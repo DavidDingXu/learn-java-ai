@@ -24,9 +24,9 @@ mvn -pl ai-gateway-demo -am test
 正常情况下会看到两个测试类都通过：
 
 ```text
-Running cn.dingxu.javaai.gateway.AiCallGatewayTest
+Running com.xiaoding.javaai.gateway.AiCallGatewayTest
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-Running cn.dingxu.javaai.gateway.AiGatewayAdvisorChainTest
+Running com.xiaoding.javaai.gateway.AiGatewayAdvisorChainTest
 Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 ```
 

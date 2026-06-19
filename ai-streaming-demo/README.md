@@ -21,7 +21,7 @@ mvn -pl ai-streaming-demo test
 正常情况下会看到：
 
 ```text
-Running cn.dingxu.javaai.streaming.StreamSessionServiceTest
+Running com.xiaoding.javaai.streaming.StreamSessionServiceTest
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 ```
 
