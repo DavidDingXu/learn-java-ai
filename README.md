@@ -2,7 +2,7 @@
 
 这个仓库是 **Java + AI 工程化落地实战** 的开源代码项目，面向有 Spring Boot 经验的 Java 后端工程师。代码从模型网关、Prompt、RAG、Tool API、Agent、Eval 到全链路追踪逐步展开，目标是把 AI 能力接进可运行、可测试、可替换的后端工程。
 
-项目可以独立发布到 GitHub / Gitee。读者 clone 后，准备 JDK 21+ 和 Maven 就能先跑测试；需要真实模型调用或基础设施联调时，再配置模型地址、API Key、Redis、MySQL、pgvector、MinIO。
+读者 clone 后，准备 JDK 21+ 和 Maven 就能先跑测试；需要真实模型调用或基础设施联调时，再配置模型地址、API Key、Redis、MySQL、pgvector、MinIO。
 
 ## 技术主线
 
