@@ -1,0 +1,19 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: ai-gateway-demo
+  ai:
+    openai:
+      api-key: ${AI_API_KEY:demo-key}
+      base-url: ${AI_BASE_URL:https://api.openai.com}
+      chat:
+        options:
+          model: ${AI_CHAT_MODEL:gpt-4o-mini}
+
+java-ai:
+  gateway:
+    model-name: ${AI_CHAT_MODEL:gpt-4o-mini}
+    max-attempts: ${AI_GATEWAY_MAX_ATTEMPTS:2}
+    call-timeout: ${AI_GATEWAY_CALL_TIMEOUT:30s}
