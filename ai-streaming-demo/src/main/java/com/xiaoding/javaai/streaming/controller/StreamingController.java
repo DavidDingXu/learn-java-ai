@@ -26,7 +26,7 @@ public class StreamingController {
 
     @GetMapping(value = "/ticket-advice", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> streamTicketAdvice(
-            @RequestParam(defaultValue = "s1001") String sessionId,
+            @RequestParam(value = "sessionId", defaultValue = "s1001") String sessionId,
             @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId) {
 
         List<StreamEvent> events = streamSessionService.createEvents(sessionId, "先核对订单，再检索退款制度。");
