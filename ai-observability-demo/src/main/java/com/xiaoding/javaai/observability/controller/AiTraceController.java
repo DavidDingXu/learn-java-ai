@@ -42,42 +42,42 @@ public class AiTraceController {
     }
 
     @PostMapping("/{traceId}/spans")
-    public AiSpan recordSpan(@PathVariable String traceId, @RequestBody RecordSpanRequest request) {
+    public AiSpan recordSpan(@PathVariable("traceId") String traceId, @RequestBody RecordSpanRequest request) {
         return recorder.recordSpan(traceId, request.name(), request.type(), request.attributes());
     }
 
     @PostMapping("/{traceId}/prompt")
-    public AiSpan recordPrompt(@PathVariable String traceId, @RequestBody RecordPromptRequest request) {
+    public AiSpan recordPrompt(@PathVariable("traceId") String traceId, @RequestBody RecordPromptRequest request) {
         return recorder.recordPrompt(traceId, request.templateVersion(), request.variables());
     }
 
     @PostMapping("/{traceId}/rag")
-    public AiSpan recordRag(@PathVariable String traceId, @RequestBody RecordRagRequest request) {
+    public AiSpan recordRag(@PathVariable("traceId") String traceId, @RequestBody RecordRagRequest request) {
         return recorder.recordRag(traceId, request.query(), request.chunkIds(), request.scores());
     }
 
     @PostMapping("/{traceId}/tool")
-    public AiSpan recordTool(@PathVariable String traceId, @RequestBody RecordToolRequest request) {
+    public AiSpan recordTool(@PathVariable("traceId") String traceId, @RequestBody RecordToolRequest request) {
         return recorder.recordTool(traceId, request.toolName(), request.argsDigest(), request.resultStatus());
     }
 
     @PostMapping("/{traceId}/agent-step")
-    public AiSpan recordAgentStep(@PathVariable String traceId, @RequestBody RecordAgentStepRequest request) {
+    public AiSpan recordAgentStep(@PathVariable("traceId") String traceId, @RequestBody RecordAgentStepRequest request) {
         return recorder.recordAgentStep(traceId, request.stepName(), request.observation(), request.decision());
     }
 
     @PostMapping("/{traceId}/events")
-    public AiEvent recordEvent(@PathVariable String traceId, @RequestBody RecordEventRequest request) {
+    public AiEvent recordEvent(@PathVariable("traceId") String traceId, @RequestBody RecordEventRequest request) {
         return recorder.recordEvent(traceId, request.name(), request.attributes());
     }
 
     @PostMapping("/{traceId}/model-usage")
-    public void recordModelUsage(@PathVariable String traceId, @RequestBody RecordModelUsageRequest request) {
+    public void recordModelUsage(@PathVariable("traceId") String traceId, @RequestBody RecordModelUsageRequest request) {
         recorder.recordModelUsage(traceId, request.model(), request.inputTokens(), request.outputTokens(), request.cost());
     }
 
     @GetMapping("/{traceId}")
-    public AiTraceSnapshot snapshot(@PathVariable String traceId) {
+    public AiTraceSnapshot snapshot(@PathVariable("traceId") String traceId) {
         return recorder.snapshot(traceId);
     }
 
@@ -97,7 +97,7 @@ public class AiTraceController {
     }
 
     @GetMapping("/quality/{scenario}")
-    public QualityReport qualityReport(@PathVariable String scenario) {
+    public QualityReport qualityReport(@PathVariable("scenario") String scenario) {
         return feedbackStore.reportByScenario(scenario);
     }
 

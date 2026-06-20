@@ -67,6 +67,14 @@ RagAnswer
 mvn -pl ai-rag-demo spring-boot:run
 ```
 
+打开前端页面：
+
+```text
+http://localhost:8086/
+```
+
+页面会提交 RAG 问题，并把回答和证据引用分开展示。
+
 ## 验证
 
 ```bash

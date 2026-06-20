@@ -45,6 +45,14 @@ mvn -pl project-helpdesk-agent spring-boot:run
 
 默认端口是 `8091`。
 
+打开前端页面：
+
+```text
+http://localhost:8091/
+```
+
+页面会跑退款工单场景，展示建议生成、引用、Tool 审计、Trace 和人工确认关闭。
+
 ## 跑通退款工单场景
 
 ```bash

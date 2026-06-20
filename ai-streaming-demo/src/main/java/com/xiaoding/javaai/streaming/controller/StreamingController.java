@@ -27,11 +27,13 @@ public class StreamingController {
     @GetMapping(value = "/ticket-advice", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> streamTicketAdvice(
             @RequestParam(value = "sessionId", defaultValue = "s1001") String sessionId,
-            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId) {
+            @RequestParam(value = "lastEventId", required = false) String lastEventId,
+            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventIdHeader) {
 
-        List<StreamEvent> events = streamSessionService.createEvents(sessionId, "先核对订单，再检索退款制度。");
-        if (lastEventId != null && !lastEventId.isBlank()) {
-            events = streamSessionService.resumeAfter(events, lastEventId);
+        StreamCursor cursor = resolveCursor(sessionId, lastEventId, lastEventIdHeader);
+        List<StreamEvent> events = streamSessionService.createEvents(cursor.sessionId(), "先核对订单，再检索退款制度。");
+        if (cursor.lastEventId() != null) {
+            events = streamSessionService.resumeAfter(events, cursor.lastEventId());
         }
 
         return Flux.fromIterable(events)
@@ -41,5 +43,36 @@ public class StreamingController {
                         .event(event.type())
                         .data(event.data())
                         .build());
+    }
+
+    private StreamCursor resolveCursor(String sessionId, String lastEventId, String lastEventIdHeader) {
+        String effectiveSessionId = hasText(sessionId) ? sessionId.trim() : "s1001";
+        String effectiveLastEventId = firstText(lastEventId, lastEventIdHeader);
+        if (effectiveLastEventId == null) {
+            int suffixIndex = effectiveSessionId.lastIndexOf('-');
+            if (suffixIndex > 0 && suffixIndex < effectiveSessionId.length() - 1
+                    && effectiveSessionId.substring(suffixIndex + 1).chars().allMatch(Character::isDigit)) {
+                effectiveLastEventId = effectiveSessionId;
+                effectiveSessionId = effectiveSessionId.substring(0, suffixIndex);
+            }
+        }
+        return new StreamCursor(effectiveSessionId, effectiveLastEventId);
+    }
+
+    private String firstText(String first, String second) {
+        if (hasText(first)) {
+            return first.trim();
+        }
+        if (hasText(second)) {
+            return second.trim();
+        }
+        return null;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private record StreamCursor(String sessionId, String lastEventId) {
     }
 }

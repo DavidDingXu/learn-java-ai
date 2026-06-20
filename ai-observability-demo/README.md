@@ -10,6 +10,14 @@ AI 全链路追踪 demo。
 mvn -pl ai-observability-demo spring-boot:run
 ```
 
+打开前端页面：
+
+```text
+http://localhost:8088/
+```
+
+页面会生成 Trace 时间线，记录 Prompt、RAG、Tool、Agent Step、成本、限流和坏 case 反馈。
+
 ## 创建 Trace
 
 ```bash

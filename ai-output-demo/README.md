@@ -37,6 +37,14 @@ mvn -pl ai-output-demo test
 mvn -pl ai-output-demo spring-boot:run
 ```
 
+打开前端页面：
+
+```text
+http://localhost:8082/
+```
+
+页面会把模型 JSON 解析成工单建议卡片，展示摘要、风险等级、下一步动作和引用依据。
+
 解析一段合法 JSON：
 
 ```bash

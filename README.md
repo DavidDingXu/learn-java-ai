@@ -51,13 +51,19 @@ demo 模块讲单点机制，两个主项目串完整链路。建议按 [docs/ma
 
 1. 准备 JDK 21。
 2. 复制 `.env.example`，按自己的模型服务填写 `AI_BASE_URL`、`AI_API_KEY`、`AI_CHAT_MODEL`，并在当前终端执行 `set -a && source .env && set +a`。
-3. 启动网关 demo：
+3. 在项目根目录先安装一次本地多模块依赖：
 
 ```bash
-mvn -pl ai-gateway-demo -am spring-boot:run
+mvn install -DskipTests
 ```
 
-4. 验证接口：
+4. 启动网关 demo：
+
+```bash
+mvn -pl ai-gateway-demo spring-boot:run
+```
+
+5. 验证接口：
 
 ```bash
 curl -X POST http://localhost:8081/api/ai/chat \
@@ -68,6 +74,26 @@ curl -X POST http://localhost:8081/api/ai/chat \
 ## 学习方式
 
 这个项目按专题组织 demo 和主项目。建议先进入对应 demo 模块运行测试，看清单点机制；再进入两个主项目，观察同一个能力在完整业务链路里的位置。
+
+## 前端 demo 入口
+
+有接口的模块都提供了对应的静态前端页面，页面放在各自 module 的 `src/main/resources/static/index.html`，启动服务后直接打开模块根路径即可。页面不是简单展示 JSON，而是按业务动作展示流式输出、证据引用、人工确认、Trace 时间线和评测结果。
+
+第一次只启动单个模块前，先在项目根执行一次 `mvn install -DskipTests`，让 `ai-common` 等内部模块进入本地 Maven 仓库。
+
+| 模块 | 启动命令 | 页面 |
+|---|---|---|
+| `ai-gateway-demo` | `mvn -pl ai-gateway-demo spring-boot:run` | `http://localhost:8081/` |
+| `ai-output-demo` | `mvn -pl ai-output-demo spring-boot:run` | `http://localhost:8082/` |
+| `ai-streaming-demo` | `mvn -pl ai-streaming-demo spring-boot:run` | `http://localhost:8083/` |
+| `ai-prompt-demo` | `mvn -pl ai-prompt-demo spring-boot:run` | `http://localhost:8084/` |
+| `ai-rag-demo` | `mvn -pl ai-rag-demo spring-boot:run` | `http://localhost:8086/` |
+| `ai-tool-demo` | `mvn -pl ai-tool-demo spring-boot:run` | `http://localhost:8087/` |
+| `ai-observability-demo` | `mvn -pl ai-observability-demo spring-boot:run` | `http://localhost:8088/` |
+| `ai-agent-demo` | `mvn -pl ai-agent-demo spring-boot:run` | `http://localhost:8089/` |
+| `ai-eval-demo` | `mvn -pl ai-eval-demo spring-boot:run` | `http://localhost:8090/` |
+| `project-helpdesk-agent` | `mvn -pl project-helpdesk-agent spring-boot:run` | `http://localhost:8091/` |
+| `project-enterprise-rag` | `mvn -pl project-enterprise-rag spring-boot:run` | `http://localhost:8092/` |
 
 ## 交付文档
 

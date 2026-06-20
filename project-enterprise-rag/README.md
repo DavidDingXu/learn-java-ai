@@ -48,6 +48,14 @@ mvn -pl project-enterprise-rag spring-boot:run
 
 默认端口是 `8092`。
 
+打开前端页面：
+
+```text
+http://localhost:8092/
+```
+
+页面会完成制度上传、知识库问答、引用展示、RAG trace 和 Eval。
+
 ## 上传并索引制度文档
 
 ```bash

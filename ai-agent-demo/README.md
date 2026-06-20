@@ -20,6 +20,14 @@
 mvn -pl ai-agent-demo spring-boot:run
 ```
 
+打开前端页面：
+
+```text
+http://localhost:8089/
+```
+
+页面会提交工单上下文，并把 Agent 的执行步骤、工具输出和最终建议分开展示。
+
 ## 验证
 
 ```bash

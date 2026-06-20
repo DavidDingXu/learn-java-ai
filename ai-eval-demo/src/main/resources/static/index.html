@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eval Demo</title>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --ok:#047857; --danger:#b42318; }
+    * { box-sizing:border-box; } body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+    main { width:min(1180px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
+    header, section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
+    h1 { margin:0 0 6px; font-size:24px; } h2 { margin:0 0 12px; font-size:17px; }
+    p { margin:0; color:var(--muted); line-height:1.7; } code { color:#334155; }
+    button { border:0; border-radius:6px; padding:9px 13px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; margin:0 8px 8px 0; }
+    .metrics { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; }
+    .metric { border:1px solid var(--line); border-radius:8px; padding:14px; background:#fbfdff; }
+    .metric span { display:block; color:var(--muted); font-size:12px; margin-bottom:4px; }
+    .results { display:grid; gap:10px; margin-top:12px; }
+    .row { border-left:4px solid var(--ok); background:#f8fafc; border-radius:6px; padding:10px; }
+    .row.fail { border-left-color:var(--danger); }
+    @media (max-width:820px) { .metrics { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Eval 评测</h1>
+    <p>页面调用 <code>/api/eval/run</code>、<code>/api/eval/rag/run</code> 和 <code>/api/eval/agent/run</code>，把通过率、路径命中和审批命中展示成可读结果。</p>
+  </header>
+
+  <section>
+    <h2>运行评测集</h2>
+    <button id="basicBtn">基础回答评测</button>
+    <button id="ragBtn">RAG 引用评测</button>
+    <button id="agentBtn">Agent 路径评测</button>
+  </section>
+
+  <section>
+    <h2>通过率</h2>
+    <div class="metrics">
+      <div class="metric"><span>类型</span><strong id="kind">-</strong></div>
+      <div class="metric"><span>总数</span><strong id="total">-</strong></div>
+      <div class="metric"><span>通过率</span><strong id="rate">-</strong></div>
+      <div class="metric"><span>关键计数</span><strong id="extra">-</strong></div>
+    </div>
+    <div id="results" class="results"></div>
+  </section>
+</main>
+
+<script>
+  const headers = { 'Content-Type': 'application/json' };
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function render(kindText, data, extraText) {
+    kind.textContent = kindText;
+    total.textContent = data.total;
+    rate.textContent = data.passRate ?? data.agreementRate ?? '-';
+    extra.textContent = extraText;
+    results.innerHTML = (data.results || []).map(row => `
+      <div class="row ${row.passed === false ? 'fail' : ''}">
+        <strong>${escapeHtml(row.caseId)}</strong><br>${escapeHtml(row.reason || JSON.stringify(row))}
+      </div>
+    `).join('');
+  }
+  async function post(path, body) {
+    const response = await fetch(path, { method:'POST', headers, body: JSON.stringify(body) });
+    if (!response.ok) throw new Error(await response.text());
+    return response.json();
+  }
+  basicBtn.addEventListener('click', async () => {
+    const data = await post('/api/eval/run', [{ caseId:'E-001', question:'发货后退款怎么处理', expectedKeyword:'核对物流', actualAnswer:'建议先核对物流状态，再转人工复核。' }]);
+    render('Basic', data, `passed=${data.passed}`);
+  });
+  ragBtn.addEventListener('click', async () => {
+    const data = await post('/api/eval/rag/run', {
+      cases:[{ caseId:'R-001', question:'发货后退款怎么办', expectedChunkIds:['refund-policy-001-c1'], expectNoEvidence:false }],
+      observations:[{ caseId:'R-001', retrievedChunkIds:['refund-policy-001-c1'], citedChunkIds:['refund-policy-001-c1'], noEvidenceReturned:false, answer:'发货后先核对物流状态。' }]
+    });
+    render('RAG', data, `retrieval=${data.retrievalPassed}, citation=${data.citationPassed}`);
+  });
+  agentBtn.addEventListener('click', async () => {
+    const data = await post('/api/eval/agent/run', {
+      cases:[{ caseId:'A-001', question:'关闭高风险退款工单', expectedToolPath:['ticket.lookup','order.lookup','policy.search'], expectHumanApproval:true }],
+      observations:[{ caseId:'A-001', actualToolPath:['ticket.lookup','order.lookup','policy.search'], humanApprovalRequested:true, riskLevel:'HIGH' }]
+    });
+    render('Agent', data, `path=${data.pathPassed}, approval=${data.approvalPassed}`);
+  });
+</script>
+</body>
+</html>

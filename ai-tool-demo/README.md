@@ -18,6 +18,14 @@ Tool 审计集中在 `ToolExecutionLedger`。当前是内存账本，记录 `tra
 mvn -pl ai-tool-demo spring-boot:run
 ```
 
+打开前端页面：
+
+```text
+http://localhost:8087/
+```
+
+页面会演示查询类 Tool、写操作人工确认、确认 token 和审计 ledger。
+
 ## 查询工单
 
 ```bash

@@ -31,7 +31,7 @@ public class PromptTemplateController {
     }
 
     @GetMapping("/render")
-    public String render(@RequestParam String code, @RequestParam Map<String, String> variables) {
+    public String render(@RequestParam("code") String code, @RequestParam Map<String, String> variables) {
         variables.remove("code");
         return promptTemplateService.render(code, variables);
     }

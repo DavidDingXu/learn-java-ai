@@ -34,4 +34,58 @@ class StreamingControllerTest {
         assertThat(eventStream).contains("id:s-test-3");
         assertThat(eventStream).contains("event:done");
     }
+
+    @Test
+    void resumesAfterEventIdPassedAsQueryParameter() {
+        byte[] body = webTestClient.get()
+                .uri("/api/stream/ticket-advice?sessionId=s1001&lastEventId=s1001-1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentTypeCompatibleWith(TEXT_EVENT_STREAM)
+                .expectBody()
+                .returnResult()
+                .getResponseBody();
+
+        String eventStream = new String(body, StandardCharsets.UTF_8);
+        assertThat(eventStream).doesNotContain("id:s1001-1");
+        assertThat(eventStream).contains("id:s1001-2");
+        assertThat(eventStream).contains("data:再检索退款制度");
+        assertThat(eventStream).contains("id:s1001-3");
+    }
+
+    @Test
+    void resumesAfterLastEventIdRequestHeaderForBrowserReconnect() {
+        byte[] body = webTestClient.get()
+                .uri("/api/stream/ticket-advice?sessionId=s1001")
+                .header("Last-Event-ID", "s1001-1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentTypeCompatibleWith(TEXT_EVENT_STREAM)
+                .expectBody()
+                .returnResult()
+                .getResponseBody();
+
+        String eventStream = new String(body, StandardCharsets.UTF_8);
+        assertThat(eventStream).doesNotContain("id:s1001-1");
+        assertThat(eventStream).contains("id:s1001-2");
+        assertThat(eventStream).contains("data:再检索退款制度");
+    }
+
+    @Test
+    void treatsSessionIdInputWithNumericSuffixAsResumeCursorForFrontendDemo() {
+        byte[] body = webTestClient.get()
+                .uri("/api/stream/ticket-advice?sessionId=s1001-2")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentTypeCompatibleWith(TEXT_EVENT_STREAM)
+                .expectBody()
+                .returnResult()
+                .getResponseBody();
+
+        String eventStream = new String(body, StandardCharsets.UTF_8);
+        assertThat(eventStream).doesNotContain("id:s1001-1");
+        assertThat(eventStream).doesNotContain("id:s1001-2");
+        assertThat(eventStream).contains("id:s1001-3");
+        assertThat(eventStream).contains("event:done");
+    }
 }

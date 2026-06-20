@@ -61,9 +61,23 @@ mvn test
 
 ## 4. 启动第一个 demo
 
+第一次只启动单个模块前，先在项目根安装本地多模块依赖：
+
 ```bash
-mvn -pl ai-gateway-demo -am spring-boot:run
+mvn install -DskipTests
 ```
+
+```bash
+mvn -pl ai-gateway-demo spring-boot:run
+```
+
+打开前端页面：
+
+```text
+http://localhost:8081/
+```
+
+页面会调用同一个 `POST /api/ai/chat` 接口，并把模型回复、`traceId`、模型名称和耗时展示出来。
 
 验证接口：
 
@@ -105,7 +119,13 @@ HelpdeskAgentControllerTest
 mvn -pl project-enterprise-rag spring-boot:run
 ```
 
-默认端口是 `8092`。上传制度文档：
+默认端口是 `8092`。可以直接打开页面完成上传、问答和评测：
+
+```text
+http://localhost:8092/
+```
+
+也可以用 curl 上传制度文档：
 
 ```bash
 curl -X POST http://localhost:8092/api/enterprise-rag/documents \
@@ -139,7 +159,13 @@ curl -X POST http://localhost:8092/api/enterprise-rag/answers \
 mvn -pl project-helpdesk-agent spring-boot:run
 ```
 
-默认端口是 `8091`。跑退款工单场景：
+默认端口是 `8091`。可以先打开页面观察建议生成、人工确认关闭和 Trace：
+
+```text
+http://localhost:8091/
+```
+
+也可以用 curl 跑退款工单场景：
 
 ```bash
 curl http://localhost:8091/api/helpdesk-agent/scenarios/refund
@@ -175,19 +201,21 @@ curl -X POST http://localhost:8091/api/helpdesk-agent/tickets/close \
 
 ## 6. 模块入口
 
-| 模块 | 目标 |
-|---|---|
-| `ai-gateway-demo` | 模型调用网关 |
-| `ai-streaming-demo` | SSE 流式输出 |
-| `ai-prompt-demo` | Prompt 模板和版本 |
-| `ai-output-demo` | 结构化输出解析 |
-| `ai-rag-demo` | 企业 RAG 权限过滤和引用 |
-| `ai-tool-demo` | Agent Tool API、人工确认、审计 |
-| `ai-agent-demo` | 受控工作流 Agent |
-| `ai-legacy-demo` | 老 JDK8 系统接入外部 Agent 服务 |
-| `ai-mcp-demo` | MCP Host / Client / Server 边界 |
-| `ai-a2a-demo` | A2A Agent Card、Skill、Task 状态 |
-| `ai-eval-demo` | Golden Set 评测 |
-| `ai-observability-demo` | Trace、Span、成本追踪 |
-| `project-enterprise-rag` | 企业制度 RAG 知识库主项目 |
-| `project-helpdesk-agent` | 企业工单 AI 助手主项目 |
+下表里的启动命令默认已经在项目根执行过 `mvn install -DskipTests` 或 `mvn test`。
+
+| 模块 | 目标 | 前端页面 |
+|---|---|---|
+| `ai-gateway-demo` | 模型调用网关 | `http://localhost:8081/` |
+| `ai-output-demo` | 结构化输出解析 | `http://localhost:8082/` |
+| `ai-streaming-demo` | SSE 流式输出 | `http://localhost:8083/` |
+| `ai-prompt-demo` | Prompt 模板和版本 | `http://localhost:8084/` |
+| `ai-rag-demo` | 企业 RAG 权限过滤和引用 | `http://localhost:8086/` |
+| `ai-tool-demo` | Agent Tool API、人工确认、审计 | `http://localhost:8087/` |
+| `ai-observability-demo` | Trace、Span、成本追踪 | `http://localhost:8088/` |
+| `ai-agent-demo` | 受控工作流 Agent | `http://localhost:8089/` |
+| `ai-eval-demo` | Golden Set 评测 | `http://localhost:8090/` |
+| `project-helpdesk-agent` | 企业工单 AI 助手主项目 | `http://localhost:8091/` |
+| `project-enterprise-rag` | 企业制度 RAG 知识库主项目 | `http://localhost:8092/` |
+| `ai-legacy-demo` | 老 JDK8 系统接入外部 Agent 服务 | 暂无 HTTP 页面 |
+| `ai-mcp-demo` | MCP Host / Client / Server 边界 | 暂无 HTTP 页面 |
+| `ai-a2a-demo` | A2A Agent Card、Skill、Task 状态 | 暂无 HTTP 页面 |

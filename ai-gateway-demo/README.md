@@ -53,7 +53,7 @@ set +a
 启动服务：
 
 ```bash
-mvn -pl ai-gateway-demo -am spring-boot:run
+mvn -pl ai-gateway-demo spring-boot:run
 ```
 
 验证接口：
@@ -63,6 +63,14 @@ curl -X POST http://localhost:8081/api/ai/chat \
   -H 'Content-Type: application/json' \
   -d '{"userId":"u1001","message":"客户申请退款，但订单已经发货。"}'
 ```
+
+也可以打开前端页面：
+
+```text
+http://localhost:8081/
+```
+
+页面会调用同一个网关接口，并展示模型回复、Trace、模型名称和耗时。
 
 返回结构：
 

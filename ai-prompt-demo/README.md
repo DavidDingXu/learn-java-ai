@@ -30,6 +30,14 @@ mvn -pl ai-prompt-demo test
 mvn -pl ai-prompt-demo spring-boot:run
 ```
 
+打开前端页面：
+
+```text
+http://localhost:8084/
+```
+
+页面会完成模板保存、变量渲染、风险检测和回滚操作，方便观察 Prompt 管理接口的真实交互。
+
 保存一个模板：
 
 ```bash

@@ -34,6 +34,14 @@ Prompt 候选版本什么时候不能发布
 mvn -pl ai-eval-demo spring-boot:run
 ```
 
+打开前端页面：
+
+```text
+http://localhost:8090/
+```
+
+页面会运行基础回答、RAG 引用和 Agent 路径评测，并展示通过率。
+
 ## 验证
 
 ```bash

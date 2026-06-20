@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Demo</title>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --danger:#b42318; --ok:#047857; }
+    * { box-sizing:border-box; } body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+    main { width:min(1180px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
+    header, section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
+    h1 { margin:0 0 6px; font-size:24px; } h2 { margin:0 0 12px; font-size:17px; }
+    p { margin:0; color:var(--muted); line-height:1.7; } code { color:#334155; }
+    .grid { display:grid; grid-template-columns:340px 1fr; gap:16px; align-items:start; }
+    label { display:grid; gap:6px; margin-bottom:10px; font-size:13px; color:var(--muted); }
+    input, textarea { border:1px solid var(--line); border-radius:6px; padding:9px 10px; font:inherit; }
+    textarea { min-height:120px; resize:vertical; }
+    button { border:0; border-radius:6px; padding:9px 13px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; }
+    .advice { white-space:pre-wrap; line-height:1.8; border:1px solid var(--line); border-radius:8px; padding:14px; background:#fbfdff; min-height:130px; }
+    .steps { display:grid; gap:10px; margin-top:12px; }
+    .step { border-left:4px solid var(--primary); background:#f8fafc; border-radius:6px; padding:10px; }
+    .approval { display:inline-flex; padding:4px 8px; border-radius:999px; background:#fef3f2; color:var(--danger); font-weight:700; margin-top:10px; }
+    @media (max-width:840px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Agent 工单建议</h1>
+    <p>页面调用 <code>/api/agent/tickets/advice</code>，把 Agent 的执行步骤、工具结果和最终建议分开呈现，方便观察它不是一次普通聊天。</p>
+  </header>
+
+  <div class="grid">
+    <section>
+      <h2>工单上下文</h2>
+      <label>ticketId <input id="ticketId" value="T-1001"></label>
+      <label>userId <input id="userId" value="u1001"></label>
+      <label>tenantId <input id="tenantId" value="tenant-a"></label>
+      <label>department <input id="department" value="support"></label>
+      <label>userQuestion <textarea id="userQuestion">客户申请 5000 元退款，但订单已经发货，能直接关闭工单吗？</textarea></label>
+      <button id="runBtn">运行 Agent</button>
+    </section>
+
+    <section>
+      <h2>处理建议</h2>
+      <div id="advice" class="advice"></div>
+      <div id="approval" class="approval" hidden>需要人工确认</div>
+      <h2 style="margin-top:16px">执行步骤</h2>
+      <div id="steps" class="steps"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  async function runAgent() {
+    advice.textContent = 'Agent 执行中...';
+    steps.textContent = '';
+    approval.hidden = true;
+    const body = {
+      ticketId: ticketId.value,
+      userQuestion: userQuestion.value,
+      userId: userId.value,
+      tenantId: tenantId.value,
+      department: department.value
+    };
+    try {
+      const response = await fetch('/api/agent/tickets/advice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const data = await response.json();
+      advice.textContent = data.advice;
+      approval.hidden = !data.requiresHumanApproval;
+      steps.innerHTML = (data.steps || []).map((step, index) => `
+        <div class="step">
+          <strong>${index + 1}. ${escapeHtml(step.name)}</strong><br>
+          <small>${escapeHtml(step.type)}</small>
+          <pre>${escapeHtml(JSON.stringify(step.output, null, 2))}</pre>
+        </div>
+      `).join('');
+    } catch (error) {
+      advice.textContent = error.message;
+    }
+  }
+  runBtn.addEventListener('click', runAgent);
+  runAgent();
+</script>
+</body>
+</html>

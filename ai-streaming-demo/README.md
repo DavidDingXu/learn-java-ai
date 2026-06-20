@@ -5,7 +5,7 @@
 当前模块覆盖：
 
 - `StreamingController`：把业务事件转换成 `ServerSentEvent`。
-- `StreamSessionService`：生成 token / done 事件，支持 `Last-Event-ID` 断点恢复。
+- `StreamSessionService`：生成 token / done 事件，支持 `Last-Event-ID` 和 `lastEventId` 断点恢复。
 - `StreamEvent`：统一表达 SSE 的 `id`、`event`、`data`。
 - `heartbeat(sessionId, sequence)`：生成心跳事件，避免把连接状态混进正文。
 - `StreamMetrics`：记录请求开始时间、首 token 时间、完成时间、TTFT 和总耗时。
@@ -28,7 +28,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 4 个测试分别验证：
 
 - 生成有序 token 事件和 done 事件。
-- 使用 `Last-Event-ID` 从下一条事件恢复。
+- 使用 `Last-Event-ID` 或 `lastEventId` 从下一条事件恢复。
 - 心跳事件使用独立的 `heartbeat` 类型。
 - TTFT 和总耗时按时间戳计算。
 
@@ -44,6 +44,14 @@ mvn -pl ai-streaming-demo spring-boot:run
 curl -N 'http://localhost:8083/api/stream/ticket-advice?sessionId=s1001'
 ```
 
+也可以打开前端页面：
+
+```text
+http://localhost:8083/
+```
+
+页面会用 SSE 逐字显示 token，并展示事件 ID、done 事件和连接状态。
+
 模拟断点恢复：
 
 ```bash
@@ -52,6 +60,8 @@ curl -N 'http://localhost:8083/api/stream/ticket-advice?sessionId=s1001' \
 ```
 
 第二个请求会从 `s1001-2` 开始返回。
+
+如果在页面里手动演示恢复，可以把 `sessionId` 保持为 `s1001`，把 `lastEventId` 填成 `s1001-1` 或 `s1001-2`。接口也兼容 `sessionId=s1001-2` 这种输入，会把它解释成从 `s1001` 会话的第二个事件之后恢复。
 
 ## 可以继续改的点
 

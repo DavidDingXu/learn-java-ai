@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trace Demo</title>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --ok:#047857; }
+    * { box-sizing:border-box; } body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+    main { width:min(1180px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
+    header, section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
+    h1 { margin:0 0 6px; font-size:24px; } h2 { margin:0 0 12px; font-size:17px; }
+    p { margin:0; color:var(--muted); line-height:1.7; } code { color:#334155; }
+    button { border:0; border-radius:6px; padding:9px 13px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; margin:0 8px 8px 0; }
+    .metrics { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; }
+    .metric { border:1px solid var(--line); border-radius:8px; padding:14px; background:#fbfdff; overflow-wrap:anywhere; }
+    .metric span { display:block; color:var(--muted); font-size:12px; margin-bottom:4px; }
+    .timeline { display:grid; gap:10px; margin-top:12px; }
+    .item { border-left:4px solid var(--ok); background:#f8fafc; border-radius:6px; padding:10px; }
+    pre { white-space:pre-wrap; margin:8px 0 0; }
+    @media (max-width:860px) { .metrics { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Trace、成本与质量反馈</h1>
+    <p>页面调用 <code>/api/traces</code> 系列接口，模拟一次 AI 请求的 Prompt、RAG、Tool、Agent Step、成本和坏 case 反馈。</p>
+  </header>
+
+  <section>
+    <h2>演示操作</h2>
+    <button id="runBtn">生成 Trace 时间线</button>
+    <button id="quotaBtn">检查限流</button>
+    <button id="feedbackBtn">提交坏 case 反馈</button>
+  </section>
+
+  <section>
+    <h2>关键指标</h2>
+    <div class="metrics">
+      <div class="metric"><span>Trace</span><strong id="traceId">-</strong></div>
+      <div class="metric"><span>Span</span><strong id="spanCount">0</strong></div>
+      <div class="metric"><span>成本</span><strong id="cost">0</strong></div>
+      <div class="metric"><span>质量</span><strong id="quality">-</strong></div>
+    </div>
+    <div id="timeline" class="timeline"></div>
+  </section>
+</main>
+
+<script>
+  const headers = { 'Content-Type': 'application/json' };
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  async function post(path, body) {
+    const response = await fetch(path, { method:'POST', headers, body: JSON.stringify(body) });
+    if (!response.ok) throw new Error(await response.text());
+    const text = await response.text();
+    return text ? JSON.parse(text) : {};
+  }
+  async function runTrace() {
+    const trace = await post('/api/traces', { userId:'u1001', scenario:'ticket-advice' });
+    await post(`/api/traces/${trace.traceId}/prompt`, { templateVersion:'ticket-advice-v1', variables:['ticketId','policy'] });
+    await post(`/api/traces/${trace.traceId}/rag`, { query:'发货后退款', chunkIds:['refund-policy-001-c1'], scores:['0.92'] });
+    await post(`/api/traces/${trace.traceId}/tool`, { toolName:'ticket.lookup', argsDigest:'ticketId=T-1001', resultStatus:'OK' });
+    await post(`/api/traces/${trace.traceId}/agent-step`, { stepName:'approval.plan', observation:'high value refund', decision:'require manual review' });
+    await post(`/api/traces/${trace.traceId}/events`, { name:'stream.first-token', attributes:{ ttftMs:320 } });
+    await post(`/api/traces/${trace.traceId}/model-usage`, { model:'gpt-4o-mini', inputTokens:120, outputTokens:80, cost:0.0012 });
+    const snapshot = await (await fetch(`/api/traces/${trace.traceId}`)).json();
+    traceId.textContent = trace.traceId;
+    spanCount.textContent = snapshot.spans.length;
+    cost.textContent = snapshot.cost;
+    timeline.innerHTML = snapshot.spans.map(span => `<div class="item"><strong>${escapeHtml(span.name)}</strong><pre>${escapeHtml(JSON.stringify(span.attributes, null, 2))}</pre></div>`).join('')
+      + snapshot.events.map(event => `<div class="item"><strong>${escapeHtml(event.name)}</strong><pre>${escapeHtml(JSON.stringify(event.attributes, null, 2))}</pre></div>`).join('');
+  }
+  quotaBtn.addEventListener('click', async () => {
+    const data = await post('/api/traces/quota/check', { tenantId:'tenant-a', userId:'u1001', requestedTokens:500 });
+    quality.textContent = data.allowed ? `限流通过，剩余 ${data.userRemaining}` : data.reason;
+  });
+  feedbackBtn.addEventListener('click', async () => {
+    await post('/api/traces/feedback', { traceId:'trace-frontend-demo', scenario:'ticket-advice', rating:'bad', reason:'引用了错误制度' });
+    const report = await (await fetch('/api/traces/quality/ticket-advice')).json();
+    quality.textContent = `bad=${report.bad}, badRate=${report.badRate}`;
+  });
+  runBtn.addEventListener('click', () => runTrace().catch(e => timeline.textContent = e.message));
+</script>
+</body>
+</html>
