@@ -28,6 +28,9 @@ class AiAgentApplicationContextTest {
         assertThat(response.getBody())
                 .contains("Agent")
                 .contains("/api/agent/tickets/advice")
-                .contains("执行步骤");
+                .contains("执行步骤")
+                .contains("/api/agent/lab/context")
+                .contains("/api/agent/lab/react")
+                .contains("上下文预算");
     }
 }

@@ -5,34 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RAG Demo</title>
   <style>
-    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --green:#047857; }
+    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --green:#047857; --red:#b42318; --amber:#b54708; }
     * { box-sizing:border-box; } body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
-    main { width:min(1120px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
+    main { width:min(1220px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
     header, section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
-    h1 { margin:0 0 6px; font-size:24px; } h2 { margin:0 0 12px; font-size:17px; }
+    h1 { margin:0 0 6px; font-size:24px; } h2 { margin:0 0 12px; font-size:17px; } h3 { margin:0 0 8px; font-size:14px; }
     p { margin:0; color:var(--muted); line-height:1.7; } code { color:#334155; }
-    .grid { display:grid; grid-template-columns:320px 1fr; gap:16px; align-items:start; }
+    .grid { display:grid; grid-template-columns:330px 1fr; gap:16px; align-items:start; }
+    .lab-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; }
     label { display:grid; gap:6px; margin-bottom:10px; font-size:13px; color:var(--muted); }
-    input, textarea { border:1px solid var(--line); border-radius:6px; padding:9px 10px; font:inherit; }
+    input, textarea, select { border:1px solid var(--line); border-radius:6px; padding:9px 10px; font:inherit; min-width:0; background:#fff; }
     textarea { min-height:86px; resize:vertical; }
     button { border:0; border-radius:6px; padding:9px 13px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; }
-    .answer { white-space:pre-wrap; line-height:1.8; border:1px solid var(--line); border-radius:8px; padding:14px; background:#fbfdff; min-height:130px; }
-    .citations { display:grid; gap:10px; margin-top:12px; }
-    .citation { border-left:4px solid var(--green); background:#f8fafc; border-radius:6px; padding:10px; }
-    .citation strong { display:block; margin-bottom:4px; }
-    @media (max-width:820px) { .grid { grid-template-columns:1fr; } }
+    .answer, .output { white-space:pre-wrap; line-height:1.8; border:1px solid var(--line); border-radius:8px; padding:14px; background:#fbfdff; min-height:120px; }
+    .list { display:grid; gap:10px; margin-top:12px; }
+    .item { border-left:4px solid var(--green); background:#f8fafc; border-radius:6px; padding:10px; overflow:auto; }
+    .item.warn { border-left-color:var(--amber); } .item.deny { border-left-color:var(--red); }
+    .meta { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+    .tag { display:inline-flex; padding:3px 7px; border-radius:999px; background:#e0ecff; color:#1d4ed8; font-size:12px; font-weight:700; }
+    .tag.gray { background:#eef2f6; color:#475467; } .tag.red { background:#fef3f2; color:var(--red); } .tag.green { background:#ecfdf3; color:var(--green); }
+    pre { margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font-size:12px; color:#334155; }
+    @media (max-width:900px) { .grid, .lab-grid { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
 <main>
   <header>
     <h1>RAG 知识库问答</h1>
-    <p>页面调用 <code>/api/rag/answer</code>，把回答和证据引用分开展示，方便观察权限过滤和引用返回。</p>
+    <p>页面调用 <code>/api/rag/answer</code> 和 RAG 链路实验接口，把解析、切分、权限过滤、混合检索、重排、查询改写、上下文压缩和索引任务拆开展示。</p>
   </header>
 
   <div class="grid">
     <section>
-      <h2>问题</h2>
+      <h2>业务问答</h2>
       <label>租户 <input id="tenantId" value="tenant-a"></label>
       <label>部门 <input id="department" value="support"></label>
       <label>query <textarea id="query">客户申请退款但订单已发货怎么办</textarea></label>
@@ -42,12 +47,58 @@
     <section>
       <h2>回答与证据引用</h2>
       <div id="answer" class="answer"></div>
-      <div id="citations" class="citations"></div>
+      <div id="citations" class="list"></div>
     </section>
   </div>
+
+  <section>
+    <h2>RAG 链路实验</h2>
+    <div class="lab-grid">
+      <div>
+        <h3>文档解析与切分</h3>
+        <label>markdown <textarea id="markdown"># 退款制度
+## 发货后退款
+客户申请退款但订单已经发货时，客服必须先核对物流状态，确认包裹是否签收。
+## 高金额退款
+单笔退款金额超过 3000 元时，需要人工复核后再继续处理。</textarea></label>
+        <button id="pipelineBtn">解析并切分</button>
+        <div id="pipelineOutput" class="list"></div>
+      </div>
+
+      <div>
+        <h3>权限过滤</h3>
+        <label>租户 <input id="accessTenantId" value="tenant-a"></label>
+        <label>部门 <input id="accessDepartment" value="support"></label>
+        <button id="accessBtn">检查可见证据</button>
+        <div id="accessOutput" class="list"></div>
+      </div>
+
+      <div>
+        <h3>混合检索与重排</h3>
+        <label>query <textarea id="retrievalQuery">客户申请退款但订单已发货怎么办</textarea></label>
+        <button id="retrievalBtn">运行检索</button>
+        <div id="retrievalOutput" class="list"></div>
+      </div>
+
+      <div>
+        <h3>多路查询与压缩</h3>
+        <label>query <textarea id="rewriteQuery">大额退款已经发货怎么办</textarea></label>
+        <button id="rewriteBtn">改写并压缩上下文</button>
+        <div id="rewriteOutput" class="list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>索引任务</h2>
+    <p>页面调用 <code>/api/rag/lab/index</code>，把 rebuild 的任务状态、chunk 数和失败原因作为业务可见结果展示。</p>
+    <button id="indexBtn">重建样例索引</button>
+    <div id="indexOutput" class="output"></div>
+  </section>
 </main>
 
 <script>
+  const jsonHeaders = { 'Content-Type': 'application/json' };
   function escapeHtml(value) {
     return String(value ?? '')
       .replaceAll('&', '&amp;')
@@ -56,39 +107,108 @@
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#39;');
   }
-
+  async function post(path, body) {
+    const response = await fetch(path, { method:'POST', headers:jsonHeaders, body:JSON.stringify(body) });
+    if (!response.ok) throw new Error(await response.text());
+    return response.json();
+  }
+  function scope() {
+    return { tenantId: tenantId.value, department: department.value };
+  }
+  function renderChunk(item) {
+    return `<div class="item"><strong>${escapeHtml(item.chunkId)}</strong>
+      <div class="meta"><span class="tag">${escapeHtml(item.documentId)}</span><span class="tag gray">${escapeHtml((item.headingPath || []).join(' / '))}</span></div>
+      <div>${escapeHtml(item.content)}</div></div>`;
+  }
+  function renderRetrieval(item, rerank) {
+    const tags = (item.sources || []).map(source => `<span class="tag">${escapeHtml(source)}</span>`).join('');
+    const reasons = (item.reasons || []).map(reason => `<span class="tag green">${escapeHtml(reason)}</span>`).join('');
+    const score = rerank ? `rerank=${item.rerankScore}, original=${item.originalScore}` : `score=${item.score}`;
+    return `<div class="item"><strong>${escapeHtml(item.chunkId)}</strong><div class="meta">${tags}${reasons}<span class="tag gray">${score}</span></div><div>${escapeHtml(item.content)}</div></div>`;
+  }
   async function ask() {
-    const answer = document.querySelector('#answer');
-    const citations = document.querySelector('#citations');
     answer.textContent = '检索中...';
     citations.textContent = '';
-    const body = {
-      query: document.querySelector('#query').value,
-      tenantId: document.querySelector('#tenantId').value,
-      department: document.querySelector('#department').value
-    };
     try {
-      const response = await fetch('/api/rag/answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (!response.ok) throw new Error(await response.text());
-      const data = await response.json();
+      const data = await post('/api/rag/answer', { query: query.value, ...scope() });
       answer.textContent = data.content;
       citations.innerHTML = (data.citations || []).map(item => `
-        <div class="citation">
+        <div class="item">
           <strong>${escapeHtml(item.documentId)} / ${escapeHtml(item.chunkId)}</strong>
-          <span>${escapeHtml(item.quote)}</span>
+          <div>${escapeHtml(item.quote)}</div>
         </div>
-      `).join('') || '<div class="citation">没有返回可引用证据</div>';
+      `).join('') || '<div class="item warn">没有返回可引用证据</div>';
     } catch (error) {
       answer.textContent = error.message;
     }
   }
-
-  document.querySelector('#askBtn').addEventListener('click', ask);
-  ask();
+  async function runPipeline() {
+    pipelineOutput.innerHTML = '<div class="item warn">解析中...</div>';
+    try {
+      const data = await post('/api/rag/lab/pipeline', {
+        documentId:'refund-policy-lab',
+        tenantId:'tenant-a',
+        title:'退款制度样例',
+        docType:'POLICY',
+        departments:['support'],
+        markdown: markdown.value
+      });
+      pipelineOutput.innerHTML = `<div class="item"><strong>plainText</strong><pre>${escapeHtml(data.plainText)}</pre></div>` + data.chunks.map(renderChunk).join('');
+    } catch (error) {
+      pipelineOutput.innerHTML = `<div class="item deny">${escapeHtml(error.message)}</div>`;
+    }
+  }
+  async function runAccess() {
+    accessOutput.innerHTML = '<div class="item warn">检查中...</div>';
+    try {
+      const data = await post('/api/rag/lab/access', { tenantId:accessTenantId.value, department:accessDepartment.value });
+      accessOutput.innerHTML = data.decisions.map(decision => `
+        <div class="item ${decision.allowed ? '' : 'deny'}">
+          <strong>${escapeHtml(decision.chunkId)}</strong>
+          <div class="meta"><span class="tag ${decision.allowed ? 'green' : 'red'}">${decision.allowed ? 'allowed' : 'denied'}</span><span class="tag gray">${escapeHtml(decision.reason)}</span></div>
+        </div>
+      `).join('');
+    } catch (error) {
+      accessOutput.innerHTML = `<div class="item deny">${escapeHtml(error.message)}</div>`;
+    }
+  }
+  async function runRetrieval() {
+    retrievalOutput.innerHTML = '<div class="item warn">检索中...</div>';
+    try {
+      const data = await post('/api/rag/lab/retrieval', { query:retrievalQuery.value, ...scope(), topK:3 });
+      retrievalOutput.innerHTML = '<h3>Hybrid</h3>' + data.hybridResults.map(item => renderRetrieval(item, false)).join('')
+        + '<h3>Rerank</h3>' + data.rerankedResults.map(item => renderRetrieval(item, true)).join('');
+    } catch (error) {
+      retrievalOutput.innerHTML = `<div class="item deny">${escapeHtml(error.message)}</div>`;
+    }
+  }
+  async function runRewrite() {
+    rewriteOutput.innerHTML = '<div class="item warn">改写中...</div>';
+    try {
+      const data = await post('/api/rag/lab/rewrite', { query:rewriteQuery.value, ...scope(), topK:3, maxCharsPerChunk:42 });
+      const queries = data.rewrittenQueries.map(item => `<span class="tag">${escapeHtml(item)}</span>`).join('');
+      const compressed = data.compressedItems.map(item => `<div class="item"><strong>${escapeHtml(item.chunkId)}</strong><div>${escapeHtml(item.compressedContent)}</div></div>`).join('');
+      rewriteOutput.innerHTML = `<div class="item"><strong>改写 query</strong><div class="meta">${queries}</div></div>` + compressed;
+    } catch (error) {
+      rewriteOutput.innerHTML = `<div class="item deny">${escapeHtml(error.message)}</div>`;
+    }
+  }
+  async function runIndex() {
+    indexOutput.textContent = '重建中...';
+    try {
+      const data = await post('/api/rag/lab/index', { documentId:'refund-policy-lab', markdown:markdown.value });
+      indexOutput.textContent = `status=${data.status}\nchunkCount=${data.chunkCount}\ntaskId=${data.taskId}\nerror=${data.errorMessage || '-'}`;
+    } catch (error) {
+      indexOutput.textContent = error.message;
+    }
+  }
+  askBtn.addEventListener('click', ask);
+  pipelineBtn.addEventListener('click', runPipeline);
+  accessBtn.addEventListener('click', runAccess);
+  retrievalBtn.addEventListener('click', runRetrieval);
+  rewriteBtn.addEventListener('click', runRewrite);
+  indexBtn.addEventListener('click', runIndex);
+  ask(); runPipeline(); runAccess(); runRetrieval(); runRewrite();
 </script>
 </body>
 </html>

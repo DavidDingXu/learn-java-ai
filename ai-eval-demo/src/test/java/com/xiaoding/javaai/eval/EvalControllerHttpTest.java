@@ -93,4 +93,79 @@ class EvalControllerHttpTest {
                 .andExpect(jsonPath("$.total").value(1))
                 .andExpect(jsonPath("$.passRate").value(1));
     }
+
+    @Test
+    void exposesJudgePromptAndHarnessEvalEndpointsThroughHttpBinding() throws Exception {
+        mockMvc.perform(post("/api/eval/judge/calibrate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                [
+                                  {
+                                    "caseId": "J-001",
+                                    "question": "发货后退款是否通过",
+                                    "humanPassed": true,
+                                    "judgePassed": true,
+                                    "judgeConfidence": 0.91,
+                                    "note": "人工和裁判一致"
+                                  }
+                                ]
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(1))
+                .andExpect(jsonPath("$.agreementRate").value(1));
+
+        mockMvc.perform(post("/api/eval/prompt/regression")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                [
+                                  {
+                                    "caseId": "P-001",
+                                    "promptKey": "refund-advice",
+                                    "baselineVersion": "v1",
+                                    "candidateVersion": "v2",
+                                    "baselinePassRate": 0.86,
+                                    "candidatePassRate": 0.88,
+                                    "tolerance": 0.02
+                                  }
+                                ]
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(1))
+                .andExpect(jsonPath("$.passRate").value(1));
+
+        mockMvc.perform(post("/api/eval/harness/run")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "cases": [
+                                    {
+                                      "caseId": "H-001",
+                                      "scenario": "hybrid-rag",
+                                      "minQualityImprovement": 0.05,
+                                      "maxCostIncreaseRate": 0.30,
+                                      "maxLatencyIncreaseRate": 0.30
+                                    }
+                                  ],
+                                  "observations": [
+                                    {
+                                      "caseId": "H-001",
+                                      "strategy": "baseline",
+                                      "qualityScore": 0.72,
+                                      "costUnits": 100,
+                                      "latencyMillis": 800
+                                    },
+                                    {
+                                      "caseId": "H-001",
+                                      "strategy": "candidate",
+                                      "qualityScore": 0.82,
+                                      "costUnits": 118,
+                                      "latencyMillis": 920
+                                    }
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(1))
+                .andExpect(jsonPath("$.promotableCandidates").value(1));
+    }
 }

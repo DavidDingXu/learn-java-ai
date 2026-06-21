@@ -2,6 +2,8 @@
 
 这个模块演示 A2A 在 Java AI 工程里的最小边界：Agent Card、Skill、Task 状态、流式事件和回调。
 
+这个模块提供了薄 Web 层和前端页面，用来观察 Agent Card、任务创建、状态事件、任务产物和 `INPUT_REQUIRED` 后的人工补充输入。核心协议对象仍然是 source of truth，Web 层只负责把任务状态机展示出来。
+
 示例场景是“工单 Agent 对外暴露处理建议 Skill”：
 
 - `AgentCard` 暴露 Agent 名称、入口和 Skill 清单。
@@ -33,6 +35,20 @@ PushNotificationConfig   // 任务状态变化后的回调配置
 ```bash
 mvn -pl ai-a2a-demo test
 ```
+
+启动前端页面：
+
+```bash
+mvn -pl ai-a2a-demo spring-boot:run
+```
+
+浏览器打开：
+
+```text
+http://localhost:8094/
+```
+
+页面会调用 `/api/a2a/card`、`/api/a2a/tasks`、`/api/a2a/tasks/{taskId}/events` 和 `/api/a2a/tasks/{taskId}/input`，观察 Agent Card、任务状态、事件流、产物和人工确认继续执行。
 
 重点测试：
 

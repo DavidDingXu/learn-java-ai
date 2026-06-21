@@ -94,6 +94,8 @@ curl -X POST http://localhost:8081/api/ai/chat \
 | `ai-eval-demo` | `mvn -pl ai-eval-demo spring-boot:run` | `http://localhost:8090/` |
 | `project-helpdesk-agent` | `mvn -pl project-helpdesk-agent spring-boot:run` | `http://localhost:8091/` |
 | `project-enterprise-rag` | `mvn -pl project-enterprise-rag spring-boot:run` | `http://localhost:8092/` |
+| `ai-mcp-demo` | `mvn -pl ai-mcp-demo spring-boot:run` | `http://localhost:8093/` |
+| `ai-a2a-demo` | `mvn -pl ai-a2a-demo spring-boot:run` | `http://localhost:8094/` |
 
 ## 交付文档
 

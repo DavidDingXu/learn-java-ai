@@ -40,7 +40,7 @@ mvn -pl ai-eval-demo spring-boot:run
 http://localhost:8090/
 ```
 
-页面会运行基础回答、RAG 引用和 Agent 路径评测，并展示通过率。
+页面会运行基础回答、RAG 引用、Agent 路径、Judge 校准、Prompt 回归和 Harness 对比评测，并展示通过率、一致率、回归数量和可发布候选数量。
 
 ## 验证
 
@@ -206,7 +206,7 @@ curl -X POST http://localhost:8090/api/eval/harness/run \
 mvn -pl ai-eval-demo test
 ```
 
-正常情况下会看到 18 个测试通过，覆盖：
+正常情况下会看到 23 个测试通过，覆盖：
 
 - 普通 Golden Set 关键字命中率。
 - RAG 召回命中。
@@ -219,3 +219,5 @@ mvn -pl ai-eval-demo test
 - 模型评委低置信度样本。
 - Prompt 候选版本低于 baseline 的回归判断。
 - Harness 候选策略的质量、成本和延迟护栏。
+- `/api/eval/run`、`/api/eval/rag/run`、`/api/eval/agent/run`、`/api/eval/judge/calibrate`、`/api/eval/prompt/regression`、`/api/eval/harness/run` 的 HTTP 合同。
+- 前端页面必须暴露 6 类评测入口。

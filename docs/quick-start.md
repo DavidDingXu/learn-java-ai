@@ -217,5 +217,5 @@ curl -X POST http://localhost:8091/api/helpdesk-agent/tickets/close \
 | `project-helpdesk-agent` | 企业工单 AI 助手主项目 | `http://localhost:8091/` |
 | `project-enterprise-rag` | 企业制度 RAG 知识库主项目 | `http://localhost:8092/` |
 | `ai-legacy-demo` | 老 JDK8 系统接入外部 Agent 服务 | 暂无 HTTP 页面 |
-| `ai-mcp-demo` | MCP Host / Client / Server 边界 | 暂无 HTTP 页面 |
-| `ai-a2a-demo` | A2A Agent Card、Skill、Task 状态 | 暂无 HTTP 页面 |
+| `ai-mcp-demo` | MCP Host / Client / Server 边界 | `http://localhost:8093/` |
+| `ai-a2a-demo` | A2A Agent Card、Skill、Task 状态 | `http://localhost:8094/` |

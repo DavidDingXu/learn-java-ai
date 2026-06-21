@@ -26,7 +26,7 @@ mvn -pl ai-agent-demo spring-boot:run
 http://localhost:8089/
 ```
 
-页面会提交工单上下文，并把 Agent 的执行步骤、工具输出和最终建议分开展示。
+页面会提交工单上下文，并把 Agent 的执行步骤、工具输出和最终建议分开展示。页面下方还有 Agent 链路实验，可以观察上下文预算如何裁剪记忆、ReAct 循环如何记录 Hook 事件、PII 如何脱敏、未授权工具如何被拒绝。
 
 ## 验证
 
@@ -50,6 +50,20 @@ steps 包含 LOOKUP_ORDER 和 ASSESS_RISK
 ASSESS_RISK.autoExecutable=false
 ```
 
+上下文和 Hook 也可以直接用接口观察：
+
+```bash
+curl -X POST http://localhost:8089/api/agent/lab/react \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "scenario": "pii",
+    "userInput": "请处理退款，手机号 13812345678",
+    "maxSteps": 5
+  }'
+```
+
+返回结果里应该能看到 `hookEvents` 包含 `pii-masking:MASK_PHONE`，并且工具输入中的手机号已被脱敏。
+
 ## 测试
 
 ```bash
@@ -65,4 +79,6 @@ AgentHookChainTest：动作执行前的手机号脱敏、Hook 工具白名单拒
 ConversationMemoryStoreTest：会话窗口、租户隔离、业务快照和长期偏好分离。
 AgentContextAssemblerTest：按 session scope 组装多轮上下文，防止跨会话复用业务快照。
 ContextEngineeringServiceTest：按预算裁剪上下文，保留业务快照、最近对话、用户偏好和历史摘要。
+TicketAgentControllerTest：覆盖工单建议接口、上下文实验接口和 ReAct Hook 实验接口。
+AiAgentApplicationContextTest：覆盖前端页面必须暴露工单建议、上下文预算和 ReAct 实验入口。
 ```

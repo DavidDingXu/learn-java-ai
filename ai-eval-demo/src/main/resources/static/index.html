@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Eval Demo</title>
   <style>
-    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --ok:#047857; --danger:#b42318; }
+    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --ok:#047857; --danger:#b42318; --amber:#b54708; }
     * { box-sizing:border-box; } body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
-    main { width:min(1180px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
+    main { width:min(1220px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
     header, section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
     h1 { margin:0 0 6px; font-size:24px; } h2 { margin:0 0 12px; font-size:17px; }
     p { margin:0; color:var(--muted); line-height:1.7; } code { color:#334155; }
@@ -15,9 +15,11 @@
     .metrics { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; }
     .metric { border:1px solid var(--line); border-radius:8px; padding:14px; background:#fbfdff; }
     .metric span { display:block; color:var(--muted); font-size:12px; margin-bottom:4px; }
+    .buttons { display:flex; flex-wrap:wrap; gap:8px; }
     .results { display:grid; gap:10px; margin-top:12px; }
-    .row { border-left:4px solid var(--ok); background:#f8fafc; border-radius:6px; padding:10px; }
-    .row.fail { border-left-color:var(--danger); }
+    .row { border-left:4px solid var(--ok); background:#f8fafc; border-radius:6px; padding:10px; overflow:auto; }
+    .row.fail { border-left-color:var(--danger); } .row.warn { border-left-color:var(--amber); }
+    pre { margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font-size:12px; color:#334155; }
     @media (max-width:820px) { .metrics { grid-template-columns:1fr 1fr; } }
   </style>
 </head>
@@ -25,14 +27,19 @@
 <main>
   <header>
     <h1>Eval 评测</h1>
-    <p>页面调用 <code>/api/eval/run</code>、<code>/api/eval/rag/run</code> 和 <code>/api/eval/agent/run</code>，把通过率、路径命中和审批命中展示成可读结果。</p>
+    <p>页面调用基础回答、RAG、Agent、Judge 校准、Prompt 回归和 Harness 对比接口，把通过率、证据命中、路径命中和候选策略是否可发布展示成可读结果。</p>
   </header>
 
   <section>
     <h2>运行评测集</h2>
-    <button id="basicBtn">基础回答评测</button>
-    <button id="ragBtn">RAG 引用评测</button>
-    <button id="agentBtn">Agent 路径评测</button>
+    <div class="buttons">
+      <button id="basicBtn">基础回答评测</button>
+      <button id="ragBtn">RAG 引用评测</button>
+      <button id="agentBtn">Agent 路径评测</button>
+      <button id="judgeBtn">Judge 校准</button>
+      <button id="promptBtn">Prompt 回归</button>
+      <button id="harnessBtn">Harness 对比</button>
+    </div>
   </section>
 
   <section>
@@ -40,7 +47,7 @@
     <div class="metrics">
       <div class="metric"><span>类型</span><strong id="kind">-</strong></div>
       <div class="metric"><span>总数</span><strong id="total">-</strong></div>
-      <div class="metric"><span>通过率</span><strong id="rate">-</strong></div>
+      <div class="metric"><span>通过率 / 一致率</span><strong id="rate">-</strong></div>
       <div class="metric"><span>关键计数</span><strong id="extra">-</strong></div>
     </div>
     <div id="results" class="results"></div>
@@ -57,15 +64,22 @@
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#39;');
   }
-
+  function resultPassed(row) {
+    if ('passed' in row) return row.passed;
+    if ('promotable' in row) return row.promotable;
+    if ('agreed' in row) return row.agreed && !row.lowConfidence;
+    return true;
+  }
   function render(kindText, data, extraText) {
     kind.textContent = kindText;
     total.textContent = data.total;
     rate.textContent = data.passRate ?? data.agreementRate ?? '-';
     extra.textContent = extraText;
     results.innerHTML = (data.results || []).map(row => `
-      <div class="row ${row.passed === false ? 'fail' : ''}">
-        <strong>${escapeHtml(row.caseId)}</strong><br>${escapeHtml(row.reason || JSON.stringify(row))}
+      <div class="row ${resultPassed(row) ? '' : 'fail'}">
+        <strong>${escapeHtml(row.caseId || row.promptKey || row.scenario || '-')}</strong><br>
+        ${escapeHtml(row.reason || JSON.stringify(row))}
+        <pre>${escapeHtml(JSON.stringify(row, null, 2))}</pre>
       </div>
     `).join('');
   }
@@ -92,6 +106,31 @@
     });
     render('Agent', data, `path=${data.pathPassed}, approval=${data.approvalPassed}`);
   });
+  judgeBtn.addEventListener('click', async () => {
+    const data = await post('/api/eval/judge/calibrate', [
+      { caseId:'J-001', question:'发货后退款是否通过', humanPassed:true, judgePassed:true, judgeConfidence:0.91, note:'人工和裁判一致' },
+      { caseId:'J-002', question:'无证据回答是否通过', humanPassed:false, judgePassed:true, judgeConfidence:0.62, note:'需要人工复盘' }
+    ]);
+    render('Judge', data, `agreed=${data.agreed}, lowConfidence=${data.lowConfidence}`);
+  });
+  promptBtn.addEventListener('click', async () => {
+    const data = await post('/api/eval/prompt/regression', [
+      { caseId:'P-001', promptKey:'refund-advice', baselineVersion:'v1', candidateVersion:'v2', baselinePassRate:0.86, candidatePassRate:0.88, tolerance:0.02 },
+      { caseId:'P-002', promptKey:'risk-check', baselineVersion:'v1', candidateVersion:'v2', baselinePassRate:0.90, candidatePassRate:0.81, tolerance:0.03 }
+    ]);
+    render('Prompt', data, `regressions=${data.regressions}`);
+  });
+  harnessBtn.addEventListener('click', async () => {
+    const data = await post('/api/eval/harness/run', {
+      cases:[{ caseId:'H-001', scenario:'hybrid-rag', minQualityImprovement:0.05, maxCostIncreaseRate:0.30, maxLatencyIncreaseRate:0.30 }],
+      observations:[
+        { caseId:'H-001', strategy:'baseline', qualityScore:0.72, costUnits:100, latencyMillis:800 },
+        { caseId:'H-001', strategy:'candidate', qualityScore:0.82, costUnits:118, latencyMillis:920 }
+      ]
+    });
+    render('Harness', data, `promotable=${data.promotableCandidates}`);
+  });
+  basicBtn.click();
 </script>
 </body>
 </html>

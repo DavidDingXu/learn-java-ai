@@ -73,7 +73,7 @@ mvn -pl ai-rag-demo spring-boot:run
 http://localhost:8086/
 ```
 
-页面会提交 RAG 问题，并把回答和证据引用分开展示。
+页面会提交 RAG 问题，并把回答和证据引用分开展示；下方的 RAG 链路实验会继续调用实验接口，观察文档解析、标题切分、权限过滤、混合检索、重排、Query Rewrite、上下文压缩和索引任务状态。
 
 ## 验证
 
@@ -87,13 +87,28 @@ curl -X POST http://localhost:8086/api/rag/answer \
   }'
 ```
 
+也可以直接观察 RAG 链路中的单点能力：
+
+```bash
+curl -X POST http://localhost:8086/api/rag/lab/retrieval \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": "客户申请退款但订单已发货怎么办",
+    "tenantId": "tenant-a",
+    "department": "support",
+    "topK": 3
+  }'
+```
+
+返回结果会同时包含 `hybridResults` 和 `rerankedResults`，便于对比关键词、向量、权限过滤和重排理由。
+
 ## 测试
 
 ```bash
 mvn -pl ai-rag-demo test
 ```
 
-正常情况下会看到 27 个测试通过，覆盖：
+正常情况下会看到 33 个测试通过，覆盖：
 
 - Markdown 解析并保留文档 metadata。
 - 按 Markdown 标题切分。
@@ -110,3 +125,5 @@ mvn -pl ai-rag-demo test
 - 规则版 rerank 能重新排序相关候选、过滤越权候选，并保留原始召回证据。
 - 引用回答只使用选中的证据，无依据时拒答，并限制进入回答层的证据数量。
 - 检索前按租户和部门过滤。
+- `/api/rag/answer`、`/api/rag/lab/pipeline`、`/api/rag/lab/access`、`/api/rag/lab/retrieval`、`/api/rag/lab/rewrite`、`/api/rag/lab/index` 的 HTTP 合同。
+- 前端页面必须暴露问答入口和 RAG 链路实验入口。

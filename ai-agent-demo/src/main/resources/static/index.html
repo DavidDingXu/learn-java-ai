@@ -5,29 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Agent Demo</title>
   <style>
-    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --danger:#b42318; --ok:#047857; }
+    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --danger:#b42318; --ok:#047857; --amber:#b54708; }
     * { box-sizing:border-box; } body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
-    main { width:min(1180px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
+    main { width:min(1220px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
     header, section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
-    h1 { margin:0 0 6px; font-size:24px; } h2 { margin:0 0 12px; font-size:17px; }
+    h1 { margin:0 0 6px; font-size:24px; } h2 { margin:0 0 12px; font-size:17px; } h3 { margin:0 0 8px; font-size:14px; }
     p { margin:0; color:var(--muted); line-height:1.7; } code { color:#334155; }
     .grid { display:grid; grid-template-columns:340px 1fr; gap:16px; align-items:start; }
+    .lab-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
     label { display:grid; gap:6px; margin-bottom:10px; font-size:13px; color:var(--muted); }
-    input, textarea { border:1px solid var(--line); border-radius:6px; padding:9px 10px; font:inherit; }
-    textarea { min-height:120px; resize:vertical; }
+    input, textarea, select { border:1px solid var(--line); border-radius:6px; padding:9px 10px; font:inherit; background:#fff; min-width:0; }
+    textarea { min-height:104px; resize:vertical; }
     button { border:0; border-radius:6px; padding:9px 13px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; }
-    .advice { white-space:pre-wrap; line-height:1.8; border:1px solid var(--line); border-radius:8px; padding:14px; background:#fbfdff; min-height:130px; }
-    .steps { display:grid; gap:10px; margin-top:12px; }
-    .step { border-left:4px solid var(--primary); background:#f8fafc; border-radius:6px; padding:10px; }
+    .advice, .output { white-space:pre-wrap; line-height:1.8; border:1px solid var(--line); border-radius:8px; padding:14px; background:#fbfdff; min-height:120px; }
+    .list { display:grid; gap:10px; margin-top:12px; }
+    .item { border-left:4px solid var(--primary); background:#f8fafc; border-radius:6px; padding:10px; overflow:auto; }
+    .item.warn { border-left-color:var(--amber); } .item.fail { border-left-color:var(--danger); } .item.ok { border-left-color:var(--ok); }
     .approval { display:inline-flex; padding:4px 8px; border-radius:999px; background:#fef3f2; color:var(--danger); font-weight:700; margin-top:10px; }
-    @media (max-width:840px) { .grid { grid-template-columns:1fr; } }
+    .meta { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+    .tag { display:inline-flex; padding:3px 7px; border-radius:999px; background:#e0ecff; color:#1d4ed8; font-size:12px; font-weight:700; }
+    .tag.gray { background:#eef2f6; color:#475467; } .tag.green { background:#ecfdf3; color:var(--ok); } .tag.red { background:#fef3f2; color:var(--danger); }
+    pre { margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font-size:12px; color:#334155; }
+    @media (max-width:900px) { .grid, .lab-grid { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
 <main>
   <header>
     <h1>Agent 工单建议</h1>
-    <p>页面调用 <code>/api/agent/tickets/advice</code>，把 Agent 的执行步骤、工具结果和最终建议分开呈现，方便观察它不是一次普通聊天。</p>
+    <p>页面调用 <code>/api/agent/tickets/advice</code>、<code>/api/agent/lab/context</code> 和 <code>/api/agent/lab/react</code>，把业务建议、上下文预算、ReAct 步骤和 Hook 事件拆开展示。</p>
   </header>
 
   <div class="grid">
@@ -46,12 +52,39 @@
       <div id="advice" class="advice"></div>
       <div id="approval" class="approval" hidden>需要人工确认</div>
       <h2 style="margin-top:16px">执行步骤</h2>
-      <div id="steps" class="steps"></div>
+      <div id="steps" class="list"></div>
     </section>
   </div>
+
+  <section>
+    <h2>Agent 链路实验</h2>
+    <div class="lab-grid">
+      <div>
+        <h3>上下文预算</h3>
+        <label>最大估算 token <input id="maxEstimatedTokens" type="number" value="140"></label>
+        <label>最多保留会话数 <input id="maxConversationMessages" type="number" value="3"></label>
+        <button id="contextBtn">组装上下文</button>
+        <div id="contextOutput" class="list"></div>
+      </div>
+      <div>
+        <h3>ReAct 与 Hook</h3>
+        <label>场景
+          <select id="reactScenario">
+            <option value="normal">正常只读工具</option>
+            <option value="pii">手机号脱敏</option>
+            <option value="blockedTool">拒绝未授权工具</option>
+          </select>
+        </label>
+        <label>userInput <textarea id="reactInput">请处理退款，手机号 13812345678</textarea></label>
+        <button id="reactBtn">运行 ReAct</button>
+        <div id="reactOutput" class="list"></div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <script>
+  const jsonHeaders = { 'Content-Type': 'application/json' };
   function escapeHtml(value) {
     return String(value ?? '')
       .replaceAll('&', '&amp;')
@@ -60,32 +93,29 @@
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#39;');
   }
-
+  async function post(path, body) {
+    const response = await fetch(path, { method:'POST', headers:jsonHeaders, body:JSON.stringify(body) });
+    if (!response.ok) throw new Error(await response.text());
+    return response.json();
+  }
   async function runAgent() {
     advice.textContent = 'Agent 执行中...';
     steps.textContent = '';
     approval.hidden = true;
-    const body = {
-      ticketId: ticketId.value,
-      userQuestion: userQuestion.value,
-      userId: userId.value,
-      tenantId: tenantId.value,
-      department: department.value
-    };
     try {
-      const response = await fetch('/api/agent/tickets/advice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+      const data = await post('/api/agent/tickets/advice', {
+        ticketId: ticketId.value,
+        userQuestion: userQuestion.value,
+        userId: userId.value,
+        tenantId: tenantId.value,
+        department: department.value
       });
-      if (!response.ok) throw new Error(await response.text());
-      const data = await response.json();
       advice.textContent = data.advice;
       approval.hidden = !data.requiresHumanApproval;
       steps.innerHTML = (data.steps || []).map((step, index) => `
-        <div class="step">
-          <strong>${index + 1}. ${escapeHtml(step.name)}</strong><br>
-          <small>${escapeHtml(step.type)}</small>
+        <div class="item">
+          <strong>${index + 1}. ${escapeHtml(step.name)}</strong>
+          <div class="meta"><span class="tag">${escapeHtml(step.type)}</span></div>
           <pre>${escapeHtml(JSON.stringify(step.output, null, 2))}</pre>
         </div>
       `).join('');
@@ -93,8 +123,51 @@
       advice.textContent = error.message;
     }
   }
+  async function runContext() {
+    contextOutput.innerHTML = '<div class="item warn">组装中...</div>';
+    try {
+      const data = await post('/api/agent/lab/context', {
+        tenantId: tenantId.value,
+        sessionId: 's-lab',
+        businessId: ticketId.value,
+        userId: userId.value,
+        maxEstimatedTokens: Number(maxEstimatedTokens.value),
+        maxConversationMessages: Number(maxConversationMessages.value)
+      });
+      contextOutput.innerHTML = `<div class="item ok"><strong>totalEstimatedTokens=${data.totalEstimatedTokens}</strong><div class="meta">${data.sources.map(source => `<span class="tag">${escapeHtml(source)}</span>`).join('')}</div></div>`
+        + data.slices.map(slice => `
+          <div class="item">
+            <strong>${escapeHtml(slice.type)}</strong>
+            <div class="meta"><span class="tag gray">${escapeHtml(slice.source)}</span><span class="tag">${slice.estimatedTokens} tokens</span></div>
+            <div>${escapeHtml(slice.content)}</div>
+          </div>
+        `).join('');
+    } catch (error) {
+      contextOutput.innerHTML = `<div class="item fail">${escapeHtml(error.message)}</div>`;
+    }
+  }
+  async function runReact() {
+    reactOutput.innerHTML = '<div class="item warn">运行中...</div>';
+    try {
+      const data = await post('/api/agent/lab/react', {
+        scenario: reactScenario.value,
+        userInput: reactInput.value,
+        maxSteps: 5
+      });
+      const stateClass = data.completed ? 'ok' : 'fail';
+      reactOutput.innerHTML = `<div class="item ${stateClass}"><strong>${data.completed ? 'completed' : 'stopped'}</strong><div class="meta"><span class="tag gray">${escapeHtml(data.stopReason)}</span></div><div>${escapeHtml(data.finalAnswer || '')}</div></div>`
+        + data.steps.map(step => {
+          const events = (step.hookEvents || []).map(event => `<span class="tag green">${escapeHtml(event)}</span>`).join('');
+          return `<div class="item"><strong>${step.index}. ${escapeHtml(step.actionName)}</strong><div class="meta">${events}</div><div>${escapeHtml(step.actionInput)}</div><pre>${escapeHtml(step.observation)}</pre></div>`;
+        }).join('');
+    } catch (error) {
+      reactOutput.innerHTML = `<div class="item fail">${escapeHtml(error.message)}</div>`;
+    }
+  }
   runBtn.addEventListener('click', runAgent);
-  runAgent();
+  contextBtn.addEventListener('click', runContext);
+  reactBtn.addEventListener('click', runReact);
+  runAgent(); runContext(); runReact();
 </script>
 </body>
 </html>

@@ -28,6 +28,9 @@ class AiRagApplicationContextTest {
         assertThat(response.getBody())
                 .contains("RAG")
                 .contains("/api/rag/answer")
-                .contains("证据引用");
+                .contains("证据引用")
+                .contains("/api/rag/lab/pipeline")
+                .contains("/api/rag/lab/retrieval")
+                .contains("RAG 链路实验");
     }
 }

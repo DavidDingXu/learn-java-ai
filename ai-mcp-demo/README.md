@@ -2,6 +2,8 @@
 
 这个模块演示 MCP 在 Java AI 工程里的边界，不直接绑定某个具体业务 Service。
 
+这个模块提供了薄 Web 层和前端页面，用来观察 MCP Server 能力发现、Host Client 工具调用、资源权限过滤、审计记录和远程调试报告。核心协议对象仍然是 source of truth，Web 层只负责把这些合同展示出来。
+
 示例场景是“企业制度中心 MCP Server”：
 
 - Server 暴露 `tools`、`resources`、`prompts`。
@@ -32,6 +34,20 @@ McpDebugReport       // 连接状态、transport、工具/资源/Prompt 快照
 ```bash
 mvn -pl ai-mcp-demo test
 ```
+
+启动前端页面：
+
+```bash
+mvn -pl ai-mcp-demo spring-boot:run
+```
+
+浏览器打开：
+
+```text
+http://localhost:8093/
+```
+
+页面会调用 `/api/mcp/session`、`/api/mcp/tools/call`、`/api/mcp/resources/read`、`/api/mcp/debug`，分别观察能力快照、工具 allowlist、资源可见性和远程调试报告。
 
 重点测试：
 

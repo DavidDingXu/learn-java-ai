@@ -2,6 +2,8 @@
 
 这个模块演示老 Java / JDK8 系统接入外部 Agent 服务的边界。
 
+这个模块保持 JDK8 编译边界，不接 Spring Boot 3，也不提供前端页面。可视化工单 AI 助手请看 `project-helpdesk-agent` 或 `ai-agent-demo`；本模块重点用契约测试保护老系统和 Agent 服务之间的 API 隔离。
+
 核心原则：
 
 - 老系统保留身份、权限、状态流转和审计。

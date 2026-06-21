@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCP Demo</title>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --ok:#047857; --danger:#b42318; }
+    * { box-sizing:border-box; } body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+    main { width:min(1180px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
+    header, section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
+    h1 { margin:0 0 6px; font-size:24px; } h2 { margin:0 0 12px; font-size:17px; }
+    p { margin:0; color:var(--muted); line-height:1.7; } code { color:#334155; }
+    .grid { display:grid; grid-template-columns:340px 1fr; gap:16px; align-items:start; }
+    label { display:grid; gap:6px; margin-bottom:10px; font-size:13px; color:var(--muted); }
+    input, select { border:1px solid var(--line); border-radius:6px; padding:9px 10px; font:inherit; }
+    button { border:0; border-radius:6px; padding:9px 13px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; margin:0 8px 8px 0; }
+    .list { display:grid; gap:10px; }
+    .item { border-left:4px solid var(--primary); background:#f8fafc; border-radius:6px; padding:10px; overflow:auto; }
+    .item.ok { border-left-color:var(--ok); } .item.fail { border-left-color:var(--danger); }
+    .tag { display:inline-flex; padding:3px 7px; border-radius:999px; background:#e0ecff; color:#1d4ed8; font-size:12px; font-weight:700; margin:4px 4px 0 0; }
+    pre { margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font-size:12px; color:#334155; }
+    @media (max-width:860px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>MCP 工具与资源</h1>
+    <p>页面调用 <code>/api/mcp/session</code>、<code>/api/mcp/tools/call</code>、<code>/api/mcp/resources/read</code> 和 <code>/api/mcp/debug</code>，观察能力发现、工具权限、资源过滤和远程调试报告。</p>
+  </header>
+
+  <div class="grid">
+    <section>
+      <h2>操作</h2>
+      <label>工具
+        <select id="toolName">
+          <option value="policy.search">policy.search</option>
+          <option value="policy.get">policy.get</option>
+        </select>
+      </label>
+      <label>query / documentId <input id="toolValue" value="退款"></label>
+      <label>部门 <input id="department" value="support"></label>
+      <label>权限 <input id="permissions" value=""></label>
+      <button id="sessionBtn">发现能力</button>
+      <button id="toolBtn">调用工具</button>
+      <button id="resourceBtn">读取资源</button>
+      <button id="debugBtn">调试报告</button>
+    </section>
+
+    <section>
+      <h2>结果</h2>
+      <div id="output" class="list"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+  const headers = { 'Content-Type': 'application/json' };
+  function escapeHtml(value) {
+    return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+  }
+  async function request(path, options) {
+    const response = await fetch(path, options);
+    if (!response.ok) throw new Error(await response.text());
+    return response.json();
+  }
+  function render(title, data, ok = true) {
+    output.innerHTML = `<div class="item ${ok ? 'ok' : 'fail'}"><strong>${escapeHtml(title)}</strong><pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre></div>`;
+  }
+  function operator() {
+    return {
+      userId:'u1001',
+      tenantId:'tenant-a',
+      department:department.value,
+      permissions:permissions.value.split(',').map(item => item.trim()).filter(Boolean)
+    };
+  }
+  sessionBtn.addEventListener('click', async () => {
+    try {
+      const data = await request('/api/mcp/session');
+      output.innerHTML = `<div class="item ok"><strong>${escapeHtml(data.serverName)}</strong><div>${data.tools.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div><pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre></div>`;
+    } catch (error) { render('error', error.message, false); }
+  });
+  toolBtn.addEventListener('click', async () => {
+    const args = toolName.value === 'policy.search' ? { query:toolValue.value } : { documentId:toolValue.value || 'refund-policy-001' };
+    try {
+      const data = await request('/api/mcp/tools/call', { method:'POST', headers, body:JSON.stringify({ toolName:toolName.value, arguments:args, operator:operator() }) });
+      render(data.success ? 'tool success' : 'tool rejected', data, data.success);
+    } catch (error) { render('error', error.message, false); }
+  });
+  resourceBtn.addEventListener('click', async () => {
+    try {
+      const data = await request('/api/mcp/resources/read', { method:'POST', headers, body:JSON.stringify({ uri:'policy://refund/refund-policy-001', operator:operator() }) });
+      render(data.visible ? 'resource visible' : 'resource hidden', data, data.visible);
+    } catch (error) { render('error', error.message, false); }
+  });
+  debugBtn.addEventListener('click', async () => {
+    try { render('debug report', await request('/api/mcp/debug')); } catch (error) { render('error', error.message, false); }
+  });
+  sessionBtn.click();
+</script>
+</body>
+</html>

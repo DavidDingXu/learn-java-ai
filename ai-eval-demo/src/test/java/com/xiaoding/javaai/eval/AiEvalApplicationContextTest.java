@@ -28,7 +28,11 @@ class AiEvalApplicationContextTest {
         assertThat(response.getBody())
                 .contains("Eval")
                 .contains("/api/eval/run")
+                .contains("/api/eval/judge/calibrate")
+                .contains("/api/eval/prompt/regression")
+                .contains("/api/eval/harness/run")
                 .contains("policy.search")
-                .contains("通过率");
+                .contains("通过率")
+                .contains("Judge 校准");
     }
 }
