@@ -206,7 +206,7 @@ curl -X POST http://localhost:8090/api/eval/harness/run \
 mvn -pl ai-eval-demo test
 ```
 
-正常情况下会看到 23 个测试通过，覆盖：
+正常情况下会看到 Eval 相关测试通过，覆盖：
 
 - 普通 Golden Set 关键字命中率。
 - RAG 召回命中。

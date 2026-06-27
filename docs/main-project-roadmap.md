@@ -71,12 +71,12 @@ HelpdeskAgentControllerTest
 
 | demo 模块 | 主项目落点 |
 |---|---|
-| `ai-gateway-demo` | `project-helpdesk-agent` 后续生成建议时通过模型网关调用模型 |
-| `ai-prompt-demo` | 工单建议、RAG 回答、评测判分都需要 Prompt 模板和版本 |
-| `ai-output-demo` | 工单建议不能只靠字符串，要解析成 `AgentAdviceResult` 这类结构化结果 |
-| `ai-rag-demo` | `project-enterprise-rag` 的权限、引用、检索、索引任务 |
-| `ai-tool-demo` | `project-helpdesk-agent` 的 `TicketToolFacade` 和 `ToolExecutionLedger` |
-| `ai-agent-demo` | 工单助手的受控编排、上下文、记忆和 hook |
+| `ai-gateway-demo` | `project-helpdesk-agent` 后续普通 Chat 场景复用路由、超时、重试、降级、日志和 trace 治理 |
+| `ai-prompt-demo` | 工单建议、RAG 回答、评测判分都需要 Spring AI 模板渲染，以及模板版本、回滚和回归治理 |
+| `ai-output-demo` | 工单建议不能只靠字符串；结构化结果优先用 Spring AI `BeanOutputConverter` / `ChatClient.responseEntity(...)`，再叠加业务校验和失败合同 |
+| `ai-rag-demo` | `project-enterprise-rag` 的权限、引用、检索、索引任务；`SpringAiEmbeddingProvider` 演示如何把 Spring AI `EmbeddingModel` 接入当前 embedding 边界 |
+| `ai-tool-demo` | `project-helpdesk-agent` 的 `TicketToolFacade`、Tool 参数校验、人工确认和 `ToolExecutionLedger`；`SpringAiToolCallbackBridge` 演示如何把治理后的 Tool API 暴露为 Spring AI `ToolCallback` |
+| `ai-agent-demo` | 工单助手的受控编排、上下文、记忆和 hook；生产接入时保留 Spring AI Advisor / Memory 等原生扩展点 |
 | `ai-eval-demo` | 两个主项目的 RAG Eval、Agent Eval、Prompt 回归 |
 | `ai-observability-demo` | 两个主项目的 trace、成本、限流和坏 case |
 
@@ -88,17 +88,19 @@ HelpdeskAgentControllerTest
 
 1. `PolicyDocument` 元数据进入 MySQL。
 2. 原始文件进入 MinIO。
-3. `DocumentChunk` 索引进入 pgvector 或 Elasticsearch。
-4. 索引任务状态持久化。
-5. embedding 和 reranker 通过 provider 接口调用真实模型服务。
+3. embedding 先复用 `ai-rag-demo` 的 `SpringAiEmbeddingProvider`，接 Spring AI `EmbeddingModel` 或 Spring AI Alibaba 模型适配。
+4. `DocumentChunk` 索引进入 Spring AI `VectorStore` 支持的 pgvector、Elasticsearch 或其他向量库。
+5. 索引任务状态持久化。
+6. reranker 和回答模型通过 Spring AI / Spring AI Alibaba 或兼容模型服务接入，同时保留引用和权限合同。
 
 `project-helpdesk-agent` 推荐替换顺序：
 
 1. 工单、订单、审计记录进入 MySQL。
 2. 会话上下文、确认 token、短期缓存进入 Redis。
 3. 制度检索调用 `project-enterprise-rag` 的 REST API。
-4. 建议生成调用 `ai-gateway-demo` 暴露的模型网关能力。
-5. 结构化输出校验复用 `ai-output-demo` 的修复和回归思路。
+4. 普通 Chat 摘要、分类等场景复用 `ai-gateway-demo` 的治理能力。
+5. 工单建议这类结构化结果优先沿用 Spring AI `ChatClient.responseEntity(...)` 和 `BeanOutputConverter`，再复用 `ai-output-demo` 的业务校验、坏输出 400 合同、trace 和 bad case 思路。
+6. Tool Calling、Advisor、Memory 不压进 `AiCallGateway`，分别保留 Spring AI 原生能力；Tool 通过 `SpringAiToolCallbackBridge` 接治理后的 Tool API，Advisor / Memory 通过 `SpringAiAdvisorMemoryBridge` 接业务上下文。
 
 ## 阶段 4：接入治理能力
 

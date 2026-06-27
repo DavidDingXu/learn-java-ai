@@ -6,7 +6,7 @@
 
 当前实现不支持真实 PDF / Word 解析。生产环境可以通过 `DocumentParser` SPI 接入 Apache Tika、docx4j、PDFBox 或云端文档解析服务。
 
-当前实现也不调用真实 embedding 模型。`DeterministicEmbeddingProvider` 只用于本地测试和示例，生产环境应该用 `EmbeddingProvider` 接入 Spring AI、Spring AI Alibaba 或 OpenAI-compatible embedding API。
+当前默认不调用真实 embedding 模型。`DeterministicEmbeddingProvider` 只用于本地测试和示例；`SpringAiEmbeddingProvider` 已经给出 Spring AI `EmbeddingModel` 的适配点，生产环境可以把它接到 Spring AI、Spring AI Alibaba 或 OpenAI-compatible embedding API。
 
 当前实现也不接 pgvector、Elasticsearch 或 Milvus。`InMemoryVectorIndex` 只用于表达向量索引的 Java 边界：upsert、cosine topK、权限过滤和结果排序。
 
@@ -34,6 +34,7 @@ DocumentAccessFilter
 DocumentAccessDecision
 EmbeddingProvider
 DeterministicEmbeddingProvider
+SpringAiEmbeddingProvider
 EmbeddingBatchService
 EmbeddingResult
 VectorIndex
@@ -108,7 +109,7 @@ curl -X POST http://localhost:8086/api/rag/lab/retrieval \
 mvn -pl ai-rag-demo test
 ```
 
-正常情况下会看到 33 个测试通过，覆盖：
+正常情况下会看到 RAG 相关测试通过，覆盖：
 
 - Markdown 解析并保留文档 metadata。
 - 按 Markdown 标题切分。
@@ -117,6 +118,7 @@ mvn -pl ai-rag-demo test
 - 访问决策按租户和部门过滤，并返回拒绝原因。
 - 文档索引任务完成解析、切分、embedding 和向量 upsert，并在空文档时返回失败状态。
 - embedding 批量去重、缓存命中和版本更新后重新向量化。
+- `SpringAiEmbeddingProvider` 可以把 Spring AI `EmbeddingModel` 结果接入当前 RAG embedding 边界。
 - 内存向量索引 upsert、cosine topK 和权限过滤。
 - 关键词检索和向量检索通过 RRF 合并，并在合并前完成权限过滤。
 - Query Rewrite 保留原始问题，生成业务 query，并记录改写原因。

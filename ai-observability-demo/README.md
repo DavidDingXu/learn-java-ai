@@ -158,7 +158,7 @@ curl http://localhost:8088/api/traces/{traceId}
 mvn -pl ai-observability-demo test
 ```
 
-正常情况下会看到 15 个测试通过，覆盖：
+正常情况下会看到可观测性和生产治理相关测试通过，覆盖：
 
 - Trace、Prompt/RAG/Model/Tool/Agent Span。
 - 普通事件记录和 trace 快照查询。

@@ -14,6 +14,8 @@
 
 `ContextEngineeringService` 在组装结果后再做一层上下文工程处理：按 token 预算保留业务快照、最近对话和用户偏好；超过窗口的历史对话会被压缩成摘要切片，并保留来源标记。当前实现是规则版，不接真实 tokenizer，也不写入 Redis 或数据库，重点是表达上下文预算和来源追踪的工程合同。
 
+`SpringAiAdvisorMemoryBridge` 演示这层治理怎么接回 Spring AI 原生能力：业务上下文先在 `AgentContextAssembler` 和 `ContextEngineeringService` 里确定范围、来源和预算，再把 `tenantId + sessionId + businessId` 生成的 conversationId 传给 Spring AI `MessageChatMemoryAdvisor`。这样 Memory / Advisor 走 Spring AI 原生链路，项目代码只补租户隔离、业务对象范围、上下文预算和 trace 参数。
+
 ## 启动
 
 ```bash
@@ -79,6 +81,7 @@ AgentHookChainTest：动作执行前的手机号脱敏、Hook 工具白名单拒
 ConversationMemoryStoreTest：会话窗口、租户隔离、业务快照和长期偏好分离。
 AgentContextAssemblerTest：按 session scope 组装多轮上下文，防止跨会话复用业务快照。
 ContextEngineeringServiceTest：按预算裁剪上下文，保留业务快照、最近对话、用户偏好和历史摘要。
+SpringAiAdvisorMemoryBridgeTest：用 Spring AI `MessageChatMemoryAdvisor` 验证 scoped conversationId 和记忆注入，不经过 `AiCallGateway`。
 TicketAgentControllerTest：覆盖工单建议接口、上下文实验接口和 ReAct Hook 实验接口。
 AiAgentApplicationContextTest：覆盖前端页面必须暴露工单建议、上下文预算和 ReAct 实验入口。
 ```

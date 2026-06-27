@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,28 +24,19 @@ public class AiCallGateway {
     private final int maxAttempts;
     private final Duration callTimeout;
     private final ExecutorService executor;
-    private final AiGatewayAdvisorChain advisorChain;
 
     @Autowired
     public AiCallGateway(ModelRouter modelRouter,
                          AiCallLogRepository logRepository,
-                         AiGatewayAdvisorChain advisorChain,
                          @Value("${java-ai.gateway.max-attempts:2}") int maxAttempts,
                          @Value("${java-ai.gateway.call-timeout:30s}") Duration callTimeout) {
-        this(modelRouter, logRepository, maxAttempts, callTimeout, Executors.newCachedThreadPool(), advisorChain);
+        this(modelRouter, logRepository, maxAttempts, callTimeout, Executors.newCachedThreadPool());
     }
 
     public AiCallGateway(ModelRouter modelRouter,
                          AiCallLogRepository logRepository,
                          int maxAttempts) {
-        this(modelRouter, logRepository, maxAttempts, Duration.ofSeconds(30), Executors.newCachedThreadPool(), new AiGatewayAdvisorChain(List.of()));
-    }
-
-    public AiCallGateway(ModelRouter modelRouter,
-                         AiCallLogRepository logRepository,
-                         int maxAttempts,
-                         AiGatewayAdvisorChain advisorChain) {
-        this(modelRouter, logRepository, maxAttempts, Duration.ofSeconds(30), Executors.newCachedThreadPool(), advisorChain);
+        this(modelRouter, logRepository, maxAttempts, Duration.ofSeconds(30), Executors.newCachedThreadPool());
     }
 
     public AiCallGateway(ModelRouter modelRouter,
@@ -54,33 +44,23 @@ public class AiCallGateway {
                          int maxAttempts,
                          Duration callTimeout,
                          ExecutorService executor) {
-        this(modelRouter, logRepository, maxAttempts, callTimeout, executor, new AiGatewayAdvisorChain(List.of()));
-    }
-
-    public AiCallGateway(ModelRouter modelRouter,
-                         AiCallLogRepository logRepository,
-                         int maxAttempts,
-                         Duration callTimeout,
-                         ExecutorService executor,
-                         AiGatewayAdvisorChain advisorChain) {
         this.modelRouter = modelRouter;
         this.logRepository = logRepository;
         this.maxAttempts = Math.max(1, maxAttempts);
         this.callTimeout = callTimeout == null ? Duration.ofSeconds(30) : callTimeout;
         this.executor = executor;
-        this.advisorChain = advisorChain == null ? new AiGatewayAdvisorChain(List.of()) : advisorChain;
     }
 
     public AiChatResponse chat(AiChatRequest request) {
         AiTrace trace = AiTrace.start(request.userId(), "gateway.chat");
-        AiGatewayExchange exchange = advisorChain.apply(AiGatewayExchange.start(trace, request, buildPrompt(request)));
+        String prompt = buildPrompt(request);
         RuntimeException lastError = null;
 
         for (ModelClient client : modelRouter.candidates()) {
             for (int attempt = 1; attempt <= maxAttempts; attempt++) {
                 long startedAt = System.nanoTime();
                 try {
-                    String content = callWithTimeout(client, exchange.prompt());
+                    String content = callWithTimeout(client, prompt);
                     long latencyMs = elapsedMs(startedAt);
                     logRepository.save(AiCallLogEntry.success(
                             trace.traceId(),
@@ -88,8 +68,7 @@ public class AiCallGateway {
                             trace.scenario(),
                             client.modelName(),
                             attempt,
-                            latencyMs,
-                            exchange.advisorEvents()
+                            latencyMs
                     ));
                     return new AiChatResponse(trace.traceId(), client.modelName(), content, latencyMs);
                 } catch (RuntimeException error) {
@@ -102,8 +81,7 @@ public class AiCallGateway {
                             client.modelName(),
                             attempt,
                             latencyMs,
-                            error,
-                            exchange.advisorEvents()
+                            error
                     ));
                 }
             }

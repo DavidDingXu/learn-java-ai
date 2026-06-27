@@ -18,14 +18,7 @@
 mvn -pl ai-streaming-demo test
 ```
 
-正常情况下会看到：
-
-```text
-Running com.xiaoding.javaai.streaming.StreamSessionServiceTest
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-```
-
-4 个测试分别验证：
+正常情况下会看到 `StreamSessionServiceTest`、`StreamingControllerTest` 和应用上下文测试通过，覆盖：
 
 - 生成有序 token 事件和 done 事件。
 - 使用 `Last-Event-ID` 或 `lastEventId` 从下一条事件恢复。

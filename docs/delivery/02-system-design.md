@@ -4,7 +4,8 @@
 
 系统拆成 demo 模块和两个主项目。demo 负责单点能力，主项目负责串联完整链路。
 
-- `ai-gateway-demo`：模型调用网关、Advisor、Memory、日志。
+- `ai-gateway-demo`：普通 Chat 调用治理、日志和 trace；Advisor / Memory 生产接入优先保留 Spring AI 原生链路。
+- `ai-tool-demo`：Tool API 的权限、参数校验、人工确认、幂等和审计；生产接入通过 Spring AI `ToolCallback` 暴露治理后的工具。
 - `ai-rag-demo`：文档解析、切分、检索、重排、引用、权限。
 - `ai-tool-demo`：Tool API、参数校验、人工确认、审计。
 - `ai-agent-demo`：Agent 编排、记忆、上下文工程、Hook。

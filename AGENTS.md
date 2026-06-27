@@ -17,7 +17,9 @@
 ## 代码边界
 
 - Controller 不直接调用模型 SDK。
-- 业务代码依赖 `AiCallGateway`，不依赖具体厂商 SDK。
+- `AiCallGateway` 只承接普通 Chat 调用里的路由、超时、重试、降级、审计、成本和 trace，不是 Spring AI 的上位替代。
+- 结构化输出、Tool Calling、Advisor、Memory、Embedding、RAG、MCP 和模型响应元数据优先使用 Spring AI 原生 API 和类型，不把它们压扁成 `String prompt -> String content`。
+- 业务代码不依赖具体厂商 SDK；应用服务可以组合 `ChatClient`、`PromptTemplate`、`BeanOutputConverter`、Advisor、Tool Callback、Memory、VectorStore 等 Spring AI 能力，并在外层补治理、观测、权限、审计和测试合同。
 - Agent 不直接调用业务 Service，必须通过 Tool API / Facade。
 - 写操作 Tool 必须有权限、幂等、状态检查和人工确认。
 - RAG 必须考虑权限、引用和增量更新。

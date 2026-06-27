@@ -38,7 +38,7 @@ EvalCase / EvalReport            // 质量评测
 mvn -pl project-enterprise-rag test
 ```
 
-正常情况下会看到 9 个测试通过，覆盖领域编排、文档上传索引、权限过滤、引用回答、证据冲突治理、RAG Eval 和 REST 接口。
+正常情况下会看到企业 RAG 主项目测试通过，覆盖领域编排、文档上传索引、权限过滤、引用回答、证据冲突治理、RAG Eval 和 REST 接口。
 
 ## 启动服务
 
@@ -207,14 +207,15 @@ citationHitRate = 1.00
 
 替换时保留 `EnterpriseRagApplicationService` 的主流程。仓储和索引实现可以变，文档版本、权限、引用和 trace 边界不变。
 
-### 阶段 3：真实模型能力
+### 阶段 3：框架原生能力接入
 
 推荐顺序：
 
-1. embedding provider 接真实模型服务。
-2. reranker provider 接真实重排服务。
-3. 回答生成通过模型网关调用模型。
-4. 输出仍然必须带 citation。
+1. embedding provider 优先复用 `ai-rag-demo` 的 `SpringAiEmbeddingProvider`，接 Spring AI `EmbeddingModel` 或 Spring AI Alibaba 模型适配。
+2. 向量索引替换为 Spring AI `VectorStore` 支持的 pgvector、Elasticsearch 或其他向量库。
+3. reranker provider 接真实重排服务。
+4. 回答生成通过 Spring AI `ChatClient` 或兼容模型服务完成。
+5. 输出仍然必须带 citation、权限过滤证据和 traceId。
 
 模型只接收权限过滤后的 chunk。
 

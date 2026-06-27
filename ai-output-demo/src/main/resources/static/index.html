@@ -5,22 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>结构化输出 Demo</title>
   <style>
-    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --danger:#b42318; --ok:#047857; }
+    :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --danger:#b42318; --ok:#047857; --chip:#eef4ff; }
     * { box-sizing: border-box; }
     body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
     main { width:min(1180px, calc(100vw - 32px)); margin:28px auto; display:grid; gap:16px; }
     header, section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
     h1 { margin:0 0 6px; font-size:24px; } h2 { margin:0 0 12px; font-size:17px; }
     p { margin:0; color:var(--muted); line-height:1.7; } code { color:#334155; }
-    textarea { width:100%; min-height:260px; resize:vertical; border:1px solid var(--line); border-radius:6px; padding:12px; font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; }
+    textarea, input { width:100%; border:1px solid var(--line); border-radius:6px; padding:12px; font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; }
+    textarea { min-height:150px; resize:vertical; }
+    input { font-family:inherit; }
     button { border:0; border-radius:6px; padding:9px 13px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; }
     .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
-    .cards { display:grid; gap:12px; }
-    .card { border:1px solid var(--line); border-radius:8px; padding:14px; background:#fbfdff; }
+    .stack { display:grid; gap:12px; }
+    .card { border:1px solid var(--line); border-radius:8px; padding:14px; background:#fbfdff; overflow-wrap:anywhere; }
     .label { font-size:12px; color:var(--muted); margin-bottom:6px; }
-    .risk { display:inline-flex; padding:4px 8px; border-radius:999px; background:#fff7ed; color:#9a3412; font-weight:700; }
+    .risk, .mode { display:inline-flex; padding:4px 8px; border-radius:999px; font-weight:700; }
+    .risk { background:#fff7ed; color:#9a3412; }
+    .mode { background:var(--chip); color:#1d4ed8; }
+    .prompt { max-height:220px; overflow:auto; white-space:pre-wrap; font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; color:#344054; }
     ul { margin:8px 0 0; padding-left:18px; line-height:1.7; }
     .error { color:var(--danger); white-space:pre-wrap; }
+    .ok { color:var(--ok); }
     @media (max-width:820px) { .grid { grid-template-columns:1fr; } }
   </style>
 </head>
@@ -28,30 +34,51 @@
 <main>
   <header>
     <h1>结构化输出</h1>
-    <p>页面调用 <code>/api/output/ticket-advice/parse</code>，把模型 JSON 解析成工单建议卡片，并展示风险等级、下一步动作和引用。</p>
+    <p>主流程调用 <code>/api/output/ticket-advice/generate</code>，使用 Spring AI 的 <code>PromptTemplate</code> 和 <code>BeanOutputConverter</code> 生成 <code>TicketAdviceResponse</code>；坏输出兜底入口单独用 <code>/parse</code> 验证 400 错误契约。</p>
   </header>
 
   <div class="grid">
-    <section>
-      <h2>模型输出 JSON</h2>
-      <textarea id="raw">{
-  "summary": "客户申请退款但订单已经发货",
-  "riskLevel": "MEDIUM",
-  "nextActions": ["核对物流状态", "转人工复核"],
-  "citations": ["refund-policy-001"]
-}</textarea>
-      <button id="parseBtn" style="margin-top:12px">解析为业务对象</button>
+    <section class="stack">
+      <h2>生成工单处理建议</h2>
+      <div>
+        <div class="label">工单</div>
+        <textarea id="ticket">客户申请退款但订单已经发货，客服需要判断是否可以直接退款。</textarea>
+      </div>
+      <div>
+        <div class="label">制度</div>
+        <textarea id="policy">已发货订单需要先核对物流状态；未签收可以拦截后退款；已签收或高金额订单需要转人工复核。</textarea>
+      </div>
+      <button id="generateBtn">生成结构化建议</button>
     </section>
 
     <section>
-      <h2>工单处理建议</h2>
-      <div id="result" class="cards"></div>
+      <h2>业务对象</h2>
+      <div id="generateResult" class="stack"></div>
+    </section>
+  </div>
+
+  <div class="grid">
+    <section class="stack">
+      <h2>坏输出兜底解析</h2>
+      <textarea id="raw">{
+  "summary": "客户申请退款但订单已经发货",
+  "riskLevel": "MEDIUM",
+  "nextActions": [],
+  "citations": ["refund-policy-001"]
+}</textarea>
+      <button id="parseBtn">解析为业务对象</button>
+    </section>
+
+    <section>
+      <h2>解析结果</h2>
+      <div id="parseResult" class="stack"></div>
     </section>
   </div>
 </main>
 
 <script>
-  const result = document.querySelector('#result');
+  const generateResult = document.querySelector('#generateResult');
+  const parseResult = document.querySelector('#parseResult');
 
   function escapeHtml(value) {
     return String(value ?? '')
@@ -66,28 +93,68 @@
     return `<ul>${(items || []).map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
   }
 
-  async function parseOutput() {
-    result.innerHTML = '<div class="card">解析中...</div>';
+  function adviceCards(data) {
+    return `
+      <div class="card"><div class="label">摘要</div><strong>${escapeHtml(data.summary)}</strong></div>
+      <div class="card"><div class="label">风险等级</div><span class="risk">${escapeHtml(data.riskLevel)}</span></div>
+      <div class="card"><div class="label">下一步动作</div>${list(data.nextActions)}</div>
+      <div class="card"><div class="label">引用依据</div>${list(data.citations)}</div>
+    `;
+  }
+
+  async function readResponse(response) {
+    const text = await response.text();
     try {
-      const response = await fetch('/api/output/ticket-advice/parse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: document.querySelector('#raw').value
-      });
-      if (!response.ok) throw new Error(await response.text());
-      const data = await response.json();
-      result.innerHTML = `
-        <div class="card"><div class="label">摘要</div><strong>${escapeHtml(data.summary)}</strong></div>
-        <div class="card"><div class="label">风险等级</div><span class="risk">${escapeHtml(data.riskLevel)}</span></div>
-        <div class="card"><div class="label">下一步动作</div>${list(data.nextActions)}</div>
-        <div class="card"><div class="label">引用依据</div>${list(data.citations)}</div>
-      `;
-    } catch (error) {
-      result.innerHTML = `<div class="card error">${escapeHtml(error.message)}</div>`;
+      return JSON.parse(text);
+    } catch {
+      return { message: text || response.statusText };
     }
   }
 
+  function renderError(target, data) {
+    target.innerHTML = `<div class="card error">${escapeHtml(data.message || data.detail || '请求失败')}</div>`;
+  }
+
+  async function generateAdvice() {
+    generateResult.innerHTML = '<div class="card">生成中...</div>';
+    const response = await fetch('/api/output/ticket-advice/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ticket: document.querySelector('#ticket').value,
+        policy: document.querySelector('#policy').value
+      })
+    });
+    const data = await readResponse(response);
+    if (!response.ok) {
+      renderError(generateResult, data);
+      return;
+    }
+    generateResult.innerHTML = `
+      <div class="card"><div class="label">模式</div><span class="mode">${escapeHtml(data.mode)}</span></div>
+      ${adviceCards(data.advice)}
+      <div class="card"><div class="label">Spring AI 输出格式约束</div><div class="prompt">${escapeHtml(data.prompt)}</div></div>
+    `;
+  }
+
+  async function parseOutput() {
+    parseResult.innerHTML = '<div class="card">解析中...</div>';
+    const response = await fetch('/api/output/ticket-advice/parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: document.querySelector('#raw').value
+    });
+    const data = await readResponse(response);
+    if (!response.ok) {
+      renderError(parseResult, data);
+      return;
+    }
+    parseResult.innerHTML = adviceCards(data);
+  }
+
+  document.querySelector('#generateBtn').addEventListener('click', generateAdvice);
   document.querySelector('#parseBtn').addEventListener('click', parseOutput);
+  generateAdvice();
   parseOutput();
 </script>
 </body>

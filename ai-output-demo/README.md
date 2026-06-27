@@ -1,13 +1,21 @@
 # ai-output-demo
 
-这个模块演示 AI 结构化输出的 Java 后端边界：严格 JSON 解析、DTO 映射、业务字段校验、坏 JSON 拦截，以及修复 Prompt 构造。
+这个模块演示 AI 结构化输出的 Java 后端边界。
 
-当前实现不会真实调用模型做修复，只负责表达“解析失败后应该把修复重试作为独立步骤”的工程位置。生产环境需要把修复调用、失败降级、Trace、bad case 收集和 Eval 关联起来。
+主链路使用 Spring AI 原生能力：
+
+- `PromptTemplate` 负责组装工单、制度和输出格式变量。
+- `BeanOutputConverter<TicketAdviceResponse>` 负责生成 JSON Schema，并把模型响应转换成业务对象。
+- `ChatClient.responseEntity(...)` 负责模型调用和结构化对象返回。
+- `TicketAdviceResponse` 负责 Java 业务字段校验。
+
+`AiJsonParser` 只保留为坏输出兜底入口，用来演示模型输出无法转成业务对象时，接口应该返回可识别的 400，而不是把 Spring 默认 500 JSON 暴露给页面。
 
 ## 核心类
 
 ```text
 StructuredOutputController
+TicketAdviceGenerationService
 AiJsonParser
 TicketAdviceResponse
 RiskLevel
@@ -21,17 +29,21 @@ RiskLevel
 mvn -pl ai-output-demo test
 ```
 
-正常情况下会看到 7 个测试通过，覆盖：
+正常情况下会看到结构化输出相关测试通过，覆盖：
 
+- Spring AI `BeanOutputConverter` 生成结构化输出格式约束。
+- 生成入口返回 `TicketAdviceResponse` 业务对象。
 - 合法工单建议 JSON 解析。
 - 缺少风险等级。
 - 缺少下一步动作。
 - 中高风险建议缺少引用依据。
 - 风险等级不是 Java 枚举值。
 - 坏 JSON 拦截。
-- 修复 Prompt 构造。
+- 解析失败通过 HTTP 返回 400，而不是 500。
 
 ## 启动服务
+
+默认不配置真实模型密钥时，生成入口会返回 deterministic sample，方便直接打开页面理解链路：
 
 ```bash
 mvn -pl ai-output-demo spring-boot:run
@@ -43,25 +55,51 @@ mvn -pl ai-output-demo spring-boot:run
 http://localhost:8082/
 ```
 
-页面会把模型 JSON 解析成工单建议卡片，展示摘要、风险等级、下一步动作和引用依据。
+页面包含两个入口：
 
-解析一段合法 JSON：
+- 生成工单处理建议：调用 `/api/output/ticket-advice/generate`，展示 Spring AI 输出格式约束和业务对象。
+- 坏输出兜底解析：调用 `/api/output/ticket-advice/parse`，验证非法 JSON 或非法业务字段会返回 400。
+
+## 接入真实模型
+
+配置 OpenAI-compatible 模型环境变量后重新启动：
 
 ```bash
-curl -X POST http://localhost:8082/api/output/ticket-advice/parse \
+export AI_API_KEY=your-api-key
+export AI_BASE_URL=https://api.openai.com
+export AI_CHAT_MODEL=gpt-4o-mini
+mvn -pl ai-output-demo spring-boot:run
+```
+
+请求生成入口：
+
+```bash
+curl -X POST http://localhost:8082/api/output/ticket-advice/generate \
   -H 'Content-Type: application/json' \
   -d '{
-    "summary": "客户申请退款，但订单已经发货。",
-    "riskLevel": "MEDIUM",
-    "nextActions": ["核对物流状态", "查询退款制度"],
-    "citations": ["policy-refund-001"]
+    "ticket": "客户申请退款，但订单已经发货。",
+    "policy": "已发货订单需要先核对物流状态；高金额订单需要转人工复核。"
   }'
 ```
 
-如果把 `riskLevel` 改成 `"中风险"`，或者把 `nextActions` 改成空数组，接口会因为 DTO 业务校验失败而返回错误。
+返回结构：
+
+```json
+{
+  "mode": "model:gpt-4o-mini",
+  "prompt": "...",
+  "rawOutput": "...",
+  "advice": {
+    "summary": "...",
+    "riskLevel": "MEDIUM",
+    "nextActions": ["..."],
+    "citations": ["..."]
+  }
+}
+```
 
 ## 边界
 
-- `AiJsonParser` 当前只做严格解析和修复 Prompt 构造，不直接调用模型。
-- `TicketAdviceResponse` 的构造器负责业务字段校验，不把无效建议带进后续流程。
-- 结构化输出失败不能只算解析异常，后续应该进入 Trace 和 bad case 样本。
+- 不重新实现 Spring AI 的结构化输出能力。
+- Java 代码补的是业务字段校验、错误 HTTP 契约、测试样本和后续 Trace / bad case / Eval 的接入位置。
+- `AiCallGateway` 不参与这个主链路。结构化输出需要保留 Spring AI 的 `ChatClient` 和 `BeanOutputConverter` 能力，再在外层补业务校验、错误 HTTP 契约、trace 和 bad case 复盘。

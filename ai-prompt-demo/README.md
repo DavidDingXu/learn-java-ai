@@ -1,8 +1,8 @@
 # ai-prompt-demo
 
-这个模块演示 Prompt 工程化的最小边界：模板保存、变量渲染、版本回滚、未填变量校验，以及用户输入的基础风险检测。
+这个模块演示 Prompt 工程化的最小边界：模板保存、Spring AI 变量渲染、版本回滚、未填变量校验，以及用户输入的基础风险检测。
 
-当前实现使用内存存储，适合讲清楚接口和边界。生产环境需要把模板、发布记录和风险命中日志落到数据库，并接入审批、灰度、Trace 和 Eval。
+当前实现使用内存存储，适合讲清楚接口和边界。变量渲染使用 Spring AI 的 `StTemplateRenderer`，自有代码只负责模板身份、版本、回滚和风险检测。生产环境需要把模板、发布记录和风险命中日志落到数据库，并接入审批、灰度、Trace 和 Eval。
 
 ## 核心类
 
@@ -22,7 +22,7 @@ PromptRiskReport
 mvn -pl ai-prompt-demo test
 ```
 
-正常情况下会看到 6 个测试通过，覆盖模板渲染、最新版本、回滚、未填变量和风险检测。
+正常情况下会看到 Prompt 管理相关测试通过，覆盖模板渲染、最新版本、回滚、未填变量和风险检测。
 
 ## 启动服务
 
@@ -43,7 +43,7 @@ http://localhost:8084/
 ```bash
 curl -X POST http://localhost:8084/api/prompts \
   -H 'Content-Type: application/json' \
-  -d '{"code":"ticket-advice","version":"v1","content":"工单：{{ticket}}\n制度：{{policy}}"}'
+  -d '{"code":"ticket-advice","version":"v1","content":"工单：{ticket}\n制度：{policy}"}'
 ```
 
 渲染模板：
@@ -72,4 +72,5 @@ curl -X POST http://localhost:8084/api/prompts/risk/detect \
 
 - 这里的 `PromptRiskDetector` 只做基础规则识别，用来表达输入风险进入 Prompt 渲染前的工程位置。
 - 它不能替代完整安全系统，也不能保证拦截所有 Prompt Injection。
+- 模板变量渲染不自研字符串替换，优先使用 Spring AI 模板能力。工程代码补版本、回滚、审批、灰度、Trace 和 Eval。
 - 模板回滚采用新增 `rollback-<version>` 的方式，不覆盖历史版本，方便后续接 Trace 和 Eval。

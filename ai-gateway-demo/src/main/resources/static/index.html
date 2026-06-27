@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>模型网关 Demo</title>
+  <title>普通 Chat 治理 Demo</title>
   <style>
     :root { --bg:#f6f8fb; --panel:#fff; --line:#d8dee8; --text:#172033; --muted:#667085; --primary:#2563eb; --green:#047857; }
     * { box-sizing:border-box; } body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
@@ -26,8 +26,8 @@
 <body>
 <main>
   <header>
-    <h1>模型网关</h1>
-    <p>页面调用 <code>/api/ai/chat</code>，观察网关统一封装后的模型回复、Trace ID 和耗时，不让前端直接依赖模型厂商接口。</p>
+    <h1>普通 Chat 治理</h1>
+    <p>页面调用 <code>/api/ai/chat</code>，观察普通 Chat 调用里的模型回复、Trace ID 和耗时，不让前端直接依赖模型厂商接口。</p>
   </header>
 
   <div class="grid">
@@ -35,11 +35,11 @@
       <h2>工单输入</h2>
       <label>userId <input id="userId" value="u1001"></label>
       <label>message <textarea id="message">客户申请退款，但订单已经发货。</textarea></label>
-      <button id="sendBtn">请求模型网关</button>
+      <button id="sendBtn">请求 Chat 治理入口</button>
     </section>
 
     <section>
-      <h2>网关响应</h2>
+      <h2>治理响应</h2>
       <div id="reply" class="reply"></div>
       <div class="metrics">
         <div class="metric"><span>Trace</span><strong id="traceId">-</strong></div>

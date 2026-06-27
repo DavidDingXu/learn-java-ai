@@ -12,6 +12,8 @@ Tool 审计集中在 `ToolExecutionLedger`。当前是内存账本，记录 `tra
 
 `AsyncToolExecutor` 演示高频只读 Tool 的执行边界：异步调度、只读缓存、超时失败和大结果裁剪。它不替代 `TicketToolFacade` 的权限和审计，只是在 Tool API 外面增加执行层保护。
 
+`SpringAiToolCallbackBridge` 把已经治理过的 `TicketToolFacade` 暴露成 Spring AI 原生 `ToolCallback`。模型侧仍然使用 Spring AI Tool Calling，项目侧继续负责参数校验、权限边界、人工确认、幂等和审计，不把 Tool 压成普通字符串调用。
+
 ## 启动
 
 ```bash
@@ -96,4 +98,19 @@ blank identifier：空参数在进入业务查询前被拒绝。
 malformed identifier：工单号、订单号、confirmationToken 格式错误时拒绝执行。
 ledger query：按 traceId、tenantId、toolName 复盘 Tool 调用路径。
 async executor：只读结果缓存、慢 Tool 超时、大结果裁剪后返回。
+SpringAiToolCallbackBridgeTest：验证 `ticket.lookup`、`ticket.close` 以 Spring AI `ToolCallback` 暴露，并且写操作不能绕过人工确认和审计。
 ```
+
+## Spring AI Tool Calling 接入点
+
+生产接入真实模型时，不要让 Agent 直接调用业务 Service，也不要绕过 Spring AI 的 Tool Calling。推荐边界是：
+
+```text
+ChatClient / Agent
+  -> Spring AI ToolCallback(ticket.lookup, ticket.close)
+  -> TicketToolFacade
+  -> 参数校验、权限、人工确认、幂等、审计
+  -> 业务系统
+```
+
+`SpringAiToolCallbackBridge#toolCallbackProvider()` 可以交给 `ChatClient` 的工具配置使用。这样模型看到的是带 schema 的工具，Java 项目保留确定性治理。

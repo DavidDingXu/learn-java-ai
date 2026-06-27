@@ -13,7 +13,7 @@
 - Agent Trace
 - Agent Eval
 
-当前第一版使用内存仓储，方便读者直接运行测试。它已经把工单上下文、Tool API、人工确认、确认 token、幂等、状态检查、Tool 审计、Agent Trace 和 Agent Eval 这些边界落到代码里。MySQL、Redis、真实制度 RAG、真实模型建议和结构化输出还没有接入，后续应该通过仓储、API client 和模型网关替换，不改 Agent 的受控执行边界。
+当前第一版使用内存仓储，方便读者直接运行测试。它已经把工单上下文、Tool API、人工确认、确认 token、幂等、状态检查、Tool 审计、Agent Trace 和 Agent Eval 这些边界落到代码里。MySQL、Redis、真实制度 RAG、真实模型建议和结构化输出还没有接入，后续应该通过仓储、API client、Spring AI `ChatClient` / `BeanOutputConverter` 和 Tool Calling 能力替换，不改 Agent 的受控执行边界。
 
 ## 核心类
 
@@ -35,7 +35,7 @@ AgentEvalCase / AgentEvalReport // Agent 评测
 mvn -pl project-helpdesk-agent test
 ```
 
-正常情况下会看到 10 个测试通过，覆盖领域编排、Tool 审计、写操作确认与幂等、Agent Eval 和 REST 接口。
+正常情况下会看到工单 AI 助手主项目测试通过，覆盖领域编排、Tool 审计、写操作确认与幂等、Agent Eval 和 REST 接口。
 
 ## 启动服务
 
@@ -172,14 +172,15 @@ traceStepNames = ticket.lookup, order.lookup, policy.search, advice.compose, app
 
 替换时继续保留 Tool 边界。Agent 通过 `TicketToolFacade` 这类受控门面使用业务能力，不直接操作业务 Service。
 
-### 阶段 3：真实 AI 能力
+### 阶段 3：框架原生能力接入
 
 推荐顺序：
 
 1. 制度检索接入 `project-enterprise-rag` 的 REST API。
-2. 建议生成接入 `ai-gateway-demo` 的模型网关。
-3. 处理建议输出接入 `ai-output-demo` 的结构化解析和修复。
-4. 需要流式体验时，再接入 WebFlux / SSE。
+2. 普通摘要、分类等文本调用复用 `ai-gateway-demo` 的路由、超时、重试、降级、日志和 trace 治理。
+3. 工单处理建议接入 Spring AI `ChatClient.responseEntity(...)` 和 `BeanOutputConverter`，再复用 `ai-output-demo` 的业务校验、坏输出 400 合同和 bad case 思路。
+4. Tool 调用优先保留 Spring AI Tool Calling 能力，并继续通过 `TicketToolFacade` 落权限、幂等、人工确认和审计。
+5. 需要流式体验时，再接入 WebFlux / SSE。
 
 关闭工单、退款、转派这类写操作不由模型直接执行。模型可以生成建议，写操作必须经过权限、状态、幂等和人工确认。
 

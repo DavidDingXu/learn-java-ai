@@ -4,3 +4,14 @@ server:
 spring:
   application:
     name: ai-output-demo
+  ai:
+    openai:
+      api-key: ${AI_API_KEY:demo-key}
+      base-url: ${AI_BASE_URL:https://api.openai.com}
+      chat:
+        options:
+          model: ${AI_CHAT_MODEL:gpt-4o-mini}
+
+java-ai:
+  output:
+    model-name: ${AI_CHAT_MODEL:gpt-4o-mini}

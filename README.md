@@ -1,8 +1,10 @@
 # Java + AI 工程化落地实战
 
-这个仓库是 **Java + AI 工程化落地实战** 的开源代码项目，面向有 Spring Boot 经验的 Java 后端工程师。代码从模型网关、Prompt、RAG、Tool API、Agent、Eval 到全链路追踪逐步展开，目标是把 AI 能力接进可运行、可测试、可替换的后端工程。
+这个仓库是 **Java + AI 工程化落地实战** 的开源代码项目，面向有 Spring Boot 经验的 Java 后端工程师。代码从普通 Chat 调用治理、Prompt、RAG、Tool API、Agent、Eval 到全链路追踪逐步展开，目标是把 AI 能力接进可运行、可测试、可替换的后端工程。
 
 读者 clone 后，准备 JDK 21+ 和 Maven 就能先跑测试；需要真实模型调用或基础设施联调时，再配置模型地址、API Key、Redis、MySQL、pgvector、MinIO。
+
+这个项目优先使用 Spring AI / Spring AI Alibaba / LangChain4j 已经提供的底层能力。demo 和主项目重点补的是 Java 工程治理：权限、审计、Trace、Eval、成本、限流、灰度、回滚、坏 case 复盘和生产替换点。内存实现或规则实现只用于表达边界，不代表要重写框架能力。
 
 ## 技术主线
 
@@ -16,8 +18,8 @@
 
 ```text
 ai-common          // 通用 DTO、trace、异常模型
-ai-gateway-demo    // 模型调用网关 demo
-ai-output-demo     // 结构化输出 demo
+ai-gateway-demo    // 普通 Chat 调用治理 demo
+ai-output-demo     // Spring AI 结构化输出 demo
 ai-streaming-demo  // SSE 流式输出 demo
 ai-prompt-demo     // Prompt 模板、变量、版本 demo
 ai-rag-demo        // 企业 RAG 权限过滤和引用 demo
@@ -43,7 +45,7 @@ docs/delivery/     // AI 项目上线前交付文档样例
 | `project-enterprise-rag` | 企业制度知识库，回答要有权限、有引用、可评测、可追踪 | `EnterpriseRagProjectTest`、`EnterpriseRagControllerTest` |
 | `project-helpdesk-agent` | 企业工单 AI 助手，Agent 调工具要受控、可确认、可审计 | `HelpdeskAgentProjectTest`、`HelpdeskAgentControllerTest` |
 
-demo 模块讲单点机制，两个主项目串完整链路。建议按 [docs/main-project-roadmap.md](docs/main-project-roadmap.md) 学习：先跑内存版边界，再把模型网关、RAG、Tool、Eval、Trace 对应回主项目，最后替换基础设施。
+demo 模块讲单点机制，两个主项目串完整链路。建议按 [docs/main-project-roadmap.md](docs/main-project-roadmap.md) 学习：先跑内存版边界，再把普通 Chat 治理、Spring AI 结构化输出、RAG、Tool、Eval、Trace 对应回主项目，最后替换基础设施。
 
 ## 快速运行
 

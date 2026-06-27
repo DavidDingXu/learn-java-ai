@@ -1,23 +1,25 @@
 package com.xiaoding.javaai.prompt.service;
 
+import org.springframework.ai.template.ValidationMode;
+import org.springframework.ai.template.st.StTemplateRenderer;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class PromptTemplateService {
 
-    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_]+)}}");
-
     private final Map<String, Map<String, PromptTemplate>> templates = new ConcurrentHashMap<>();
+    private final StTemplateRenderer renderer = StTemplateRenderer.builder()
+            .startDelimiterToken('{')
+            .endDelimiterToken('}')
+            .validationMode(ValidationMode.THROW)
+            .build();
 
     public PromptTemplate save(String code, String version, String content) {
         PromptTemplate template = new PromptTemplate(code, version, content, Instant.now());
@@ -50,23 +52,18 @@ public class PromptTemplateService {
 
     public String render(String code, Map<String, String> variables) {
         PromptTemplate template = findLatest(code);
-        String rendered = template.content();
-        for (Map.Entry<String, String> entry : variables.entrySet()) {
-            rendered = rendered.replace("{{" + entry.getKey() + "}}", entry.getValue());
+        try {
+            return renderer.apply(template.content(), toObjectMap(variables));
+        } catch (IllegalStateException error) {
+            throw new IllegalArgumentException("unresolved prompt variables for " + code + ": " + error.getMessage(), error);
         }
-        Set<String> unresolvedVariables = unresolvedVariables(rendered);
-        if (!unresolvedVariables.isEmpty()) {
-            throw new IllegalArgumentException("unresolved prompt variables: " + unresolvedVariables);
-        }
-        return rendered;
     }
 
-    private Set<String> unresolvedVariables(String rendered) {
-        Matcher matcher = VARIABLE_PATTERN.matcher(rendered);
-        Set<String> variables = new LinkedHashSet<>();
-        while (matcher.find()) {
-            variables.add(matcher.group(1));
+    private Map<String, Object> toObjectMap(Map<String, String> variables) {
+        if (variables == null || variables.isEmpty()) {
+            return Map.of();
         }
-        return variables;
+        return variables.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

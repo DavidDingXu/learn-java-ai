@@ -27,6 +27,6 @@ mvn -pl ai-common test
 
 ## 边界
 
-- 本模块不是模型网关，模型调用在 `ai-gateway-demo`。
+- 本模块不是普通 Chat 调用治理入口，模型调用策略在 `ai-gateway-demo`。
 - 本模块不是完整 trace 系统，生产治理示例在 `ai-observability-demo`。
 - 本模块不依赖 Spring Boot，便于被其他 demo 直接引用。

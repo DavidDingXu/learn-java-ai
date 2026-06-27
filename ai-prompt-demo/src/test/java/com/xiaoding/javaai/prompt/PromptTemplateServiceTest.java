@@ -13,7 +13,7 @@ class PromptTemplateServiceTest {
     @Test
     void rendersVariablesAndKeepsVersion() {
         PromptTemplateService service = new PromptTemplateService();
-        PromptTemplate template = service.save("ticket-advice", "v1", "工单：{{ticket}}\n制度：{{policy}}");
+        PromptTemplate template = service.save("ticket-advice", "v1", "工单：{ticket}\n制度：{policy}");
 
         String rendered = service.render(template.code(), Map.of(
                 "ticket", "客户申请退款但订单已发货",
@@ -28,8 +28,8 @@ class PromptTemplateServiceTest {
     @Test
     void returnsLatestTemplateByCode() {
         PromptTemplateService service = new PromptTemplateService();
-        service.save("ticket-advice", "v1", "旧模板 {{ticket}}");
-        service.save("ticket-advice", "v2", "新模板 {{ticket}}");
+        service.save("ticket-advice", "v1", "旧模板 {ticket}");
+        service.save("ticket-advice", "v2", "新模板 {ticket}");
 
         PromptTemplate latest = service.findLatest("ticket-advice");
 
@@ -40,8 +40,8 @@ class PromptTemplateServiceTest {
     @Test
     void rollbackPublishesOldVersionAsLatestWithoutOverwritingHistory() {
         PromptTemplateService service = new PromptTemplateService();
-        service.save("ticket-advice", "v1", "旧模板 {{ticket}}");
-        service.save("ticket-advice", "v2", "新模板 {{ticket}}");
+        service.save("ticket-advice", "v1", "旧模板 {ticket}");
+        service.save("ticket-advice", "v2", "新模板 {ticket}");
 
         PromptTemplate rolledBack = service.rollback("ticket-advice", "v1");
 
@@ -54,7 +54,7 @@ class PromptTemplateServiceTest {
     @Test
     void renderRejectsUnresolvedVariables() {
         PromptTemplateService service = new PromptTemplateService();
-        service.save("ticket-advice", "v1", "工单：{{ticket}}\n制度：{{policy}}");
+        service.save("ticket-advice", "v1", "工单：{ticket}\n制度：{policy}");
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() ->
                         service.render("ticket-advice", Map.of("ticket", "客户申请退款")))

@@ -26,7 +26,7 @@ class AiGatewayApplicationContextTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody())
-                .contains("模型网关")
+                .contains("普通 Chat 治理")
                 .contains("/api/ai/chat")
                 .contains("Trace");
     }

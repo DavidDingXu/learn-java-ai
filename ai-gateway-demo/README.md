@@ -1,16 +1,16 @@
 # ai-gateway-demo
 
-`ai-gateway-demo` 演示 Java AI 项目的第一层工程边界：业务入口不直接调用模型 SDK，而是统一进入 `AiCallGateway`。
+`ai-gateway-demo` 演示 Java AI 项目的第一层工程治理：Controller 不直接调用模型 SDK，普通 Chat 调用通过 `AiCallGateway` 承接路由、超时、重试、降级、日志和 trace。
+
+`AiCallGateway` 不是 Spring AI 的上位替代，也不是全项目的模型抽象层。它只把普通 Chat 调用里的治理项显性化。结构化输出、Tool Calling、Advisor、Memory、Embedding、RAG、MCP 和模型响应元数据这类能力，后续模块保留 Spring AI 原生 API，再把同类治理项按场景接上。
 
 这个模块当前覆盖：
 
 - `AiGatewayController`：只做 HTTP 协议适配。
 - `AiCallGateway`：统一组装 Prompt、创建 trace、调用模型、处理超时、重试和降级。
-- `AiGatewayAdvisorChain`：在模型调用前集中执行上下文增强、会话记忆等逻辑。
-- `GatewayConversationMemoryAdvisor`：内存版会话记忆 Advisor，演示 Memory 不应该散落到 Controller。
 - `ModelClient`：屏蔽具体模型 SDK。
 - `ModelRouter`：按优先级选择主模型和备用模型。
-- `AiCallLogEntry`：记录每次模型尝试的 model、attempt、status、latency、traceId 和 advisorEvents。
+- `AiCallLogEntry`：记录每次模型尝试的 model、attempt、status、latency、traceId 和 errorMessage。
 - `InMemoryAiCallLogRepository`：内存版调用日志仓储，用于示例和测试。
 
 ## 运行测试
@@ -21,23 +21,15 @@
 mvn -pl ai-gateway-demo -am test
 ```
 
-正常情况下会看到两个测试类都通过：
+正常情况下会看到普通 Chat 治理和 HTTP 合同相关测试通过。
 
-```text
-Running com.xiaoding.javaai.gateway.AiCallGatewayTest
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-Running com.xiaoding.javaai.gateway.AiGatewayAdvisorChainTest
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-```
-
-6 个测试分别验证：
+这些测试分别验证：
 
 - 正常模型调用会返回 `traceId`、`model`、`latencyMs`，并记录成功日志。
 - 主模型第一次失败后会重试，第二次成功。
 - 主模型连续失败后会切到备用模型，并记录每次失败和成功。
 - 主模型超时后会记录失败原因，并切到备用模型。
-- Advisor 会在模型调用前补充上下文，并把执行事件写入日志。
-- 会话记忆 Advisor 只在模型网关边界补充最近会话，不让 Controller 直接拼历史消息。
+- HTTP 页面和接口只暴露普通 Chat 调用，后续结构化输出、Tool、Advisor、Memory 不复用这个文本入口。
 
 ## 启动接口
 
@@ -70,7 +62,7 @@ curl -X POST http://localhost:8081/api/ai/chat \
 http://localhost:8081/
 ```
 
-页面会调用同一个网关接口，并展示模型回复、Trace、模型名称和耗时。
+页面会调用同一个普通 Chat 接口，并展示模型回复、Trace、模型名称和耗时。
 
 返回结构：
 
@@ -92,3 +84,5 @@ http://localhost:8081/
 第三步可以把 `max-attempts` 调成 1 或 3，再观察 `AiCallGatewayTest` 里日志记录的变化。
 
 第四步可以把 `call-timeout` 调小，例如 `30ms`，再看慢模型如何触发降级。真实项目里不要把超时时间写死在代码里，它应该是按场景配置出来的。
+
+不要把这个模块继续扩成框架能力承载层。结构化输出看 `ai-output-demo`，Tool Calling 看 `ai-tool-demo`，Advisor / Memory 看 `ai-agent-demo` 里的 Spring AI 接入边界。后续复用的是路由、超时、日志、trace、成本和失败策略这些治理项，不复用 `AiCallGateway.chat(...)` 这个普通文本接口。

@@ -30,7 +30,7 @@ class PromptTemplateControllerTest {
                                 {
                                   "code": "ticket-advice",
                                   "version": "v1",
-                                  "content": "工单：{{ticket}}\\n制度：{{policy}}"
+                                  "content": "工单：{ticket}\\n制度：{policy}"
                                 }
                                 """))
                 .andExpect(status().isOk())
