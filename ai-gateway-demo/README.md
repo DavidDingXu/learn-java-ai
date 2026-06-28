@@ -2,7 +2,9 @@
 
 `ai-gateway-demo` 演示 Java AI 项目的第一层工程治理：Controller 不直接调用模型 SDK，普通 Chat 调用通过 `AiCallGateway` 承接路由、超时、重试、降级、日志和 trace。
 
-`AiCallGateway` 不是 Spring AI 的上位替代，也不是全项目的模型抽象层。它只把普通 Chat 调用里的治理项显性化。结构化输出、Tool Calling、Advisor、Memory、Embedding、RAG、MCP 和模型响应元数据这类能力，后续模块保留 Spring AI 原生 API，再把同类治理项按场景接上。
+这个模块的定位是“普通 Chat 调用治理样板”。它把 `traceId`、`model`、`attempt`、`latency`、`timeout`、`fallback` 和调用日志这些治理字段固定下来，方便后续专题复用同一套工程要求。
+
+`AiCallGateway` 不接管 Spring AI 的高阶能力，也不是全项目的模型抽象层。结构化输出、Tool Calling、Advisor、Memory、Embedding、RAG、MCP 和模型响应元数据有自己的原生类型和生命周期，后续模块会保留 Spring AI 原生 API，再把同类治理项按场景接上。
 
 这个模块当前覆盖：
 
@@ -85,4 +87,4 @@ http://localhost:8081/
 
 第四步可以把 `call-timeout` 调小，例如 `30ms`，再看慢模型如何触发降级。真实项目里不要把超时时间写死在代码里，它应该是按场景配置出来的。
 
-不要把这个模块继续扩成框架能力承载层。结构化输出看 `ai-output-demo`，Tool Calling 看 `ai-tool-demo`，Advisor / Memory 看 `ai-agent-demo` 里的 Spring AI 接入边界。后续复用的是路由、超时、日志、trace、成本和失败策略这些治理项，不复用 `AiCallGateway.chat(...)` 这个普通文本接口。
+不要把这个模块继续扩成框架能力承载层。结构化输出看 `ai-output-demo`，Tool Calling 看 `ai-tool-demo`，Advisor / Memory 看 `ai-agent-demo` 里的 Spring AI 接入边界。后续复用的是治理字段和工程要求，不复用 `AiCallGateway.chat(...)` 这个普通文本接口。

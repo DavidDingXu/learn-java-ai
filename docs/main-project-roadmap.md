@@ -100,7 +100,7 @@ HelpdeskAgentControllerTest
 3. 制度检索调用 `project-enterprise-rag` 的 REST API。
 4. 普通 Chat 摘要、分类等场景复用 `ai-gateway-demo` 的治理能力。
 5. 工单建议这类结构化结果优先沿用 Spring AI `ChatClient.responseEntity(...)` 和 `BeanOutputConverter`，再复用 `ai-output-demo` 的业务校验、坏输出 400 合同、trace 和 bad case 思路。
-6. Tool Calling、Advisor、Memory 不压进 `AiCallGateway`，分别保留 Spring AI 原生能力；Tool 通过 `SpringAiToolCallbackBridge` 接治理后的 Tool API，Advisor / Memory 通过 `SpringAiAdvisorMemoryBridge` 接业务上下文。
+6. Tool Calling、Advisor、Memory 不收进普通文本网关，分别保留 Spring AI 原生能力；Tool 通过 `SpringAiToolCallbackBridge` 接治理后的 Tool API，Advisor / Memory 通过 `SpringAiAdvisorMemoryBridge` 接业务上下文。
 
 ## 阶段 4：接入治理能力
 

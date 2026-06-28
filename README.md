@@ -6,6 +6,16 @@
 
 这个项目优先使用 Spring AI / Spring AI Alibaba / LangChain4j 已经提供的底层能力。demo 和主项目重点补的是 Java 工程治理：权限、审计、Trace、Eval、成本、限流、灰度、回滚、坏 case 复盘和生产替换点。内存实现或规则实现只用于表达边界，不代表要重写框架能力。
 
+项目按三层组织：
+
+```text
+框架原生能力：ChatClient、PromptTemplate、BeanOutputConverter、ToolCallback、Advisor、Memory、VectorStore
+  -> 业务用例编排：工单建议、企业知识问答、Tool 调用、Agent 任务
+  -> 工程治理：权限、审计、Trace、Eval、成本、限流、灰度、回滚、bad case
+```
+
+`ai-gateway-demo` 只演示普通 Chat 调用治理。结构化输出、Tool Calling、Advisor、Memory、RAG 等模块会优先保留 Spring AI 原生能力，再把同类治理字段接到对应链路上。
+
 ## 技术主线
 
 - 主线框架：Spring AI

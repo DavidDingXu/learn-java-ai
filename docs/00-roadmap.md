@@ -6,6 +6,8 @@
 
 这条路线默认优先使用框架底层能力：Spring AI 的 `ChatClient`、`PromptTemplate`、结构化输出、Tool、Advisor、Memory、Embedding、VectorStore 和 MCP 能力不重新实现。项目代码重点补上层工程治理：权限、审计、Trace、Eval、成本、限流、灰度、回滚、坏 case 复盘和生产替换点。
 
+学习顺序按“治理语义先行，框架扩展点承接”组织：先用 `ai-gateway-demo` 把普通 Chat 调用里的路由、超时、重试、降级、日志和 trace 讲清楚；再在结构化输出、Tool、Advisor、Memory、RAG 等模块里保留 Spring AI 原生能力，并把同类治理要求挂到各自链路上。
+
 ## 两条主项目线
 
 学习路线不是只看 demo。demo 模块负责讲单点机制，两个主项目负责串完整业务链路。
