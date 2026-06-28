@@ -15,9 +15,9 @@
     <modules>
         <module>ai-common</module>
         <module>ai-gateway-demo</module>
-        <module>ai-output-demo</module>
         <module>ai-streaming-demo</module>
         <module>ai-prompt-demo</module>
+        <module>ai-output-demo</module>
         <module>ai-rag-demo</module>
         <module>ai-tool-demo</module>
         <module>ai-agent-demo</module>

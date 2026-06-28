@@ -29,9 +29,9 @@
 ```text
 ai-common          // 通用 DTO、trace、异常模型
 ai-gateway-demo    // 普通 Chat 调用治理 demo
-ai-output-demo     // Spring AI 结构化输出 demo
 ai-streaming-demo  // SSE 流式输出 demo
 ai-prompt-demo     // Prompt 模板、变量、版本 demo
+ai-output-demo     // Spring AI 结构化输出 demo
 ai-rag-demo        // 企业 RAG 权限过滤和引用 demo
 ai-tool-demo       // Agent Tool API、人工确认、审计 demo
 ai-agent-demo      // 受控工作流 Agent demo
@@ -96,9 +96,9 @@ curl -X POST http://localhost:8081/api/ai/chat \
 | 模块 | 启动命令 | 页面 |
 |---|---|---|
 | `ai-gateway-demo` | `mvn -pl ai-gateway-demo spring-boot:run` | `http://localhost:8081/` |
-| `ai-output-demo` | `mvn -pl ai-output-demo spring-boot:run` | `http://localhost:8082/` |
 | `ai-streaming-demo` | `mvn -pl ai-streaming-demo spring-boot:run` | `http://localhost:8083/` |
 | `ai-prompt-demo` | `mvn -pl ai-prompt-demo spring-boot:run` | `http://localhost:8084/` |
+| `ai-output-demo` | `mvn -pl ai-output-demo spring-boot:run` | `http://localhost:8082/` |
 | `ai-rag-demo` | `mvn -pl ai-rag-demo spring-boot:run` | `http://localhost:8086/` |
 | `ai-tool-demo` | `mvn -pl ai-tool-demo spring-boot:run` | `http://localhost:8087/` |
 | `ai-observability-demo` | `mvn -pl ai-observability-demo spring-boot:run` | `http://localhost:8088/` |

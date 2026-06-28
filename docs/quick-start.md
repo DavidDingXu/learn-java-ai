@@ -206,9 +206,9 @@ curl -X POST http://localhost:8091/api/helpdesk-agent/tickets/close \
 | 模块 | 目标 | 前端页面 |
 |---|---|---|
 | `ai-gateway-demo` | 普通 Chat 调用治理 | `http://localhost:8081/` |
-| `ai-output-demo` | Spring AI 结构化输出 | `http://localhost:8082/` |
 | `ai-streaming-demo` | SSE 流式输出 | `http://localhost:8083/` |
 | `ai-prompt-demo` | Prompt 模板和版本 | `http://localhost:8084/` |
+| `ai-output-demo` | Spring AI 结构化输出 | `http://localhost:8082/` |
 | `ai-rag-demo` | 企业 RAG 权限过滤和引用 | `http://localhost:8086/` |
 | `ai-tool-demo` | Agent Tool API、人工确认、审计 | `http://localhost:8087/` |
 | `ai-observability-demo` | Trace、Span、成本追踪 | `http://localhost:8088/` |
