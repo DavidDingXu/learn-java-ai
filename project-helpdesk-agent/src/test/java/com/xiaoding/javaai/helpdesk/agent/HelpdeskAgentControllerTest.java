@@ -57,6 +57,23 @@ class HelpdeskAgentControllerTest {
     }
 
     @Test
+    void liveAdviceRequiresRealAiConfiguration() throws Exception {
+        mockMvc.perform(post("/api/helpdesk-agent/advice/live")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "ticketId": "T-1001",
+                                  "question": "客户申请退款，但订单已经发货，应该怎么处理？",
+                                  "userId": "u1001",
+                                  "tenantId": "tenant-a",
+                                  "department": "support"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"));
+    }
+
+    @Test
     void exposesCloseTicketEndpointThatRequiresHumanApproval() throws Exception {
         String body = """
                 {

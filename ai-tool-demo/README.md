@@ -14,6 +14,8 @@ Tool 审计集中在 `ToolExecutionLedger`。当前是内存账本，记录 `tra
 
 `SpringAiToolCallbackBridge` 把已经治理过的 `TicketToolFacade` 暴露成 Spring AI 原生 `ToolCallback`。模型侧仍然使用 Spring AI Tool Calling，项目侧继续负责参数校验、权限边界、人工确认、幂等和审计，不把 Tool 压成普通字符串调用。
 
+`/api/tools/live-agent` 会把 `ticket.lookup`、`ticket.close` 作为 Spring AI Tool Callback 提供给真实模型。未配置有效 `AI_API_KEY` 时，live 入口返回 `AI_CONFIGURATION_REQUIRED`。
+
 ## 启动
 
 ```bash
@@ -82,6 +84,20 @@ curl -X POST http://localhost:8087/api/tools/ticket/close \
 curl http://localhost:8087/api/tools/ledger
 ```
 
+## 真实模型 Tool Calling
+
+配置真实模型后，可以让模型通过 Spring AI Tool Calling 查询工单并生成建议：
+
+```bash
+curl -X POST http://localhost:8087/api/tools/live-agent \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "question": "请查询 T-1001，判断客户退款但订单已发货时下一步怎么处理。"
+  }'
+```
+
+重点看返回里的 `content` 和 `toolRecords`。写操作 Tool 仍然需要人工确认和 confirmationToken，不能被模型直接绕过。
+
 ## 测试
 
 ```bash
@@ -99,6 +115,7 @@ malformed identifier：工单号、订单号、confirmationToken 格式错误时
 ledger query：按 traceId、tenantId、toolName 复盘 Tool 调用路径。
 async executor：只读结果缓存、慢 Tool 超时、大结果裁剪后返回。
 SpringAiToolCallbackBridgeTest：验证 `ticket.lookup`、`ticket.close` 以 Spring AI `ToolCallback` 暴露，并且写操作不能绕过人工确认和审计。
+ToolControllerTest：覆盖 HTTP Tool、审计查询和真实 AI live 配置边界。
 ```
 
 ## Spring AI Tool Calling 接入点

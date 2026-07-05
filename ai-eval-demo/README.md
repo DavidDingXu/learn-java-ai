@@ -2,7 +2,7 @@
 
 AI 功能 Golden Set 评测 demo。
 
-本模块先不用 LLM-as-Judge，演示最小可解释评测：
+本模块同时提供离线可解释评测和真实 LLM-as-Judge 入口。离线评测用于稳定回归；`/api/eval/judge/live` 会调用 Spring AI `ChatClient` 让真实模型评估候选回答。
 
 - 普通 Golden Set：样本包含问题、期望关键依据、实际回答，`EvalRunner` 计算每条样本是否通过和整体通过率。
 - RAG Eval：样本包含期望 chunk、实际召回 chunk、实际引用 chunk、是否拒答，`RagEvalRunner` 分别计算召回、引用和无依据拒答。
@@ -13,7 +13,7 @@ AI 功能 Golden Set 评测 demo。
 
 ## 当前边界
 
-当前 demo 是规则版评测，不接真实模型评委，也不读取线上日志平台。
+离线评测不读取线上日志平台，也不依赖外部模型。
 
 它的目标是先把 Java 后端的评测合同写清楚：
 
@@ -27,6 +27,8 @@ Prompt 候选版本什么时候不能发布
 ```
 
 生产项目里可以把输入换成线上 trace、RAG 检索日志、Agent 执行步骤和人工标注结果，但不应该改变这些核心对象的含义。
+
+真实模型评委入口用于人工标签之外的裁判实验。未配置有效 `AI_API_KEY` 时，该接口返回 `AI_CONFIGURATION_REQUIRED`，不会用规则结果冒充模型评委。
 
 ## 启动
 
@@ -166,6 +168,20 @@ curl -X POST http://localhost:8090/api/eval/prompt/regression \
   ]'
 ```
 
+LLM-as-Judge live 示例：
+
+```bash
+curl -X POST http://localhost:8090/api/eval/judge/live \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "question": "发货后退款怎么处理",
+    "expectedEvidence": "发货后退款需先核对物流状态。",
+    "answer": "建议直接退款。"
+  }'
+```
+
+重点看返回里的 `model`、`prompt` 和 `judgeOutput`。这个入口用于观察真实模型评委输出，是否采信还要回到人工标签校准结果。
+
 Harness Experiment 示例：
 
 ```bash
@@ -219,5 +235,5 @@ mvn -pl ai-eval-demo test
 - 模型评委低置信度样本。
 - Prompt 候选版本低于 baseline 的回归判断。
 - Harness 候选策略的质量、成本和延迟护栏。
-- `/api/eval/run`、`/api/eval/rag/run`、`/api/eval/agent/run`、`/api/eval/judge/calibrate`、`/api/eval/prompt/regression`、`/api/eval/harness/run` 的 HTTP 合同。
+- `/api/eval/run`、`/api/eval/rag/run`、`/api/eval/agent/run`、`/api/eval/judge/calibrate`、`/api/eval/judge/live`、`/api/eval/prompt/regression`、`/api/eval/harness/run` 的 HTTP 合同。
 - 前端页面必须暴露 6 类评测入口。

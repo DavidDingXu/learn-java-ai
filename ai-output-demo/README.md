@@ -43,7 +43,7 @@ mvn -pl ai-output-demo test
 
 ## 启动服务
 
-默认不配置真实模型密钥时，生成入口会返回 deterministic sample，方便直接打开页面理解链路：
+生成入口会真实调用 Spring AI `ChatClient.responseEntity(...)`。未配置有效 `AI_API_KEY` 时，`/api/output/ticket-advice/generate` 会返回 `AI_CONFIGURATION_REQUIRED`，不会降级成样例结果；坏 JSON 解析入口仍然可以离线验证错误合同。
 
 ```bash
 mvn -pl ai-output-demo spring-boot:run
@@ -57,10 +57,10 @@ http://localhost:8082/
 
 页面包含两个入口：
 
-- 生成工单处理建议：调用 `/api/output/ticket-advice/generate`，展示 Spring AI 输出格式约束和业务对象。
+- 生成工单处理建议：调用 `/api/output/ticket-advice/generate`，用真实模型返回 Spring AI 结构化业务对象。
 - 坏输出兜底解析：调用 `/api/output/ticket-advice/parse`，验证非法 JSON 或非法业务字段会返回 400。
 
-## 接入真实模型
+## 真实模型配置
 
 配置 OpenAI-compatible 模型环境变量后重新启动：
 

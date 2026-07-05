@@ -2,7 +2,7 @@
 
 这个仓库是 **Java + AI 工程化落地实战** 的开源代码项目，面向有 Spring Boot 经验的 Java 后端工程师。代码从普通 Chat 调用治理、Prompt、RAG、Tool API、Agent、Eval 到全链路追踪逐步展开，目标是把 AI 能力接进可运行、可测试、可替换的后端工程。
 
-读者 clone 后，准备 JDK 21+ 和 Maven 就能先跑测试；需要真实模型调用或基础设施联调时，再配置模型地址、API Key、Redis、MySQL、pgvector、MinIO。
+读者 clone 后，准备 JDK 21+ 和 Maven 就能先跑测试；配置模型地址和 API Key 后，可以直接调用各模块的 `live` 接口和两个主项目的真实模型链路。Redis、MySQL、pgvector、MinIO 仍然作为后续基础设施替换项。
 
 这个项目优先使用 Spring AI / Spring AI Alibaba / LangChain4j 已经提供的底层能力。demo 和主项目重点补的是 Java 工程治理：权限、审计、Trace、Eval、成本、限流、灰度、回滚、坏 case 复盘和生产替换点。内存实现或规则实现只用于表达边界，不代表要重写框架能力。
 
@@ -62,7 +62,7 @@ demo 模块讲单点机制，两个主项目串完整链路。建议按 [docs/ma
 完整说明见 [docs/quick-start.md](docs/quick-start.md)。
 
 1. 准备 JDK 21。
-2. 复制 `.env.example`，按自己的模型服务填写 `AI_BASE_URL`、`AI_API_KEY`、`AI_CHAT_MODEL`，并在当前终端执行 `set -a && source .env && set +a`。
+2. 复制 `.env.example`，按自己的模型服务填写 `AI_BASE_URL`、`AI_API_KEY`、`AI_CHAT_MODEL`、`AI_EMBEDDING_MODEL`，并在当前终端执行 `set -a && source .env && set +a`。
 3. 在项目根目录先安装一次本地多模块依赖：
 
 ```bash
@@ -86,6 +86,27 @@ curl -X POST http://localhost:8081/api/ai/chat \
 ## 学习方式
 
 这个项目按专题组织 demo 和主项目。建议先进入对应 demo 模块运行测试，看清单点机制；再进入两个主项目，观察同一个能力在完整业务链路里的位置。
+
+## 真实 AI 入口
+
+稳定单元测试默认不访问外部模型；所有涉及模型生成、embedding、Tool Calling、LLM-as-Judge、Trace 的模块都提供真实 AI `live` 入口。未配置有效 `AI_API_KEY` 时，这些入口返回 `AI_CONFIGURATION_REQUIRED`，不会降级成假样例。
+
+| 模块 | 真实 AI 入口 |
+|---|---|
+| `ai-streaming-demo` | `GET /api/stream/ticket-advice/live` |
+| `ai-prompt-demo` | `POST /api/prompts/live-preview` |
+| `ai-output-demo` | `POST /api/output/ticket-advice/generate` |
+| `ai-rag-demo` | `POST /api/rag/live-answer` |
+| `ai-tool-demo` | `POST /api/tools/live-agent` |
+| `ai-agent-demo` | `POST /api/agent/tickets/live-advice` |
+| `ai-mcp-demo` | `POST /api/mcp/live-answer` |
+| `ai-a2a-demo` | `POST /api/a2a/tasks/live` |
+| `ai-eval-demo` | `POST /api/eval/judge/live` |
+| `ai-observability-demo` | `POST /api/traces/live-model-call` |
+| `project-enterprise-rag` | `POST /api/enterprise-rag/answers/live` |
+| `project-helpdesk-agent` | `POST /api/helpdesk-agent/advice/live` |
+
+`ai-legacy-demo` 保持 JDK8 边界，不直接引入 Spring AI；它通过 `HttpLegacyAgentClient` 调用外部 Agent 服务，例如 `project-helpdesk-agent` 的 `/api/helpdesk-agent/advice/live`。
 
 ## 前端 demo 入口
 

@@ -28,6 +28,7 @@ cp .env.example .env
 AI_BASE_URL=https://api.openai.com
 AI_API_KEY=replace-with-your-api-key
 AI_CHAT_MODEL=gpt-4o-mini
+AI_EMBEDDING_MODEL=text-embedding-3-small
 AI_GATEWAY_MAX_ATTEMPTS=2
 AI_GATEWAY_CALL_TIMEOUT=30s
 
@@ -45,7 +46,9 @@ source .env
 set +a
 ```
 
-当前大部分 demo 和测试使用内存仓储或 fake client，不要求先启动 Docker。需要验证 Redis、MySQL、pgvector、MinIO 接入时，再启动本地依赖：
+单元测试默认不访问外部模型，便于稳定回归；`live` 接口会真实调用模型或 embedding 服务。未配置有效 `AI_API_KEY` 时，`live` 接口会返回 `AI_CONFIGURATION_REQUIRED`，不会返回 fake 结果。
+
+当前 demo 和测试不要求先启动 Docker。需要验证 Redis、MySQL、pgvector、MinIO 接入时，再启动本地依赖：
 
 ```bash
 docker compose -f docker/docker-compose.yml up -d
@@ -153,6 +156,18 @@ curl -X POST http://localhost:8092/api/enterprise-rag/answers \
 
 重点看返回里的 `citations` 和 `trace.steps`。
 
+配置真实模型后，可以调用真实 RAG 入口。这个入口会先走权限过滤和引用证据，再调用 embedding 与 Chat 模型：
+
+```bash
+curl -X POST http://localhost:8092/api/enterprise-rag/answers/live \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "question": "客户申请退款但订单已发货怎么办",
+    "tenantId": "tenant-a",
+    "department": "support"
+  }'
+```
+
 工单 AI 助手：
 
 ```bash
@@ -178,6 +193,20 @@ riskLevel = HIGH
 requiredAction = MANUAL_REVIEW
 toolNames = ticket.lookup, order.lookup, policy.search
 traceStepNames = ticket.lookup, order.lookup, policy.search, advice.compose, approval.plan
+```
+
+配置真实模型后，调用真实 Agent 建议入口。这个入口会先执行 Java 侧 Tool、RAG、风险和人工确认编排，再让模型生成客服可读建议：
+
+```bash
+curl -X POST http://localhost:8091/api/helpdesk-agent/advice/live \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticketId": "T-1001",
+    "question": "客户申请退款，但订单已经发货，应该怎么处理？",
+    "userId": "u1001",
+    "tenantId": "tenant-a",
+    "department": "support"
+  }'
 ```
 
 关闭工单接口需要人工确认和确认 token：

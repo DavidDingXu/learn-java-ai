@@ -13,7 +13,7 @@
 
 ## 阶段 1：先跑通内存版边界
 
-这一阶段不需要 MySQL、Redis、pgvector、MinIO，也不需要真实模型 API。目标是先看清楚对象边界和流程。
+这一阶段不需要 MySQL、Redis、pgvector、MinIO；测试也不强制访问真实模型 API。目标是先看清楚对象边界和流程。配置 `AI_API_KEY`、`AI_BASE_URL`、`AI_CHAT_MODEL` 和 `AI_EMBEDDING_MODEL` 后，可以直接调用两个主项目的 `live` 入口验证真实模型交互。
 
 运行企业制度 RAG：
 

@@ -96,4 +96,24 @@ class McpControllerHttpTest {
                 .andExpect(jsonPath("$.connected").value(true))
                 .andExpect(jsonPath("$.tools", hasItem("policy.search")));
     }
+
+    @Test
+    void liveAnswerRequiresRealAiConfiguration() throws Exception {
+        mockMvc.perform(post("/api/mcp/live-answer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "ticketSummary": "客户申请退款但订单已发货",
+                                  "query": "退款",
+                                  "operator": {
+                                    "userId": "u1001",
+                                    "tenantId": "tenant-a",
+                                    "department": "support",
+                                    "permissions": []
+                                  }
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"));
+    }
 }

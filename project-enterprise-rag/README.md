@@ -15,7 +15,7 @@
 - RAG trace
 - 检索和引用质量评测
 
-当前第一版使用内存仓储，方便读者直接运行测试。它已经把文档版本、权限、引用、索引任务、证据治理、RAG Eval 和 trace 这些边界落到代码里。MySQL、pgvector、Elasticsearch、MinIO、真实 embedding 和 reranker 还没有接入，后续应该通过仓储和 provider 替换，不改应用层边界。
+当前第一版使用内存仓储，方便读者直接运行测试。它已经把文档版本、权限、引用、索引任务、证据治理、RAG Eval 和 trace 这些边界落到代码里；`/api/enterprise-rag/answers/live` 会在这些边界之后调用 Spring AI `EmbeddingModel` 和 `ChatClient`，完成真实 embedding + 模型回答。MySQL、pgvector、Elasticsearch、MinIO 和真实 reranker 仍然作为基础设施替换项，通过仓储和 provider 替换，不改应用层边界。
 
 ## 核心类
 
@@ -99,6 +99,20 @@ trace.steps = query-rewrite, access-filter, hybrid-retrieve, evidence-governance
 ```
 
 如果把 `department` 改成 `hr`，当前用户就查不到 support 部门制度，回答会返回没有可访问依据。
+
+配置真实模型后，可以调用 live 问答入口：
+
+```bash
+curl -X POST http://localhost:8092/api/enterprise-rag/answers/live \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "question": "客户申请退款但订单已发货怎么办",
+    "tenantId": "tenant-a",
+    "department": "support"
+  }'
+```
+
+重点看返回里的 `queryVectorDimensions`、`evidence.citations`、`evidence.trace.steps` 和 `answer.content`。未配置有效 `AI_API_KEY` 时，这个接口返回 `AI_CONFIGURATION_REQUIRED`。
 
 ## 验证知识冲突治理
 
@@ -194,6 +208,7 @@ citationHitRate = 1.00
 - 证据冲突、优先级和时效治理。
 - RAG Eval。
 - RAG Trace。
+- 真实 embedding + Chat 模型问答入口。
 
 ### 阶段 2：基础设施替换
 
@@ -211,10 +226,10 @@ citationHitRate = 1.00
 
 推荐顺序：
 
-1. embedding provider 优先复用 `ai-rag-demo` 的 `SpringAiEmbeddingProvider`，接 Spring AI `EmbeddingModel` 或 Spring AI Alibaba 模型适配。
+1. 当前 live 入口已经使用 Spring AI `EmbeddingModel` 和 `ChatClient`；下一步把同样的 provider 挂到索引链路。
 2. 向量索引替换为 Spring AI `VectorStore` 支持的 pgvector、Elasticsearch 或其他向量库。
 3. reranker provider 接真实重排服务。
-4. 回答生成通过 Spring AI `ChatClient` 或兼容模型服务完成。
+4. 回答生成继续通过 Spring AI `ChatClient` 或兼容模型服务完成。
 5. 输出仍然必须带 citation、权限过滤证据和 traceId。
 
 模型只接收权限过滤后的 chunk。

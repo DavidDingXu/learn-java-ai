@@ -2,17 +2,17 @@
 
 企业 RAG 文档管道、权限过滤、引用和高阶检索 demo。
 
-本模块先不接真实向量库，重点演示 RAG 的工程合同：文档 metadata、Markdown / 纯文本解析、标题感知切分、chunk metadata、embedding 批处理与缓存、内存向量索引、索引任务、混合检索、规则版重排、引用回答、租户/部门过滤、Query Rewrite、多路查询、上下文压缩和无依据兜底。
+本模块用内存向量索引表达 RAG 工程合同，同时提供真实 AI `/api/rag/live-answer` 入口。离线接口用于稳定测试文档 metadata、Markdown / 纯文本解析、标题感知切分、chunk metadata、embedding 批处理与缓存、混合检索、规则版重排、引用回答、租户/部门过滤、Query Rewrite、多路查询、上下文压缩和无依据兜底；live 入口会调用 Spring AI `EmbeddingModel` 和 `ChatClient`。
 
 当前实现不支持真实 PDF / Word 解析。生产环境可以通过 `DocumentParser` SPI 接入 Apache Tika、docx4j、PDFBox 或云端文档解析服务。
 
-当前默认不调用真实 embedding 模型。`DeterministicEmbeddingProvider` 只用于本地测试和示例；`SpringAiEmbeddingProvider` 已经给出 Spring AI `EmbeddingModel` 的适配点，生产环境可以把它接到 Spring AI、Spring AI Alibaba 或 OpenAI-compatible embedding API。
+默认测试使用 `DeterministicEmbeddingProvider`，保证回归稳定；`/api/rag/live-answer` 使用 Spring AI `EmbeddingModel` 生成 query embedding，并把权限过滤后的引用证据交给真实 Chat 模型回答。未配置有效 `AI_API_KEY` 时，live 入口返回 `AI_CONFIGURATION_REQUIRED`。
 
 当前实现也不接 pgvector、Elasticsearch 或 Milvus。`InMemoryVectorIndex` 只用于表达向量索引的 Java 边界：upsert、cosine topK、权限过滤和结果排序。
 
 当前实现也不接真实 reranker 模型。`RerankService` 只用规则表达重排边界：保留原始召回分、计算重排分、记录来源和理由，并在重排前做权限兜底。
 
-当前实现也不接真实回答模型。`CitationAnswerComposer` 只表达引用回答的 Java 边界：证据为空时拒答，只使用选中的证据生成回答，并保留 `documentId`、`chunkId` 和原文摘录。
+离线 `/api/rag/answer` 通过 `CitationAnswerComposer` 表达引用回答的 Java 边界：证据为空时拒答，只使用选中的证据生成回答，并保留 `documentId`、`chunkId` 和原文摘录。真实回答模型走 `/api/rag/live-answer`，但仍然只能使用权限过滤后的证据。
 
 当前实现的 `IndexTaskService` 是同步内存版，只表达索引任务边界：解析、切分、向量化、upsert、任务状态、版本和失败原因。生产环境需要继续接入任务表、消息队列、重试、旧版本下线和真实向量库。
 
@@ -103,6 +103,20 @@ curl -X POST http://localhost:8086/api/rag/lab/retrieval \
 
 返回结果会同时包含 `hybridResults` 和 `rerankedResults`，便于对比关键词、向量、权限过滤和重排理由。
 
+配置真实模型后，可以验证真实 embedding + Chat 回答链路：
+
+```bash
+curl -X POST http://localhost:8086/api/rag/live-answer \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": "客户申请退款但订单已发货怎么办",
+    "tenantId": "tenant-a",
+    "department": "support"
+  }'
+```
+
+重点看返回里的 `queryVectorDimensions`、`answer` 和 `evidence.citations`。如果没有配置有效 `AI_API_KEY`，这个接口会返回 `AI_CONFIGURATION_REQUIRED`。
+
 ## 测试
 
 ```bash
@@ -127,5 +141,5 @@ mvn -pl ai-rag-demo test
 - 规则版 rerank 能重新排序相关候选、过滤越权候选，并保留原始召回证据。
 - 引用回答只使用选中的证据，无依据时拒答，并限制进入回答层的证据数量。
 - 检索前按租户和部门过滤。
-- `/api/rag/answer`、`/api/rag/lab/pipeline`、`/api/rag/lab/access`、`/api/rag/lab/retrieval`、`/api/rag/lab/rewrite`、`/api/rag/lab/index` 的 HTTP 合同。
+- `/api/rag/answer`、`/api/rag/live-answer`、`/api/rag/lab/pipeline`、`/api/rag/lab/access`、`/api/rag/lab/retrieval`、`/api/rag/lab/rewrite`、`/api/rag/lab/index` 的 HTTP 合同。
 - 前端页面必须暴露问答入口和 RAG 链路实验入口。

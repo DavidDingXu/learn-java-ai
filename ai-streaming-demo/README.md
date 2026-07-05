@@ -2,6 +2,8 @@
 
 `ai-streaming-demo` 演示 Java AI 应用里的 SSE 流式输出边界。代码把模型回复抽象成可恢复、可观测的事件流，而不是只在 Controller 里返回一个 `Flux<String>`。
 
+`/api/stream/ticket-advice/live` 会通过 Spring AI `ChatClient.stream()` 调真实模型并输出 SSE `model-token` 事件。未配置有效 `AI_API_KEY` 时，live 入口返回 `AI_CONFIGURATION_REQUIRED`。
+
 当前模块覆盖：
 
 - `StreamingController`：把业务事件转换成 `ServerSentEvent`。
@@ -53,6 +55,14 @@ curl -N 'http://localhost:8083/api/stream/ticket-advice?sessionId=s1001' \
 ```
 
 第二个请求会从 `s1001-2` 开始返回。
+
+配置真实模型后，可以验证真实模型流：
+
+```bash
+curl -N 'http://localhost:8083/api/stream/ticket-advice/live?question=客户申请退款但订单已经发货，应该怎么处理？'
+```
+
+重点看 SSE 事件里的 `event:model-token` 和最终 `event:done`。
 
 如果在页面里手动演示恢复，可以把 `sessionId` 保持为 `s1001`，把 `lastEventId` 填成 `s1001-1` 或 `s1001-2`。接口也兼容 `sessionId=s1001-2` 这种输入，会把它解释成从 `s1001` 会话的第二个事件之后恢复。
 

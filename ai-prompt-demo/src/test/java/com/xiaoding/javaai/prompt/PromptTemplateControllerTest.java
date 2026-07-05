@@ -69,4 +69,31 @@ class PromptTemplateControllerTest {
                 .andExpect(jsonPath("$.code").value("ticket-advice"))
                 .andExpect(jsonPath("$.version").value("rollback-v1"));
     }
+
+    @Test
+    void livePreviewRequiresRealAiConfiguration() throws Exception {
+        mockMvc.perform(post("/api/prompts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "code": "ticket-live",
+                                  "version": "v1",
+                                  "content": "工单：{ticket}"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/prompts/live-preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "code": "ticket-live",
+                                  "variables": {
+                                    "ticket": "客户申请退款"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"));
+    }
 }

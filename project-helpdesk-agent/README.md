@@ -13,7 +13,7 @@
 - Agent Trace
 - Agent Eval
 
-当前第一版使用内存仓储，方便读者直接运行测试。它已经把工单上下文、Tool API、人工确认、确认 token、幂等、状态检查、Tool 审计、Agent Trace 和 Agent Eval 这些边界落到代码里。MySQL、Redis、真实制度 RAG、真实模型建议和结构化输出还没有接入，后续应该通过仓储、API client、Spring AI `ChatClient` / `BeanOutputConverter` 和 Tool Calling 能力替换，不改 Agent 的受控执行边界。
+当前第一版使用内存仓储，方便读者直接运行测试。它已经把工单上下文、Tool API、人工确认、确认 token、幂等、状态检查、Tool 审计、Agent Trace 和 Agent Eval 这些边界落到代码里；`/api/helpdesk-agent/advice/live` 会先执行这些 Java 侧受控编排，再通过 Spring AI `ChatClient` 调真实模型生成客服可读建议。MySQL、Redis、真实制度 RAG 服务和更严格的结构化输出仍然作为后续替换项，不改 Agent 的受控执行边界。
 
 ## 核心类
 
@@ -83,6 +83,22 @@ curl -X POST http://localhost:8091/api/helpdesk-agent/advice \
     "department": "support"
   }'
 ```
+
+配置真实模型后，可以调用 live 建议入口：
+
+```bash
+curl -X POST http://localhost:8091/api/helpdesk-agent/advice/live \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticketId": "T-1001",
+    "question": "客户申请退款，但订单已经发货，应该怎么处理？",
+    "userId": "u1001",
+    "tenantId": "tenant-a",
+    "department": "support"
+  }'
+```
+
+重点看返回里的 `context.toolRecords`、`context.trace.steps` 和 `answer.content`。模型只生成建议文本，关闭工单、退款、转派这类写操作仍然必须走后端权限、状态、幂等和人工确认。
 
 关闭工单接口会要求人工确认：
 
@@ -160,6 +176,7 @@ traceStepNames = ticket.lookup, order.lookup, policy.search, advice.compose, app
 - Tool 调用进入 `ToolExecutionLedger`。
 - Agent 关键步骤进入 `AiTrace`。
 - Eval 同时评估引用命中和动作判断。
+- 真实模型建议入口在受控工作流之后执行。
 
 ### 阶段 2：基础设施替换
 
@@ -178,7 +195,7 @@ traceStepNames = ticket.lookup, order.lookup, policy.search, advice.compose, app
 
 1. 制度检索接入 `project-enterprise-rag` 的 REST API。
 2. 普通摘要、分类等文本调用复用 `ai-gateway-demo` 的路由、超时、重试、降级、日志和 trace 治理。
-3. 工单处理建议接入 Spring AI `ChatClient.responseEntity(...)` 和 `BeanOutputConverter`，再复用 `ai-output-demo` 的业务校验、坏输出 400 合同和 bad case 思路。
+3. 当前 live 入口已经接入 Spring AI `ChatClient`；下一步把工单处理建议升级为 `ChatClient.responseEntity(...)` 和 `BeanOutputConverter`，再复用 `ai-output-demo` 的业务校验、坏输出 400 合同和 bad case 思路。
 4. Tool 调用优先保留 Spring AI Tool Calling 能力，并继续通过 `TicketToolFacade` 落权限、幂等、人工确认和审计。
 5. 需要流式体验时，再接入 WebFlux / SSE。
 

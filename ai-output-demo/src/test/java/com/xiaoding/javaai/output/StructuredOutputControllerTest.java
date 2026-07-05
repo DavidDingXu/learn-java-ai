@@ -73,7 +73,7 @@ class StructuredOutputControllerTest {
     }
 
     @Test
-    void generatesTicketAdviceWithSpringAiPromptContract() throws Exception {
+    void generateEndpointRequiresRealAiConfiguration() throws Exception {
         String request = """
                 {
                   "ticket": "客户申请退款但订单已经发货",
@@ -83,17 +83,9 @@ class StructuredOutputControllerTest {
 
         mockMvc.perform(post("/api/output/ticket-advice/generate")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mode").value("sample"))
-                .andExpect(jsonPath("$.prompt", containsString("Your response should be in JSON format")))
-                .andExpect(jsonPath("$.prompt", containsString("riskLevel")))
-                .andExpect(jsonPath("$.prompt", containsString("nextActions")))
-                .andExpect(jsonPath("$.prompt", containsString("additionalProperties")))
-                .andExpect(jsonPath("$.rawOutput").doesNotExist())
-                .andExpect(jsonPath("$.advice.summary", containsString("订单已经发货")))
-                .andExpect(jsonPath("$.advice.riskLevel").value("MEDIUM"))
-                .andExpect(jsonPath("$.advice.nextActions[0]").value("核对物流状态"))
-                .andExpect(jsonPath("$.advice.citations[0]").value("refund-policy-001"));
+                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"))
+                .andExpect(jsonPath("$.detail", containsString("AI_API_KEY")));
     }
 }

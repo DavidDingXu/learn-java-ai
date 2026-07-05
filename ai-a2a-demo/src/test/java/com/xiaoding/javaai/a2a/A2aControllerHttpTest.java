@@ -97,6 +97,23 @@ class A2aControllerHttpTest {
                 .andExpect(jsonPath("$.statusMessage").value("ticket advice completed after human approval"));
     }
 
+    @Test
+    void liveTaskRequiresRealAiConfiguration() throws Exception {
+        mockMvc.perform(post("/api/a2a/tasks/live")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "skillId": "ticket.advice",
+                                  "input": {
+                                    "ticketId": "T-1001",
+                                    "question": "客户申请退款但订单已发货怎么办"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"));
+    }
+
     private String taskId(String json) throws Exception {
         JsonNode root = objectMapper.readTree(json);
         return root.path("taskId").asText();

@@ -1,5 +1,6 @@
 package com.xiaoding.javaai.output.service;
 
+import com.xiaoding.javaai.common.ai.RealAiRuntime;
 import com.xiaoding.javaai.output.RiskLevel;
 import com.xiaoding.javaai.output.TicketAdviceResponse;
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,9 +32,9 @@ public class TicketAdviceGenerationService {
         BeanOutputConverter<TicketAdviceResponse> outputConverter = new BeanOutputConverter<>(TicketAdviceResponse.class);
         String prompt = buildPrompt(input, outputConverter);
         ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
-        if (!realModelAvailable(builder)) {
-            TicketAdviceResponse advice = buildSampleAdvice(input);
-            return new GenerationOutput("sample", prompt, null, advice);
+        RealAiRuntime.requireConfigured(apiKey, "ai-output-demo");
+        if (builder == null) {
+            throw new IllegalStateException("ai-output-demo requires a Spring AI ChatClient.Builder bean");
         }
 
         try {
@@ -52,16 +53,6 @@ public class TicketAdviceGenerationService {
         }
     }
 
-    private boolean realModelAvailable(ChatClient.Builder builder) {
-        if (builder == null) {
-            return false;
-        }
-        if (apiKey == null || apiKey.isBlank()) {
-            return false;
-        }
-        return !apiKey.equals("demo-key") && !apiKey.equals("replace-with-your-api-key");
-    }
-
     private String buildPrompt(TicketAdviceGenerationInput input,
                                BeanOutputConverter<TicketAdviceResponse> outputConverter) {
         return new PromptTemplate("""
@@ -76,27 +67,11 @@ public class TicketAdviceGenerationService {
         ));
     }
 
-    private TicketAdviceResponse buildSampleAdvice(TicketAdviceGenerationInput input) {
-        return new TicketAdviceResponse(
-                sampleSummary(input.ticket()),
-                RiskLevel.MEDIUM,
-                java.util.List.of("核对物流状态", "转人工复核"),
-                java.util.List.of("refund-policy-001")
-        );
-    }
-
     private String rawContent(ChatResponse response) {
         if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
             return null;
         }
         return response.getResult().getOutput().getText();
-    }
-
-    private String sampleSummary(String ticket) {
-        if (ticket == null || ticket.isBlank()) {
-            return "客户申请退款但订单已经发货";
-        }
-        return ticket.replace("\"", "'");
     }
 
     public record TicketAdviceGenerationInput(String ticket, String policy) {

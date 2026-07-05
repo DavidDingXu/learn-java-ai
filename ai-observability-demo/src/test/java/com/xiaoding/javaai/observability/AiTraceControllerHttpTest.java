@@ -95,6 +95,22 @@ class AiTraceControllerHttpTest {
     }
 
     @Test
+    void liveModelCallRequiresRealAiConfiguration() throws Exception {
+        mockMvc.perform(post("/api/traces/live-model-call")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "userId": "u1001",
+                                  "scenario": "ticket-advice",
+                                  "promptVersion": "ticket-advice-v1",
+                                  "question": "客户申请退款但订单已发货怎么办"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"));
+    }
+
+    @Test
     void exposesQuotaFeedbackQualityAndCostEndpointsThroughHttpBinding() throws Exception {
         mockMvc.perform(post("/api/traces")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -4,7 +4,9 @@
 
 本模块演示企业里第一版 Agent 更适合做成受控工作流：先查工单，再查订单，再检索制度，然后评估风险，最后生成建议。高风险动作只给建议，不直接执行。
 
-模块里也包含一个受限 ReAct 示例：用脚本 planner 模拟模型选择工具，但通过 `ReActPolicy` 限制最大步骤和工具白名单。它不接真实 LLM，重点是演示 Java 工程里 ReAct 循环外面的护栏。
+`/api/agent/tickets/live-advice` 会先跑这条受控工作流，拿到后端步骤、工具结果和人工确认结论，再通过 Spring AI `ChatClient` 调真实模型生成面向客服的建议。未配置有效 `AI_API_KEY` 时，live 入口返回 `AI_CONFIGURATION_REQUIRED`。
+
+模块里也包含一个受限 ReAct 示例：用脚本 planner 固定工具选择路径，专门验证 `ReActPolicy` 的最大步骤和工具白名单。真实模型交互放在 `/api/agent/tickets/live-advice`；这个离线 planner 只负责让护栏测试稳定可回归，避免把模型随机性混进策略验证。
 
 受限 ReAct 示例还补了 `AgentHookChain`。Hook 会在动作执行前处理 PII 脱敏、工具白名单等治理逻辑，并把 `hookEvents` 写入 `ReActStep`。它和 `ReActPolicy` 的分工不同：Hook 更适合做动作级拦截、输入改写和风险标记，Policy 负责默认执行边界。
 
@@ -52,6 +54,22 @@ steps 包含 LOOKUP_ORDER 和 ASSESS_RISK
 ASSESS_RISK.autoExecutable=false
 ```
 
+配置真实模型后，可以调用 live 入口：
+
+```bash
+curl -X POST http://localhost:8089/api/agent/tickets/live-advice \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticketId": "T-1001",
+    "userQuestion": "客户申请 5000 元退款，但订单已经发货，能直接关闭工单吗？",
+    "userId": "u1001",
+    "tenantId": "tenant-a",
+    "department": "support"
+  }'
+```
+
+重点看返回里的 `modelAdvice` 和 `backendContext.steps`。模型只负责生成建议文本，不能绕过后端工作流直接执行写操作。
+
 上下文和 Hook 也可以直接用接口观察：
 
 ```bash
@@ -82,6 +100,6 @@ ConversationMemoryStoreTest：会话窗口、租户隔离、业务快照和长�
 AgentContextAssemblerTest：按 session scope 组装多轮上下文，防止跨会话复用业务快照。
 ContextEngineeringServiceTest：按预算裁剪上下文，保留业务快照、最近对话、用户偏好和历史摘要。
 SpringAiAdvisorMemoryBridgeTest：用 Spring AI `MessageChatMemoryAdvisor` 验证 scoped conversationId 和记忆注入，不经过 `AiCallGateway`。
-TicketAgentControllerTest：覆盖工单建议接口、上下文实验接口和 ReAct Hook 实验接口。
+TicketAgentControllerTest：覆盖工单建议接口、真实 AI live 配置边界、上下文实验接口和 ReAct Hook 实验接口。
 AiAgentApplicationContextTest：覆盖前端页面必须暴露工单建议、上下文预算和 ReAct 实验入口。
 ```

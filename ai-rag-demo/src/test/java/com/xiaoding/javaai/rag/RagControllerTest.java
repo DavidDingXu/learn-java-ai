@@ -40,6 +40,21 @@ class RagControllerTest {
     }
 
     @Test
+    void liveAnswerRequiresRealAiConfiguration() throws Exception {
+        mockMvc.perform(post("/api/rag/live-answer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "query": "客户申请退款但订单已发货怎么办",
+                                  "tenantId": "tenant-a",
+                                  "department": "support"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"));
+    }
+
+    @Test
     void exposesRagPipelineLabEndpointThroughHttpBinding() throws Exception {
         mockMvc.perform(post("/api/rag/lab/pipeline")
                         .contentType(MediaType.APPLICATION_JSON)

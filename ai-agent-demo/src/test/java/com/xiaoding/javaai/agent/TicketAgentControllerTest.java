@@ -44,6 +44,23 @@ class TicketAgentControllerTest {
     }
 
     @Test
+    void liveAdviceRequiresRealAiConfiguration() throws Exception {
+        mockMvc.perform(post("/api/agent/tickets/live-advice")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "ticketId": "T-1001",
+                                  "userQuestion": "客户申请 5000 元退款，但订单已经发货，能直接关闭工单吗？",
+                                  "userId": "u1001",
+                                  "tenantId": "tenant-a",
+                                  "department": "support"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"));
+    }
+
+    @Test
     void exposesContextLabEndpointThroughHttpBinding() throws Exception {
         String body = """
                 {

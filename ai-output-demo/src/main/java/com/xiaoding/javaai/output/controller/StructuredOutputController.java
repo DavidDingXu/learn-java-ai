@@ -42,6 +42,12 @@ public class StructuredOutputController {
         return new StructuredOutputError("STRUCTURED_OUTPUT_INVALID", "AI output cannot become a valid business object", error.getMessage());
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public StructuredOutputError handleMissingAiConfiguration(IllegalStateException error) {
+        return new StructuredOutputError("AI_CONFIGURATION_REQUIRED", "Real AI generation requires model configuration", error.getMessage());
+    }
+
     public record TicketAdviceGenerationRequest(String ticket, String policy) {
     }
 

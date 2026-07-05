@@ -11,6 +11,7 @@ import org.springframework.ai.converter.StructuredOutputConverter;
 import org.springframework.beans.factory.ObjectProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.mock;
@@ -20,25 +21,20 @@ import static org.mockito.Mockito.when;
 class TicketAdviceGenerationServiceTest {
 
     @Test
-    void sampleModeStillUsesSpringAiSchemaFormatForPromptContract() {
+    void refusesToGenerateAdviceWithoutRealAiConfiguration() {
         TicketAdviceGenerationService service = new TicketAdviceGenerationService(
                 objectProvider(null),
                 "demo-key",
                 "gpt-4o-mini"
         );
 
-        var output = service.generate(new TicketAdviceGenerationInput(
+        assertThatThrownBy(() -> service.generate(new TicketAdviceGenerationInput(
                 "客户申请退款但订单已经发货",
                 "已发货订单需要先核对物流状态"
-        ));
-
-        assertThat(output.mode()).isEqualTo("sample");
-        assertThat(output.rawOutput()).isNull();
-        assertThat(output.advice().riskLevel()).isEqualTo(RiskLevel.MEDIUM);
-        assertThat(output.prompt()).contains("Your response should be in JSON format");
-        assertThat(output.prompt()).contains("riskLevel");
-        assertThat(output.prompt()).contains("nextActions");
-        assertThat(output.prompt()).contains("additionalProperties");
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ai-output-demo")
+                .hasMessageContaining("AI_API_KEY");
     }
 
     @Test
@@ -83,7 +79,16 @@ class TicketAdviceGenerationServiceTest {
     }
 
     private ObjectProvider<ChatClient.Builder> objectProvider(ChatClient.Builder builder) {
-        return new ObjectProvider<>() {
+        return new TestObjectProvider(builder);
+    }
+
+    private static final class TestObjectProvider implements ObjectProvider<ChatClient.Builder> {
+        private final ChatClient.Builder builder;
+
+        private TestObjectProvider(ChatClient.Builder builder) {
+            this.builder = builder;
+        }
+
             @Override
             public ChatClient.Builder getObject(Object... args) throws BeansException {
                 return builder;
@@ -103,7 +108,6 @@ class TicketAdviceGenerationServiceTest {
             public ChatClient.Builder getObject() throws BeansException {
                 return builder;
             }
-        };
     }
 
     @SuppressWarnings("unchecked")

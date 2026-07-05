@@ -4,6 +4,8 @@ AI 全链路追踪 demo。
 
 本模块演示一次 AI 请求如何记录 Trace、Prompt/RAG/Model/Tool/Agent Span、模型 token 成本、用户/租户配额、坏 case 反馈，以及上线前的发布验收检查。
 
+`/api/traces/live-model-call` 会先创建 trace，再通过 Spring AI `ChatClient` 调真实模型，最后记录模型 token 估算、模型调用事件和 trace 快照。未配置有效 `AI_API_KEY` 时，live 入口返回 `AI_CONFIGURATION_REQUIRED`。
+
 ## 启动
 
 ```bash
@@ -106,6 +108,23 @@ curl http://localhost:8088/api/traces/cost/by-scenario
 
 当前 demo 使用内存汇总，生产项目可以换成 Micrometer、日志平台或数据库聚合。
 
+## 真实模型调用并记录 Trace
+
+配置真实模型后，可以跑一次完整模型调用追踪：
+
+```bash
+curl -X POST http://localhost:8088/api/traces/live-model-call \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "userId": "u1001",
+    "scenario": "ticket-advice",
+    "promptVersion": "ticket-advice-v1",
+    "question": "客户申请退款但订单已发货怎么办"
+  }'
+```
+
+重点看返回里的 `modelResult`、`trace.spans`、`trace.events` 和 `trace.cost`。
+
 ## 用户级和租户级配额
 
 ```bash
@@ -166,4 +185,5 @@ mvn -pl ai-observability-demo test
 - 用户级和租户级 token 配额。
 - 坏 case 反馈收集和质量报告。
 - Controller 结构化接口。
+- 真实 AI live 调用的配置边界。
 - 发布前压测、安全、灰度、回滚、值班和核心质量指标检查。

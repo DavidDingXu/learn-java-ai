@@ -58,6 +58,34 @@ class EnterpriseRagControllerTest {
     }
 
     @Test
+    void liveAnswerRequiresRealAiConfiguration() throws Exception {
+        mockMvc.perform(post("/api/enterprise-rag/documents")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "documentId": "refund-policy-live",
+                                  "tenantId": "tenant-a",
+                                  "departments": ["support"],
+                                  "type": "POLICY",
+                                  "content": "退款制度\\n发货后退款需先核对物流状态。"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/enterprise-rag/answers/live")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "question": "客户申请退款但订单已发货怎么办",
+                                  "tenantId": "tenant-a",
+                                  "department": "support"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"));
+    }
+
+    @Test
     void evaluatesRagQualityThroughHttpEndpoint() throws Exception {
         mockMvc.perform(post("/api/enterprise-rag/documents")
                 .contentType(MediaType.APPLICATION_JSON)

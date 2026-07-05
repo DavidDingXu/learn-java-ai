@@ -1,5 +1,7 @@
 package com.xiaoding.javaai.observability.controller;
 
+import com.xiaoding.javaai.common.ai.LiveAiResult;
+import com.xiaoding.javaai.common.ai.SpringAiChatCaller;
 import com.xiaoding.javaai.observability.service.AiSpan;
 import com.xiaoding.javaai.observability.service.AiEvent;
 import com.xiaoding.javaai.observability.service.AiTrace;
@@ -12,11 +14,19 @@ import com.xiaoding.javaai.observability.service.QualityReport;
 import com.xiaoding.javaai.observability.service.QuotaDecision;
 import com.xiaoding.javaai.observability.service.QuotaService;
 import com.xiaoding.javaai.observability.service.SpanType;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -29,11 +39,27 @@ public class AiTraceController {
     private final AiTraceRecorder recorder;
     private final QuotaService quotaService;
     private final FeedbackStore feedbackStore;
+    private final ObjectProvider<ChatClient.Builder> chatClientBuilderProvider;
+    private final String apiKey;
+    private final String modelName;
 
     public AiTraceController(AiTraceRecorder recorder, QuotaService quotaService, FeedbackStore feedbackStore) {
+        this(recorder, quotaService, feedbackStore, new EmptyChatClientBuilderProvider(), "demo-key", "gpt-4o-mini");
+    }
+
+    @Autowired
+    public AiTraceController(AiTraceRecorder recorder,
+                             QuotaService quotaService,
+                             FeedbackStore feedbackStore,
+                             ObjectProvider<ChatClient.Builder> chatClientBuilderProvider,
+                             @Value("${spring.ai.openai.api-key:}") String apiKey,
+                             @Value("${java-ai.observability.model-name:gpt-4o-mini}") String modelName) {
         this.recorder = recorder;
         this.quotaService = quotaService;
         this.feedbackStore = feedbackStore;
+        this.chatClientBuilderProvider = chatClientBuilderProvider;
+        this.apiKey = apiKey;
+        this.modelName = modelName;
     }
 
     @PostMapping
@@ -101,6 +127,40 @@ public class AiTraceController {
         return feedbackStore.reportByScenario(scenario);
     }
 
+    @PostMapping("/live-model-call")
+    public LiveTraceResponse liveModelCall(@RequestBody LiveTraceRequest request) {
+        AiTrace trace = recorder.startTrace(request.userId(), request.scenario());
+        recorder.recordPrompt(trace.traceId(), request.promptVersion(), List.of("question"));
+        LiveAiResult result = new SpringAiChatCaller(
+                chatClientBuilderProvider.getIfAvailable(),
+                apiKey,
+                modelName,
+                "ai-observability-demo"
+        ).call("你是企业工单系统里的 AI 助手。回答要短，并说明依据边界。", request.question());
+        int inputTokens = estimateTokens(request.question());
+        int outputTokens = estimateTokens(result.content());
+        recorder.recordModelUsage(trace.traceId(), result.model(), inputTokens, outputTokens, 0);
+        recorder.recordEvent(trace.traceId(), "model.call.completed", Map.of(
+                "model", result.model(),
+                "inputTokens", inputTokens,
+                "outputTokens", outputTokens
+        ));
+        return new LiveTraceResponse(result, recorder.snapshot(trace.traceId()));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public AiConfigurationError aiConfigurationError(IllegalStateException error) {
+        return new AiConfigurationError("AI_CONFIGURATION_REQUIRED", error.getMessage());
+    }
+
+    private int estimateTokens(String text) {
+        if (text == null || text.isBlank()) {
+            return 0;
+        }
+        return Math.max(1, text.length() / 2);
+    }
+
     public record StartTraceRequest(String userId, String scenario) {
     }
 
@@ -129,5 +189,36 @@ public class AiTraceController {
     }
 
     public record FeedbackRequest(String traceId, String scenario, String rating, String reason) {
+    }
+
+    public record LiveTraceRequest(String userId, String scenario, String promptVersion, String question) {
+    }
+
+    public record LiveTraceResponse(LiveAiResult modelResult, AiTraceSnapshot trace) {
+    }
+
+    public record AiConfigurationError(String code, String message) {
+    }
+
+    private static final class EmptyChatClientBuilderProvider implements ObjectProvider<ChatClient.Builder> {
+        @Override
+        public ChatClient.Builder getObject(Object... args) throws BeansException {
+            return null;
+        }
+
+        @Override
+        public ChatClient.Builder getIfAvailable() throws BeansException {
+            return null;
+        }
+
+        @Override
+        public ChatClient.Builder getIfUnique() throws BeansException {
+            return null;
+        }
+
+        @Override
+        public ChatClient.Builder getObject() throws BeansException {
+            return null;
+        }
     }
 }

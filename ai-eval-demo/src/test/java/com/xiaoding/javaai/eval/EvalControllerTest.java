@@ -12,6 +12,9 @@ import com.xiaoding.javaai.eval.service.PromptRegressionCase;
 import com.xiaoding.javaai.eval.service.PromptRegressionRunner;
 import com.xiaoding.javaai.eval.service.RagEvalRunner;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,7 +29,10 @@ class EvalControllerTest {
             new AgentEvalRunner(),
             new JudgeCalibrationRunner(),
             new PromptRegressionRunner(),
-            new HarnessExperimentRunner()
+            new HarnessExperimentRunner(),
+            objectProvider(null),
+            "demo-key",
+            "gpt-4o-mini"
     );
 
     @Test
@@ -84,5 +90,29 @@ class EvalControllerTest {
 
         assertThat(report.total()).isEqualTo(1);
         assertThat(report.promotableCandidates()).isEqualTo(1);
+    }
+
+    private static ObjectProvider<ChatClient.Builder> objectProvider(ChatClient.Builder builder) {
+        return new ObjectProvider<>() {
+            @Override
+            public ChatClient.Builder getObject(Object... args) throws BeansException {
+                return builder;
+            }
+
+            @Override
+            public ChatClient.Builder getIfAvailable() throws BeansException {
+                return builder;
+            }
+
+            @Override
+            public ChatClient.Builder getIfUnique() throws BeansException {
+                return builder;
+            }
+
+            @Override
+            public ChatClient.Builder getObject() throws BeansException {
+                return builder;
+            }
+        };
     }
 }

@@ -4,6 +4,8 @@
 
 这个模块提供了薄 Web 层和前端页面，用来观察 Agent Card、任务创建、状态事件、任务产物和 `INPUT_REQUIRED` 后的人工补充输入。核心协议对象仍然是 source of truth，Web 层只负责把任务状态机展示出来。
 
+`/api/a2a/tasks/live` 会先按 A2A 合同创建任务、记录事件和产物，再通过 Spring AI `ChatClient` 调真实模型生成调用方可读的处理建议。未配置有效 `AI_API_KEY` 时，live 入口返回 `AI_CONFIGURATION_REQUIRED`。
+
 示例场景是“工单 Agent 对外暴露处理建议 Skill”：
 
 - `AgentCard` 暴露 Agent 名称、入口和 Skill 清单。
@@ -49,6 +51,22 @@ http://localhost:8094/
 ```
 
 页面会调用 `/api/a2a/card`、`/api/a2a/tasks`、`/api/a2a/tasks/{taskId}/events` 和 `/api/a2a/tasks/{taskId}/input`，观察 Agent Card、任务状态、事件流、产物和人工确认继续执行。
+
+配置真实模型后，可以调用：
+
+```bash
+curl -X POST http://localhost:8094/api/a2a/tasks/live \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "skillId": "ticket.advice",
+    "input": {
+      "ticketId": "T-1001",
+      "question": "客户申请退款但订单已发货怎么办"
+    }
+  }'
+```
+
+重点看返回里的 `task.state`、`events` 和 `answer.content`。模型只总结 A2A task artifact 和状态，不能跳过 `INPUT_REQUIRED`。
 
 重点测试：
 

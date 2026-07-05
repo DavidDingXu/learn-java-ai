@@ -39,6 +39,21 @@ class EvalControllerHttpTest {
     }
 
     @Test
+    void liveJudgeRequiresRealAiConfiguration() throws Exception {
+        mockMvc.perform(post("/api/eval/judge/live")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "question": "发货后退款怎么处理",
+                                  "expectedEvidence": "发货后退款需先核对物流状态。",
+                                  "answer": "建议直接退款。"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"));
+    }
+
+    @Test
     void exposesRagAndAgentEvalEndpointsThroughHttpBinding() throws Exception {
         mockMvc.perform(post("/api/eval/rag/run")
                         .contentType(MediaType.APPLICATION_JSON)

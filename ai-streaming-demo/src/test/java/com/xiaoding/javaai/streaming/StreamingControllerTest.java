@@ -88,4 +88,14 @@ class StreamingControllerTest {
         assertThat(eventStream).contains("id:s1001-3");
         assertThat(eventStream).contains("event:done");
     }
+
+    @Test
+    void liveStreamRequiresRealAiConfiguration() {
+        webTestClient.get()
+                .uri("/api/stream/ticket-advice/live?question=退款怎么处理")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("AI_CONFIGURATION_REQUIRED");
+    }
 }

@@ -75,4 +75,17 @@ class ToolControllerTest {
                 .andExpect(jsonPath("$.length()", greaterThanOrEqualTo(3)))
                 .andExpect(jsonPath("$[0].toolName").value("ticket.lookup"));
     }
+
+    @Test
+    void liveAgentRequiresRealAiConfiguration() throws Exception {
+        mockMvc.perform(post("/api/tools/live-agent")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "question": "帮我查询 T-1001 并给退款建议"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("AI_CONFIGURATION_REQUIRED"));
+    }
 }

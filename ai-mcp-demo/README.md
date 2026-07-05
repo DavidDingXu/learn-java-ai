@@ -4,6 +4,8 @@
 
 这个模块提供了薄 Web 层和前端页面，用来观察 MCP Server 能力发现、Host Client 工具调用、资源权限过滤、审计记录和远程调试报告。核心协议对象仍然是 source of truth，Web 层只负责把这些合同展示出来。
 
+`/api/mcp/live-answer` 会先初始化 MCP session，再按 `ToolAccessPolicy` 调用 `policy.search`，渲染 MCP prompt，最后通过 Spring AI `ChatClient` 调真实模型生成制度回答。未配置有效 `AI_API_KEY` 时，live 入口返回 `AI_CONFIGURATION_REQUIRED`。
+
 示例场景是“企业制度中心 MCP Server”：
 
 - Server 暴露 `tools`、`resources`、`prompts`。
@@ -48,6 +50,25 @@ http://localhost:8093/
 ```
 
 页面会调用 `/api/mcp/session`、`/api/mcp/tools/call`、`/api/mcp/resources/read`、`/api/mcp/debug`，分别观察能力快照、工具 allowlist、资源可见性和远程调试报告。
+
+配置真实模型后，可以调用：
+
+```bash
+curl -X POST http://localhost:8093/api/mcp/live-answer \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticketSummary": "客户申请退款但订单已发货",
+    "query": "退款",
+    "operator": {
+      "userId": "u1001",
+      "tenantId": "tenant-a",
+      "department": "support",
+      "permissions": []
+    }
+  }'
+```
+
+重点看返回里的 `session.tools`、`toolResult.data.matches`、`prompt` 和 `answer.content`。模型只接收 MCP Host 允许访问的工具结果。
 
 重点测试：
 
