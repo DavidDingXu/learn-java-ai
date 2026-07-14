@@ -1,0 +1,68 @@
+$ErrorActionPreference = "Stop"
+
+$RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$ReportPrefix = if ($args.Count -gt 0) { $args[0] } else { Join-Path $RootDir "docs/reports/lesson-12-live-model-eval" }
+$Port = if ($env:JAVA_AI_EVAL_PORT) { $env:JAVA_AI_EVAL_PORT } else { "18081" }
+
+foreach ($Name in @("JAVA_AI_CHAT_API_KEY", "JAVA_AI_CHAT_BASE_URL", "JAVA_AI_CHAT_MODEL", "JAVA_AI_MAIN_JAVA_HOME", "JAVA_AI_EVAL_BEARER_TOKEN", "JAVA_AI_JWT_ISSUER")) {
+  if (-not (Get-Item "Env:$Name" -ErrorAction SilentlyContinue).Value) {
+    throw "$Name is required."
+  }
+}
+
+if (-not $env:JAVA_AI_DEV_JWT_HMAC_SECRET -and -not $env:JAVA_AI_JWT_JWK_SET_URI) {
+  throw "JAVA_AI_DEV_JWT_HMAC_SECRET or JAVA_AI_JWT_JWK_SET_URI is required."
+}
+
+$Commit = if ($env:JAVA_AI_EVAL_COMMIT) { $env:JAVA_AI_EVAL_COMMIT } else { git -C $RootDir rev-parse HEAD }
+& (Join-Path $RootDir "mvnw.cmd") -f (Join-Path $RootDir "pom.xml") `
+  -pl services/knowledge-service,quality/eval-runner -am package -DskipTests
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+$ServiceJar = Join-Path $RootDir "services/knowledge-service/target/knowledge-service-0.1.0-SNAPSHOT.jar"
+$Java = Join-Path $env:JAVA_AI_MAIN_JAVA_HOME "bin/java.exe"
+$SecurityArgs = @(
+  "--java-ai.security.jwt.enabled=true",
+  "--java-ai.security.jwt.issuer=$($env:JAVA_AI_JWT_ISSUER)",
+  "--java-ai.security.jwt.audience=$(if ($env:JAVA_AI_JWT_AUDIENCE) { $env:JAVA_AI_JWT_AUDIENCE } else { 'knowledge-service' })",
+  "--java-ai.security.jwt.allowed-actors=$(if ($env:JAVA_AI_JWT_ALLOWED_ACTORS) { $env:JAVA_AI_JWT_ALLOWED_ACTORS } else { 'customer-bff' })"
+)
+if ($env:JAVA_AI_DEV_JWT_HMAC_SECRET) {
+  $SecurityArgs += "--java-ai.security.jwt.hmac-secret=$($env:JAVA_AI_DEV_JWT_HMAC_SECRET)"
+} else {
+  $SecurityArgs += "--java-ai.security.jwt.jwk-set-uri=$($env:JAVA_AI_JWT_JWK_SET_URI)"
+}
+$ServiceArgs = @(
+  "-jar", $ServiceJar,
+  "--spring.profiles.active=live-model",
+  "--server.address=127.0.0.1",
+  "--server.port=$Port"
+)
+$ServiceArgs += $SecurityArgs
+$Process = Start-Process -FilePath $Java -PassThru -NoNewWindow -ArgumentList $ServiceArgs
+
+try {
+  $Healthy = $false
+  for ($Attempt = 0; $Attempt -lt 60; $Attempt++) {
+    try {
+      Invoke-RestMethod -Uri "http://127.0.0.1:$Port/actuator/health" | Out-Null
+      $Healthy = $true
+      break
+    } catch {
+      Start-Sleep -Seconds 1
+    }
+  }
+  if (-not $Healthy) { throw "Knowledge Service did not become healthy." }
+
+  & $Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar") `
+    model-eval `
+    --dataset (Join-Path $RootDir "datasets/model-interaction/golden-set-v2.jsonl") `
+    --base-url "http://127.0.0.1:$Port" `
+    --mode LIVE_MODEL `
+    --bearer-token $env:JAVA_AI_EVAL_BEARER_TOKEN `
+    --report $ReportPrefix `
+    --commit $Commit
+  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+} finally {
+  Stop-Process -Id $Process.Id -ErrorAction SilentlyContinue
+}

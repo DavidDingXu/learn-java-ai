@@ -1,0 +1,47 @@
+spring:
+  flyway:
+    enabled: true
+  ai:
+    model:
+      audio:
+        speech: none
+        transcription: none
+      chat: openai
+      embedding: openai
+      image: none
+      moderation: none
+    openai:
+      api-key: ${JAVA_AI_CHAT_API_KEY}
+      base-url: ${JAVA_AI_CHAT_BASE_URL}
+      chat:
+        model: ${JAVA_AI_CHAT_MODEL}
+      embedding:
+        model: ${JAVA_AI_EMBEDDING_MODEL}
+
+java-ai:
+  runtime:
+    execution-mode: LIVE_MODEL
+    external-integrations-enabled: true
+  security:
+    jwt:
+      enabled: true
+      issuer: ${JAVA_AI_JWT_ISSUER}
+      audience: ${JAVA_AI_JWT_AUDIENCE:knowledge-service}
+      jwk-set-uri: ${JAVA_AI_JWT_JWK_SET_URI:}
+      hmac-secret: ${JAVA_AI_DEV_JWT_HMAC_SECRET:}
+      allowed-actors: ${JAVA_AI_JWT_ALLOWED_ACTORS:customer-bff,ticket-agent-service}
+  knowledge:
+    context-source: retrieval
+    postgres:
+      jdbc-url: ${JAVA_AI_POSTGRES_URL}
+      username: ${JAVA_AI_POSTGRES_USER}
+      password: ${JAVA_AI_POSTGRES_PASSWORD}
+      maximum-pool-size: ${JAVA_AI_POSTGRES_POOL_SIZE:10}
+    retrieval:
+      mode: hybrid
+      top-k: ${JAVA_AI_RETRIEVAL_TOP_K:6}
+      embedding-dimensions: ${JAVA_AI_EMBEDDING_DIMENSIONS:1536}
+      candidate-k: ${JAVA_AI_RETRIEVAL_CANDIDATE_K:20}
+      lexical-search: true
+      rewrite-query: false
+      rerank: false

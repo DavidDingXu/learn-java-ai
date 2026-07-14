@@ -1,0 +1,279 @@
+openapi: 3.1.0
+info:
+  title: Knowledge Service API
+  version: 1.0.0
+  description: Grounded enterprise knowledge answers. Caller identity comes only from the bearer token.
+servers:
+  - url: http://localhost:8081
+paths:
+  /api/v1/knowledge/answers:
+    post:
+      operationId: answerKnowledgeQuestion
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeAnswerRequest'
+      responses:
+        '200':
+          description: Grounded answer with source citations and model metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeAnswerResponse'
+        '400':
+          description: Invalid business input.
+        '401':
+          description: Missing or invalid delegated token.
+        '403':
+          description: Authenticated token does not have knowledge:answer scope.
+        '429':
+          description: Model concurrency limit reached.
+        '502':
+          description: Model output or Provider response is invalid.
+        '503':
+          description: Model is not configured or the circuit is open.
+        '504':
+          description: Model call timed out.
+  /api/v1/knowledge/answers/stream:
+    post:
+      operationId: streamKnowledgeAnswer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeAnswerRequest'
+      responses:
+        '200':
+          description: Ordered metadata, delta, heartbeat, citation, completed or error events.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/AnswerStreamEvent'
+        '400':
+          description: Invalid business input.
+        '401':
+          description: Missing or invalid delegated token.
+        '403':
+          description: Authenticated token does not have knowledge:answer scope.
+  /internal/v1/knowledge/retrieval/evaluations:
+    post:
+      operationId: evaluateKnowledgeRetrieval
+      description: Internal retrieval contract for versioned Golden Set evaluation. Identity and access scope come only from the bearer token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeRetrievalEvaluationRequest'
+      responses:
+        '200':
+          description: Ordered chunk identifiers returned by the configured retrieval plan.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeRetrievalEvaluationResponse'
+        '400':
+          description: Invalid question or TopK.
+        '401':
+          description: Missing or invalid delegated token.
+        '403':
+          description: Authenticated token does not have knowledge:eval scope.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    KnowledgeAnswerRequest:
+      type: object
+      additionalProperties: false
+      required: [question]
+      properties:
+        question:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        conversationContext:
+          $ref: '#/components/schemas/ConversationContext'
+    ConversationContext:
+      type: object
+      additionalProperties: false
+      properties:
+        summary:
+          type: string
+          maxLength: 1000
+        turns:
+          type: array
+          maxItems: 12
+          items:
+            $ref: '#/components/schemas/ConversationTurn'
+    ConversationTurn:
+      type: object
+      additionalProperties: false
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [USER, ASSISTANT]
+        content:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    KnowledgeAnswerResponse:
+      type: object
+      additionalProperties: false
+      required: [answer, citations, refused, refusalReason, model, usage, finishReason, traceId, executionMode]
+      properties:
+        answer:
+          type: string
+        citations:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [documentId, version, sectionId, title]
+            properties:
+              documentId:
+                type: string
+              version:
+                type: string
+              sectionId:
+                type: string
+              title:
+                type: string
+        refused:
+          type: boolean
+        refusalReason:
+          type: [string, 'null']
+        model:
+          type: string
+        usage:
+          type: object
+          additionalProperties: false
+          required: [promptTokens, completionTokens, totalTokens]
+          properties:
+            promptTokens:
+              type: integer
+              format: int32
+              minimum: 0
+            completionTokens:
+              type: integer
+              format: int32
+              minimum: 0
+            totalTokens:
+              type: integer
+              format: int32
+              minimum: 0
+        finishReason:
+          type: string
+        traceId:
+          type: string
+        executionMode:
+          type: string
+          enum: [LOCAL_DISABLED, PROVIDER_PROTOCOL_FIXTURE, LIVE_MODEL]
+    KnowledgeRetrievalEvaluationRequest:
+      type: object
+      additionalProperties: false
+      required: [question, topK]
+      properties:
+        question:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        topK:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+    KnowledgeRetrievalEvaluationResponse:
+      type: object
+      additionalProperties: false
+      required: [embeddingModel, chunkIds]
+      properties:
+        embeddingModel:
+          type: string
+          minLength: 1
+        chunkIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+    AnswerStreamEvent:
+      oneOf:
+        - $ref: '#/components/schemas/MetadataEvent'
+        - $ref: '#/components/schemas/DeltaEvent'
+        - $ref: '#/components/schemas/HeartbeatEvent'
+        - $ref: '#/components/schemas/CitationEvent'
+        - $ref: '#/components/schemas/CompletedEvent'
+        - $ref: '#/components/schemas/ErrorEvent'
+    MetadataEvent:
+      type: object
+      additionalProperties: false
+      required: [traceId, promptVersion, executionMode]
+      properties:
+        traceId: { type: string }
+        promptVersion: { type: string }
+        executionMode:
+          type: string
+          enum: [LOCAL_DISABLED, PROVIDER_PROTOCOL_FIXTURE, LIVE_MODEL]
+    DeltaEvent:
+      type: object
+      additionalProperties: false
+      required: [text]
+      properties:
+        text: { type: string }
+    HeartbeatEvent:
+      type: object
+      additionalProperties: false
+      required: [epochMillis]
+      properties:
+        epochMillis: { type: integer, format: int64 }
+    CitationEvent:
+      type: object
+      additionalProperties: false
+      required: [citation]
+      properties:
+        citation:
+          type: object
+          additionalProperties: false
+          required: [documentId, version, sectionId, title]
+          properties:
+            documentId: { type: string }
+            version: { type: string }
+            sectionId: { type: string }
+            title: { type: string }
+    CompletedEvent:
+      type: object
+      additionalProperties: false
+      required: [model, usage, finishReason, ttftMillis]
+      properties:
+        model: { type: string }
+        usage:
+          $ref: '#/components/schemas/ModelUsage'
+        finishReason: { type: string }
+        ttftMillis: { type: integer, format: int64 }
+    ErrorEvent:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+    ModelUsage:
+      type: object
+      additionalProperties: false
+      required: [promptTokens, completionTokens, totalTokens]
+      properties:
+        promptTokens: { type: integer, format: int32, minimum: 0 }
+        completionTokens: { type: integer, format: int32, minimum: 0 }
+        totalTokens: { type: integer, format: int32, minimum: 0 }

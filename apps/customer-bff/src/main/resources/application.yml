@@ -1,0 +1,68 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: customer-bff
+  profiles:
+    default: local-lite
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local-lite
+
+java-ai:
+  runtime:
+    external-integrations-enabled: false
+  security:
+    customer-jwt:
+      enabled: false
+  consultation:
+    session-ttl: 30m
+    max-turns: 8
+    max-estimated-tokens: 1200
+    max-summary-chars: 800
+    rate-limit:
+      requests: 20
+      window: 1m
+
+---
+spring:
+  config:
+    activate:
+      on-profile: shared-dev
+
+java-ai:
+  runtime:
+    external-integrations-enabled: true
+  security:
+    customer-jwt:
+      enabled: true
+      issuer: ${JAVA_AI_CUSTOMER_JWT_ISSUER}
+      audience: customer-bff
+      jwk-set-uri: ${JAVA_AI_CUSTOMER_JWT_JWK_SET_URI:}
+      hmac-secret: ${JAVA_AI_CUSTOMER_JWT_HMAC_SECRET:}
+  identity:
+    token-endpoint: ${JAVA_AI_TOKEN_EXCHANGE_ENDPOINT}
+    client-id: ${JAVA_AI_TOKEN_EXCHANGE_CLIENT_ID}
+    client-secret: ${JAVA_AI_TOKEN_EXCHANGE_CLIENT_SECRET}
+    timeout: 5s
+  downstream:
+    knowledge:
+      base-url: ${JAVA_AI_KNOWLEDGE_BASE_URL:http://localhost:8081}
+      timeout: 10s
+      stream-idle-timeout: 30s
+    ticket:
+      base-url: ${JAVA_AI_TICKET_BASE_URL:http://localhost:8082}
+      timeout: 5s

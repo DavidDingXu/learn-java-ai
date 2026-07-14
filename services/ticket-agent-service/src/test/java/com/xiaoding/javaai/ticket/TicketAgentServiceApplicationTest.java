@@ -1,0 +1,45 @@
+package com.xiaoding.javaai.ticket;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.client.RestTestClient;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@ActiveProfiles("local-lite")
+@AutoConfigureRestTestClient
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class TicketAgentServiceApplicationTest {
+
+    @Autowired
+    private Environment environment;
+
+    @Autowired
+    private RestTestClient client;
+
+    @Test
+    void startsWithoutExternalInfrastructureAndExposesOnlyHealth() {
+        assertThat(environment.matchesProfiles("local-lite")).isTrue();
+        assertThat(environment.getProperty("spring.application.name"))
+                .isEqualTo("ticket-agent-service");
+        assertThat(environment.getProperty(
+                "java-ai.runtime.external-integrations-enabled", Boolean.class))
+                .isFalse();
+
+        client.get()
+                .uri("/actuator/health")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo("UP");
+
+        client.get()
+                .uri("/actuator/env")
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+}

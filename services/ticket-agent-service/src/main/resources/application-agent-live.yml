@@ -1,0 +1,26 @@
+spring:
+  ai:
+    retry:
+      max-attempts: 1
+    model:
+      audio:
+        speech: none
+        transcription: none
+      chat: openai
+      embedding: none
+      image: none
+      moderation: none
+    openai:
+      api-key: ${JAVA_AI_CHAT_API_KEY}
+      base-url: ${JAVA_AI_CHAT_BASE_URL}
+      chat:
+        model: ${JAVA_AI_CHAT_MODEL}
+
+java-ai:
+  runtime:
+    external-integrations-enabled: true
+  agent:
+    downstream-enabled: false
+  security:
+    jwt:
+      enabled: false

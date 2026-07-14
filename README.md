@@ -1,145 +1,191 @@
-# Java + AI 工程化落地实战
+# Java AI Engineering Practice
 
-这个仓库是 **Java + AI 工程化落地实战** 的开源代码项目，面向有 Spring Boot 经验的 Java 后端工程师。代码从普通 Chat 调用治理、Prompt、RAG、Tool API、Agent、Eval 到全链路追踪逐步展开，目标是把 AI 能力接进可运行、可测试、可替换的后端工程。
+这是《Java + AI 应用开发落地实战》的配套代码项目，面向已经具备 Spring Boot 和 HTTP API 开发经验的 Java 后端工程师。项目围绕企业知识服务、C 端自助咨询、工单 AI 协同和 JDK8 老系统接入持续演进。
 
-读者 clone 后，准备 JDK 21+ 和 Maven 就能先跑测试；配置模型地址和 API Key 后，可以直接调用各模块的 `live` 接口和两个主项目的真实模型链路。Redis、MySQL、pgvector、MinIO 仍然作为后续基础设施替换项。
+## 当前状态
 
-这个项目优先使用 Spring AI / Spring AI Alibaba / LangChain4j 已经提供的底层能力。demo 和主项目重点补的是 Java 工程治理：权限、审计、Trace、Eval、成本、限流、灰度、回滚、坏 case 复盘和生产替换点。内存实现或规则实现只用于表达边界，不代表要重写框架能力。
+当前为 **付费专栏发布基线**，已经完成：
 
-项目按三层组织：
+- 三个可启动的 Java 21 HTTP 应用和健康检查。
+- 一个依赖轻量的 Eval Runner 入口。
+- 一个使用真实 Java 8 编译的独立客户端工程。
+- Spring AI Alibaba、LangChain4j、AgentScope 和协议互操作四个有实现、有测试的隔离实验构建。
+- macOS/Linux 与 Windows 两套验证脚本合同。
+- 不依赖外部数据库、模型密钥或业务网络的日常测试路径。
+- Knowledge Service 的 Spring AI、WebFlux、可靠性和可观测依赖边界。
+- Customer BFF 的客户 JWT、RFC 8693 Token Exchange、下游客户端认证与 audience/scope 隔离。
+- 默认离线、显式真实模型两套配置边界，以及真实 JDK21/JDK8 CI 合同。
+- 第一条固定政策上下文问答、Spring AI 业务适配器、确定性模型协议合同和真实模型验证入口。
+- 版本化 Prompt、信任分区、结构化输出、业务校验和带稳定事件合同的 SSE。
+- 面向知识回答用例的超时、并发、断路器和安全读重试。
+- 独立 HTTP Eval Runner、5 条 Golden Set、合同评测和真实模型评测。
+- Micrometer Observation、Spring AI 原生观测和 HTTP Trace 关联。
+- 知识文档版本冲突、重复内容、上传校验、本地文件对象存储和确定性政策切分。
+- PostgreSQL/pgvector 结构、Embedding 模型隔离、TopK 前 ACL 与有效期过滤。
+- 向量与 trigram 混合检索、RRF 融合、可配置候选预算和受控 Rerank 边界。
+- JWT 中租户、主体和部门范围到检索 SQL 的完整传递。
+- 索引任务租约、尝试预算、原子领取、JDBC 队列和确定性文档版本索引服务。
+- 版本化检索 Golden Set、受 `knowledge:eval` 保护的评测接口、Recall@K、HitRate@K、MRR、重复率、p95 延迟和阈值门禁。
+- C 端完整回答与 SSE 接口、会话/尝试标识、取消与异常状态收口。
+- 带 TTL、消息窗口、Token 估算、裁剪和事实隔离摘要的短时会话。
+- 绑定回答尝试的反馈、可追踪重试和不可变工单升级快照。
+- Ticket Agent Service 的委托 JWT 校验、幂等键、请求指纹、重复返回与冲突拒绝。
+- Ticket Agent Service 的 PostgreSQL/Flyway 任务、确认执行状态和审计持久化，以及不在数据库事务中调用远程 Tool 的两阶段执行边界。
+- 受限步数 Agent 状态机、Spring AI 2.0 结构化规划、模型元数据和真实模型烟测。
+- 服务端 Tool 目录、参数白名单、只读知识查询、写操作风险分级和人工确认单。
+- 确认幂等、乐观版本、确定性拒绝与未知执行结果分流、低敏审计事件。
+- Knowledge Service 与 Java 8 Legacy Tool 的 HTTP 适配器，以及开发联调用委托 JWT 签发器。
+- 独立 Java 8 任务查询与确认客户端，认证、连接池、超时、错误映射和未知结果异常。
+- Agent Golden Set、三令牌公开 HTTP 评测器和 JSON/Markdown 报告入口。
+- Injection 绕过确认、合成 PII 审计泄露和身份字段污染的安全回归数据集与跨平台入口。
+- Ticket Agent 规划次数、Token 分布、Tool 结果与耗时的 Micrometer 指标，shared-dev 暴露 Prometheus 端点。
+- Agent Run 公平信号量并发门禁、稳定 429 错误合同，以及异常路径的许可释放测试。
+- local-lite、shared-dev、CI 三种环境配置、证据边界和跨平台验证入口。
+- 跨平台 release gate：全构建、合同、Java 8、专栏门禁、敏感信息扫描和可选外部健康证据。
+- DashScope Provider 适配、国内 Embedding/Rerank 同集评测和 Spring AI Alibaba 人工确认 Graph。
+- LangChain4j AI Services、租户受限 RAG、Tool 循环、结构化输出和按业务能力共存策略。
+- AgentScope 2.0 Tool 权限复用、人工确认事件、MCP 外部 Tool 注册和 A2A 任务状态边界。
+- MCP Java SDK 2.0.0 的 Streamable HTTP 初始化、工具发现和只读调用互操作。
+- A2A Java SDK 1.1.0.Final 的 Agent Card 发现、Skill 准入、JSON-RPC 消息发送与 Task 映射。
+- 50 条检索、30 条 Agent 和 30 条安全教学回归数据；公司落地必须替换或扩展为真实业务分布。
+- Customer BFF、Knowledge Service、Ticket Agent Service 和 JDK8 Legacy Tool 四份 OpenAPI 合同。
 
-```text
-框架原生能力：ChatClient、PromptTemplate、BeanOutputConverter、ToolCallback、Advisor、Memory、VectorStore
-  -> 业务用例编排：工单建议、企业知识问答、Tool 调用、Agent 任务
-  -> 工程治理：权限、审计、Trace、Eval、成本、限流、灰度、回滚、bad case
-```
+当前已经完成真实模型调用、企业 RAG、C 端会话与信任交互、幂等工单升级、受控 Agent、Java 8 客户端、安全回归、标准指标、跨平台发布门禁，以及框架和协议隔离实验。业务接口始终要求受信身份，不把租户和客户身份放进请求体。Labs 证明依赖、API、协议互操作和业务边界可编译、可回归，不等于相关 Provider、生产 MCP Server 或远程 Agent 已在公司网络完成联调。PostgreSQL/pgvector 真实指标仍需共享测试环境；进程内会话和限流只用于 local-lite，Ticket Agent 的共享环境状态已使用 JDBC/Flyway，但仍需目标 PostgreSQL 上的迁移、并发、备份恢复和容量验证。S3 兼容对象存储、生产索引写入、真实 IdP Token Exchange、外部 JDK8 Tool 服务、正式 Customer Web、持久 UNKNOWN 对账和端到端容量验证仍需公司环境完成。
 
-`ai-gateway-demo` 只演示普通 Chat 调用治理。结构化输出、Tool Calling、Advisor、Memory、RAG 等模块会优先保留 Spring AI 原生能力，再把同类治理字段接到对应链路上。
-
-## 技术主线
-
-- 主线框架：Spring AI
-- 国内生态补充：Spring AI Alibaba
-- 对照框架：LangChain4j
-- 高阶扩展：AgentScope Java
-- 工程底座：Java 21、Spring Boot 3.x、Maven 多模块
-
-## 当前模块
-
-```text
-ai-common          // 通用 DTO、trace、异常模型
-ai-gateway-demo    // 普通 Chat 调用治理 demo
-ai-streaming-demo  // SSE 流式输出 demo
-ai-prompt-demo     // Prompt 模板、变量、版本 demo
-ai-output-demo     // Spring AI 结构化输出 demo
-ai-rag-demo        // 企业 RAG 权限过滤和引用 demo
-ai-tool-demo       // Agent Tool API、人工确认、审计 demo
-ai-agent-demo      // 受控工作流 Agent demo
-ai-legacy-demo     // 老 JDK8 系统接入外部 Agent 服务 demo
-ai-mcp-demo        // MCP Host / Client / Server 边界 demo
-ai-a2a-demo        // A2A Agent Card、Skill、Task 状态 demo
-ai-eval-demo       // Golden Set 评测 demo
-ai-observability-demo // AI Trace、Span、成本追踪 demo
-project-enterprise-rag // 企业制度 RAG 知识库主项目
-project-helpdesk-agent // 企业工单 AI 助手主项目
-docs/              // 路线图、框架选型、启动说明
-docs/delivery/     // AI 项目上线前交付文档样例
-```
-
-## 两个主项目
-
-这个仓库用两个主项目承接完整业务链路：一个解决企业知识库问题，一个解决业务 Agent 执行问题。
-
-| 主项目 | 目标 | 先看什么 |
-|---|---|---|
-| `project-enterprise-rag` | 企业制度知识库，回答要有权限、有引用、可评测、可追踪 | `EnterpriseRagProjectTest`、`EnterpriseRagControllerTest` |
-| `project-helpdesk-agent` | 企业工单 AI 助手，Agent 调工具要受控、可确认、可审计 | `HelpdeskAgentProjectTest`、`HelpdeskAgentControllerTest` |
-
-demo 模块讲单点机制，两个主项目串完整链路。建议按 [docs/main-project-roadmap.md](docs/main-project-roadmap.md) 学习：先跑内存版边界，再把普通 Chat 治理、Spring AI 结构化输出、RAG、Tool、Eval、Trace 对应回主项目，最后替换基础设施。
-
-## 快速运行
-
-完整说明见 [docs/quick-start.md](docs/quick-start.md)。
-
-1. 准备 JDK 21。
-2. 复制 `.env.example`，按自己的模型服务填写 `AI_BASE_URL`、`AI_API_KEY`、`AI_CHAT_MODEL`、`AI_EMBEDDING_MODEL`，并在当前终端执行 `set -a && source .env && set +a`。
-3. 在项目根目录先安装一次本地多模块依赖：
-
-```bash
-mvn install -DskipTests
-```
-
-4. 启动网关 demo：
-
-```bash
-mvn -pl ai-gateway-demo spring-boot:run
-```
-
-5. 验证接口：
-
-```bash
-curl -X POST http://localhost:8081/api/ai/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"userId":"u1001","message":"帮我总结一下：客户申请退款，但订单已经发货。"}'
-```
-
-## 学习方式
-
-这个项目按专题组织 demo 和主项目。建议先进入对应 demo 模块运行测试，看清单点机制；再进入两个主项目，观察同一个能力在完整业务链路里的位置。
-
-## 真实 AI 入口
-
-稳定单元测试默认不访问外部模型；所有涉及模型生成、embedding、Tool Calling、LLM-as-Judge、Trace 的模块都提供真实 AI `live` 入口。未配置有效 `AI_API_KEY` 时，这些入口返回 `AI_CONFIGURATION_REQUIRED`，不会降级成假样例。
-
-| 模块 | 真实 AI 入口 |
-|---|---|
-| `ai-streaming-demo` | `GET /api/stream/ticket-advice/live` |
-| `ai-prompt-demo` | `POST /api/prompts/live-preview` |
-| `ai-output-demo` | `POST /api/output/ticket-advice/generate` |
-| `ai-rag-demo` | `POST /api/rag/live-answer` |
-| `ai-tool-demo` | `POST /api/tools/live-agent` |
-| `ai-agent-demo` | `POST /api/agent/tickets/live-advice` |
-| `ai-mcp-demo` | `POST /api/mcp/live-answer` |
-| `ai-a2a-demo` | `POST /api/a2a/tasks/live` |
-| `ai-eval-demo` | `POST /api/eval/judge/live` |
-| `ai-observability-demo` | `POST /api/traces/live-model-call` |
-| `project-enterprise-rag` | `POST /api/enterprise-rag/answers/live` |
-| `project-helpdesk-agent` | `POST /api/helpdesk-agent/advice/live` |
-
-`ai-legacy-demo` 保持 JDK8 边界，不直接引入 Spring AI；它通过 `HttpLegacyAgentClient` 调用外部 Agent 服务，例如 `project-helpdesk-agent` 的 `/api/helpdesk-agent/advice/live`。
-
-## 前端 demo 入口
-
-有接口的模块都提供了对应的静态前端页面，页面放在各自 module 的 `src/main/resources/static/index.html`，启动服务后直接打开模块根路径即可。页面不是简单展示 JSON，而是按业务动作展示流式输出、证据引用、人工确认、Trace 时间线和评测结果。
-
-第一次只启动单个模块前，先在项目根执行一次 `mvn install -DskipTests`，让 `ai-common` 等内部模块进入本地 Maven 仓库。
-
-| 模块 | 启动命令 | 页面 |
-|---|---|---|
-| `ai-gateway-demo` | `mvn -pl ai-gateway-demo spring-boot:run` | `http://localhost:8081/` |
-| `ai-streaming-demo` | `mvn -pl ai-streaming-demo spring-boot:run` | `http://localhost:8083/` |
-| `ai-prompt-demo` | `mvn -pl ai-prompt-demo spring-boot:run` | `http://localhost:8084/` |
-| `ai-output-demo` | `mvn -pl ai-output-demo spring-boot:run` | `http://localhost:8082/` |
-| `ai-rag-demo` | `mvn -pl ai-rag-demo spring-boot:run` | `http://localhost:8086/` |
-| `ai-tool-demo` | `mvn -pl ai-tool-demo spring-boot:run` | `http://localhost:8087/` |
-| `ai-observability-demo` | `mvn -pl ai-observability-demo spring-boot:run` | `http://localhost:8088/` |
-| `ai-agent-demo` | `mvn -pl ai-agent-demo spring-boot:run` | `http://localhost:8089/` |
-| `ai-eval-demo` | `mvn -pl ai-eval-demo spring-boot:run` | `http://localhost:8090/` |
-| `project-helpdesk-agent` | `mvn -pl project-helpdesk-agent spring-boot:run` | `http://localhost:8091/` |
-| `project-enterprise-rag` | `mvn -pl project-enterprise-rag spring-boot:run` | `http://localhost:8092/` |
-| `ai-mcp-demo` | `mvn -pl ai-mcp-demo spring-boot:run` | `http://localhost:8093/` |
-| `ai-a2a-demo` | `mvn -pl ai-a2a-demo spring-boot:run` | `http://localhost:8094/` |
-
-## 交付文档
-
-AI 项目上线前不能只交代码。`docs/delivery/` 放了五份最小交付文档样例：
+## 模块边界
 
 ```text
-01-requirements-spec.md
-02-system-design.md
-03-api-contract.md
-04-eval-plan.md
-05-release-plan.md
+services/knowledge-service       企业知识与知识问答边界
+services/ticket-agent-service    工单 AI 协同与受控 Tool 边界
+apps/customer-bff                C 端身份委托、会话和协议聚合边界
+quality/eval-runner              独立评测入口
+
+integrations/jdk8-client         独立 Java 8 构建
+apps/customer-web                独立前端构建边界
+labs/spring-ai-alibaba-lab       Spring AI Alibaba 迁移实验
+labs/langchain4j-lab             LangChain4j 迁移实验
+labs/agentscope-lab              AgentScope 扩展实验
+labs/protocol-interop-lab         MCP/A2A 官方 SDK 互操作实验
+contracts                        OpenAPI 与 Schema
+datasets                         Golden Set 与坏案例数据
+deploy                           部署清单和环境说明
 ```
 
-这些文档给生产评审提供最小事实版本：需求、设计、接口、评测和发布计划要能被业务、测试、安全和运维一起 review。
+根 Maven reactor 只聚合三个服务和 Eval Runner。labs、JDK8 客户端和 Customer Web 独立构建，避免框架与协议实验依赖、Java 8 字节码和前端工具链污染主项目。
+
+服务之间通过 HTTP/OpenAPI 合同协作，不共享领域 JAR，也不跨服务访问数据库。详细决策见：
+
+- [系统上下文](docs/architecture/system-context.md)
+- [客户咨询完整时序](docs/architecture/customer-consultation-flow.md)
+- [服务与数据所有权](docs/architecture/service-ownership.md)
+- [为什么以 Spring AI 为主线](docs/adr/0001-spring-ai-mainline.md)
+- [为什么拆分构建边界](docs/adr/0002-build-boundaries.md)
+- [框架实验为什么保持隔离](docs/adr/0003-framework-lab-isolation.md)
+- [框架选型矩阵](docs/decisions/framework-selection-matrix.md)
+
+## 技术基线
+
+- 主 reactor：Java 21 字节码、Spring Boot 4.1.0、Spring AI BOM 2.0.0。
+- labs reactor：Spring AI Alibaba 1.1.2.3、LangChain4j 1.17.2、AgentScope 2.0.0、MCP Java SDK 2.0.0、A2A Java SDK 1.1.0.Final。
+- JDK8 客户端：Java 8、独立 Maven 构建。
+- Maven Wrapper：3.9.14。
+
+完整锁定见 [版本基线](docs/version-baseline.md)。这些是项目选择，不等同于“所有公司项目都必须使用的最新版本”。
+
+## 环境要求
+
+至少准备：
+
+- Node.js，用于仓库契约测试。
+- 一个包含 `java` 和 `javac` 的 JDK 21 或更高版本。使用高于 21 的 JDK 时只证明 `--release 21` 编译，CI 仍需在真实 JDK 21 上运行。
+- 一个包含 `java` 和 `javac` 的完整 JDK 8，用于独立客户端构建。
+
+本地可使用高于 21 的完整 JDK 编译 Java 21 字节码，但 CI 仍需在真实 JDK 21 上运行；老系统客户端必须使用独立完整 JDK 8。具体配置见 [本地工具链手册](docs/runbooks/local-toolchain.md)。
+
+## 一次跑完
+
+macOS/Linux：
+
+```bash
+export JAVA_AI_MAIN_JAVA_HOME=/path/to/jdk-21-or-newer
+export JAVA_AI_JDK8_HOME=/path/to/full-jdk8
+scripts/verify-unit.sh
+```
+
+Windows PowerShell：
+
+```powershell
+$env:JAVA_AI_MAIN_JAVA_HOME = "C:\\Java\\jdk-21"
+$env:JAVA_AI_JDK8_HOME = "C:\\Java\\jdk8"
+.\scripts\verify-unit.ps1
+```
+
+脚本会运行项目 Node 契约、主 reactor、labs reactor 和 Java 8 客户端。若在包含 `column/` 的完整工作区执行，还会运行专栏内容契约；独立 clone 只验证代码项目，并明确打印未验证专栏内容。
+
+## 分别构建
+
+主 reactor：
+
+```bash
+./mvnw verify
+```
+
+框架实验：
+
+```bash
+./mvnw -f labs/pom.xml verify
+```
+
+Java 8 客户端：
+
+```bash
+JAVA_HOME=/path/to/full-jdk8 PATH="$JAVA_HOME/bin:$PATH" \
+  ./mvnw -f integrations/jdk8-client/pom.xml verify
+```
+
+Windows 可使用 `mvnw.cmd` 和对应 JDK 环境变量执行相同 POM。
+
+## 启动服务骨架
+
+三个应用都提供 Actuator health。Knowledge Service 提供知识回答和 SSE，Customer BFF 提供 C 端回答、SSE、反馈、重试和工单升级，Ticket Agent Service 提供任务接收、运行、查询、确认与审计：
+
+```bash
+./mvnw -pl services/knowledge-service spring-boot:run
+./mvnw -pl services/ticket-agent-service spring-boot:run
+./mvnw -pl apps/customer-bff spring-boot:run
+```
+
+默认端口分别为 8081、8082 和 8080。验证示例：
+
+```bash
+curl http://localhost:8081/actuator/health
+```
+
+期望返回包含 `"status":"UP"` 的 JSON。`/actuator/env` 不对外暴露。
+
+知识模型命令见 [真实模型 Smoke](docs/runbooks/live-model-smoke.md)，模型、检索和 Agent 评测见 [模型及检索评测](docs/runbooks/model-interaction-eval.md)。安全回归见 [AI Security Regression](docs/runbooks/security-regression.md)，三套环境的连接与证据边界见 [Environment Modes](docs/runbooks/environment-modes.md)，发布入口见 [Release Checklist](docs/runbooks/release-checklist.md)。Ticket Agent 的真实模型烟测使用 `scripts/run-agent-live-model-smoke.sh` 或对应 PowerShell 脚本。检索和 Agent 评测通过显式 URL 与凭证连接共享测试环境，本机或 CI 运行 Eval Runner。
+
+## 外部环境检查
+
+当前外部脚本只检查一个已部署服务的健康端点：
+
+```bash
+JAVA_AI_EXTERNAL_BASE_URL=https://test.example.com scripts/verify-integration.sh
+```
+
+Windows 使用：
+
+```powershell
+$env:JAVA_AI_EXTERNAL_BASE_URL = "https://test.example.com"
+.\scripts\verify-integration.ps1
+```
+
+该结果不能证明数据库、向量检索、对象存储、模型或端到端业务已经验证。pgvector 使用 `external-integration` Maven profile 和独立 CI 工作流，健康检查的结论不能替代它。
+
+## 环境变量示例
+
+`.env.example` 只列出当前代码和验证脚本实际消费的变量。模型、Embedding、数据库和委托 JWT 均通过环境变量注入，不写入源码或默认配置。
+
+## 已有交付证据
+
+工程重置范围、命令、结果和未覆盖项见 [Phase A Reset](docs/delivery/phase-a-reset.md)。架构和框架边界复核见 [Lesson 02 Architecture Review](docs/reports/lesson-02-architecture-review.md) 与 [Lesson 03 Framework Decision](docs/reports/lesson-03-framework-decision.md)。模型工程证据见 [Milestone 12](docs/reports/milestone-12.md)。

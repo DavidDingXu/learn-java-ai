@@ -1,0 +1,37 @@
+name: Live Model Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-model:
+    runs-on: ubuntu-latest
+    environment: live-model-smoke
+    env:
+      JAVA_AI_CHAT_API_KEY: ${{ secrets.JAVA_AI_CHAT_API_KEY }}
+      JAVA_AI_CHAT_BASE_URL: ${{ secrets.JAVA_AI_CHAT_BASE_URL }}
+      JAVA_AI_CHAT_MODEL: ${{ vars.JAVA_AI_CHAT_MODEL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Record JDK 21 home
+        run: echo "JAVA_AI_MAIN_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+
+      - name: Run explicit live model smoke
+        run: scripts/run-live-model-smoke.sh
+
+      - name: Upload redacted evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lesson-04-live-model-smoke
+          path: docs/reports/lesson-04-live-model-smoke.md

@@ -1,0 +1,100 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ticket-agent-service
+  profiles:
+    default: local-lite
+  ai:
+    retry:
+      max-attempts: 1
+    model:
+      audio:
+        speech: none
+        transcription: none
+      chat: none
+      embedding: none
+      image: none
+      moderation: none
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local-lite
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+  flyway:
+    enabled: false
+
+java-ai:
+  persistence:
+    mode: memory
+  runtime:
+    external-integrations-enabled: false
+  agent:
+    downstream-enabled: false
+    max-steps: 4
+    max-concurrent-runs: 4
+    confirmation-ttl: 15m
+    allowed-queues: refund-review,tier-2
+  security:
+    jwt:
+      enabled: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: shared-dev
+  datasource:
+    url: ${JAVA_AI_TICKET_DB_URL:jdbc:postgresql://localhost:5432/java_ai_ticket}
+    username: ${JAVA_AI_TICKET_DB_USERNAME:java_ai}
+    password: ${JAVA_AI_TICKET_DB_PASSWORD:java_ai}
+    hikari:
+      maximum-pool-size: ${JAVA_AI_TICKET_DB_POOL_SIZE:10}
+  flyway:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+
+java-ai:
+  persistence:
+    mode: jdbc
+    confirmation-lease: ${JAVA_AI_CONFIRMATION_LEASE:30s}
+  runtime:
+    external-integrations-enabled: true
+  agent:
+    downstream-enabled: true
+    max-concurrent-runs: ${JAVA_AI_AGENT_MAX_CONCURRENT_RUNS:16}
+    knowledge-base-url: ${JAVA_AI_KNOWLEDGE_BASE_URL:http://localhost:8081}
+    legacy-tool-base-url: ${JAVA_AI_LEGACY_TOOL_BASE_URL:http://localhost:8090}
+    downstream-timeout: ${JAVA_AI_DOWNSTREAM_TIMEOUT:3s}
+    downstream-token-mode: ${JAVA_AI_DOWNSTREAM_TOKEN_MODE:development-hmac}
+    delegated-token:
+      issuer: ${JAVA_AI_JWT_ISSUER}
+      hmac-secret: ${JAVA_AI_DEV_JWT_HMAC_SECRET}
+      actor-id: ticket-agent-service
+      ttl: 2m
+  security:
+    jwt:
+      enabled: true
+      issuer: ${JAVA_AI_JWT_ISSUER}
+      audience: ticket-agent-service
+      jwk-set-uri: ${JAVA_AI_JWT_JWK_SET_URI:}
+      hmac-secret: ${JAVA_AI_DEV_JWT_HMAC_SECRET:}

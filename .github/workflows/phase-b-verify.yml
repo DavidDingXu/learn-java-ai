@@ -1,0 +1,37 @@
+name: Phase B Verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Record JDK 8 home
+        run: echo "JAVA_AI_JDK8_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+
+      - name: Install JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Record JDK 21 home
+        run: echo "JAVA_AI_MAIN_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+
+      - name: Verify all build boundaries
+        run: scripts/verify-phase-b.sh

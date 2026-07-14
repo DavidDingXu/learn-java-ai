@@ -1,0 +1,80 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: knowledge-service
+  reactor:
+    context-propagation: auto
+  profiles:
+    default: local-lite
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  ai:
+    retry:
+      max-attempts: 1
+    model:
+      audio:
+        speech: none
+        transcription: none
+      chat: none
+      embedding: none
+      image: none
+      moderation: none
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+resilience4j:
+  retry:
+    instances:
+      knowledgeAnswer:
+        max-attempts: 2
+        wait-duration: 100ms
+  circuitbreaker:
+    instances:
+      knowledgeAnswer:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+  timelimiter:
+    instances:
+      knowledgeAnswer:
+        timeout-duration: 8s
+        cancel-running-future: true
+  bulkhead:
+    instances:
+      knowledgeAnswer:
+        max-concurrent-calls: 20
+        max-wait-duration: 0
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local-lite
+
+java-ai:
+  runtime:
+    execution-mode: LOCAL_DISABLED
+    external-integrations-enabled: false
+  prompt:
+    knowledge-answer:
+      version: knowledge-answer-v1
+  security:
+    jwt:
+      enabled: false
+      issuer: ${JAVA_AI_JWT_ISSUER:}
+      audience: knowledge-service
+      jwk-set-uri: ${JAVA_AI_JWT_JWK_SET_URI:}
+      hmac-secret: ${JAVA_AI_DEV_JWT_HMAC_SECRET:}
+      allowed-actors: customer-bff,ticket-agent-service
