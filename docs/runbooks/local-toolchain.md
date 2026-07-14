@@ -9,7 +9,7 @@
 | Legacy client | full JDK 8 exactly | `integrations/jdk8-client/pom.xml` |
 | Contract checks | Node.js | `scripts/*.test.mjs` |
 
-The author workstation currently has JDK 26 and JDK 8. Local JDK 26 runs compile the main modules with `--release 21`; they do not prove runtime behavior on a JDK 21 JVM. CI must include a real JDK 21 build.
+使用高于 21 的 JDK 时，主模块仍通过 `--release 21` 生成 Java 21 字节码；这只能证明编译兼容性，不能替代真实 JDK 21 CI 运行。
 
 ## macOS/Linux
 
@@ -28,14 +28,6 @@ scripts/verify-unit.sh
 ```
 
 On managed macOS machines, `/usr/libexec/java_home -v 1.8` may return a browser JRE without `javac`. Do not use that result unless both binaries exist and `javac -version` reports Java 8.
-
-To require the surrounding paid-column checks from the combined workspace:
-
-```bash
-JAVA_AI_REQUIRE_COLUMN_TESTS=1 scripts/verify-unit.sh
-```
-
-An independent project clone may omit that flag. The script then states that column checks were not run.
 
 ## Windows PowerShell
 
@@ -88,15 +80,15 @@ scripts/verify-integration.sh
 
 Missing configuration exits with code 2. A successful run proves only that `/actuator/health` returned HTTP 200 with `status=UP`. It does not validate model calls, databases, vector search, object storage or business workflows.
 
-## No-Docker Development
+## Development And External Infrastructure
 
-Daily verification must remain usable when Docker is blocked by company policy. Use deterministic unit tests, contract fixtures and `local-lite` for normal work. When real infrastructure is introduced, choose one explicit path:
+日常验证使用确定性单测、合同测试和 `local-lite`。需要真实数据库、模型、对象存储或外部业务系统时，通过环境变量显式连接以下任一环境：
 
 - an externally managed test environment;
 - CI runners allowed to start containers;
-- a company-provided remote development environment.
+- a remote development environment.
 
-Record which path produced each report. Do not translate a local substitute into a production claim.
+报告必须记录实际使用的环境和验证边界，不能用本地替代实现推导生产结论。
 
 ## Common Failures
 
@@ -107,10 +99,6 @@ Record which path produced each report. Do not translate a local substitute into
 ### Main reactor reports the wrong Java version
 
 Set `JAVA_AI_MAIN_JAVA_HOME` explicitly. The script requires javac major 21 or newer.
-
-### Standalone clone cannot find column tests
-
-Leave `JAVA_AI_REQUIRE_COLUMN_TESTS=0`. Set it to `1` only in the combined workspace release gate.
 
 ### External verification exits with code 2
 

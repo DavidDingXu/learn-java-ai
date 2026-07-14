@@ -12,7 +12,7 @@ function read(relativePath) {
   return readFileSync(absolutePath, "utf8");
 }
 
-test("root build locks the Phase B dependency and plugin versions", () => {
+test("root build locks dependency and plugin versions", () => {
   const pom = read("pom.xml");
 
   assert.match(pom, /<resilience4j\.version>2\.4\.0<\/resilience4j\.version>/);
@@ -115,12 +115,12 @@ test("default model mode is disabled and live mode requires explicit variables",
   assert.match(live, /external-integrations-enabled:\s*true/);
 });
 
-test("Phase B verification is cross-platform and Docker-free", {
+test("build verification is cross-platform and self-contained", {
   skip: process.platform === "win32",
 }, () => {
-  const shellPath = path.join(projectRoot, "scripts/verify-phase-b.sh");
-  const shell = read("scripts/verify-phase-b.sh");
-  const powershell = read("scripts/verify-phase-b.ps1");
+  const shellPath = path.join(projectRoot, "scripts/verify-build.sh");
+  const shell = read("scripts/verify-build.sh");
+  const powershell = read("scripts/verify-build.ps1");
 
   assert.notEqual(statSync(shellPath).mode & 0o111, 0);
   for (const content of [shell, powershell]) {
@@ -131,12 +131,12 @@ test("Phase B verification is cross-platform and Docker-free", {
 });
 
 test("CI proves real JDK 21 and separate JDK 8 builds", () => {
-  const verifyWorkflow = read(".github/workflows/phase-b-verify.yml");
+  const verifyWorkflow = read(".github/workflows/verify.yml");
 
   assert.match(verifyWorkflow, /node-version:\s*["']?24/);
   assert.match(verifyWorkflow, /java-version:\s*["']?21/);
   assert.match(verifyWorkflow, /java-version:\s*["']?8/);
   assert.match(verifyWorkflow, /JAVA_AI_MAIN_JAVA_HOME=\$JAVA_HOME/);
   assert.match(verifyWorkflow, /JAVA_AI_JDK8_HOME=\$JAVA_HOME/);
-  assert.match(verifyWorkflow, /verify-phase-b\.sh/);
+  assert.match(verifyWorkflow, /verify-build\.sh/);
 });

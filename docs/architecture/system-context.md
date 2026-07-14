@@ -2,13 +2,13 @@
 
 ## Status
 
-当前处于付费专栏发布基线。Knowledge Service 已实现企业 RAG 主线；Customer BFF 已实现客户身份、委托令牌、完整回答、SSE、短时会话、反馈、重试和升级工单；Ticket Agent Service 已实现可信任务身份、受限步数规划、服务端 Tool 目录、人工确认、幂等、JDBC/Flyway 持久化、审计和 HTTP 下游适配器；JDK8 客户端已能查询任务并提交确认。项目已经补齐 AI 安全回归、Micrometer 指标、Agent 并发容量门禁、无 Docker 环境合同、框架/协议 labs 和跨平台 release gate。正式 Customer Web、目标 PostgreSQL 容量、真实 IdP/下游联调、持久 UNKNOWN 对账和端到端容量验证仍需公司环境完成。
+Knowledge Service 已实现企业 RAG 主线；Customer BFF 已实现客户身份、委托令牌、完整回答、SSE、短时会话、反馈、重试和升级工单；Ticket Agent Service 已实现可信任务身份、受限步数规划、服务端 Tool 目录、人工确认、幂等、JDBC/Flyway 持久化、审计和 HTTP 下游适配器；JDK8 客户端已能查询任务并提交确认。项目同时提供 AI 安全回归、Micrometer 指标、Agent 并发容量门禁、三套环境配置、框架与协议 labs 和跨平台 release gate。正式 Customer Web、目标 PostgreSQL 容量、真实 IdP/下游联调、持久 UNKNOWN 对账和端到端容量验证仍需在目标公司环境完成。
 
 下图同时包含当前可运行连线和后续目标。BFF 到 Knowledge 的回答/SSE、BFF 到 Ticket 的幂等升级，以及 JDK8 客户端到 Ticket 的查询和确认已经有代码；生产 CRM 的业务写入实现、回调部署和外部环境验收仍不能从图中推断已经交付。
 
 ## Business Context
 
-专栏只维护一条连续业务链：客户先在 C 端咨询政策或订单问题，知识服务给出带依据的回答；无法解决的问题升级为工单；客服人员在 JDK8 业务终端确认高风险动作；评测与可观测能力贯穿整条链路。
+项目围绕一条连续业务链展开：客户先在 C 端咨询政策或订单问题，知识服务给出带依据的回答；无法解决的问题升级为工单；客服人员在 JDK8 业务终端确认高风险动作；评测与可观测能力贯穿整条链路。
 
 ```mermaid
 flowchart LR

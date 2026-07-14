@@ -44,7 +44,7 @@ function dependencyCoordinates(xml) {
     .filter((coordinate) => coordinate.groupId && coordinate.artifactId);
 }
 
-function isForbiddenPhaseADependency({ groupId, artifactId }) {
+function isRestrictedInfrastructureDependency({ groupId, artifactId }) {
   const allowedFrameworkBoms = new Map([
     ["org.springframework.ai", "spring-ai-bom"],
     ["com.alibaba.cloud.ai", "spring-ai-alibaba-bom"],
@@ -255,7 +255,7 @@ test("mainline POMs keep infrastructure and model provider ownership explicit", 
           || allowedTicketStorage
           || allowedRootVersionManagement
           || allowedLabDependency
-          || !isForbiddenPhaseADependency(coordinate),
+          || !isRestrictedInfrastructureDependency(coordinate),
         true,
         `forbidden dependency in ${pomPath}: ${coordinate.groupId}:${coordinate.artifactId}`,
       );
@@ -277,7 +277,7 @@ test("provider starter artifact IDs require an explicit module exception", () =>
     { groupId: "org.testcontainers", artifactId: "junit-jupiter" },
   ]) {
     assert.equal(
-      isForbiddenPhaseADependency(coordinate),
+      isRestrictedInfrastructureDependency(coordinate),
       true,
       `${coordinate.groupId}:${coordinate.artifactId}`,
     );
@@ -293,7 +293,6 @@ test("Maven Wrapper is pinned to Maven 3.9.14", () => {
 
 test("reader guidance matches the current service and build boundaries", () => {
   const readme = read("README.md");
-  const agents = read("AGENTS.md");
 
   for (const requiredPath of [
     "services/knowledge-service",
@@ -306,10 +305,10 @@ test("reader guidance matches the current service and build boundaries", () => {
     "labs/agentscope-lab",
     "labs/protocol-interop-lab",
   ]) {
-    assert.match(`${readme}\n${agents}`, new RegExp(requiredPath.replaceAll("/", "\\/")));
+    assert.match(readme, new RegExp(requiredPath.replaceAll("/", "\\/")));
   }
 
-  assert.match(readme, /付费专栏发布基线/);
+  assert.match(readme, /可运行、可测试的工程基线/);
   assert.match(readme, /受控 Agent/);
   assert.match(readme, /安全回归/);
   assert.match(readme, /Micrometer/);
@@ -322,23 +321,36 @@ test("reader guidance matches the current service and build boundaries", () => {
   assert.match(readme, /Java 8.*客户端/);
   assert.match(readme, /pgvector/);
   assert.match(readme, /verify-unit/);
-  assert.match(agents, /HTTP/);
-  assert.match(agents, /不共享领域 JAR/);
-  assert.doesNotMatch(`${readme}\n${agents}`, /AiCallGateway|ai-[a-z-]+-demo|project-enterprise-rag|project-helpdesk-agent/);
+  assert.match(readme, /HTTP\/OpenAPI/);
+  assert.match(readme, /不共享领域 JAR/);
+  assert.doesNotMatch(readme, /AiCallGateway|ai-[a-z-]+-demo|project-enterprise-rag|project-helpdesk-agent/);
 });
 
-test("project decision documents exist and contain no column authoring language", () => {
+test("public project surface excludes authoring and internal delivery artifacts", () => {
+  for (const internalPath of [
+    "AGENTS.md",
+    "docs/delivery/phase-a-reset.md",
+    ".github/workflows/phase-b-verify.yml",
+    ".github/workflows/phase-c-pgvector.yml",
+    "scripts/phase-b-build-contract.test.mjs",
+    "scripts/verify-phase-b.sh",
+    "scripts/verify-phase-b.ps1",
+  ]) {
+    assert.equal(existsSync(path.join(projectRoot, internalPath)), false, `${internalPath} must not be public`);
+  }
+
   const docs = [
+    "README.md",
     "docs/architecture/system-context.md",
     "docs/adr/0001-spring-ai-mainline.md",
     "docs/adr/0002-build-boundaries.md",
-    "docs/delivery/phase-a-reset.md",
     "docs/runbooks/local-toolchain.md",
     "docs/version-baseline.md",
+    "apps/customer-web/README.md",
   ];
 
   for (const document of docs) {
     const content = read(document);
-    assert.doesNotMatch(content, /公众号|文章排期|备稿|小红书|作者工作流/);
+    assert.doesNotMatch(content, /付费专栏|公众号|文章排期|备稿|小红书|作者工作流|author workstation|Phase [A-Z]|Reset Delivery/);
   }
 });

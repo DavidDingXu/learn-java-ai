@@ -43,7 +43,7 @@ export JAVA_AI_POSTGRES_PASSWORD='replace-with-test-password'
 ./mvnw -pl services/knowledge-service verify -Pexternal-integration
 ```
 
-预期 `PgVectorExternalIT` 执行一条 Flyway 迁移，并从三份跨租户、跨权限测试数据中只返回 `allowed-chunk`。CI 中的 `.github/workflows/phase-c-pgvector.yml` 使用同一 Maven profile；没有该运行结果时，不能声称真实 pgvector 已验证。
+预期 `PgVectorExternalIT` 执行一条 Flyway 迁移，并从三份跨租户、跨权限测试数据中只返回 `allowed-chunk`。CI 中的 `.github/workflows/pgvector-integration.yml` 使用同一 Maven profile；没有该运行结果时，不能声称真实 pgvector 已验证。
 
 ## Evidence Boundary
 

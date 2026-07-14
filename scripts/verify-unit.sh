@@ -3,7 +3,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 PROJECT_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
-WORKSPACE_ROOT="$(CDPATH= cd -- "$PROJECT_ROOT/../.." && pwd)"
 MVNW="$PROJECT_ROOT/mvnw"
 
 SELECTED_JDK=""
@@ -147,24 +146,6 @@ for test_file in "$PROJECT_ROOT"/scripts/*.test.mjs; do
 done
 (( ${#node_tests[@]} > 0 )) || die 2 "No project contract tests were found under $PROJECT_ROOT/scripts."
 
-column_test_count=0
-if [[ -d "$WORKSPACE_ROOT/column/scripts" ]]; then
-  for test_file in "$WORKSPACE_ROOT"/column/scripts/*.test.mjs; do
-    [[ -e "$test_file" ]] || continue
-    node_tests+=("$test_file")
-    ((column_test_count += 1))
-  done
-fi
-
-if (( column_test_count == 0 )); then
-  if [[ "${JAVA_AI_REQUIRE_COLUMN_TESTS:-0}" == "1" ]]; then
-    die 2 "Column tests are required but were not found under $WORKSPACE_ROOT/column/scripts."
-  fi
-  printf 'NOTE: standalone project verification; column tests were not found and were not verified.\n'
-else
-  printf 'Column contract tests included: %s file(s).\n' "$column_test_count"
-fi
-
 node --test "${node_tests[@]}"
 
 run_maven "$MAIN_JAVA_HOME" -f "$PROJECT_ROOT/pom.xml" verify
@@ -172,8 +153,3 @@ run_maven "$MAIN_JAVA_HOME" -f "$PROJECT_ROOT/labs/pom.xml" verify
 run_maven "$JDK8_HOME" -f "$PROJECT_ROOT/integrations/jdk8-client/pom.xml" verify
 
 printf 'Project unit verification passed for root, labs, Java 8 client, and project contracts.\n'
-if (( column_test_count > 0 )); then
-  printf 'Column contract verification also passed.\n'
-else
-  printf 'Column contract verification was not run.\n'
-fi

@@ -23,10 +23,9 @@ test("unit scripts cover all independent build boundaries", () => {
     assert.match(content, /pom\.xml/);
     assert.match(content, /labs[\\/]pom\.xml/);
     assert.match(content, /integrations[\\/]jdk8-client[\\/]pom\.xml/);
-    assert.match(content, /column[\\/]scripts/);
     assert.match(content, /JAVA_AI_MAIN_JAVA_HOME/);
     assert.match(content, /JAVA_AI_JDK8_HOME/);
-    assert.match(content, /JAVA_AI_REQUIRE_COLUMN_TESTS/);
+    assert.doesNotMatch(content, /column[\\/]scripts|JAVA_AI_REQUIRE_COLUMN_TESTS/);
   }
 });
 
@@ -44,17 +43,6 @@ test("Spring Boot modules are HTTP applications packaged as executable jars", ()
   assert.match(ticketPom, /<artifactId>spring-boot-starter-web<\/artifactId>/);
   assert.match(ticketPom, /<artifactId>spring-boot-maven-plugin<\/artifactId>/);
   assert.match(ticketPom, /<goal>repackage<\/goal>/);
-});
-
-test("unit scripts distinguish workspace and standalone verification", () => {
-  const shell = read("scripts/verify-unit.sh");
-  const powershell = read("scripts/verify-unit.ps1");
-
-  for (const content of [shell, powershell]) {
-    assert.match(content, /standalone project verification/);
-    assert.match(content, /column tests were not found and were not verified/);
-    assert.match(content, /Column contract verification was not run/);
-  }
 });
 
 test("Java 8 selection never relies on macOS java_home fallback", () => {

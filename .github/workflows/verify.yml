@@ -1,4 +1,4 @@
-name: Phase B Verify
+name: Verify
 
 on:
   push:
@@ -34,4 +34,4 @@ jobs:
         run: echo "JAVA_AI_MAIN_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
 
       - name: Verify all build boundaries
-        run: scripts/verify-phase-b.sh
+        run: scripts/verify-build.sh

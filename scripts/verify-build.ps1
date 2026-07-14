@@ -11,4 +11,4 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Write-Host "Phase B build and runtime contracts passed without external model or infrastructure calls."
+Write-Host "Build and runtime contracts passed without external model or infrastructure calls."

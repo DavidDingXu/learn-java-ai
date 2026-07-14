@@ -6,7 +6,6 @@ $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
-$WorkspaceRoot = (Resolve-Path (Join-Path $ProjectRoot "..\..")).Path
 $MavenWrapper = Join-Path $ProjectRoot "mvnw.cmd"
 
 function Stop-WithError {
@@ -178,21 +177,6 @@ if ($ProjectTests.Count -eq 0) {
     Stop-WithError "No project contract tests were found under $(Join-Path $ProjectRoot 'scripts')."
 }
 $NodeTests = @($ProjectTests.FullName)
-$ColumnScripts = Join-Path $WorkspaceRoot "column\scripts"
-$ColumnTests = @()
-if (Test-Path $ColumnScripts) {
-    $ColumnTests = @(Get-ChildItem -Path $ColumnScripts -Filter "*.test.mjs" -File)
-}
-if ($ColumnTests.Count -eq 0) {
-    if ($env:JAVA_AI_REQUIRE_COLUMN_TESTS -eq "1") {
-        Stop-WithError "Column tests are required but were not found under $ColumnScripts."
-    }
-    Write-Host "NOTE: standalone project verification; column tests were not found and were not verified."
-}
-else {
-    Write-Host "Column contract tests included: $($ColumnTests.Count) file(s)."
-    $NodeTests += $ColumnTests.FullName
-}
 
 Invoke-CheckedNative -Command "node.exe" -Arguments (@("--test") + $NodeTests) -Description "Node contract tests"
 Invoke-MavenWithJdk -JavaHome $MainJavaHome -Arguments @("-f", (Join-Path $ProjectRoot "pom.xml"), "verify") -Description "root reactor"
@@ -200,9 +184,3 @@ Invoke-MavenWithJdk -JavaHome $MainJavaHome -Arguments @("-f", (Join-Path $Proje
 Invoke-MavenWithJdk -JavaHome $Jdk8Home -Arguments @("-f", (Join-Path $ProjectRoot "integrations\jdk8-client\pom.xml"), "verify") -Description "Java 8 client"
 
 Write-Host "Project unit verification passed for root, labs, Java 8 client, and project contracts."
-if ($ColumnTests.Count -gt 0) {
-    Write-Host "Column contract verification also passed."
-}
-else {
-    Write-Host "Column contract verification was not run."
-}

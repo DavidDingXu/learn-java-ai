@@ -1,4 +1,4 @@
-name: Phase C pgvector integration
+name: pgvector integration
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     paths:
       - "pom.xml"
       - "services/knowledge-service/**"
-      - ".github/workflows/phase-c-pgvector.yml"
+      - ".github/workflows/pgvector-integration.yml"
 
 jobs:
   pgvector-integration:

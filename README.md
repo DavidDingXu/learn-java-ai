@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-当前为 **付费专栏发布基线**，已经完成：
+当前为可运行、可测试的工程基线，已经完成：
 
 - 三个可启动的 Java 21 HTTP 应用和健康检查。
 - 一个依赖轻量的 Eval Runner 入口。
@@ -41,7 +41,7 @@
 - Ticket Agent 规划次数、Token 分布、Tool 结果与耗时的 Micrometer 指标，shared-dev 暴露 Prometheus 端点。
 - Agent Run 公平信号量并发门禁、稳定 429 错误合同，以及异常路径的许可释放测试。
 - local-lite、shared-dev、CI 三种环境配置、证据边界和跨平台验证入口。
-- 跨平台 release gate：全构建、合同、Java 8、专栏门禁、敏感信息扫描和可选外部健康证据。
+- 跨平台 release gate：全构建、合同、Java 8、敏感信息扫描和可选外部健康证据。
 - DashScope Provider 适配、国内 Embedding/Rerank 同集评测和 Spring AI Alibaba 人工确认 Graph。
 - LangChain4j AI Services、租户受限 RAG、Tool 循环、结构化输出和按业务能力共存策略。
 - AgentScope 2.0 Tool 权限复用、人工确认事件、MCP 外部 Tool 注册和 A2A 任务状态边界。
@@ -120,7 +120,7 @@ $env:JAVA_AI_JDK8_HOME = "C:\\Java\\jdk8"
 .\scripts\verify-unit.ps1
 ```
 
-脚本会运行项目 Node 契约、主 reactor、labs reactor 和 Java 8 客户端。若在包含 `column/` 的完整工作区执行，还会运行专栏内容契约；独立 clone 只验证代码项目，并明确打印未验证专栏内容。
+脚本会运行项目 Node 契约、主 reactor、labs reactor 和 Java 8 客户端。
 
 ## 分别构建
 
@@ -186,6 +186,6 @@ $env:JAVA_AI_EXTERNAL_BASE_URL = "https://test.example.com"
 
 `.env.example` 只列出当前代码和验证脚本实际消费的变量。模型、Embedding、数据库和委托 JWT 均通过环境变量注入，不写入源码或默认配置。
 
-## 已有交付证据
+## 工程证据
 
-工程重置范围、命令、结果和未覆盖项见 [Phase A Reset](docs/delivery/phase-a-reset.md)。架构和框架边界复核见 [Lesson 02 Architecture Review](docs/reports/lesson-02-architecture-review.md) 与 [Lesson 03 Framework Decision](docs/reports/lesson-03-framework-decision.md)。模型工程证据见 [Milestone 12](docs/reports/milestone-12.md)。
+架构和框架边界复核见 [Architecture Review](docs/reports/lesson-02-architecture-review.md) 与 [Framework Decision](docs/reports/lesson-03-framework-decision.md)。模型调用、Golden Set 和真实模型验证见 [Model Engineering](docs/reports/milestone-12.md)，各业务增量的构建结果和明确未覆盖项位于 `docs/reports/`。
