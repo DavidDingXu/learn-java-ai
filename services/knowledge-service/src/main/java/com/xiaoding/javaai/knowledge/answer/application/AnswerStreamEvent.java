@@ -8,7 +8,7 @@ public sealed interface AnswerStreamEvent permits
         AnswerStreamEvent.CompletedEvent,
         AnswerStreamEvent.ErrorEvent {
 
-    record MetadataEvent(String traceId, String promptVersion, ExecutionMode executionMode)
+    record MetadataEvent(String traceId, String promptVersion)
             implements AnswerStreamEvent {
     }
 

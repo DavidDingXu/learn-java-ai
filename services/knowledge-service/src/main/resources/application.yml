@@ -2,15 +2,17 @@ server:
   port: 8081
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: knowledge-service
   reactor:
     context-propagation: auto
-  profiles:
-    default: local-lite
   jackson:
     deserialization:
       fail-on-unknown-properties: true
+  flyway:
+    enabled: true
   ai:
     retry:
       max-attempts: 1
@@ -18,16 +20,23 @@ spring:
       audio:
         speech: none
         transcription: none
-      chat: none
-      embedding: none
+      chat: openai
+      embedding: openai
       image: none
       moderation: none
+    openai:
+      api-key: ${JAVA_AI_CHAT_API_KEY}
+      base-url: ${JAVA_AI_CHAT_BASE_URL}
+      chat:
+        model: ${JAVA_AI_CHAT_MODEL}
+      embedding:
+        model: ${JAVA_AI_EMBEDDING_MODEL}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,prometheus
   endpoint:
     health:
       show-details: never
@@ -57,24 +66,32 @@ resilience4j:
         max-concurrent-calls: 20
         max-wait-duration: 0
 
----
-spring:
-  config:
-    activate:
-      on-profile: local-lite
-
 java-ai:
   runtime:
-    execution-mode: LOCAL_DISABLED
-    external-integrations-enabled: false
+    external-integrations-enabled: true
   prompt:
     knowledge-answer:
       version: knowledge-answer-v1
   security:
     jwt:
-      enabled: false
-      issuer: ${JAVA_AI_JWT_ISSUER:}
-      audience: knowledge-service
+      enabled: true
+      issuer: ${JAVA_AI_JWT_ISSUER}
+      audience: ${JAVA_AI_JWT_AUDIENCE:knowledge-service}
       jwk-set-uri: ${JAVA_AI_JWT_JWK_SET_URI:}
       hmac-secret: ${JAVA_AI_DEV_JWT_HMAC_SECRET:}
-      allowed-actors: customer-bff,ticket-agent-service
+      allowed-actors: ${JAVA_AI_JWT_ALLOWED_ACTORS:customer-bff,ticket-agent-service}
+  knowledge:
+    context-source: retrieval
+    postgres:
+      jdbc-url: ${JAVA_AI_POSTGRES_URL}
+      username: ${JAVA_AI_POSTGRES_USER}
+      password: ${JAVA_AI_POSTGRES_PASSWORD}
+      maximum-pool-size: ${JAVA_AI_POSTGRES_POOL_SIZE:10}
+    retrieval:
+      mode: hybrid
+      top-k: ${JAVA_AI_RETRIEVAL_TOP_K:6}
+      embedding-dimensions: ${JAVA_AI_EMBEDDING_DIMENSIONS:1536}
+      candidate-k: ${JAVA_AI_RETRIEVAL_CANDIDATE_K:20}
+      lexical-search: true
+      rewrite-query: false
+      rerank: false

@@ -46,8 +46,7 @@ class WebClientKnowledgeAnswerClientTest {
                           "model":"fixture-model",
                           "usage":{"promptTokens":10,"completionTokens":8,"totalTokens":18},
                           "finishReason":"stop",
-                          "traceId":"trace-123",
-                          "executionMode":"PROVIDER_PROTOCOL_FIXTURE"
+                          "traceId":"trace-123"
                         }
                         """));
         WebClientKnowledgeAnswerClient client = new WebClientKnowledgeAnswerClient(

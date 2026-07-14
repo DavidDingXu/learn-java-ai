@@ -1,0 +1,39 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+  flyway:
+    enabled: false
+  ai:
+    model:
+      audio:
+        speech: none
+        transcription: none
+      chat: none
+      embedding: none
+      image: none
+      moderation: none
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+java-ai:
+  runtime:
+    external-integrations-enabled: false
+  prompt:
+    knowledge-answer:
+      version: knowledge-answer-v1
+  security:
+    jwt:
+      enabled: false
+      issuer: https://identity.example.test
+      audience: knowledge-service
+      jwk-set-uri: ""
+      hmac-secret: ""
+      allowed-actors: customer-bff,ticket-agent-service
+  knowledge:
+    context-source: classpath

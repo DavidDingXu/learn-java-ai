@@ -1,7 +1,6 @@
 package com.xiaoding.javaai.knowledge.answer.web;
 
 import com.xiaoding.javaai.knowledge.answer.application.Citation;
-import com.xiaoding.javaai.knowledge.answer.application.ExecutionMode;
 import com.xiaoding.javaai.knowledge.answer.application.KnowledgeAnswer;
 import com.xiaoding.javaai.knowledge.answer.application.ModelUsage;
 
@@ -15,8 +14,7 @@ public record KnowledgeAnswerResponse(
         String model,
         ModelUsage usage,
         String finishReason,
-        String traceId,
-        ExecutionMode executionMode
+        String traceId
 ) {
 
     static KnowledgeAnswerResponse from(KnowledgeAnswer answer) {
@@ -28,8 +26,7 @@ public record KnowledgeAnswerResponse(
                 answer.model(),
                 answer.usage(),
                 answer.finishReason(),
-                answer.traceId(),
-                answer.executionMode()
+                answer.traceId()
         );
     }
 }

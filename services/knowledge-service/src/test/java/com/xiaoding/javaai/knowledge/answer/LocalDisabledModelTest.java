@@ -14,7 +14,7 @@ import reactor.test.StepVerifier;
 import java.time.Instant;
 import java.util.List;
 
-@ActiveProfiles("local-lite")
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class LocalDisabledModelTest {
 
@@ -22,7 +22,7 @@ class LocalDisabledModelTest {
     private AnswerKnowledgeQuestion answerKnowledgeQuestion;
 
     @Test
-    void failsExplicitlyWhenTheDefaultProfileHasNoModel() {
+    void failsExplicitlyWhenTheTestConfigurationHasNoModel() {
         StepVerifier.create(answerKnowledgeQuestion.answer(
                         new AnswerKnowledgeQuestionCommand(
                                 "退款为什么还没到账？",

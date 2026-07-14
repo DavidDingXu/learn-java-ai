@@ -2,7 +2,6 @@ package com.xiaoding.javaai.knowledge.answer;
 
 import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestion;
 import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestionCommand;
-import com.xiaoding.javaai.knowledge.answer.application.ExecutionMode;
 import com.xiaoding.javaai.knowledge.answer.application.KnowledgeAnswer;
 import com.xiaoding.javaai.knowledge.document.domain.TenantId;
 import com.xiaoding.javaai.knowledge.retrieval.application.KnowledgeAccessScope;
@@ -10,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,9 +22,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("live-model")
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class LiveModelSmokeIT {
+
+    @DynamicPropertySource
+    static void liveModelProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.ai.model.chat", () -> "openai");
+        registry.add("spring.ai.openai.api-key", () -> requiredEnvironment("JAVA_AI_CHAT_API_KEY"));
+        registry.add("spring.ai.openai.base-url", () -> requiredEnvironment("JAVA_AI_CHAT_BASE_URL"));
+        registry.add("spring.ai.openai.chat.model", () -> requiredEnvironment("JAVA_AI_CHAT_MODEL"));
+        registry.add("java-ai.runtime.external-integrations-enabled", () -> true);
+    }
 
     @Autowired
     private AnswerKnowledgeQuestion answerKnowledgeQuestion;
@@ -48,8 +58,6 @@ class LiveModelSmokeIT {
         assertThat(answer.answer()).isNotBlank();
         assertThat(answer.citations()).isNotEmpty();
         assertThat(answer.model()).isNotBlank();
-        assertThat(answer.executionMode()).isEqualTo(ExecutionMode.LIVE_MODEL);
-
         writeReport(answer, question);
     }
 
@@ -74,7 +82,7 @@ class LiveModelSmokeIT {
 
                 - Executed at: %s
                 - Commit: `%s`
-                - Execution mode: `%s`
+                - Execution mode: `LIVE_MODEL`
                 - Model: `%s`
                 - Finish reason: `%s`
                 - Prompt tokens: %d
@@ -97,7 +105,6 @@ class LiveModelSmokeIT {
                 """.formatted(
                 Instant.now(),
                 commit,
-                answer.executionMode(),
                 answer.model(),
                 answer.finishReason(),
                 answer.usage().promptTokens(),
@@ -115,6 +122,14 @@ class LiveModelSmokeIT {
         String value = System.getProperty(name);
         if (value == null || value.isBlank()) {
             throw new IllegalStateException("Missing required system property: " + name);
+        }
+        return value;
+    }
+
+    private static String requiredEnvironment(String name) {
+        String value = System.getenv(name);
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Missing required environment variable: " + name);
         }
         return value;
     }

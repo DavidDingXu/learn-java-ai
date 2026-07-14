@@ -2,46 +2,19 @@ server:
   port: 8080
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: customer-bff
-  profiles:
-    default: local-lite
 
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,prometheus
   endpoint:
     health:
       show-details: never
-
----
-spring:
-  config:
-    activate:
-      on-profile: local-lite
-
-java-ai:
-  runtime:
-    external-integrations-enabled: false
-  security:
-    customer-jwt:
-      enabled: false
-  consultation:
-    session-ttl: 30m
-    max-turns: 8
-    max-estimated-tokens: 1200
-    max-summary-chars: 800
-    rate-limit:
-      requests: 20
-      window: 1m
-
----
-spring:
-  config:
-    activate:
-      on-profile: shared-dev
 
 java-ai:
   runtime:
@@ -60,9 +33,17 @@ java-ai:
     timeout: 5s
   downstream:
     knowledge:
-      base-url: ${JAVA_AI_KNOWLEDGE_BASE_URL:http://localhost:8081}
+      base-url: ${JAVA_AI_KNOWLEDGE_BASE_URL}
       timeout: 10s
       stream-idle-timeout: 30s
     ticket:
-      base-url: ${JAVA_AI_TICKET_BASE_URL:http://localhost:8082}
+      base-url: ${JAVA_AI_TICKET_BASE_URL}
       timeout: 5s
+  consultation:
+    session-ttl: 30m
+    max-turns: 8
+    max-estimated-tokens: 1200
+    max-summary-chars: 800
+    rate-limit:
+      requests: 20
+      window: 1m

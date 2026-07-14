@@ -10,7 +10,7 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("local-lite")
+@ActiveProfiles("test")
 @AutoConfigureRestTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TicketAgentServiceApplicationTest {
@@ -22,8 +22,8 @@ class TicketAgentServiceApplicationTest {
     private RestTestClient client;
 
     @Test
-    void startsWithoutExternalInfrastructureAndExposesOnlyHealth() {
-        assertThat(environment.matchesProfiles("local-lite")).isTrue();
+    void testConfigurationStartsWithoutExternalInfrastructureAndExposesOnlyHealth() {
+        assertThat(environment.matchesProfiles("test")).isTrue();
         assertThat(environment.getProperty("spring.application.name"))
                 .isEqualTo("ticket-agent-service");
         assertThat(environment.getProperty(

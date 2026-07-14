@@ -21,4 +21,4 @@ Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
 
 ## Production Boundary
 
-Confirmation and idempotency state are in-memory only in `local-lite`. `shared-dev` uses JDBC/Flyway, durable unique constraints and optimistic task updates; an expired pending write is not automatically reclaimed without downstream reconciliation. High-risk domains may still require multi-party approval rather than a single confirmation.
+Confirmation and idempotency state are in-memory only in tests. The runtime configuration uses JDBC/Flyway, durable unique constraints and optimistic task updates; an expired pending write is not automatically reclaimed without downstream reconciliation. High-risk domains may still require multi-party approval rather than a single confirmation.

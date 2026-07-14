@@ -4,7 +4,6 @@ import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestion;
 import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestionCommand;
 import com.xiaoding.javaai.knowledge.answer.application.AnswerStreamEvent;
 import com.xiaoding.javaai.knowledge.answer.application.Citation;
-import com.xiaoding.javaai.knowledge.answer.application.ExecutionMode;
 import com.xiaoding.javaai.knowledge.answer.application.KnowledgeAnswer;
 import com.xiaoding.javaai.knowledge.answer.application.ModelUsage;
 import org.junit.jupiter.api.Test;
@@ -116,7 +115,7 @@ class KnowledgeAnswerControllerTest {
                 useCase,
                 command -> Flux.just(
                         new AnswerStreamEvent.MetadataEvent(
-                                "trace-123", "knowledge-answer-v1", ExecutionMode.PROVIDER_PROTOCOL_FIXTURE),
+                                "trace-123", "knowledge-answer-v1"),
                         new AnswerStreamEvent.DeltaEvent("退款通常 1 到 5 个工作日到账。"),
                         new AnswerStreamEvent.CompletedEvent(
                                 "fixture-model", new ModelUsage(1, 1, 2), "stop", 42)
@@ -141,8 +140,7 @@ class KnowledgeAnswerControllerTest {
                 "fixture-model",
                 new ModelUsage(1, 1, 2),
                 "stop",
-                "trace-123",
-                ExecutionMode.PROVIDER_PROTOCOL_FIXTURE
+                "trace-123"
         );
     }
 

@@ -11,7 +11,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("local-lite")
+@ActiveProfiles("test")
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class KnowledgeServiceApplicationTest {
@@ -23,8 +23,8 @@ class KnowledgeServiceApplicationTest {
     private WebTestClient webTestClient;
 
     @Test
-    void startsWithoutExternalInfrastructureAndExposesOnlyHealth() {
-        assertThat(environment.matchesProfiles("local-lite")).isTrue();
+    void testConfigurationStartsWithoutExternalInfrastructureAndExposesOnlyHealth() {
+        assertThat(environment.matchesProfiles("test")).isTrue();
         assertThat(environment.getProperty("spring.application.name"))
                 .isEqualTo("knowledge-service");
         assertThat(environment.getProperty(

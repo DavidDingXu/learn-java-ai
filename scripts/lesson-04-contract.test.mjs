@@ -39,18 +39,21 @@ test("Spring AI remains inside the knowledge infrastructure adapter", () => {
   assert.match(adapter, /Schedulers\.boundedElastic\(\)/);
 });
 
-test("lesson 04 ships deterministic policy and explicit execution modes", () => {
+test("lesson 04 ships deterministic policy without exposing verification modes", () => {
   const policy = read("services/knowledge-service/src/main/resources/knowledge/refund-policy-v1.md");
   const metadata = read("services/knowledge-service/src/main/resources/knowledge/refund-policy-v1.properties");
-  const fixture = read("services/knowledge-service/src/main/resources/application-provider-fixture.yml");
-  const live = read("services/knowledge-service/src/main/resources/application-live-model.yml");
+  const runtime = read("services/knowledge-service/src/main/resources/application.yml");
+  const openApi = read("contracts/openapi/knowledge-service-v1.yaml");
+  const response = read("services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/answer/web/KnowledgeAnswerResponse.java");
 
   assert.match(policy, /1 到 5 个工作日/);
   assert.match(metadata, /documentId=refund-policy/);
   assert.match(metadata, /version=v1/);
   assert.match(metadata, /sectionId=arrival-time/);
-  assert.match(fixture, /PROVIDER_PROTOCOL_FIXTURE/);
-  assert.match(live, /LIVE_MODEL/);
+  assert.match(runtime, /\$\{JAVA_AI_CHAT_API_KEY}/);
+  assert.doesNotMatch(runtime, /execution-mode/);
+  assert.doesNotMatch(openApi, /executionMode|LOCAL_DISABLED|PROVIDER_PROTOCOL_FIXTURE/);
+  assert.doesNotMatch(response, /ExecutionMode|executionMode/);
 });
 
 test("live model smoke is cross-platform, secret-gated and report-producing", () => {

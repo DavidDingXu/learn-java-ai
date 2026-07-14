@@ -10,8 +10,7 @@ public record KnowledgeAnswer(
         String model,
         ModelUsage usage,
         String finishReason,
-        String traceId,
-        ExecutionMode executionMode
+        String traceId
 ) {
 
     public KnowledgeAnswer {

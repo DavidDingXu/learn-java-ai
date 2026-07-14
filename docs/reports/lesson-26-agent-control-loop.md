@@ -21,4 +21,4 @@ Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
 
 ## Production Boundary
 
-The `local-lite` repository and audit trail are in-memory. The `shared-dev` profile persists task snapshots, versions, confirmation decisions and audit events with JDBC/Flyway. Company deployment still must verify target-database concurrency, worker ownership, recovery and capacity before enabling production write tools.
+The test configuration keeps repository and audit state in memory. The runtime configuration persists task snapshots, versions, confirmation decisions and audit events with JDBC/Flyway. Company deployment still must verify target-database concurrency, worker ownership, recovery and capacity before enabling production write tools.

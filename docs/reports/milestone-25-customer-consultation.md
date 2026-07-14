@@ -20,7 +20,7 @@ The milestone contains customer JWT mapping, authenticated RFC 8693 Token Exchan
 
 ## External Boundary
 
-The local result does not prove a production IdP, browser-to-gateway SSE cancellation, shared Redis or database session storage, distributed rate limiting, durable ticket idempotency, external pgvector retrieval quality or end-to-end capacity. The `shared-dev` profile provides the real integration configuration boundary; those environment-specific conclusions require deployed services and signed short-lived tokens.
+The deterministic test result does not prove a production IdP, browser-to-gateway SSE cancellation, shared Redis or database session storage, distributed rate limiting, durable ticket idempotency, external pgvector retrieval quality or end-to-end capacity. The runtime configuration provides the real integration boundary; those conclusions require deployed services and signed short-lived tokens.
 
 ## Tag Rule
 

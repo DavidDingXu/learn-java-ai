@@ -64,7 +64,6 @@ test("shell verification scripts are executable", { skip: process.platform === "
     "scripts/run-live-model-eval.sh",
     "scripts/run-retrieval-eval.sh",
     "scripts/run-security-regression.sh",
-    "scripts/verify-local-lite.sh",
     "scripts/release-gate.sh",
   ]) {
     assert.notEqual(statSync(path.join(projectRoot, relativePath)).mode & 0o111, 0);
@@ -87,14 +86,14 @@ test("security regression scripts combine authorization tests and external Agent
   }
 });
 
-test("local-lite and release gates preserve no-Docker and external-evidence boundaries", () => {
-  const localShell = read("scripts/verify-local-lite.sh");
-  const localPowershell = read("scripts/verify-local-lite.ps1");
+test("unit and release gates preserve fast-regression and external-evidence boundaries", () => {
+  const unitShell = read("scripts/verify-unit.sh");
+  const unitPowershell = read("scripts/verify-unit.ps1");
   const releaseShell = read("scripts/release-gate.sh");
   const releasePowershell = read("scripts/release-gate.ps1");
 
-  for (const content of [localShell, localPowershell]) {
-    assert.match(content, /verify-unit/);
+  for (const content of [unitShell, unitPowershell]) {
+    assert.match(content, /node/);
     assert.doesNotMatch(content, /docker\s+(?:run|compose)/i);
   }
   for (const content of [releaseShell, releasePowershell]) {

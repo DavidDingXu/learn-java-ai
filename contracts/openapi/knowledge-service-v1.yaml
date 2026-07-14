@@ -132,7 +132,7 @@ components:
     KnowledgeAnswerResponse:
       type: object
       additionalProperties: false
-      required: [answer, citations, refused, refusalReason, model, usage, finishReason, traceId, executionMode]
+      required: [answer, citations, refused, refusalReason, model, usage, finishReason, traceId]
       properties:
         answer:
           type: string
@@ -178,9 +178,6 @@ components:
           type: string
         traceId:
           type: string
-        executionMode:
-          type: string
-          enum: [LOCAL_DISABLED, PROVIDER_PROTOCOL_FIXTURE, LIVE_MODEL]
     KnowledgeRetrievalEvaluationRequest:
       type: object
       additionalProperties: false
@@ -219,13 +216,10 @@ components:
     MetadataEvent:
       type: object
       additionalProperties: false
-      required: [traceId, promptVersion, executionMode]
+      required: [traceId, promptVersion]
       properties:
         traceId: { type: string }
         promptVersion: { type: string }
-        executionMode:
-          type: string
-          enum: [LOCAL_DISABLED, PROVIDER_PROTOCOL_FIXTURE, LIVE_MODEL]
     DeltaEvent:
       type: object
       additionalProperties: false

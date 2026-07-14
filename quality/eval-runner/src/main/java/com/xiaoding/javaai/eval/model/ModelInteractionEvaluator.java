@@ -26,7 +26,7 @@ public final class ModelInteractionEvaluator {
                 KnowledgeAnswerSnapshot answer = client.answer(baseUrl, evalCase.question());
                 models.add(answer.model());
                 totalTokens += Math.max(answer.totalTokens(), 0);
-                String failure = validate(evalCase, answer, mode);
+                String failure = validate(evalCase, answer);
                 results.add(new EvalCaseResult(
                         evalCase.id(), failure == null, failure == null ? "ok" : failure,
                         Duration.between(started, Instant.now()).toMillis(), answer.traceId()
@@ -45,11 +45,7 @@ public final class ModelInteractionEvaluator {
         );
     }
 
-    private static String validate(EvalCase evalCase, KnowledgeAnswerSnapshot answer, EvalMode mode) {
-        String expectedMode = mode == EvalMode.LIVE_MODEL ? "LIVE_MODEL" : "PROVIDER_PROTOCOL_FIXTURE";
-        if (!expectedMode.equals(answer.executionMode())) {
-            return "execution mode mismatch: expected " + expectedMode + " but was " + answer.executionMode();
-        }
+    private static String validate(EvalCase evalCase, KnowledgeAnswerSnapshot answer) {
         if (answer.refused() && !evalCase.expectRefusal() && !evalCase.allowSafeRefusal()) {
             return "refusal expectation mismatch";
         }

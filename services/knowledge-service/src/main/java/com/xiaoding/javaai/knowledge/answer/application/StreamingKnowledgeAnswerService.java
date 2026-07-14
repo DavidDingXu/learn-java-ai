@@ -17,7 +17,6 @@ public final class StreamingKnowledgeAnswerService implements StreamKnowledgeAns
     private final PolicyContextSource contextSource;
     private final KnowledgeAnswerStreamModel streamModel;
     private final TraceIdProvider traceIdProvider;
-    private final ExecutionMode executionMode;
     private final String promptVersion;
     private final String systemInstruction;
 
@@ -25,14 +24,12 @@ public final class StreamingKnowledgeAnswerService implements StreamKnowledgeAns
             PolicyContextSource contextSource,
             KnowledgeAnswerStreamModel streamModel,
             TraceIdProvider traceIdProvider,
-            ExecutionMode executionMode,
             String promptVersion,
             String systemInstruction
     ) {
         this.contextSource = contextSource;
         this.streamModel = streamModel;
         this.traceIdProvider = traceIdProvider;
-        this.executionMode = executionMode;
         this.promptVersion = promptVersion;
         this.systemInstruction = systemInstruction;
     }
@@ -94,7 +91,7 @@ public final class StreamingKnowledgeAnswerService implements StreamKnowledgeAns
 
         return Flux.concat(
                         Flux.just(new AnswerStreamEvent.MetadataEvent(
-                                traceIdProvider.currentTraceId(), promptVersion, executionMode)),
+                                traceIdProvider.currentTraceId(), promptVersion)),
                         body,
                         citations,
                         completed

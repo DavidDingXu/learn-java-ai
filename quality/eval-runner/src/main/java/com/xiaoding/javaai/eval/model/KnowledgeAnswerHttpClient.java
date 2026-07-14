@@ -88,7 +88,6 @@ public final class KnowledgeAnswerHttpClient implements KnowledgeAnswerClient {
                 root.path("refused").asBoolean(false),
                 root.path("refusalReason").asText(""),
                 requiredText(root, "model"),
-                requiredText(root, "executionMode"),
                 requiredText(root, "traceId"),
                 usage.path("promptTokens").asInt(-1),
                 usage.path("completionTokens").asInt(-1),

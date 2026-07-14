@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("local-lite")
+@ActiveProfiles("test")
 @AutoConfigureRestTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TicketAgentJwtSecurityTest {

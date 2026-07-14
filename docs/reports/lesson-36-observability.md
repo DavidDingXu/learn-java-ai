@@ -9,7 +9,7 @@ Implementation commit: `b8fd7c46e2329e48cdbdbedfcc58e8097afe306d`
 - Ticket Agent records plan count, total-token distribution and Tool duration/outcome through an application telemetry port.
 - Meter tags are limited to decision, finish reason, tool and outcome; task, prompt, question, tenant and model are not metric tags.
 - Read and write Tool success, rejection, uncertain result and local failure are recorded at the owning application boundary.
-- Prometheus is exposed only by the shared-dev profile; local-lite continues to expose only health.
+- Runtime configuration exposes health and Prometheus; test configuration exposes health only.
 - Business audit IDs remain separate from sampled Trace and aggregated metrics.
 
 ## Verification

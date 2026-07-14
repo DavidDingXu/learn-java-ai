@@ -39,7 +39,6 @@ class KnowledgeAnswerServiceTest {
                 model,
                 () -> "trace-123",
                 passthroughTelemetry(),
-                ExecutionMode.PROVIDER_PROTOCOL_FIXTURE,
                 "knowledge-answer-v1",
                 "system instruction"
         );
@@ -79,7 +78,6 @@ class KnowledgeAnswerServiceTest {
                 model,
                 () -> "trace-123",
                 passthroughTelemetry(),
-                ExecutionMode.PROVIDER_PROTOCOL_FIXTURE,
                 "knowledge-answer-v1",
                 "system instruction"
         );
@@ -91,8 +89,6 @@ class KnowledgeAnswerServiceTest {
                     org.assertj.core.api.Assertions.assertThat(answer.usage().totalTokens()).isEqualTo(60);
                     org.assertj.core.api.Assertions.assertThat(answer.finishReason()).isEqualTo("stop");
                     org.assertj.core.api.Assertions.assertThat(answer.traceId()).isEqualTo("trace-123");
-                    org.assertj.core.api.Assertions.assertThat(answer.executionMode())
-                            .isEqualTo(ExecutionMode.PROVIDER_PROTOCOL_FIXTURE);
                     org.assertj.core.api.Assertions.assertThat(answer.citations())
                             .containsExactly(new Citation(
                                     "refund-policy", "v1", "arrival-time", "退款到账时间"));
@@ -119,7 +115,6 @@ class KnowledgeAnswerServiceTest {
                 model,
                 () -> "trace-123",
                 passthroughTelemetry(),
-                ExecutionMode.PROVIDER_PROTOCOL_FIXTURE,
                 "knowledge-answer-v1",
                 "system instruction"
         );

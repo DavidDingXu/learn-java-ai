@@ -2,10 +2,18 @@ server:
   port: 8082
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: ticket-agent-service
-  profiles:
-    default: local-lite
+  datasource:
+    url: ${JAVA_AI_TICKET_DB_URL}
+    username: ${JAVA_AI_TICKET_DB_USERNAME}
+    password: ${JAVA_AI_TICKET_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${JAVA_AI_TICKET_DB_POOL_SIZE:10}
+  flyway:
+    enabled: true
   ai:
     retry:
       max-attempts: 1
@@ -13,65 +21,24 @@ spring:
       audio:
         speech: none
         transcription: none
-      chat: none
+      chat: openai
       embedding: none
       image: none
       moderation: none
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health
-  endpoint:
-    health:
-      show-details: never
-
----
-spring:
-  config:
-    activate:
-      on-profile: local-lite
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
-  flyway:
-    enabled: false
-
-java-ai:
-  persistence:
-    mode: memory
-  runtime:
-    external-integrations-enabled: false
-  agent:
-    downstream-enabled: false
-    max-steps: 4
-    max-concurrent-runs: 4
-    confirmation-ttl: 15m
-    allowed-queues: refund-review,tier-2
-  security:
-    jwt:
-      enabled: false
-
----
-spring:
-  config:
-    activate:
-      on-profile: shared-dev
-  datasource:
-    url: ${JAVA_AI_TICKET_DB_URL:jdbc:postgresql://localhost:5432/java_ai_ticket}
-    username: ${JAVA_AI_TICKET_DB_USERNAME:java_ai}
-    password: ${JAVA_AI_TICKET_DB_PASSWORD:java_ai}
-    hikari:
-      maximum-pool-size: ${JAVA_AI_TICKET_DB_POOL_SIZE:10}
-  flyway:
-    enabled: true
+    openai:
+      api-key: ${JAVA_AI_CHAT_API_KEY}
+      base-url: ${JAVA_AI_CHAT_BASE_URL}
+      chat:
+        model: ${JAVA_AI_CHAT_MODEL}
 
 management:
   endpoints:
     web:
       exposure:
         include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
 
 java-ai:
   persistence:
@@ -81,11 +48,14 @@ java-ai:
     external-integrations-enabled: true
   agent:
     downstream-enabled: true
+    max-steps: ${JAVA_AI_AGENT_MAX_STEPS:4}
     max-concurrent-runs: ${JAVA_AI_AGENT_MAX_CONCURRENT_RUNS:16}
-    knowledge-base-url: ${JAVA_AI_KNOWLEDGE_BASE_URL:http://localhost:8081}
-    legacy-tool-base-url: ${JAVA_AI_LEGACY_TOOL_BASE_URL:http://localhost:8090}
+    confirmation-ttl: ${JAVA_AI_CONFIRMATION_TTL:15m}
+    allowed-queues: ${JAVA_AI_AGENT_ALLOWED_QUEUES:refund-review,tier-2}
+    knowledge-base-url: ${JAVA_AI_KNOWLEDGE_BASE_URL}
+    legacy-tool-base-url: ${JAVA_AI_LEGACY_TOOL_BASE_URL}
     downstream-timeout: ${JAVA_AI_DOWNSTREAM_TIMEOUT:3s}
-    downstream-token-mode: ${JAVA_AI_DOWNSTREAM_TOKEN_MODE:development-hmac}
+    downstream-token-mode: ${JAVA_AI_DOWNSTREAM_TOKEN_MODE}
     delegated-token:
       issuer: ${JAVA_AI_JWT_ISSUER}
       hmac-secret: ${JAVA_AI_DEV_JWT_HMAC_SECRET}

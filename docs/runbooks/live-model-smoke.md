@@ -43,7 +43,7 @@ $env:JAVA_AI_CHAT_MODEL = "provider-model-name"
 脚本显式运行 `LiveModelSmokeIT`。成功条件包括：
 
 - 返回非空回答。
-- `executionMode` 等于 `LIVE_MODEL`。
+- 响应包含非空模型名、Token 用量、结束原因、Trace 和有效引用。
 - 至少有一条来自 `refund-policy/v1#arrival-time` 的引用。
 - 模型名、finish reason 和 Token 用量能映射到项目响应。
 - 模型输出通过 JSON Schema 转换、引用校验和业务动作校验。

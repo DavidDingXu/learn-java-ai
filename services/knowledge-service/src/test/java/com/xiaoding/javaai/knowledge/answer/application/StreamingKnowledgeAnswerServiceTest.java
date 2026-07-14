@@ -28,7 +28,6 @@ class StreamingKnowledgeAnswerServiceTest {
                 prompt -> Flux.just(new ModelStreamChunk(
                         "无法确认。", "fixture-model", new ModelUsage(1, 1, 2), "stop")),
                 () -> "trace-123",
-                ExecutionMode.PROVIDER_PROTOCOL_FIXTURE,
                 "knowledge-answer-v1",
                 "system instruction"
         );
@@ -59,7 +58,6 @@ class StreamingKnowledgeAnswerServiceTest {
                 source,
                 model,
                 () -> "trace-123",
-                ExecutionMode.PROVIDER_PROTOCOL_FIXTURE,
                 "knowledge-answer-v1",
                 "system instruction"
         );
@@ -90,7 +88,6 @@ class StreamingKnowledgeAnswerServiceTest {
                 query -> Mono.just(List.of()),
                 model,
                 () -> "trace-123",
-                ExecutionMode.PROVIDER_PROTOCOL_FIXTURE,
                 "knowledge-answer-v1",
                 "system instruction"
         );

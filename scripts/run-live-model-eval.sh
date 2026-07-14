@@ -49,7 +49,9 @@ env JAVA_HOME="$MAIN_JAVA_HOME" PATH="$MAIN_JAVA_HOME/bin:$PATH" \
   JAVA_AI_CHAT_MODEL="$JAVA_AI_CHAT_MODEL" \
   "$MAIN_JAVA_HOME/bin/java" \
   -jar "$ROOT_DIR/services/knowledge-service/target/knowledge-service-0.1.0-SNAPSHOT.jar" \
-  --spring.profiles.active=live-model \
+  --java-ai.knowledge.context-source=classpath \
+  --spring.ai.model.embedding=none \
+  --spring.flyway.enabled=false \
   --server.address=127.0.0.1 \
   --server.port="$PORT" \
   "${SECURITY_ARGS[@]}" \

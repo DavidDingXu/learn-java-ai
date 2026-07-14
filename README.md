@@ -14,7 +14,7 @@
 - 不依赖外部数据库、模型密钥或业务网络的日常测试路径。
 - Knowledge Service 的 Spring AI、WebFlux、可靠性和可观测依赖边界。
 - Customer BFF 的客户 JWT、RFC 8693 Token Exchange、下游客户端认证与 audience/scope 隔离。
-- 默认离线、显式真实模型两套配置边界，以及真实 JDK21/JDK8 CI 合同。
+- 测试替身与正式运行配置隔离，以及真实 JDK21/JDK8 CI 合同。
 - 第一条固定政策上下文问答、Spring AI 业务适配器、确定性模型协议合同和真实模型验证入口。
 - 版本化 Prompt、信任分区、结构化输出、业务校验和带稳定事件合同的 SSE。
 - 面向知识回答用例的超时、并发、断路器和安全读重试。
@@ -38,9 +38,9 @@
 - 独立 Java 8 任务查询与确认客户端，认证、连接池、超时、错误映射和未知结果异常。
 - Agent Golden Set、三令牌公开 HTTP 评测器和 JSON/Markdown 报告入口。
 - Injection 绕过确认、合成 PII 审计泄露和身份字段污染的安全回归数据集与跨平台入口。
-- Ticket Agent 规划次数、Token 分布、Tool 结果与耗时的 Micrometer 指标，shared-dev 暴露 Prometheus 端点。
+- Ticket Agent 规划次数、Token 分布、Tool 结果与耗时的 Micrometer 指标，并暴露受管理网络保护的 Prometheus 端点。
 - Agent Run 公平信号量并发门禁、稳定 429 错误合同，以及异常路径的许可释放测试。
-- local-lite、shared-dev、CI 三种环境配置、证据边界和跨平台验证入口。
+- 每个服务一份运行配置、统一 `.env` 参数入口、测试隔离和跨平台验证命令。
 - 跨平台 release gate：全构建、合同、Java 8、敏感信息扫描和可选外部健康证据。
 - DashScope Provider 适配、国内 Embedding/Rerank 同集评测和 Spring AI Alibaba 人工确认 Graph。
 - LangChain4j AI Services、租户受限 RAG、Tool 循环、结构化输出和按业务能力共存策略。
@@ -50,7 +50,7 @@
 - 50 条检索、30 条 Agent 和 30 条安全教学回归数据；公司落地必须替换或扩展为真实业务分布。
 - Customer BFF、Knowledge Service、Ticket Agent Service 和 JDK8 Legacy Tool 四份 OpenAPI 合同。
 
-当前已经完成真实模型调用、企业 RAG、C 端会话与信任交互、幂等工单升级、受控 Agent、Java 8 客户端、安全回归、标准指标、跨平台发布门禁，以及框架和协议隔离实验。业务接口始终要求受信身份，不把租户和客户身份放进请求体。Labs 证明依赖、API、协议互操作和业务边界可编译、可回归，不等于相关 Provider、生产 MCP Server 或远程 Agent 已在公司网络完成联调。PostgreSQL/pgvector 真实指标仍需共享测试环境；进程内会话和限流只用于 local-lite，Ticket Agent 的共享环境状态已使用 JDBC/Flyway，但仍需目标 PostgreSQL 上的迁移、并发、备份恢复和容量验证。S3 兼容对象存储、生产索引写入、真实 IdP Token Exchange、外部 JDK8 Tool 服务、正式 Customer Web、持久 UNKNOWN 对账和端到端容量验证仍需公司环境完成。
+当前已经完成真实模型调用、企业 RAG、C 端会话与信任交互、幂等工单升级、受控 Agent、Java 8 客户端、安全回归、标准指标、跨平台发布门禁，以及框架和协议隔离实验。业务接口始终要求受信身份，不把租户和客户身份放进请求体。Labs 证明依赖、API、协议互操作和业务边界可编译、可回归，不等于相关 Provider、生产 MCP Server 或远程 Agent 已在公司网络完成联调。运行配置使用 PostgreSQL/Flyway 持久化 Ticket Agent 状态，并使用 PostgreSQL/pgvector 支撑知识检索；目标数据库仍需完成迁移、并发、备份恢复和容量验证。Customer BFF 当前的进程内会话与限流适配器需要在多实例部署前替换为共享实现。S3 兼容对象存储、生产索引写入、真实 IdP Token Exchange、外部 JDK8 Tool 服务、正式 Customer Web、持久 UNKNOWN 对账和端到端容量验证仍需公司环境完成。
 
 ## 模块边界
 
@@ -149,6 +149,14 @@ Windows 可使用 `mvnw.cmd` 和对应 JDK 环境变量执行相同 POM。
 
 三个应用都提供 Actuator health。Knowledge Service 提供知识回答和 SSE，Customer BFF 提供 C 端回答、SSE、反馈、重试和工单升级，Ticket Agent Service 提供任务接收、运行、查询、确认与审计：
 
+先从示例生成唯一的本地参数文件并填写真实连接信息：
+
+```bash
+cp .env.example .env
+```
+
+三个服务都会通过 `spring.config.import` 读取项目根目录的 `.env`，无需切换 Spring Profile。然后分别启动：
+
 ```bash
 ./mvnw -pl services/knowledge-service spring-boot:run
 ./mvnw -pl services/ticket-agent-service spring-boot:run
@@ -163,7 +171,7 @@ curl http://localhost:8081/actuator/health
 
 期望返回包含 `"status":"UP"` 的 JSON。`/actuator/env` 不对外暴露。
 
-知识模型命令见 [真实模型 Smoke](docs/runbooks/live-model-smoke.md)，模型、检索和 Agent 评测见 [模型及检索评测](docs/runbooks/model-interaction-eval.md)。安全回归见 [AI Security Regression](docs/runbooks/security-regression.md)，三套环境的连接与证据边界见 [Environment Modes](docs/runbooks/environment-modes.md)，发布入口见 [Release Checklist](docs/runbooks/release-checklist.md)。Ticket Agent 的真实模型烟测使用 `scripts/run-agent-live-model-smoke.sh` 或对应 PowerShell 脚本。检索和 Agent 评测通过显式 URL 与凭证连接共享测试环境，本机或 CI 运行 Eval Runner。
+知识模型命令见 [真实模型 Smoke](docs/runbooks/live-model-smoke.md)，模型、检索和 Agent 评测见 [模型及检索评测](docs/runbooks/model-interaction-eval.md)。安全回归见 [AI Security Regression](docs/runbooks/security-regression.md)，统一参数和启动方式见 [Runtime Configuration](docs/runbooks/runtime-configuration.md)，发布入口见 [Release Checklist](docs/runbooks/release-checklist.md)。Ticket Agent 的真实模型烟测使用 `scripts/run-agent-live-model-smoke.sh` 或对应 PowerShell 脚本。检索和 Agent 评测通过显式 URL 与凭证连接目标测试环境，本机或 CI 均运行同一个 Eval Runner。
 
 ## 外部环境检查
 

@@ -82,7 +82,7 @@ Missing configuration exits with code 2. A successful run proves only that `/act
 
 ## Development And External Infrastructure
 
-日常验证使用确定性单测、合同测试和 `local-lite`。需要真实数据库、模型、对象存储或外部业务系统时，通过环境变量显式连接以下任一环境：
+日常代码回归使用 `src/test` 下的确定性配置、单元测试和合同测试。需要真实数据库、模型、对象存储或外部业务系统时，通过根目录 `.env` 或部署系统显式注入连接参数：
 
 - an externally managed test environment;
 - CI runners allowed to start containers;

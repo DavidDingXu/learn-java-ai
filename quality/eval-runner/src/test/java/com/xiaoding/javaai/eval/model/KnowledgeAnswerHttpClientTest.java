@@ -29,7 +29,7 @@ class KnowledgeAnswerHttpClientTest {
         HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
         server.createContext("/api/v1/knowledge/answers", exchange -> {
             byte[] body = """
-                    {"answer":"退款通常 1 到 5 个工作日到账。","citations":[{"sectionId":"arrival-time"}],"refused":false,"refusalReason":"","model":"fixture-model","executionMode":"PROVIDER_PROTOCOL_FIXTURE","traceId":"trace-1","usage":{"promptTokens":12,"completionTokens":8,"totalTokens":20}}
+                    {"answer":"退款通常 1 到 5 个工作日到账。","citations":[{"sectionId":"arrival-time"}],"refused":false,"refusalReason":"","model":"fixture-model","traceId":"trace-1","usage":{"promptTokens":12,"completionTokens":8,"totalTokens":20}}
                     """.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, body.length);

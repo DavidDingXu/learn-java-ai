@@ -39,7 +39,7 @@ class WebClientKnowledgeAnswerStreamClientTest {
                 .setHeader("Content-Type", "text/event-stream")
                 .setBody("""
                         event:metadata
-                        data:{"traceId":"trace-123","promptVersion":"v1","executionMode":"LIVE_MODEL"}
+                        data:{"traceId":"trace-123","promptVersion":"v1"}
 
                         event:delta
                         data:{"text":"退款通常在 1 到 5 个工作日到账。"}

@@ -3,7 +3,6 @@ package com.xiaoding.javaai.knowledge.answer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestion;
 import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestionCommand;
-import com.xiaoding.javaai.knowledge.answer.application.ExecutionMode;
 import com.xiaoding.javaai.knowledge.document.domain.TenantId;
 import com.xiaoding.javaai.knowledge.retrieval.application.KnowledgeAccessScope;
 import okhttp3.mockwebserver.MockResponse;
@@ -27,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("provider-fixture")
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class ProviderProtocolFixtureTest {
 
@@ -45,9 +44,11 @@ class ProviderProtocolFixtureTest {
 
     @DynamicPropertySource
     static void providerProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.ai.model.chat", () -> "openai");
         registry.add("spring.ai.openai.api-key", () -> "fixture-key");
         registry.add("spring.ai.openai.base-url", () -> PROVIDER.url("/").toString());
         registry.add("spring.ai.openai.chat.model", () -> "fixture-model");
+        registry.add("java-ai.runtime.external-integrations-enabled", () -> true);
     }
 
     @Autowired
@@ -91,7 +92,6 @@ class ProviderProtocolFixtureTest {
                     assertThat(answer.usage().completionTokens()).isEqualTo(18);
                     assertThat(answer.usage().totalTokens()).isEqualTo(70);
                     assertThat(answer.finishReason()).isEqualTo("stop");
-                    assertThat(answer.executionMode()).isEqualTo(ExecutionMode.PROVIDER_PROTOCOL_FIXTURE);
                     assertThat(answer.citations()).singleElement().satisfies(citation -> {
                         assertThat(citation.documentId()).isEqualTo("refund-policy");
                         assertThat(citation.version()).isEqualTo("v1");

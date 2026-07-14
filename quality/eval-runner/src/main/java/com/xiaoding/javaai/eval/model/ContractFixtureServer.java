@@ -60,7 +60,6 @@ public final class ContractFixtureServer implements AutoCloseable {
                     "refused", refused,
                     "refusalReason", refused ? "evidence_missing" : "",
                     "model", "contract-fixture-model",
-                    "executionMode", "PROVIDER_PROTOCOL_FIXTURE",
                     "traceId", "fixture-" + Integer.toHexString(question.hashCode()),
                     "usage", Map.of("promptTokens", 30, "completionTokens", 15, "totalTokens", 45)
             ));

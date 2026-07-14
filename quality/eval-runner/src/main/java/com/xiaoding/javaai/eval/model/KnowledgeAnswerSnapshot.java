@@ -8,7 +8,6 @@ public record KnowledgeAnswerSnapshot(
         boolean refused,
         String refusalReason,
         String model,
-        String executionMode,
         String traceId,
         int promptTokens,
         int completionTokens,

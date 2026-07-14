@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("agent-provider-fixture")
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 class TicketAgentProviderProtocolFixtureTest {
 
@@ -43,9 +43,11 @@ class TicketAgentProviderProtocolFixtureTest {
 
     @DynamicPropertySource
     static void providerProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.ai.model.chat", () -> "openai");
         registry.add("spring.ai.openai.api-key", () -> "fixture-key");
         registry.add("spring.ai.openai.base-url", () -> PROVIDER.url("/").toString());
         registry.add("spring.ai.openai.chat.model", () -> "fixture-model");
+        registry.add("java-ai.runtime.external-integrations-enabled", () -> true);
     }
 
     @Autowired

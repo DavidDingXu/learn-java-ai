@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -89,30 +89,45 @@ test("eval runner owns contract tooling and remains independent of services", ()
   assert.doesNotMatch(pom, /knowledge-service|ticket-agent-service|customer-bff|spring-ai-/);
 });
 
-test("default model mode is disabled and live mode requires explicit variables", () => {
-  const defaults = read("services/knowledge-service/src/main/resources/application.yml");
-  const live = read("services/knowledge-service/src/main/resources/application-live-model.yml");
+test("each service exposes one production-facing runtime configuration", () => {
+  const services = [
+    "services/knowledge-service",
+    "services/ticket-agent-service",
+    "apps/customer-bff",
+  ];
 
-  assert.match(defaults, /speech:\s*none/);
-  assert.match(defaults, /transcription:\s*none/);
-  assert.match(defaults, /chat:\s*none/);
-  assert.match(defaults, /embedding:\s*none/);
-  assert.match(defaults, /image:\s*none/);
-  assert.match(defaults, /moderation:\s*none/);
-  assert.match(defaults, /execution-mode:\s*LOCAL_DISABLED/);
-  assert.match(defaults, /external-integrations-enabled:\s*false/);
+  for (const service of services) {
+    const mainResources = path.join(projectRoot, service, "src/main/resources");
+    const runtimeConfigs = readdirSync(mainResources)
+      .filter((name) => /^application.*\.ya?ml$/.test(name))
+      .sort();
+    assert.deepEqual(runtimeConfigs, ["application.yml"], `${service} runtime configs`);
 
-  assert.match(live, /speech:\s*none/);
-  assert.match(live, /transcription:\s*none/);
-  assert.match(live, /chat:\s*openai/);
-  assert.match(live, /embedding:\s*none/);
-  assert.match(live, /image:\s*none/);
-  assert.match(live, /moderation:\s*none/);
-  assert.match(live, /\$\{JAVA_AI_CHAT_API_KEY}/);
-  assert.match(live, /\$\{JAVA_AI_CHAT_BASE_URL}/);
-  assert.match(live, /\$\{JAVA_AI_CHAT_MODEL}/);
-  assert.match(live, /execution-mode:\s*LIVE_MODEL/);
-  assert.match(live, /external-integrations-enabled:\s*true/);
+    const runtime = read(`${service}/src/main/resources/application.yml`);
+    assert.doesNotMatch(runtime, /spring:\s*[\s\S]*?profiles:|on-profile:|local-lite|shared-dev/);
+    assert.match(runtime, /import:\s*optional:file:\.env\[\.properties\]/);
+    assert.equal(
+      existsSync(path.join(projectRoot, service, "src/test/resources/application-test.yml")),
+      true,
+      `${service} must isolate deterministic defaults under src/test`,
+    );
+  }
+
+  const knowledge = read("services/knowledge-service/src/main/resources/application.yml");
+  assert.match(knowledge, /chat:\s*openai/);
+  assert.match(knowledge, /embedding:\s*openai/);
+  assert.match(knowledge, /\$\{JAVA_AI_CHAT_API_KEY}/);
+  assert.match(knowledge, /\$\{JAVA_AI_POSTGRES_URL}/);
+  assert.doesNotMatch(knowledge, /execution-mode|LOCAL_DISABLED|PROVIDER_PROTOCOL_FIXTURE/);
+
+  const ticket = read("services/ticket-agent-service/src/main/resources/application.yml");
+  assert.match(ticket, /persistence:\s*[\s\S]*?mode:\s*jdbc/);
+  assert.match(ticket, /\$\{JAVA_AI_TICKET_DB_URL}/);
+  assert.match(ticket, /downstream-enabled:\s*true/);
+
+  const bff = read("apps/customer-bff/src/main/resources/application.yml");
+  assert.match(bff, /\$\{JAVA_AI_TOKEN_EXCHANGE_ENDPOINT}/);
+  assert.match(bff, /\$\{JAVA_AI_KNOWLEDGE_BASE_URL}/);
 });
 
 test("build verification is cross-platform and self-contained", {

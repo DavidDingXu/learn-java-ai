@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,9 +22,18 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("agent-live")
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 class TicketAgentLiveModelSmokeIT {
+
+    @DynamicPropertySource
+    static void liveModelProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.ai.model.chat", () -> "openai");
+        registry.add("spring.ai.openai.api-key", () -> requiredEnvironment("JAVA_AI_CHAT_API_KEY"));
+        registry.add("spring.ai.openai.base-url", () -> requiredEnvironment("JAVA_AI_CHAT_BASE_URL"));
+        registry.add("spring.ai.openai.chat.model", () -> requiredEnvironment("JAVA_AI_CHAT_MODEL"));
+        registry.add("java-ai.runtime.external-integrations-enabled", () -> true);
+    }
 
     @Autowired
     private TicketAgentPlanner planner;
@@ -84,6 +95,14 @@ class TicketAgentLiveModelSmokeIT {
         String value = System.getProperty(name);
         if (value == null || value.isBlank()) {
             throw new IllegalStateException("Missing required system property: " + name);
+        }
+        return value;
+    }
+
+    private static String requiredEnvironment(String name) {
+        String value = System.getenv(name);
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Missing required environment variable: " + name);
         }
         return value;
     }

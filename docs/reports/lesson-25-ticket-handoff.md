@@ -28,4 +28,4 @@ java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar contract-val
 
 ## Production Boundary
 
-Ticket Agent 的 `shared-dev` 模式已经使用 PostgreSQL/Flyway 持久化任务、请求指纹和状态，`local-lite` 仍使用进程内实现方便日常开发。公司环境必须继续验证目标 PostgreSQL 的事务隔离、并发领取、备份恢复与容量；后续 Agent、Tool 和 JDK8 回调只能在同一任务基础上继续，不能重新解释一份无来源文本。
+Ticket Agent 的运行配置使用 PostgreSQL/Flyway 持久化任务、请求指纹和状态，进程内实现只保留在测试配置中。公司环境必须继续验证目标 PostgreSQL 的事务隔离、并发领取、备份恢复与容量；后续 Agent、Tool 和 JDK8 回调只能在同一任务基础上继续，不能重新解释一份无来源文本。

@@ -12,7 +12,7 @@ Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 - `ConversationWindowPolicy` 同时约束消息数量、估算 Token 和摘要长度，而不是只按轮数截断。
 - 被裁剪历史只摘要“用户问了什么、是否已回答”，不会把旧助手答案写成业务事实。
 - Knowledge Service 将摘要、历史消息和当前问题都放在不可信分区，检索仍只使用当前问题，可信政策只能来自授权检索结果。
-- local-lite 使用带版本检查的内存存储端口，冲突不会静默覆盖。
+- 测试配置使用带版本检查的内存存储端口，冲突不会静默覆盖。
 
 ## Local Verification
 

@@ -3,7 +3,6 @@ package com.xiaoding.javaai.knowledge.security;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestion;
 import com.xiaoding.javaai.knowledge.answer.application.Citation;
-import com.xiaoding.javaai.knowledge.answer.application.ExecutionMode;
 import com.xiaoding.javaai.knowledge.answer.application.KnowledgeAnswer;
 import com.xiaoding.javaai.knowledge.answer.application.ModelUsage;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-@ActiveProfiles("local-lite")
+@ActiveProfiles("test")
 @Import(KnowledgeJwtSecurityTest.StubAnswerConfiguration.class)
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -257,8 +256,7 @@ class KnowledgeJwtSecurityTest {
                     "fixture-model",
                     new ModelUsage(1, 1, 2),
                     "stop",
-                    "trace-security",
-                    ExecutionMode.PROVIDER_PROTOCOL_FIXTURE
+                    "trace-security"
             ));
         }
     }

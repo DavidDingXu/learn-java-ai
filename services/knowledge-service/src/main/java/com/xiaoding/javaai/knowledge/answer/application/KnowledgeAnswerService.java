@@ -14,7 +14,6 @@ public final class KnowledgeAnswerService implements AnswerKnowledgeQuestion {
     private final KnowledgeAnswerModel answerModel;
     private final TraceIdProvider traceIdProvider;
     private final KnowledgeAnswerTelemetry telemetry;
-    private final ExecutionMode executionMode;
     private final String promptVersion;
     private final String systemInstruction;
     private final KnowledgeAnswerValidator validator = new KnowledgeAnswerValidator();
@@ -24,7 +23,6 @@ public final class KnowledgeAnswerService implements AnswerKnowledgeQuestion {
             KnowledgeAnswerModel answerModel,
             TraceIdProvider traceIdProvider,
             KnowledgeAnswerTelemetry telemetry,
-            ExecutionMode executionMode,
             String promptVersion,
             String systemInstruction
     ) {
@@ -32,7 +30,6 @@ public final class KnowledgeAnswerService implements AnswerKnowledgeQuestion {
         this.answerModel = answerModel;
         this.traceIdProvider = traceIdProvider;
         this.telemetry = telemetry;
-        this.executionMode = executionMode;
         this.promptVersion = promptVersion;
         this.systemInstruction = systemInstruction;
     }
@@ -70,8 +67,7 @@ public final class KnowledgeAnswerService implements AnswerKnowledgeQuestion {
                 draft.model(),
                 draft.usage(),
                 draft.finishReason(),
-                traceIdProvider.currentTraceId(),
-                executionMode
+                traceIdProvider.currentTraceId()
         );
     }
 }

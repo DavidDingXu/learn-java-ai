@@ -34,7 +34,9 @@ if ($env:JAVA_AI_DEV_JWT_HMAC_SECRET) {
 }
 $ServiceArgs = @(
   "-jar", $ServiceJar,
-  "--spring.profiles.active=live-model",
+  "--java-ai.knowledge.context-source=classpath",
+  "--spring.ai.model.embedding=none",
+  "--spring.flyway.enabled=false",
   "--server.address=127.0.0.1",
   "--server.port=$Port"
 )

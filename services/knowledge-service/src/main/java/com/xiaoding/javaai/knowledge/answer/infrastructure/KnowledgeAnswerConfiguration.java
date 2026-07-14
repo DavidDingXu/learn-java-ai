@@ -1,7 +1,6 @@
 package com.xiaoding.javaai.knowledge.answer.infrastructure;
 
 import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestion;
-import com.xiaoding.javaai.knowledge.answer.application.ExecutionMode;
 import com.xiaoding.javaai.knowledge.answer.application.KnowledgeAnswerService;
 import com.xiaoding.javaai.knowledge.answer.application.StreamKnowledgeAnswer;
 import com.xiaoding.javaai.knowledge.answer.application.StreamingKnowledgeAnswerService;
@@ -91,7 +90,6 @@ class KnowledgeAnswerConfiguration {
             KnowledgeAnswerModel answerModel,
             TraceIdProvider traceIdProvider,
             KnowledgeAnswerTelemetry telemetry,
-            @Value("${java-ai.runtime.execution-mode}") ExecutionMode executionMode,
             @Value("${java-ai.prompt.knowledge-answer.version:knowledge-answer-v1}") String promptVersion,
             @Value("classpath:prompts/knowledge-answer/v1/system.txt") Resource systemPrompt
     ) throws IOException {
@@ -100,7 +98,6 @@ class KnowledgeAnswerConfiguration {
                 answerModel,
                 traceIdProvider,
                 telemetry,
-                executionMode,
                 promptVersion,
                 systemPrompt.getContentAsString(StandardCharsets.UTF_8).strip()
         );
@@ -111,7 +108,6 @@ class KnowledgeAnswerConfiguration {
             PolicyContextSource contextSource,
             KnowledgeAnswerStreamModel streamModel,
             TraceIdProvider traceIdProvider,
-            @Value("${java-ai.runtime.execution-mode}") ExecutionMode executionMode,
             @Value("${java-ai.prompt.knowledge-answer.version:knowledge-answer-v1}") String promptVersion,
             @Value("classpath:prompts/knowledge-answer/v1/system.txt") Resource systemPrompt
     ) throws IOException {
@@ -119,7 +115,6 @@ class KnowledgeAnswerConfiguration {
                 contextSource,
                 streamModel,
                 traceIdProvider,
-                executionMode,
                 promptVersion,
                 systemPrompt.getContentAsString(StandardCharsets.UTF_8).strip()
         );

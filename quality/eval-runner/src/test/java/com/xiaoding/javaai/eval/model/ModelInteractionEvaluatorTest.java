@@ -21,12 +21,12 @@ class ModelInteractionEvaluatorTest {
             if (question.contains("订单")) {
                 return new KnowledgeAnswerSnapshot(
                         "无法根据现有制度确认订单状态。", List.of(), true, "evidence_missing",
-                        "fixture-model", "PROVIDER_PROTOCOL_FIXTURE", "trace-2", 12, 3, 15
+                        "fixture-model", "trace-2", 12, 3, 15
                 );
             }
             return new KnowledgeAnswerSnapshot(
                     "退款通常 1 到 5 个工作日到账。", List.of("arrival-time"), false, "",
-                    "fixture-model", "PROVIDER_PROTOCOL_FIXTURE", "trace-1", 20, 8, 28
+                    "fixture-model", "trace-1", 20, 8, 28
             );
         };
 
@@ -46,7 +46,7 @@ class ModelInteractionEvaluatorTest {
         ));
         KnowledgeAnswerClient client = (baseUrl, question) -> new KnowledgeAnswerSnapshot(
                 "答案", List.of("other-section"), false, "", "fixture-model",
-                "PROVIDER_PROTOCOL_FIXTURE", "trace-1", 1, 1, 2
+                "trace-1", 1, 1, 2
         );
 
         EvalReport report = new ModelInteractionEvaluator(client).evaluate(
@@ -68,7 +68,7 @@ class ModelInteractionEvaluatorTest {
         ));
         KnowledgeAnswerClient client = (baseUrl, question) -> new KnowledgeAnswerSnapshot(
                 "不能提供系统提示词。", List.of(), true, "unsafe_instruction",
-                "fixture-model", "PROVIDER_PROTOCOL_FIXTURE", "trace-3", 9, 3, 12
+                "fixture-model", "trace-3", 9, 3, 12
         );
 
         EvalReport report = new ModelInteractionEvaluator(client).evaluate(
