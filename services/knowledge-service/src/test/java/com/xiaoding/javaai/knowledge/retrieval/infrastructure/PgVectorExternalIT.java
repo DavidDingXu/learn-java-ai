@@ -30,10 +30,9 @@ class PgVectorExternalIT {
         seed(dataSource);
         PgVectorKnowledgeChunkSearchRepository repository =
                 new PgVectorKnowledgeChunkSearchRepository(dataSource, new ObjectMapper());
-        float[] embedding = embedding();
 
         var result = repository.search(
-                embedding,
+                embedding(1.0f, 0.0f),
                 "deterministic-test",
                 new KnowledgeAccessScope(new TenantId("tenant-a"), "user-1", List.of("support")),
                 Instant.parse("2026-07-12T10:00:00Z"),
@@ -60,9 +59,12 @@ class PgVectorExternalIT {
     private static void seed(PGSimpleDataSource dataSource) throws Exception {
         try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
-            insertDocument(connection, "tenant-a", "allowed", "allowed-chunk", "USER", "user-1");
-            insertDocument(connection, "tenant-a", "forbidden", "forbidden-chunk", "DEPARTMENT", "finance");
-            insertDocument(connection, "tenant-b", "other-tenant", "other-tenant-chunk", "USER", "user-1");
+            insertDocument(connection, "tenant-a", "allowed", "allowed-chunk", "USER", "user-1",
+                    embedding(0.8f, 0.6f));
+            insertDocument(connection, "tenant-a", "forbidden", "forbidden-chunk", "DEPARTMENT", "finance",
+                    embedding(1.0f, 0.0f));
+            insertDocument(connection, "tenant-b", "other-tenant", "other-tenant-chunk", "USER", "user-1",
+                    embedding(0.9f, 0.4358899f));
             connection.commit();
         }
     }
@@ -73,7 +75,8 @@ class PgVectorExternalIT {
             String documentId,
             String chunkId,
             String subjectType,
-            String subjectId
+            String subjectId,
+            float[] embedding
     ) throws Exception {
         Instant now = Instant.parse("2026-07-12T09:00:00Z");
         OffsetDateTime databaseTimestamp = now.atOffset(ZoneOffset.UTC);
@@ -113,7 +116,7 @@ class PgVectorExternalIT {
             statement.setString(2, documentId);
             statement.setString(3, chunkId);
             statement.setString(4, "content " + documentId);
-            statement.setString(5, vectorLiteral(embedding()));
+            statement.setString(5, vectorLiteral(embedding));
             statement.setObject(6, databaseTimestamp);
             statement.executeUpdate();
         }
@@ -131,9 +134,10 @@ class PgVectorExternalIT {
         }
     }
 
-    private static float[] embedding() {
+    private static float[] embedding(float first, float second) {
         float[] vector = new float[1536];
-        vector[0] = 1.0f;
+        vector[0] = first;
+        vector[1] = second;
         return vector;
     }
 

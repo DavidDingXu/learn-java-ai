@@ -61,17 +61,14 @@ final class SpringAiKnowledgeAnswerModel implements KnowledgeAnswerModel {
         ChatResponseMetadata metadata = response.getMetadata();
         Usage usage = metadata == null ? null : metadata.getUsage();
         String responseModel = metadata == null ? null : metadata.getModel();
+        ModelUsage modelUsage = mapUsage(usage);
         return new ModelAnswerDraft(
                 structured.answer(),
                 structured.citedSectionIds(),
                 structured.refused(),
                 structured.refusalReason(),
                 responseModel == null || responseModel.isBlank() ? configuredModel : responseModel,
-                new ModelUsage(
-                        usage == null ? 0 : valueOrZero(usage.getPromptTokens()),
-                        usage == null ? 0 : valueOrZero(usage.getCompletionTokens()),
-                        usage == null ? 0 : valueOrZero(usage.getTotalTokens())
-                ),
+                modelUsage,
                 normalizeFinishReason(response.getResult().getMetadata().getFinishReason())
         );
     }
@@ -82,6 +79,15 @@ final class SpringAiKnowledgeAnswerModel implements KnowledgeAnswerModel {
 
     private static int valueOrZero(Integer value) {
         return value == null ? 0 : value;
+    }
+
+    private static ModelUsage mapUsage(Usage usage) {
+        if (usage == null) return null;
+        int promptTokens = valueOrZero(usage.getPromptTokens());
+        int completionTokens = valueOrZero(usage.getCompletionTokens());
+        int totalTokens = valueOrZero(usage.getTotalTokens());
+        if (promptTokens == 0 && completionTokens == 0 && totalTokens == 0) return null;
+        return new ModelUsage(promptTokens, completionTokens, totalTokens);
     }
 
     static String buildUserMessage(GroundedPrompt prompt, String outputFormat) {

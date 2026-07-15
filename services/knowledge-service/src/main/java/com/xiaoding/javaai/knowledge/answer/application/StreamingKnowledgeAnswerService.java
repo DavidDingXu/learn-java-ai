@@ -49,7 +49,7 @@ public final class StreamingKnowledgeAnswerService implements StreamKnowledgeAns
         long startedNanos = System.nanoTime();
         AtomicLong firstTokenNanos = new AtomicLong();
         AtomicReference<String> model = new AtomicReference<>("unknown");
-        AtomicReference<ModelUsage> usage = new AtomicReference<>(new ModelUsage(0, 0, 0));
+        AtomicReference<ModelUsage> usage = new AtomicReference<>();
         AtomicReference<String> finishReason = new AtomicReference<>("unknown");
         GroundedPrompt prompt = new GroundedPrompt(
                 systemInstruction, promptVersion, command.question(),
@@ -77,24 +77,27 @@ public final class StreamingKnowledgeAnswerService implements StreamKnowledgeAns
                         .takeUntilOther(shared.ignoreElements())
         ));
 
-        Flux<AnswerStreamEvent> citations = Flux.fromIterable(contexts)
-                .map(context -> (AnswerStreamEvent) new AnswerStreamEvent.CitationEvent(new Citation(
-                        context.documentId(), context.version(), context.sectionId(), context.title()
-                )));
-        Flux<AnswerStreamEvent> completed = Flux.defer(() -> {
+        Flux<AnswerStreamEvent> terminal = Flux.defer(() -> {
+            ModelUsage terminalUsage = usage.get();
+            if (terminalUsage == null || isEmpty(terminalUsage)) {
+                return Flux.error(new InvalidModelAnswerException("model usage is missing"));
+            }
             long first = firstTokenNanos.get();
             long ttftMillis = first == 0 ? -1 : Duration.ofNanos(first - startedNanos).toMillis();
-            return Flux.just(new AnswerStreamEvent.CompletedEvent(
-                    model.get(), usage.get(), finishReason.get(), ttftMillis
-            ));
+            Flux<AnswerStreamEvent> citations = Flux.fromIterable(contexts)
+                    .map(context -> (AnswerStreamEvent) new AnswerStreamEvent.CitationEvent(new Citation(
+                            context.documentId(), context.version(), context.sectionId(), context.title()
+                    )));
+            return Flux.concat(citations, Flux.just(new AnswerStreamEvent.CompletedEvent(
+                    model.get(), terminalUsage, finishReason.get(), ttftMillis
+            )));
         });
 
         return Flux.concat(
                         Flux.just(new AnswerStreamEvent.MetadataEvent(
                                 traceIdProvider.currentTraceId(), promptVersion)),
                         body,
-                        citations,
-                        completed
+                        terminal
                 )
                 .onErrorResume(error -> Flux.just(new AnswerStreamEvent.ErrorEvent(
                         "MODEL_STREAM_FAILED", safeMessage(error)
@@ -105,5 +108,11 @@ public final class StreamingKnowledgeAnswerService implements StreamKnowledgeAns
         return error instanceof ModelNotConfiguredException
                 ? error.getMessage()
                 : "The model stream ended unexpectedly";
+    }
+
+    private static boolean isEmpty(ModelUsage usage) {
+        return usage.promptTokens() == 0
+                && usage.completionTokens() == 0
+                && usage.totalTokens() == 0;
     }
 }

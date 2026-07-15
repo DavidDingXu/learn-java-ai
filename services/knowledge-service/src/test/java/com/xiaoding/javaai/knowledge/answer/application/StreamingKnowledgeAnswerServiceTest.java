@@ -78,6 +78,30 @@ class StreamingKnowledgeAnswerServiceTest {
     }
 
     @Test
+    void endsWithAnErrorWhenTheProviderDoesNotReturnUsageMetadata() {
+        KnowledgeAnswerStreamModel model = prompt -> Flux.just(
+                new ModelStreamChunk("退款通常需要几个工作日。", "fixture-model", null, "stop")
+        );
+        StreamingKnowledgeAnswerService service = new StreamingKnowledgeAnswerService(
+                query -> Mono.just(List.of()),
+                model,
+                () -> "trace-123",
+                "knowledge-answer-v1",
+                "system instruction"
+        );
+
+        StepVerifier.create(service.stream(command("退款什么时候到账？")))
+                .assertNext(event -> org.assertj.core.api.Assertions.assertThat(event)
+                        .isInstanceOf(AnswerStreamEvent.MetadataEvent.class))
+                .assertNext(event -> org.assertj.core.api.Assertions.assertThat(event)
+                        .isEqualTo(new AnswerStreamEvent.DeltaEvent("退款通常需要几个工作日。")))
+                .assertNext(event -> org.assertj.core.api.Assertions.assertThat(event)
+                        .isEqualTo(new AnswerStreamEvent.ErrorEvent(
+                                "MODEL_STREAM_FAILED", "The model stream ended unexpectedly")))
+                .verifyComplete();
+    }
+
+    @Test
     void cancellingTheSubscriberCancelsTheModelStream() {
         AtomicBoolean cancelled = new AtomicBoolean();
         KnowledgeAnswerStreamModel model = prompt -> Flux.concat(

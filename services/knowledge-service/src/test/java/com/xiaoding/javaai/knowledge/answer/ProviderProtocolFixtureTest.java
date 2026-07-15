@@ -3,6 +3,7 @@ package com.xiaoding.javaai.knowledge.answer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestion;
 import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestionCommand;
+import com.xiaoding.javaai.knowledge.answer.application.InvalidModelAnswerException;
 import com.xiaoding.javaai.knowledge.document.domain.TenantId;
 import com.xiaoding.javaai.knowledge.retrieval.application.KnowledgeAccessScope;
 import okhttp3.mockwebserver.MockResponse;
@@ -111,6 +112,37 @@ class ProviderProtocolFixtureTest {
                 .contains("knowledge-answer-v1")
                 .contains("refund-policy")
                 .contains("1 到 5 个工作日");
+    }
+
+    @Test
+    void rejectsAProviderResponseWithoutUsageMetadata() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        String structuredAnswer = objectMapper.writeValueAsString(Map.of(
+                "answer", "退款审核通过后，通常还需要 1 到 5 个工作日原路到账。",
+                "citedSectionIds", List.of("arrival-time"),
+                "refused", false,
+                "refusalReason", ""
+        ));
+        String providerResponse = objectMapper.writeValueAsString(Map.of(
+                "id", "chatcmpl-without-usage",
+                "object", "chat.completion",
+                "created", 1750000000,
+                "model", "fixture-model",
+                "choices", List.of(Map.of(
+                        "index", 0,
+                        "message", Map.of("role", "assistant", "content", structuredAnswer),
+                        "finish_reason", "stop"
+                ))
+        ));
+        PROVIDER.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody(providerResponse));
+
+        StepVerifier.create(answerKnowledgeQuestion.answer(
+                        command("退款审核通过了，为什么还没到账？")))
+                .expectErrorMatches(error -> error instanceof InvalidModelAnswerException
+                        && error.getMessage().contains("model usage is missing"))
+                .verify();
     }
 
     private static AnswerKnowledgeQuestionCommand command(String question) {
