@@ -155,3 +155,34 @@ test("CI proves real JDK 21 and separate JDK 8 builds", () => {
   assert.match(verifyWorkflow, /JAVA_AI_JDK8_HOME=\$JAVA_HOME/);
   assert.match(verifyWorkflow, /verify-build\.sh/);
 });
+
+test("Failsafe loads compiled classes instead of the repackaged Boot jar", () => {
+  const pom = read("services/knowledge-service/pom.xml");
+
+  assert.match(pom, /<artifactId>maven-failsafe-plugin<\/artifactId>/);
+  assert.match(
+    pom,
+    /<classesDirectory>\$\{project\.build\.outputDirectory\}<\/classesDirectory>/,
+  );
+  assert.match(pom, /<include>\*\*\/PgVectorExternalIT\.java<\/include>/);
+  assert.doesNotMatch(pom, /<include>\*\*\/LiveModelSmokeIT\.java<\/include>/);
+});
+
+test("GitHub workflows use actions backed by Node 24", () => {
+  for (const workflow of [
+    ".github/workflows/verify.yml",
+    ".github/workflows/live-model-smoke.yml",
+    ".github/workflows/pgvector-integration.yml",
+  ]) {
+    const content = read(workflow);
+    assert.doesNotMatch(content, /actions\/(?:checkout|setup-java|setup-node)@v4/);
+    assert.match(content, /actions\/checkout@v6/);
+    assert.match(content, /actions\/setup-java@v5/);
+  }
+
+  assert.match(read(".github/workflows/verify.yml"), /actions\/setup-node@v6/);
+  assert.match(
+    read(".github/workflows/live-model-smoke.yml"),
+    /actions\/upload-artifact@v7/,
+  );
+});
