@@ -9,6 +9,8 @@ import org.postgresql.ds.PGSimpleDataSource;
 
 import java.sql.Connection;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,6 +76,7 @@ class PgVectorExternalIT {
             String subjectId
     ) throws Exception {
         Instant now = Instant.parse("2026-07-12T09:00:00Z");
+        OffsetDateTime databaseTimestamp = now.atOffset(ZoneOffset.UTC);
         try (var statement = connection.prepareStatement("""
                 INSERT INTO knowledge_document
                     (tenant_id, document_id, title, revision, created_by, created_at, updated_at)
@@ -82,8 +85,8 @@ class PgVectorExternalIT {
             statement.setString(1, tenantId);
             statement.setString(2, documentId);
             statement.setString(3, documentId);
-            statement.setObject(4, now);
-            statement.setObject(5, now);
+            statement.setObject(4, databaseTimestamp);
+            statement.setObject(5, databaseTimestamp);
             statement.executeUpdate();
         }
         try (var statement = connection.prepareStatement("""
@@ -96,8 +99,8 @@ class PgVectorExternalIT {
             statement.setString(2, documentId);
             statement.setString(3, "sha256:" + documentId);
             statement.setString(4, tenantId + "/" + documentId + ".txt");
-            statement.setObject(5, now);
-            statement.setObject(6, now);
+            statement.setObject(5, databaseTimestamp);
+            statement.setObject(6, databaseTimestamp);
             statement.executeUpdate();
         }
         try (var statement = connection.prepareStatement("""
@@ -111,7 +114,7 @@ class PgVectorExternalIT {
             statement.setString(3, chunkId);
             statement.setString(4, "content " + documentId);
             statement.setString(5, vectorLiteral(embedding()));
-            statement.setObject(6, now);
+            statement.setObject(6, databaseTimestamp);
             statement.executeUpdate();
         }
         try (var statement = connection.prepareStatement("""
@@ -123,7 +126,7 @@ class PgVectorExternalIT {
             statement.setString(2, documentId);
             statement.setString(3, subjectType);
             statement.setString(4, subjectId);
-            statement.setObject(5, now);
+            statement.setObject(5, databaseTimestamp);
             statement.executeUpdate();
         }
     }
