@@ -18,6 +18,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class A2aInteroperabilityTest {
 
     @Test
+    void agentCardDeclaresA2aProtocolVersionOnEveryInterface() {
+        JsonObject card = JsonParser.parseString(agentCard("https://agent.example.com"))
+                .getAsJsonObject();
+        JsonObject jsonRpcInterface = card.getAsJsonArray("supportedInterfaces")
+                .get(0)
+                .getAsJsonObject();
+
+        assertEquals("1.0", jsonRpcInterface.get("protocolVersion").getAsString());
+    }
+
+    @Test
     void discoversAgentCardAndReceivesCompletedTaskThroughOfficialClient() throws Exception {
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         String baseUrl = "http://127.0.0.1:" + server.getAddress().getPort();
@@ -30,6 +41,7 @@ class A2aInteroperabilityTest {
             var task = client.send("分析工单 T-100 的退款风险");
 
             assertEquals("risk-review-agent", discovery.agentName());
+            assertEquals("1.0", discovery.protocolVersion());
             assertEquals(Set.of("risk-review"), Set.copyOf(discovery.approvedSkills()));
             assertEquals(TaskState.TASK_STATE_COMPLETED, task.status().state());
             assertEquals("risk=MEDIUM",
@@ -46,7 +58,7 @@ class A2aInteroperabilityTest {
                   "description":"分析工单风险并返回只读结论",
                   "version":"1.0.0",
                   "supportedInterfaces":[
-                    {"url":"%s/a2a","protocolBinding":"JSONRPC","tenant":""}
+                    {"url":"%s/a2a","protocolBinding":"JSONRPC","protocolVersion":"1.0","tenant":""}
                   ],
                   "capabilities":{"streaming":false,"pushNotifications":false,"extendedAgentCard":false},
                   "defaultInputModes":["text/plain"],
