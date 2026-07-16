@@ -7,9 +7,9 @@
 | Main reactor | full JDK 21 or newer; CI uses real JDK 21 | `pom.xml` |
 | Framework labs | full JDK 21 or newer | `labs/pom.xml` |
 | Legacy client | full JDK 8 exactly | `integrations/jdk8-client/pom.xml` |
-| Contract checks | Node.js | `scripts/*.test.mjs` |
+| Repository checks | Node.js | `scripts/*.test.mjs` |
 
-使用高于 21 的 JDK 时，主模块仍通过 `--release 21` 生成 Java 21 字节码；这只能证明编译兼容性，不能替代真实 JDK 21 CI 运行。
+使用高于 21 的 JDK 时，主模块仍通过 `--release 21` 生成 Java 21 字节码；这只能检查编译兼容性，不能替代真实 JDK 21 CI 运行。
 
 ## macOS/Linux
 
@@ -82,11 +82,11 @@ Missing configuration exits with code 2. A successful run proves only that `/act
 
 ## Development And External Infrastructure
 
-日常代码回归使用 `src/test` 下的确定性配置、单元测试和合同测试。需要真实数据库、模型、对象存储或外部业务系统时，通过根目录 `.env` 或部署系统显式注入连接参数：
+日常代码回归使用 `src/test` 下的确定性配置、单元测试以及接口和规则测试。需要真实数据库、模型、对象存储或外部业务系统时，通过根目录 `.env` 或部署系统显式注入连接参数：
 
-- an externally managed test environment;
-- CI runners allowed to start containers;
-- a remote development environment.
+- 统一管理的测试环境；
+- 允许启动容器的 CI Runner；
+- 远程开发环境。
 
 报告必须记录实际使用的环境和验证边界，不能用本地替代实现推导生产结论。
 

@@ -6,7 +6,7 @@
 
 脚本直接调用应用端口，不经过 HTTP，因此不验证 JWT 或入站 Trace。HTTP Golden Set 和 Trace 证据由 `model-interaction-eval.md` 中的 live eval 提供。Knowledge Service 的公开接口默认仍受拒绝或 JWT 策略保护。
 
-确定性模型协议合同进入默认测试，真实模型调用只在显式提供凭证时运行。前者证明请求与响应映射可回归，后者证明当前模型端点可调用；报告必须明确证据类型，不能互相替代。
+确定性模型协议回归进入默认测试，真实模型调用只在显式提供凭证时运行。前者检查请求与响应映射，后者检查当前模型端点能否调用；两项结果不能互相替代。
 
 ## Required Environment
 

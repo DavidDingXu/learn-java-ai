@@ -26,8 +26,8 @@ Status: VERIFIED_LOCAL_RETRIEVAL_COMPOSITION
   test
 ```
 
-覆盖完整混合流程、纯向量流程、Rerank 候选约束、跨通道重复候选、单通道重复去重、同分稳定排序、Spring Bean 组装和关键词 SQL 合同。
+覆盖完整混合流程、纯向量流程、Rerank 候选约束、跨通道重复候选、单通道重复去重、同分稳定排序、Spring Bean 组装和关键词 SQL 结构。
 
 ## Evidence Boundary
 
-这里证明的是应用层组合算法和 PostgreSQL `pg_trgm` 基础适配。当前没有中文分词、Query Rewrite 或 Reranker 生产适配器，也没有用真实模型和真实语料验证相关性、延迟与成本。RRF 的 `rankConstant=60` 和候选预算不是生产调优结论；是否启用混合检索与 Rerank 必须由第 21 课的检索评测数据决定。
+当前测试覆盖应用层组合算法和 PostgreSQL `pg_trgm` 基础适配。项目尚未提供中文分词、Query Rewrite 或 Reranker 生产适配器，也没有用真实模型和真实语料验证相关性、延迟与成本。RRF 的 `rankConstant=60` 和候选预算不是生产调优结论；是否启用混合检索与 Rerank 必须由检索评测数据决定。

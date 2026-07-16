@@ -21,16 +21,16 @@
 
 ## Commit
 
-提交基线：`3be7f19`。该提交证明 Spring AI Provider starter 只进入 Knowledge Service，三个对照框架仍在独立 labs reactor。
+提交基线：`3be7f19`。依赖树显示 Spring AI Provider starter 只进入 Knowledge Service，三个对照框架仍在独立 labs reactor。
 
 ## Accepted Boundaries
 
 - Spring AI 作为 Java 21 主线，原因是与现有 Spring Boot 工程体系的综合迁移成本最低。
 - Spring AI 类型限制在基础设施适配器，业务层通过 `KnowledgeAnswerModel` 一类端口隔离。
 - 不建设万能模型网关，也不把 Chat、RAG、Tool 和 Agent 压成统一的 `String -> String`。
-- Spring AI Alibaba、LangChain4j 和 AgentScope 使用同一业务合同、同一数据集在独立 labs 中比较。
+- Spring AI Alibaba、LangChain4j 和 AgentScope 使用相同业务接口、规则和数据集在独立 labs 中比较。
 - Provider SDK 只在主线缺失关键能力时进入窄适配器。
-- 公司已有强制 AI 平台时，平台合同优先，不能为了课程示例绕过公司治理。
+- 公司已有强制 AI 平台时，优先遵守平台接入规范，不能为了运行仓库示例而绕过公司治理。
 
 ## Rejected Alternatives
 
@@ -42,8 +42,8 @@
 ## Replacement Conditions
 
 - Spring AI 无法承载必需的 Provider 能力，且窄适配器也无法补齐。
-- 公司 AI 平台已提供更稳定的身份、配额、路由、审计和 SLA 合同。
-- 其他框架在相同业务合同和数据集上取得可重复的质量或维护成本优势。
+- 公司 AI 平台已提供更稳定的身份、配额、路由、审计和 SLA。
+- 其他框架在相同业务接口、规则和数据集上取得可重复的质量或维护成本优势。
 - 当前版本组合不再满足安全、兼容或长期维护要求。
 
 ## Evidence Limit

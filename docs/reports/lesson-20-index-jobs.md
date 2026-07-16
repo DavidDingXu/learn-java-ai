@@ -33,7 +33,7 @@ Status: VERIFIED_LOCAL_RECOVERABLE_TASK_CONTRACT
   test
 ```
 
-覆盖状态迁移、租约所有权、失败重试、死信状态、Worker 编排、JDBC Queue、PostgreSQL SQL 合同和确定性索引替换。
+覆盖状态迁移、租约所有权、失败重试、死信状态、Worker 编排、JDBC Queue、PostgreSQL SQL 结构和确定性索引替换。
 
 ## Evidence Boundary
 

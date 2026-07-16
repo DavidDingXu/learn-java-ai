@@ -16,4 +16,4 @@ Status: VERIFIED
 
 ## Replacement Boundary
 
-更换 Provider 或框架时只替换基础设施适配器，应用合同保持不变。不同 Provider 对缓存 Token、推理 Token 和 finish reason 的扩展字段需要单独建兼容测试，不能硬塞进通用字符串 Map。
+更换 Provider 或框架时只替换基础设施适配器，应用接口保持不变。不同 Provider 对缓存 Token、推理 Token 和 finish reason 的扩展字段需要单独建兼容测试，不能硬塞进通用字符串 Map。

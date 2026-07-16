@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -11,6 +11,30 @@ function read(relativePath) {
   assert.equal(existsSync(absolutePath), true, `${relativePath} must exist`);
   return readFileSync(absolutePath, "utf8");
 }
+
+function markdownFiles(relativeDirectory) {
+  const absoluteDirectory = path.join(projectRoot, relativeDirectory);
+  return readdirSync(absoluteDirectory, { withFileTypes: true }).flatMap((entry) => {
+    if ([".git", "node_modules", "target"].includes(entry.name)) return [];
+    const relativePath = path.join(relativeDirectory, entry.name);
+    if (entry.isDirectory()) return markdownFiles(relativePath);
+    return entry.isFile() && entry.name.endsWith(".md") ? [relativePath] : [];
+  });
+}
+
+test("public project documentation avoids opaque authoring language", () => {
+  const publicDocuments = markdownFiles(".");
+  const opaqueWording = /合同|收口|闭环|沉淀|教学(?:样例|数据|回归)/;
+  const violations = publicDocuments.flatMap((relativePath) =>
+    read(relativePath)
+      .split(/\r?\n/)
+      .flatMap((line, index) =>
+        opaqueWording.test(line) ? [`${relativePath}:${index + 1}`] : [],
+      ),
+  );
+
+  assert.deepEqual(violations, []);
+});
 
 test("architecture documents match the executable module boundaries", () => {
   const rootPom = read("pom.xml");
@@ -97,8 +121,8 @@ test("framework matrix compares production candidates on the same decision axes"
     assert.match(matrix, new RegExp(axis.replaceAll("/", "\\/"), "i"));
   }
 
-  assert.match(matrix, /same business contract|同一业务合同/i);
-  assert.match(matrix, /same dataset|同一数据集/i);
+  assert.match(matrix, /same (?:business )?interfaces|相同(?:的)?业务接口/i);
+  assert.match(matrix, /same dataset|相同[^。；\n]{0,24}数据集/i);
 });
 
 test("lesson 02 and 03 reports bind decisions to reviewed evidence", () => {

@@ -11,11 +11,11 @@ Status: VERIFIED_DETERMINISTIC_CHUNKING
 
 - Markdown 标题层级进入每个 chunk 的 heading path。
 - `第十条` 一类条款编号进入独立 clause 元数据。
-- tenant、document、version、chunk policy version 和 ordinal 进入 chunk 合同。
+- tenant、document、version、chunk policy version 和 ordinal 共同组成 chunk 标识。
 - CRLF 与 LF 规范化后产生相同 chunk ID。
 - 超长内容按句子边界拆分；无法按句子拆分时才执行硬切分，结果不超过策略上限。
 - chunk ID 由规范化内容和完整版本元数据计算，可用于幂等增量替换。
 
 ## Evidence Boundary
 
-字符上限只用于证明确定性切分方法，不等同于目标模型 Token 上限。引入 Embedding 模型后需要按实际 tokenizer、召回坏案例和引用粒度重新确定生产参数。
+字符上限只用于检查确定性切分方法，不等同于目标模型 Token 上限。引入 Embedding 模型后需要按实际 tokenizer、召回坏案例和引用粒度重新确定生产参数。

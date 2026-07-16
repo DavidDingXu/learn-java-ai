@@ -11,7 +11,7 @@ Status: VERIFIED_LOCAL_VECTOR_CONTRACT_WITH_EXTERNAL_PROFILE
 
 ## Verified Locally
 
-- 应用层只依赖 Embedding 与检索端口；Spring AI 的 `EmbeddingModel` 和 JDBC 类型没有进入应用合同。
+- 应用层只依赖 Embedding 与检索端口；Spring AI 的 `EmbeddingModel` 和 JDBC 类型没有进入应用接口。
 - `SpringAiKnowledgeEmbeddingModel` 映射向量及 Provider 返回的模型名；缺失向量或模型元数据会被拒绝。
 - Flyway 创建 `VECTOR(1536)` 字段和基于 cosine distance 的 HNSW 索引，迁移文件是当前数据库结构的唯一来源。
 - pgvector 查询使用参数绑定传入向量、Embedding 模型、租户、有效时间和 TopK，并按 `<=>` 距离排序后限制结果数量。
@@ -21,7 +21,7 @@ Status: VERIFIED_LOCAL_VECTOR_CONTRACT_WITH_EXTERNAL_PROFILE
 
 ## Local Verification
 
-以下命令只运行 JVM 内的单元测试和 SQL/迁移合同测试，不连接真实 PostgreSQL，也不调用真实 Embedding API：
+以下命令只运行 JVM 内的单元测试、SQL 结构和迁移测试，不连接真实 PostgreSQL，也不调用真实 Embedding API：
 
 ```bash
 ./mvnw -pl services/knowledge-service \
@@ -29,7 +29,7 @@ Status: VERIFIED_LOCAL_VECTOR_CONTRACT_WITH_EXTERNAL_PROFILE
   test
 ```
 
-在项目支持的 JDK 21 环境中，预期 7 个测试全部通过。这里证明的是端口编排、SQL 结构、参数绑定和结果映射。
+在项目支持的 JDK 21 环境中，预期 7 个测试全部通过。这些测试覆盖端口编排、SQL 结构、参数绑定和结果映射。
 
 ## External pgvector Verification
 
@@ -47,4 +47,4 @@ export JAVA_AI_POSTGRES_PASSWORD='replace-with-test-password'
 
 ## Evidence Boundary
 
-本地测试不证明 PostgreSQL/pgvector 可连接，也不证明真实 Embedding 质量。外部测试只验证一次迁移、向量查询和权限过滤，数据量很小且向量人为固定；它不覆盖 HNSW 参数调优、索引构建耗时、连接池容量、真实语义召回、备份恢复或生产高可用。
+本地测试不连接 PostgreSQL/pgvector，也不检查真实 Embedding 质量。外部测试只验证一次迁移、向量查询和权限过滤，数据量很小且向量人为固定；它不覆盖 HNSW 参数调优、索引构建耗时、连接池容量、真实语义召回、备份恢复或生产高可用。

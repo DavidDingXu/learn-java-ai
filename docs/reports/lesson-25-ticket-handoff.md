@@ -11,7 +11,7 @@ Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 - BFF 调 Ticket Agent 时只发送业务快照；tenant、customer、角色和部门继续来自委托 JWT，不进入请求体。
 - Ticket Agent 校验 `ticket-agent-service` audience、`customer-bff` actor 与 `ticket:task:create` scope。
 - Ticket Agent 对请求内容生成 SHA-256 指纹：同键同内容返回原 task 且标记 duplicate，同键异内容返回 409。
-- `customer-bff-v1.yaml`、`knowledge-service-v1.yaml` 和 `agent-task-v1.yaml` 已进入统一合同解析器。
+- `customer-bff-v1.yaml`、`knowledge-service-v1.yaml` 和 `agent-task-v1.yaml` 已进入统一接口定义解析器。
 
 ## Local Verification
 
@@ -24,7 +24,7 @@ Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar contract-validate contracts
 ```
 
-合同解析结果：4 份 OpenAPI、2 份 JSON Schema、2 个正向夹具和 2 个负向夹具全部通过。
+接口定义解析结果：4 份 OpenAPI、2 份 JSON Schema、2 个正向夹具和 2 个负向夹具全部通过。
 
 ## Production Boundary
 

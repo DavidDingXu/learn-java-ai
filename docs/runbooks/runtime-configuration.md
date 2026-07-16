@@ -33,13 +33,13 @@ rg -n '=$' .env
 ./mvnw -pl apps/customer-bff spring-boot:run
 ```
 
-默认端口为 8081、8082 和 8080。先检查 health，再执行真实模型 Smoke、检索 Eval 或业务接口验证。health 只证明进程和基础 Bean 已启动，不替代数据库查询、模型质量和端到端业务结果。
+默认端口为 8081、8082 和 8080。先检查 health，再执行真实模型 Smoke、检索 Eval 或业务接口验证。health 只能确认进程和基础 Bean 已启动，不覆盖数据库查询、模型质量和端到端业务结果。
 
 ## Test Isolation
 
 `src/test/resources/application-test.yml` 关闭模型和外部连接，并为需要状态的测试选择内存适配器。Spring Boot 上下文测试显式使用 `@ActiveProfiles("test")`；模型协议测试和真实模型 Smoke 通过测试属性覆盖必要参数。
 
-这套测试配置不会打进生产 Jar，也不要求读者在运行应用时切换 Profile。快速代码回归统一执行：
+这套测试配置不会打进生产 Jar，正常启动应用时也不需要切换 Profile。快速代码回归统一执行：
 
 ```bash
 scripts/verify-unit.sh
@@ -57,13 +57,13 @@ scripts/verify-unit.sh
 
 CI 同样调用 `verify-unit` 或 `release-gate`，并按任务需要注入临时数据库和测试凭证。CI 是命令执行位置，不是另一套应用配置。
 
-## Evidence Boundary
+## Verification Scope
 
-| Evidence | Command or source | What it proves |
+| Check | Command or source | Covered scope |
 |---|---|---|
-| Code regression | `scripts/verify-unit.sh` | Java/Node 合同、业务规则和构建边界 |
+| Code regression | `scripts/verify-unit.sh` | Java/Node 接口检查、业务规则和构建边界 |
 | Real API | model Smoke and Eval scripts | Provider 协议、模型响应和固定数据集结果 |
 | Integration | deployed service URLs and scoped tokens | 数据库、身份与跨服务行为 |
 | Production acceptance | capacity, SLO, migration and rollback reports | 目标环境是否满足上线条件 |
 
-这些证据使用同一套配置键，但结论不能互相替代。
+这些检查使用同一套配置键，但覆盖范围不同，不能用其中一项代替另一项。

@@ -1,6 +1,6 @@
 # Java AI Engineering Practice
 
-这是《Java + AI 应用开发落地实战》的配套代码项目，面向已经具备 Spring Boot 和 HTTP API 开发经验的 Java 后端工程师。项目围绕企业知识服务、C 端自助咨询、工单 AI 协同和 JDK8 老系统接入持续演进。
+这是一个面向 Java 后端工程师的 AI 应用工程实践项目，默认读者已经具备 Spring Boot 和 HTTP API 开发经验。项目围绕企业知识服务、C 端自助咨询、工单 AI 协同和 JDK8 老系统接入持续演进。
 
 ## 当前状态
 
@@ -10,23 +10,23 @@
 - 一个依赖轻量的 Eval Runner 入口。
 - 一个使用真实 Java 8 编译的独立客户端工程。
 - Spring AI Alibaba、LangChain4j、AgentScope 和协议互操作四个有实现、有测试的隔离实验构建。
-- macOS/Linux 与 Windows 两套验证脚本合同。
+- macOS/Linux 与 Windows 两套验证脚本。
 - 不依赖外部数据库、模型密钥或业务网络的日常测试路径。
 - Knowledge Service 的 Spring AI、WebFlux、可靠性和可观测依赖边界。
 - Customer BFF 的客户 JWT、RFC 8693 Token Exchange、下游客户端认证与 audience/scope 隔离。
-- 测试替身与正式运行配置隔离，以及真实 JDK21/JDK8 CI 合同。
-- 第一条固定政策上下文问答、Spring AI 业务适配器、确定性模型协议合同和真实模型验证入口。
-- 版本化 Prompt、信任分区、结构化输出、业务校验和带稳定事件合同的 SSE。
+- 测试替身与正式运行配置隔离，以及真实 JDK 21/JDK 8 CI 校验。
+- 第一条固定政策上下文问答、Spring AI 业务适配器、确定性模型协议回归测试和真实模型验证入口。
+- 版本化 Prompt、信任分区、结构化输出、业务校验和事件格式稳定的 SSE。
 - 面向知识回答用例的超时、并发、断路器和安全读重试。
-- 独立 HTTP Eval Runner、5 条 Golden Set、合同评测和真实模型评测。
+- 独立 HTTP Eval Runner、5 条 Golden Set、接口回归评测和真实模型评测。
 - Micrometer Observation、Spring AI 原生观测和 HTTP Trace 关联。
 - 知识文档版本冲突、重复内容、上传校验、本地文件对象存储和确定性政策切分。
 - PostgreSQL/pgvector 结构、Embedding 模型隔离、TopK 前 ACL 与有效期过滤。
 - 向量与 trigram 混合检索、RRF 融合、可配置候选预算和受控 Rerank 边界。
 - JWT 中租户、主体和部门范围到检索 SQL 的完整传递。
 - 索引任务租约、尝试预算、原子领取、JDBC 队列和确定性文档版本索引服务。
-- 版本化检索 Golden Set、受 `knowledge:eval` 保护的评测接口、Recall@K、HitRate@K、MRR、重复率、p95 延迟和阈值门禁。
-- C 端完整回答与 SSE 接口、会话/尝试标识、取消与异常状态收口。
+- 版本化检索 Golden Set、受 `knowledge:eval` 保护的评测接口、Recall@K、HitRate@K、MRR、重复率、p95 延迟和阈值检查。
+- C 端完整回答与 SSE 接口、会话/尝试标识，以及明确的取消和异常状态。
 - 带 TTL、消息窗口、Token 估算、裁剪和事实隔离摘要的短时会话。
 - 绑定回答尝试的反馈、可追踪重试和不可变工单升级快照。
 - Ticket Agent Service 的委托 JWT 校验、幂等键、请求指纹、重复返回与冲突拒绝。
@@ -39,18 +39,18 @@
 - Agent Golden Set、三令牌公开 HTTP 评测器和 JSON/Markdown 报告入口。
 - Injection 绕过确认、合成 PII 审计泄露和身份字段污染的安全回归数据集与跨平台入口。
 - Ticket Agent 规划次数、Token 分布、Tool 结果与耗时的 Micrometer 指标，并暴露受管理网络保护的 Prometheus 端点。
-- Agent Run 公平信号量并发门禁、稳定 429 错误合同，以及异常路径的许可释放测试。
+- Agent Run 使用公平信号量限制并发，并提供稳定的 429 错误码与响应格式，以及异常路径的许可释放测试。
 - 每个服务一份运行配置、统一 `.env` 参数入口、测试隔离和跨平台验证命令。
-- 跨平台 release gate：全构建、合同、Java 8、敏感信息扫描和可选外部健康证据。
+- 跨平台 release gate：全构建、接口与规则回归、Java 8、敏感信息扫描和可选外部健康检查。
 - DashScope Provider 适配、国内 Embedding/Rerank 同集评测和 Spring AI Alibaba 人工确认 Graph。
 - LangChain4j AI Services、租户受限 RAG、Tool 循环、结构化输出和按业务能力共存策略。
 - AgentScope 2.0 Tool 权限复用、人工确认事件、MCP 外部 Tool 注册和 A2A 任务状态边界。
 - MCP Java SDK 2.0.0 的 Streamable HTTP 初始化、工具发现和只读调用互操作。
 - A2A Java SDK 1.1.0.Final 的 Agent Card 发现、Skill 准入、JSON-RPC 消息发送与 Task 映射。
-- 50 条检索、30 条 Agent 和 30 条安全教学回归数据；公司落地必须替换或扩展为真实业务分布。
-- Customer BFF、Knowledge Service、Ticket Agent Service 和 JDK8 Legacy Tool 四份 OpenAPI 合同。
+- 50 条检索、30 条 Agent 和 30 条安全合成回归数据；公司落地必须替换或扩展为真实业务分布。
+- Customer BFF、Knowledge Service、Ticket Agent Service 和 JDK8 Legacy Tool 四份 OpenAPI 文档。
 
-当前已经完成真实模型调用、企业 RAG、C 端会话与信任交互、幂等工单升级、受控 Agent、Java 8 客户端、安全回归、标准指标、跨平台发布门禁，以及框架和协议隔离实验。业务接口始终要求受信身份，不把租户和客户身份放进请求体。Labs 证明依赖、API、协议互操作和业务边界可编译、可回归，不等于相关 Provider、生产 MCP Server 或远程 Agent 已在公司网络完成联调。运行配置使用 PostgreSQL/Flyway 持久化 Ticket Agent 状态，并使用 PostgreSQL/pgvector 支撑知识检索；目标数据库仍需完成迁移、并发、备份恢复和容量验证。Customer BFF 当前的进程内会话与限流适配器需要在多实例部署前替换为共享实现。S3 兼容对象存储、生产索引写入、真实 IdP Token Exchange、外部 JDK8 Tool 服务、正式 Customer Web、持久 UNKNOWN 对账和端到端容量验证仍需公司环境完成。
+当前代码覆盖真实模型调用、企业 RAG、C 端会话与信任交互、幂等工单升级、受控 Agent、Java 8 客户端、安全回归、标准指标、跨平台发布检查，以及框架和协议隔离实验。业务接口始终要求受信身份，不把租户和客户身份放进请求体。Labs 覆盖依赖解析、API 调用、协议互操作和业务边界回归，但尚未与生产 Provider、MCP Server 或远程 Agent 在公司网络联调。运行配置使用 PostgreSQL/Flyway 持久化 Ticket Agent 状态，并使用 PostgreSQL/pgvector 支撑知识检索；目标数据库仍需完成迁移、并发、备份恢复和容量验证。Customer BFF 当前的进程内会话与限流适配器需要在多实例部署前替换为共享实现。S3 兼容对象存储、生产索引写入、真实 IdP Token Exchange、外部 JDK8 Tool 服务、正式 Customer Web、持久 UNKNOWN 对账和端到端容量验证仍需公司环境完成。
 
 ## 模块边界
 
@@ -73,7 +73,7 @@ deploy                           部署清单和环境说明
 
 根 Maven reactor 只聚合三个服务和 Eval Runner。labs、JDK8 客户端和 Customer Web 独立构建，避免框架与协议实验依赖、Java 8 字节码和前端工具链污染主项目。
 
-服务之间通过 HTTP/OpenAPI 合同协作，不共享领域 JAR，也不跨服务访问数据库。详细决策见：
+服务之间通过版本化 HTTP/OpenAPI 接口协作，不共享领域 JAR，也不跨服务访问数据库。详细决策见：
 
 - [系统上下文](docs/architecture/system-context.md)
 - [客户咨询完整时序](docs/architecture/customer-consultation-flow.md)
@@ -97,7 +97,7 @@ deploy                           部署清单和环境说明
 至少准备：
 
 - Node.js，用于仓库契约测试。
-- 一个包含 `java` 和 `javac` 的 JDK 21 或更高版本。使用高于 21 的 JDK 时只证明 `--release 21` 编译，CI 仍需在真实 JDK 21 上运行。
+- 一个包含 `java` 和 `javac` 的 JDK 21 或更高版本。使用高于 21 的 JDK 时只能验证 `--release 21` 编译兼容性，CI 仍需在真实 JDK 21 上运行。
 - 一个包含 `java` 和 `javac` 的完整 JDK 8，用于独立客户端构建。
 
 本地可使用高于 21 的完整 JDK 编译 Java 21 字节码，但 CI 仍需在真实 JDK 21 上运行；老系统客户端必须使用独立完整 JDK 8。具体配置见 [本地工具链手册](docs/runbooks/local-toolchain.md)。
@@ -188,12 +188,12 @@ $env:JAVA_AI_EXTERNAL_BASE_URL = "https://test.example.com"
 .\scripts\verify-integration.ps1
 ```
 
-该结果不能证明数据库、向量检索、对象存储、模型或端到端业务已经验证。pgvector 使用 `external-integration` Maven profile 和独立 CI 工作流，健康检查的结论不能替代它。
+该脚本只检查健康端点，不覆盖数据库、向量检索、对象存储、模型或端到端业务。pgvector 使用 `external-integration` Maven profile 和独立 CI 工作流验证，健康检查不能替代这项验证。
 
 ## 环境变量示例
 
 `.env.example` 只列出当前代码和验证脚本实际消费的变量。模型、Embedding、数据库和委托 JWT 均通过环境变量注入，不写入源码或默认配置。
 
-## 工程证据
+## 验证结果
 
 架构和框架边界复核见 [Architecture Review](docs/reports/lesson-02-architecture-review.md) 与 [Framework Decision](docs/reports/lesson-03-framework-decision.md)。模型调用、Golden Set 和真实模型验证见 [Model Engineering](docs/reports/milestone-12.md)，各业务增量的构建结果和明确未覆盖项位于 `docs/reports/`。

@@ -10,6 +10,6 @@ Authentication and authorization facts come from verified tokens. Business reque
 
 服务间 HTTP/OpenAPI 与 JSON Schema 的协议源文件放在这里。该目录不发布共享领域 Jar，服务也不能通过 Java 依赖共享领域对象。
 
-第一版只采用 HTTP 合同，不预建消息协议、Kafka 或 Outbox。
+第一版只采用版本化 HTTP/OpenAPI 接口，不预建消息协议、Kafka 或 Outbox。
 
-当前公开合同覆盖 Customer BFF、Knowledge Service、Ticket Agent Service 与 JDK8 Legacy Tool。C 端请求只包含问题、会话标识、反馈和升级原因；租户、客户、角色与部门仍由令牌提供。
+当前公开接口定义覆盖 Customer BFF、Knowledge Service、Ticket Agent Service 与 JDK8 Legacy Tool。C 端请求只包含问题、会话标识、反馈和升级原因；租户、客户、角色与部门仍由令牌提供。

@@ -24,7 +24,7 @@ Status: VERIFIED_LOCAL_ACCESS_QUERY_CONTRACT_WITH_EXTERNAL_PROFILE
   test
 ```
 
-预期 4 个测试全部通过。该命令验证 JWT Claim 到检索范围的映射，以及权限、版本和时效条件位于 TopK 之前的 SQL 合同；它不启动数据库。
+预期 4 个测试全部通过。该命令验证 JWT Claim 到检索范围的映射，以及权限、版本和时效条件位于 TopK 之前的 SQL 结构；它不启动数据库。
 
 ## External pgvector Verification
 
@@ -42,4 +42,4 @@ export JAVA_AI_POSTGRES_PASSWORD='replace-with-test-password'
 
 ## Evidence Boundary
 
-本报告覆盖当前 `USER`、`DEPARTMENT`、`TENANT` 三种允许规则，不覆盖显式拒绝、组织树继承、动态属性策略、权限有效期或 PostgreSQL RLS。`JwtKnowledgeAccessScopeFactory` 的输入前提是 JWT 已由 Spring Security 验证；它自身不验证签名、issuer、audience 和过期时间。SQL 合同测试也不能替代真实数据库的执行计划与并发验证。
+本报告覆盖当前 `USER`、`DEPARTMENT`、`TENANT` 三种允许规则，不覆盖显式拒绝、组织树继承、动态属性策略、权限有效期或 PostgreSQL RLS。`JwtKnowledgeAccessScopeFactory` 的输入前提是 JWT 已由 Spring Security 验证；它自身不验证签名、issuer、audience 和过期时间。SQL 结构测试也不能替代真实数据库的执行计划与并发验证。

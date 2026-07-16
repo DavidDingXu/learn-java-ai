@@ -17,4 +17,4 @@ Status: VERIFIED_LOCAL_DOMAIN
 
 ## Evidence Boundary
 
-本报告证明内存中的领域规则和单元测试，不证明数据库乐观锁、跨实例并发或真实文档管理 API 已经验证。数据库结构与持久化冲突将在引入 Flyway/PostgreSQL 后单独报告。
+本报告覆盖内存中的领域规则和单元测试，不覆盖数据库乐观锁、跨实例并发或真实文档管理 API。数据库结构与持久化冲突将在引入 Flyway/PostgreSQL 后单独报告。

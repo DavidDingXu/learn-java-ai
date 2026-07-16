@@ -16,4 +16,4 @@ Status: VERIFIED
 
 ## Replacement Boundary
 
-公司项目应把 Prompt 当作带版本的发布物，变更需要 Golden Set 回归。模板平台、配置中心或数据库只是存储方式，不能替代信任分区、评测和回滚合同。
+公司项目应把 Prompt 当作带版本的发布物，变更需要 Golden Set 回归。模板平台、配置中心或数据库只是存储方式，不能替代信任分区、评测和回滚规则。
