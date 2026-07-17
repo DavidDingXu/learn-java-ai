@@ -172,6 +172,7 @@ class PgVectorExternalIT {
 
     private static void seedMetadata(PGSimpleDataSource dataSource, Instant now) throws Exception {
         OffsetDateTime databaseTimestamp = now.atOffset(ZoneOffset.UTC);
+        OffsetDateTime existingVersionTimestamp = now.minusSeconds(3600).atOffset(ZoneOffset.UTC);
         try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
             try (var statement = connection.prepareStatement("""
@@ -179,7 +180,7 @@ class PgVectorExternalIT {
                         (tenant_id, document_id, title, revision, created_by, created_at, updated_at)
                     VALUES ('tenant-a', 'refund-policy', '退款政策', 2, 'editor-1', ?, ?)
                     """)) {
-                statement.setObject(1, databaseTimestamp);
+                statement.setObject(1, existingVersionTimestamp);
                 statement.setObject(2, databaseTimestamp);
                 statement.executeUpdate();
             }
@@ -193,8 +194,8 @@ class PgVectorExternalIT {
                         'PUBLISHED', ?, 'editor-1', ?
                     )
                     """)) {
-                statement.setObject(1, databaseTimestamp);
-                statement.setObject(2, databaseTimestamp);
+                statement.setObject(1, existingVersionTimestamp);
+                statement.setObject(2, existingVersionTimestamp);
                 statement.executeUpdate();
             }
             insertRunningIndexTask(connection, 1, now);
