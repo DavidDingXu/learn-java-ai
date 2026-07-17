@@ -3,6 +3,7 @@ package com.xiaoding.javaai.labs.agentscope;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,6 +30,14 @@ public final class A2aTaskCoordinator {
 
     public synchronized A2aTask onCallback(String taskId, A2aTaskStatus status, String remoteReceipt) {
         A2aTask current = requireTask(taskId);
+        if (isTerminal(current.status()) && isTerminal(status)) {
+            if (current.status() == status && Objects.equals(current.remoteReceipt(), remoteReceipt)) {
+                return current;
+            }
+            throw new IllegalStateException(
+                    "A2A protocol conflict for terminal task " + taskId
+                            + ": existing=" + current.status() + ", incoming=" + status);
+        }
         if (!canTransition(current.status(), status)) {
             throw new IllegalStateException("illegal A2A task transition: " + current.status() + " -> " + status);
         }
@@ -76,5 +85,9 @@ public final class A2aTaskCoordinator {
             case UNKNOWN -> next == A2aTaskStatus.COMPLETED || next == A2aTaskStatus.FAILED;
             case COMPLETED, FAILED -> false;
         };
+    }
+
+    private static boolean isTerminal(A2aTaskStatus status) {
+        return status == A2aTaskStatus.COMPLETED || status == A2aTaskStatus.FAILED;
     }
 }

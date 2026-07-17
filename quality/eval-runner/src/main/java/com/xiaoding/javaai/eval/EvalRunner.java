@@ -37,7 +37,7 @@ public final class EvalRunner {
     }
 
     public static String version() {
-        return "phase-f";
+        return "0.1.0";
     }
 
     public static void main(String[] args) {

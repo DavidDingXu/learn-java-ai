@@ -3,6 +3,7 @@ package com.xiaoding.javaai.knowledge.indexing.infrastructure;
 import com.xiaoding.javaai.knowledge.document.domain.DocumentId;
 import com.xiaoding.javaai.knowledge.document.domain.TenantId;
 import com.xiaoding.javaai.knowledge.indexing.application.ClaimedIndexTask;
+import com.xiaoding.javaai.knowledge.indexing.application.IndexTaskLeaseLostException;
 import com.xiaoding.javaai.knowledge.indexing.application.IndexTaskType;
 import com.xiaoding.javaai.knowledge.indexing.application.port.IndexTaskQueue;
 
@@ -33,9 +34,43 @@ public final class PostgresIndexTaskQueue implements IndexTaskQueue {
             Duration leaseDuration,
             int maximumAttempts
     ) {
-        PostgresIndexTaskClaimQuery query = PostgresIndexTaskClaimQuery.create(
+        return claim(PostgresIndexTaskClaimQuery.create(
                 workerId, now, leaseDuration, maximumAttempts
+        ));
+    }
+
+    @Override
+    public Optional<ClaimedIndexTask> claimNextForTenant(
+            TenantId tenantId,
+            String workerId,
+            Instant now,
+            Duration leaseDuration,
+            int maximumAttempts
+    ) {
+        return claim(PostgresIndexTaskClaimQuery.createForTenant(
+                tenantId, workerId, now, leaseDuration, maximumAttempts
+        ));
+    }
+
+    @Override
+    public void renewLease(
+            UUID taskId,
+            String workerId,
+            int leaseAttempt,
+            Instant now,
+            Duration leaseDuration
+    ) {
+        executeMutation(
+                PostgresIndexTaskMutationQuery.renewLease(
+                        taskId, workerId, leaseAttempt, now, leaseDuration
+                ),
+                taskId,
+                workerId,
+                leaseAttempt
         );
+    }
+
+    private Optional<ClaimedIndexTask> claim(PostgresIndexTaskClaimQuery query) {
         try (var connection = dataSource.getConnection();
              var statement = connection.prepareStatement(query.sql())) {
             bind(statement, query.parameters());

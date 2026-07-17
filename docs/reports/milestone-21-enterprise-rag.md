@@ -1,26 +1,38 @@
 # Milestone 21 Enterprise RAG
 
-Status: VERIFIED_LOCAL_CONTRACTS_EXTERNAL_ENVIRONMENT_REQUIRED
+Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 
-## Implementation
+## Included Capabilities
 
-Commit: `0f5d9649e5e39ef2b54907dc394ffc871abffed0`
+- 受 `knowledge:write` 保护的文档上传与发布接口，租户和操作人来自 JWT。
+- `JdbcKnowledgeDocumentRepository` 保存文档、不可变版本和 revision；Flyway V1-V4 管理文档、ACL、索引任务、分块、发布审计与检索版本指针。
+- 原文通过 `DocumentObjectStore` 隔离存储实现，默认适配器写入本地文件目录。
+- 发布事务同时更新业务版本、文档级 READ ACL 和 `PENDING` 索引任务。
+- Worker 使用租约领取任务，长索引期间按租约代次续租，读取原文后完成确定性切分和批量 Embedding，再由 pgvector sink 写入分块。
+- sink 在写事务开始时校验 `leaseAttempt` 和租约有效期，写入完成后原子切换 `document_search_version`。
+- 新业务版本发布后，已有文档继续读取上一版索引；首次发布要等索引任务完成后才可检索。
+- 向量和 trigram 检索在 TopK 前应用租户、业务有效期、检索版本和 ACL 条件，并支持 RRF 融合。
+- 检索评测通过受 `knowledge:eval` 保护的 HTTP 接口运行，输出 Recall@K、HitRate@K、MRR、重复率和 p95 延迟。
 
-The milestone contains document lifecycle and upload boundaries, deterministic chunking, pgvector retrieval, ACL and effective-time filtering before TopK, embedding-model isolation, PostgreSQL trigram hybrid retrieval, RRF, controlled reranking, grounded answer context, recoverable index tasks and an authenticated retrieval evaluation runner.
+## Verification Commands
 
-## Verification
+日常代码回归：
 
-- Knowledge Service local contract suite: 70 tests passed after excluding tests that require loopback sockets, live model credentials or an external PostgreSQL environment.
-- Customer BFF delegated-token contract: 1 test passed in the same reactor run.
-- Eval Runner local suite: 14 tests passed.
-- Project contract suite: 43 tests passed; 1 loopback-only test was skipped by the restricted sandbox.
-- OpenAPI and JSON Schema validation: 3 OpenAPI files, 2 schemas, 2 positive fixtures and 2 negative fixtures passed.
-- Article content, AI-flavor, code-link and visual-asset checks passed for the 21 available articles.
+```bash
+./mvnw -pl services/knowledge-service,quality/eval-runner test
+```
 
-## External Boundary
+专用 PostgreSQL/pgvector 测试库：
 
-The local result does not claim real PostgreSQL/pgvector capacity, real retrieval quality, production object storage or multi-process worker recovery. `PgVectorExternalIT` and `scripts/run-retrieval-eval.sh` must run against a dedicated prepared environment before publishing environment-specific Recall, latency or capacity conclusions.
+```bash
+export JAVA_AI_POSTGRES_URL='jdbc:postgresql://127.0.0.1:5432/java_ai_test'
+export JAVA_AI_POSTGRES_USER='java_ai'
+export JAVA_AI_POSTGRES_PASSWORD='replace-with-test-password'
+./mvnw -pl services/knowledge-service verify -Pexternal-integration
+```
 
-## Tag Rule
+外部 profile 会执行 `Flyway.clean()`，只能连接一次性或专用测试库，不能连接共享库或生产库。Windows 可使用 `mvnw.cmd` 并设置相同环境变量。
 
-`milestone-21-enterprise-rag` must point to implementation commit `0f5d9649e5e39ef2b54907dc394ffc871abffed0`. Documentation-only commits do not replace this implementation evidence point.
+## Remaining Environment Work
+
+本仓库的本地测试不提供公司语料的召回率、HNSW 参数、并发 Worker、任务积压、数据库容量或备份恢复结论。默认本地文件对象存储也不适合多实例部署。上线前需要接入公司的对象存储和 IdP，在目标 PostgreSQL/pgvector 环境完成迁移、并发、故障恢复、容量及检索质量测试。

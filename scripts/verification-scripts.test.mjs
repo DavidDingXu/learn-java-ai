@@ -187,3 +187,29 @@ test("PowerShell integration verification has the same missing-environment guard
   assert.match(powershell, /status -ne "UP"/);
   assert.match(powershell, /one HTTP health endpoint only/);
 });
+
+test("PowerShell evaluation and smoke scripts run Maven with the selected main JDK", () => {
+  const runtime = read("scripts/main-java-runtime.ps1");
+  assert.match(runtime, /JAVA_AI_MAIN_JAVA_HOME/);
+  assert.match(runtime, /\$env:JAVA_HOME\s*=\s*\$JavaHome/);
+  assert.match(runtime, /\$env:Path\s*=.*Join-Path \$JavaHome 'bin'/);
+  assert.match(runtime, /bin\\java\.exe/);
+  assert.match(runtime, /bin\\javac\.exe/);
+  assert.match(runtime, /\$Major -lt 21/);
+
+  for (const relativePath of [
+    "scripts/run-contract-eval.ps1",
+    "scripts/run-live-model-eval.ps1",
+    "scripts/run-live-model-smoke.ps1",
+    "scripts/run-retrieval-eval.ps1",
+    "scripts/run-agent-eval.ps1",
+    "scripts/run-agent-live-model-smoke.ps1",
+    "scripts/run-security-regression.ps1",
+  ]) {
+    const content = read(relativePath);
+    assert.match(content, /main-java-runtime\.ps1/, relativePath);
+    assert.match(content, /Enter-JavaAiMainJdk/, relativePath);
+    assert.match(content, /Restore-JavaAiEnvironment/, relativePath);
+    assert.doesNotMatch(content, /(?:^|\s)java\s+-jar/, relativePath);
+  }
+});

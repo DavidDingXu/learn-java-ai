@@ -32,6 +32,8 @@ import javax.sql.DataSource;
 @ConditionalOnProperty(name = "java-ai.knowledge.context-source", havingValue = "retrieval")
 class KnowledgeRetrievalConfiguration {
 
+    private static final int DOCUMENT_CHUNK_EMBEDDING_DIMENSIONS = 1536;
+
     @Bean(destroyMethod = "close")
     @ConditionalOnMissingBean(DataSource.class)
     DataSource knowledgeDataSource(
@@ -52,10 +54,9 @@ class KnowledgeRetrievalConfiguration {
 
     @Bean
     KnowledgeEmbeddingModel knowledgeEmbeddingModel(
-            EmbeddingModel embeddingModel,
-            @Value("${java-ai.knowledge.retrieval.embedding-dimensions:1536}") int expectedDimensions
+            EmbeddingModel embeddingModel
     ) {
-        return new SpringAiKnowledgeEmbeddingModel(embeddingModel, expectedDimensions);
+        return new SpringAiKnowledgeEmbeddingModel(embeddingModel, DOCUMENT_CHUNK_EMBEDDING_DIMENSIONS);
     }
 
     @Bean

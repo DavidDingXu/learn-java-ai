@@ -152,6 +152,12 @@ class DocumentUploadServiceTest {
         public void put(ObjectKey key, String mediaType, byte[] content) {
             objects.put(key, content.clone());
         }
+
+        @Override
+        public byte[] get(ObjectKey key) {
+            byte[] content = objects.get(key);
+            return content == null ? null : content.clone();
+        }
     }
 
     private static final class RecordingParser implements DocumentContentParser {

@@ -1,5 +1,6 @@
 package com.xiaoding.javaai.ticket.security;
 
+import com.xiaoding.javaai.ticket.task.AgentTaskAccessDeniedException;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -40,7 +41,7 @@ class DelegatedTicketIdentityFactoryTest {
         ));
 
         assertThatThrownBy(() -> factory.create(jwt, "customer-bff"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(AgentTaskAccessDeniedException.class)
                 .hasMessageContaining("actor");
     }
 

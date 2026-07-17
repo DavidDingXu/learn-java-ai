@@ -1,6 +1,6 @@
 # Framework Migration Labs
 
-These modules compare framework behavior behind narrow business contracts. They are not dependencies of the production services.
+These modules compare framework behavior behind narrow business interfaces. They are not dependencies of the production services.
 
 Run all experiments:
 

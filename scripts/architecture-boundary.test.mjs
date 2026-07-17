@@ -24,7 +24,7 @@ function markdownFiles(relativeDirectory) {
 
 test("public project documentation avoids opaque authoring language", () => {
   const publicDocuments = markdownFiles(".");
-  const opaqueWording = /合同|收口|闭环|沉淀|教学(?:样例|数据|回归)/;
+  const opaqueWording = /合同|收口|闭环|沉淀|教学(?:样例|数据|回归)|\bthe\s+column\b|\bcolumn\s+completion\b|\bbusiness\s+contracts?\b|\bteaching\s+(?:cases|data|regressions?)\b|\bPhase\s+[A-Z]\b|\bReset\s+Delivery\b/i;
   const violations = publicDocuments.flatMap((relativePath) =>
     read(relativePath)
       .split(/\r?\n/)

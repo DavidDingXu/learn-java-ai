@@ -74,6 +74,25 @@ class TicketAgentJwtSecurityTest {
                 .jsonPath("$.taskId").isEqualTo(taskId.get());
     }
 
+    @Test
+    void rejects_task_intake_from_the_wrong_actor_as_forbidden() {
+        HttpHeaders createHeaders = headers(token(
+                "customer-42", "unknown-client", "ticket:task:create", List.of("CUSTOMER")));
+        createHeaders.set("Idempotency-Key", "handoff:tenant-a:case-2");
+
+        client.post()
+                .uri("/api/v1/agent/tasks")
+                .headers(requestHeaders -> requestHeaders.addAll(createHeaders))
+                .body(Map.of(
+                        "caseId", "case-2",
+                        "objective", "Resolve customer consultation",
+                        "businessContext", Map.of("question", "退款多久到账？")))
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("AGENT_TASK_ACCESS_DENIED");
+    }
+
     private static HttpHeaders headers(String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);

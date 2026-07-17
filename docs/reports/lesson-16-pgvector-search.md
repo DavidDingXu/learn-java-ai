@@ -1,12 +1,12 @@
 # Lesson 16 pgvector Search Evidence
 
-Status: VERIFIED_LOCAL_VECTOR_CONTRACT_WITH_EXTERNAL_PROFILE
+Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 
 - Application service: `KnowledgeRetrievalService`
 - Embedding port and adapter: `KnowledgeEmbeddingModel` / `SpringAiKnowledgeEmbeddingModel`
 - Search adapter: `PgVectorKnowledgeChunkSearchRepository`
 - SQL builder: `PgVectorSearchQuery`
-- Schema source: `db/migration/V1__knowledge_platform.sql`
+- Schema source: `db/migration/V1__knowledge_platform.sql` and `db/migration/V4__document_search_version.sql`
 - External test: `PgVectorExternalIT`
 
 ## Verified Locally
@@ -15,13 +15,13 @@ Status: VERIFIED_LOCAL_VECTOR_CONTRACT_WITH_EXTERNAL_PROFILE
 - `SpringAiKnowledgeEmbeddingModel` 映射向量及 Provider 返回的模型名；缺失向量或模型元数据会被拒绝。
 - Flyway 创建 `VECTOR(1536)` 字段和基于 cosine distance 的 HNSW 索引，迁移文件是当前数据库结构的唯一来源。
 - pgvector 查询使用参数绑定传入向量、Embedding 模型、租户、有效时间和 TopK，并按 `<=>` 距离排序后限制结果数量。
-- 查询只允许 `ACTIVE` 文档、当前 `PUBLISHED` 版本和与查询向量相同的 Embedding 模型，避免模型迁移期间混排不兼容向量。
+- 查询只允许 `ACTIVE` 文档、存在当前有效 `PUBLISHED` 业务版本的文档，以及 `document_search_version` 指向且 Embedding 模型一致的分块。发布替换版本后，新索引完成前继续读取上一版分块。
 - JDBC 适配器把 `heading_path`、条款、正文、文档版本和相似度映射为 `RetrievedKnowledgeChunk`。
-- `DeterministicHashEmbeddingModel` 只提供无外部模型时的稳定本地向量，测试验证其确定性和单位范数，不把它当作语义 Embedding。
+- 测试源码中的 `DeterministicHashEmbeddingModel` 只提供稳定本地向量，用来检查确定性和单位范数，不把它当作语义 Embedding。
 
 ## Local Verification
 
-以下命令只运行 JVM 内的单元测试、SQL 结构和迁移测试，不连接真实 PostgreSQL，也不调用真实 Embedding API：
+以下命令只运行 JVM 内的单元测试、SQL 结构和迁移文件检查，不连接 PostgreSQL，也不调用 Provider Embedding API：
 
 ```bash
 ./mvnw -pl services/knowledge-service \
@@ -29,11 +29,11 @@ Status: VERIFIED_LOCAL_VECTOR_CONTRACT_WITH_EXTERNAL_PROFILE
   test
 ```
 
-在项目支持的 JDK 21 环境中，预期 7 个测试全部通过。这些测试覆盖端口编排、SQL 结构、参数绑定和结果映射。
+这些测试覆盖端口编排、SQL 结构、参数绑定、检索版本选择和结果映射。
 
 ## External pgvector Verification
 
-外部验证必须使用安装了 `vector` 扩展的专用测试库。测试会执行 `Flyway.clean()` 并重建结构，禁止指向共享或生产数据库。
+外部测试必须使用安装了 `vector` 扩展的专用数据库。测试会执行 `Flyway.clean()` 并重建结构，禁止指向共享或生产数据库。
 
 ```bash
 export JAVA_AI_POSTGRES_URL='jdbc:postgresql://127.0.0.1:5432/java_ai_test'
@@ -43,8 +43,8 @@ export JAVA_AI_POSTGRES_PASSWORD='replace-with-test-password'
 ./mvnw -pl services/knowledge-service verify -Pexternal-integration
 ```
 
-预期 `PgVectorExternalIT` 执行一条 Flyway 迁移，并从三份跨租户、跨权限测试数据中只返回 `allowed-chunk`。CI 中的 `.github/workflows/pgvector-integration.yml` 使用同一 Maven profile；没有该运行结果时，不能声称真实 pgvector 已验证。
+`PgVectorExternalIT` 会执行全部 Flyway 迁移，从三份跨租户、跨权限测试数据中只返回 `allowed-chunk`，并检查替换索引完成前读取上一版、完成后切换到新版。`.github/workflows/pgvector-integration.yml` 调用同一 Maven profile；具体环境是否通过应以该次测试报告为准。
 
 ## Evidence Boundary
 
-本地测试不连接 PostgreSQL/pgvector，也不检查真实 Embedding 质量。外部测试只验证一次迁移、向量查询和权限过滤，数据量很小且向量人为固定；它不覆盖 HNSW 参数调优、索引构建耗时、连接池容量、真实语义召回、备份恢复或生产高可用。
+本地测试不连接 PostgreSQL/pgvector，也不检查 Embedding 质量。外部测试的数据量很小，向量也是固定输入，只覆盖迁移、向量查询、权限过滤和检索版本切换；HNSW 参数、索引构建耗时、连接池容量、公司语料召回、备份恢复和高可用仍需在目标环境测试。

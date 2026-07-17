@@ -42,6 +42,10 @@ public class SecurityConfiguration {
                             .pathMatchers("/actuator/health", "/actuator/env", "/error").permitAll()
                             .pathMatchers("/api/v1/knowledge/answers/**")
                             .hasAuthority("SCOPE_knowledge:answer")
+                            .pathMatchers("/api/v1/knowledge/documents/**")
+                            .hasAuthority("SCOPE_knowledge:write")
+                            .pathMatchers("/internal/v1/knowledge/index-tasks/run-once")
+                            .hasAuthority("SCOPE_knowledge:index")
                             .pathMatchers("/internal/v1/knowledge/retrieval/evaluations")
                             .hasAuthority("SCOPE_knowledge:eval")
                             .anyExchange().denyAll());

@@ -6,6 +6,7 @@ $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
+. (Join-Path $PSScriptRoot "main-java-runtime.ps1")
 $MavenWrapper = Join-Path $ProjectRoot "mvnw.cmd"
 $ReportPath = if ([string]::IsNullOrWhiteSpace($env:JAVA_AI_LIVE_REPORT_PATH)) {
     Join-Path $ProjectRoot "docs\reports\lesson-04-live-model-smoke.md"
@@ -25,45 +26,13 @@ foreach ($Name in @("JAVA_AI_CHAT_API_KEY", "JAVA_AI_CHAT_BASE_URL", "JAVA_AI_CH
     }
 }
 
-$MainJavaHome = if (-not [string]::IsNullOrWhiteSpace($env:JAVA_AI_MAIN_JAVA_HOME)) {
-    $env:JAVA_AI_MAIN_JAVA_HOME
-} else {
-    $env:JAVA_HOME
-}
-if ([string]::IsNullOrWhiteSpace($MainJavaHome)) {
-    Stop-WithError "Set JAVA_AI_MAIN_JAVA_HOME to a full JDK 21 or newer."
-}
-
-$Java = Join-Path $MainJavaHome "bin\java.exe"
-$Javac = Join-Path $MainJavaHome "bin\javac.exe"
-if (-not (Test-Path $Java) -or -not (Test-Path $Javac)) {
-    Stop-WithError "JAVA_AI_MAIN_JAVA_HOME must contain bin\java.exe and bin\javac.exe: $MainJavaHome"
-}
-
-$JavacOutput = (& $Javac -version 2>&1 | Out-String).Trim()
-if ($LASTEXITCODE -ne 0 -or $JavacOutput -notmatch '^javac\s+(.+)$') {
-    Stop-WithError "Unable to parse javac version: $JavacOutput"
-}
-$Version = $Matches[1]
-$Major = if ($Version.StartsWith("1.")) {
-    [int](($Version.Substring(2) -split '[._]')[0])
-} else {
-    [int](($Version -split '[._]')[0])
-}
-if ($Major -lt 21) {
-    Stop-WithError "The live model smoke test requires JDK 21 or newer."
-}
-
 $Commit = (& git -C $ProjectRoot rev-parse HEAD 2>$null | Out-String).Trim()
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($Commit)) {
     $Commit = "unknown"
 }
 
-$PreviousJavaHome = $env:JAVA_HOME
-$PreviousPath = $env:Path
+$JavaRuntime = Enter-JavaAiMainJdk
 try {
-    $env:JAVA_HOME = $MainJavaHome
-    $env:Path = "$(Join-Path $MainJavaHome 'bin')$([IO.Path]::PathSeparator)$PreviousPath"
     & $MavenWrapper `
         -f (Join-Path $ProjectRoot "pom.xml") `
         -pl services/knowledge-service `
@@ -76,12 +45,7 @@ try {
     }
 }
 finally {
-    if ($null -eq $PreviousJavaHome) {
-        Remove-Item Env:JAVA_HOME -ErrorAction SilentlyContinue
-    } else {
-        $env:JAVA_HOME = $PreviousJavaHome
-    }
-    $env:Path = $PreviousPath
+    Restore-JavaAiEnvironment $JavaRuntime
 }
 
 Write-Host "LIVE_MODEL report written to $ReportPath"

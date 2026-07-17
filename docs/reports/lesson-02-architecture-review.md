@@ -19,7 +19,7 @@
 
 ## Commit
 
-提交基线：`3be7f19`。该提交已通过主 reactor、独立 labs、真实 JDK8 客户端和项目契约验证。
+提交基线：`3be7f19`。该提交已通过主 reactor、独立 labs、JDK8 独立客户端构建和项目接口检查。
 
 ## Accepted Boundaries
 

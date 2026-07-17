@@ -1,5 +1,6 @@
 package com.xiaoding.javaai.knowledge.indexing.infrastructure;
 
+import com.xiaoding.javaai.knowledge.document.domain.TenantId;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -32,6 +33,39 @@ class PostgresIndexTaskClaimQueryTest {
                 3,
                 now,
                 3,
+                now,
+                now,
+                "indexer-a",
+                now.plusSeconds(45),
+                now
+        );
+    }
+
+    @Test
+    void scopes_both_expired_lease_recovery_and_claim_to_one_tenant() {
+        Instant now = Instant.parse("2026-07-13T04:00:00Z");
+
+        PostgresIndexTaskClaimQuery query = PostgresIndexTaskClaimQuery.createForTenant(
+                new TenantId("tenant-a"), "indexer-a", now, Duration.ofSeconds(45), 3
+        );
+
+        assertThat(query.sql().toLowerCase()).containsSubsequence(
+                "where status = 'running'",
+                "and attempts >= ?",
+                "and lease_until <= ?",
+                "and tenant_id = ?",
+                "candidate as",
+                "where status in ('pending', 'retry_wait', 'running')",
+                "and attempts < ?",
+                "and tenant_id = ?"
+        );
+        assertThat(query.parameters()).containsExactly(
+                now,
+                3,
+                now,
+                "tenant-a",
+                3,
+                "tenant-a",
                 now,
                 now,
                 "indexer-a",

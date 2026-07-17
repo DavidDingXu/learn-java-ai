@@ -59,7 +59,7 @@ public final class DocumentUploadService {
         objectStore.put(objectKey, command.mediaType(), content);
         repository.save(document);
         return new UploadedDocument(
-                document.id(), document.tenantId(), version.number(), contentHash, objectKey
+                document.id(), document.tenantId(), version.number(), document.revision(), contentHash, objectKey
         );
     }
 

@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+. (Join-Path $PSScriptRoot "main-java-runtime.ps1")
 $ReportPrefix = if ($args.Count -gt 0) { $args[0] } else { Join-Path $RootDir "docs/reports/lesson-34-agent-eval" }
 
 foreach ($Name in @(
@@ -15,18 +16,22 @@ foreach ($Name in @(
 }
 
 $Commit = if ($env:JAVA_AI_EVAL_COMMIT) { $env:JAVA_AI_EVAL_COMMIT } else { git -C $RootDir rev-parse HEAD }
-$Java = Join-Path $env:JAVA_AI_MAIN_JAVA_HOME "bin/java.exe"
-& (Join-Path $RootDir "mvnw.cmd") -f (Join-Path $RootDir "pom.xml") `
-  -pl quality/eval-runner -am package -DskipTests
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$JavaRuntime = Enter-JavaAiMainJdk
+try {
+  & (Join-Path $RootDir "mvnw.cmd") -f (Join-Path $RootDir "pom.xml") `
+    -pl quality/eval-runner -am package -DskipTests
+  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-& $Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar") `
-  agent-eval `
-  --dataset (Join-Path $RootDir "datasets/agent/golden-set-v1.jsonl") `
-  --base-url $env:JAVA_AI_AGENT_BASE_URL `
-  --create-token $env:JAVA_AI_AGENT_CREATE_TOKEN `
-  --run-token $env:JAVA_AI_AGENT_RUN_TOKEN `
-  --read-token $env:JAVA_AI_AGENT_READ_TOKEN `
-  --report $ReportPrefix `
-  --commit $Commit
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar") `
+    agent-eval `
+    --dataset (Join-Path $RootDir "datasets/agent/golden-set-v1.jsonl") `
+    --base-url $env:JAVA_AI_AGENT_BASE_URL `
+    --create-token $env:JAVA_AI_AGENT_CREATE_TOKEN `
+    --run-token $env:JAVA_AI_AGENT_RUN_TOKEN `
+    --read-token $env:JAVA_AI_AGENT_READ_TOKEN `
+    --report $ReportPrefix `
+    --commit $Commit
+  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+} finally {
+  Restore-JavaAiEnvironment $JavaRuntime
+}

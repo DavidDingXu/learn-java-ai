@@ -1,9 +1,9 @@
 # Lesson 15 Document Chunking Evidence
 
-Status: VERIFIED_DETERMINISTIC_CHUNKING
+Status: IMPLEMENTED_WITH_DETERMINISTIC_TESTS
 
-- Implementation commit: `24f2177`
 - Chunker: `PolicyDocumentChunker`
+- Indexer: `DocumentVersionIndexingService`
 - Dataset fixture: `datasets/knowledge/refund-policy-chunking-v1.md`
 - Test: `PolicyDocumentChunkerTest`
 
@@ -18,4 +18,4 @@ Status: VERIFIED_DETERMINISTIC_CHUNKING
 
 ## Evidence Boundary
 
-字符上限只用于检查确定性切分方法，不等同于目标模型 Token 上限。引入 Embedding 模型后需要按实际 tokenizer、召回坏案例和引用粒度重新确定生产参数。
+当前索引 Worker 已使用该切分器，但字符上限不等同于目标模型的 Token 上限。公司语料接入后需要结合 tokenizer、召回坏案例和引用粒度重新确定参数；修改策略时应升级 `chunkPolicyVersion` 并重建索引。

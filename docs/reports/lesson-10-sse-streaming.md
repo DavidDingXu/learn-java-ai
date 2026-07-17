@@ -16,4 +16,4 @@ Status: VERIFIED_PROTOCOL_AND_SERVICE
 
 ## Evidence Boundary
 
-本提交验证流式代码、HTTP 协议和取消语义，但没有把普通 `LIVE_MODEL` 报告冒充真实 SSE 报告。公司上线前仍需用目标 Provider、网关和前端执行断连、代理缓冲、空闲超时和慢客户端验收。
+本提交检查流式代码、HTTP 协议和取消语义；普通 `LIVE_MODEL` 调用不能代替目标 SSE 链路。公司上线前仍需使用目标 Provider、网关和前端测试断连、代理缓冲、空闲超时和慢客户端。

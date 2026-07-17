@@ -62,6 +62,11 @@ public class DelegatedJwtConfiguration {
 
     private static NimbusReactiveJwtDecoder createDecoder(Environment environment) {
         String hmacSecret = environment.getProperty("java-ai.security.jwt.hmac-secret", "");
+        String jwkSetUri = environment.getProperty("java-ai.security.jwt.jwk-set-uri", "");
+        if (StringUtils.hasText(hmacSecret) && StringUtils.hasText(jwkSetUri)) {
+            throw new IllegalStateException(
+                    "Configure exactly one JWT verification source: jwk-set-uri or hmac-secret");
+        }
         if (StringUtils.hasText(hmacSecret)) {
             byte[] secretBytes = hmacSecret.getBytes(StandardCharsets.UTF_8);
             if (secretBytes.length < 32) {
@@ -73,7 +78,6 @@ public class DelegatedJwtConfiguration {
                     .build();
         }
 
-        String jwkSetUri = environment.getProperty("java-ai.security.jwt.jwk-set-uri", "");
         if (StringUtils.hasText(jwkSetUri)) {
             return NimbusReactiveJwtDecoder.withJwkSetUri(jwkSetUri).build();
         }

@@ -8,7 +8,9 @@ Implementation baseline: `release-hardening-2026-07-14`
 
 - Duplicate submissions with the same idempotency key and fingerprint reuse one task.
 - A changed fingerprint under the same key is rejected.
-- Status transitions are monotonic; terminal states cannot regress and uncertain delivery can enter UNKNOWN.
+- Status transitions are monotonic; terminal states cannot regress and uncertain delivery can enter UNKNOWN before a confirmed terminal result arrives.
+- A repeated terminal callback is idempotent only when status and receipt match; conflicting terminal results are rejected as protocol conflicts.
+- Unknown task IDs are rejected without creating local state.
 - A2A Java SDK `1.1.0.Final` discovers a standard Agent Card, validates an allowlisted skill and sends a message over JSON-RPC.
 - The official client maps the response to a completed A2A Task with an artifact.
 - AgentScope `A2aTaskCoordinator` remains the business state boundary; SDK enums are not persisted as the domain contract.

@@ -22,5 +22,19 @@ class AgentScopeTicketRuntimeTest {
         assertEquals(PermissionBehavior.ASK, write.behavior());
         assertEquals(PermissionBehavior.DENY, export.behavior());
         assertEquals("tenant-a", read.tenantId());
+        assertEquals("agent-user", read.subjectId());
+        assertEquals("query_ticket", read.toolName());
+        assertEquals("ticket-policy", read.ruleSource());
+        assertEquals("Permission granted for query_ticket", read.reason());
+        assertEquals("tenant-a", write.tenantId());
+        assertEquals("agent-user", write.subjectId());
+        assertEquals("update_ticket", write.toolName());
+        assertEquals("ticket-policy", write.ruleSource());
+        assertEquals("Permission required for update_ticket", write.reason());
+        assertEquals("tenant-a", export.tenantId());
+        assertEquals("agent-user", export.subjectId());
+        assertEquals("export_all_customers", export.toolName());
+        assertEquals("data-policy", export.ruleSource());
+        assertEquals("Permission to use export_all_customers has been denied", export.reason());
     }
 }

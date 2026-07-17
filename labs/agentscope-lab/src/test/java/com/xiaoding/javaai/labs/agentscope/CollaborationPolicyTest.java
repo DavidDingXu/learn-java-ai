@@ -12,6 +12,15 @@ class CollaborationPolicyTest {
     private final CollaborationPolicy policy = new CollaborationPolicy();
 
     @Test
+    void keepsDependentReadOnlyWorkInOneAgent() {
+        CollaborationDecision decision = policy.decide(List.of(
+                new WorkUnit("policy-search", true, false),
+                new WorkUnit("draft-answer", false, false)));
+
+        assertEquals(CollaborationMode.SINGLE_AGENT, decision.mode());
+    }
+
+    @Test
     void usesMultipleAgentsOnlyForIndependentReadOnlyWork() {
         CollaborationDecision decision = policy.decide(List.of(
                 new WorkUnit("policy-search", true, false),

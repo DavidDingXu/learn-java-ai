@@ -8,7 +8,7 @@ Date: 2026-07-13
 
 The target readers and expected delivery teams already use Spring Boot. The main business path needs model calls, structured output, streaming, RAG, Tool Calling, observations and MCP without replacing the surrounding Java application architecture.
 
-The project also needs to explain Spring AI Alibaba, LangChain4j and AgentScope. Putting all four frameworks in the main reactor would make dependency conflicts, runtime behavior and ownership harder to reason about. A framework comparison is useful only when the same business contract and dataset are kept stable.
+The project also evaluates Spring AI Alibaba, LangChain4j and AgentScope. Putting all four frameworks in the main reactor would make dependency conflicts, runtime behavior and ownership harder to reason about. A framework comparison is useful only when the same business interface and dataset are kept stable.
 
 Direct Provider SDK usage was also considered. It gives early access to vendor-specific features but pushes authentication, configuration, retries, metadata mapping and migration cost into business code.
 
@@ -22,14 +22,14 @@ Spring AI 2.0.0 is a GA release, not a milestone or release candidate. Its Boot 
 - Application ports use business language, such as a knowledge-answer model or ticket-planning model.
 - The project does not create a universal model gateway and does not reduce Chat, RAG, Tool and Agent behavior to `String -> String`.
 - Provider SDKs may be used behind a dedicated adapter only when Spring AI cannot expose a required capability and the gap is documented.
-- Spring AI Alibaba, LangChain4j and AgentScope remain in the independent `labs` reactor. They reuse the same business contracts, datasets and evaluation rules when their lessons are implemented.
+- Spring AI Alibaba, LangChain4j and AgentScope remain in the independent `labs` reactor. Candidate implementations use the same business interfaces and evaluation rules; production comparison still requires the same dataset and target environment.
 
 ## Consequences
 
 Positive:
 
 - Spring Boot teams can reuse familiar configuration, dependency management, testing and observability practices.
-- Mainline articles can evolve one coherent codebase instead of switching application architecture for each framework.
+- Mainline services keep one coherent application architecture instead of switching structure for each framework.
 - Framework migration chapters can measure real differences in code, behavior and maintenance cost.
 
 Costs:
@@ -44,7 +44,7 @@ Revisit this decision when at least one of these conditions is true:
 
 - A required Provider capability cannot be implemented through Spring AI or a narrow adapter without losing essential behavior.
 - The company already operates a governed AI platform whose contract is the required integration boundary.
-- A different Java framework produces a materially better result on the same business contract and dataset, and the migration cost is acceptable.
+- A different Java framework produces a materially better result on the same business interface and dataset, and the migration cost is acceptable.
 - The selected Spring Boot and Spring AI versions no longer receive the security or compatibility support required by the deployment environment.
 
 Changing the mainline requires a new ADR, dependency-tree evidence, regression results and a rollback path. Popularity or API preference alone is not enough.

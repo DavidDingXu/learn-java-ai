@@ -37,3 +37,5 @@ java-ai:
       allowed-actors: customer-bff,ticket-agent-service
   knowledge:
     context-source: classpath
+    ingestion:
+      enabled: false

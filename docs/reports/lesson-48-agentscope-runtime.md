@@ -8,7 +8,7 @@ Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 - `AgentScopeTicketRuntime` uses real `RuntimeContext`, `Toolkit` and `PermissionEngine` types.
 - Query, update and customer export map to ALLOW, ASK and DENY.
-- Trusted execution identity remains a business record and is preserved in the decision.
+- Trusted execution identity remains a business record; the decision also preserves the tool, rule source and readable reason.
 
 ## Verification
 

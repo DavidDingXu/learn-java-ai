@@ -27,8 +27,8 @@ Status: VERIFIED_LOCAL_GROUNDED_ANSWER_COMPOSITION
   test
 ```
 
-预期 5 个测试全部通过，覆盖可信检索参数传递、chunk 到引用上下文的映射、引用回填和未知引用拒绝。
+这些测试覆盖可信检索参数传递、chunk 到引用上下文的映射、引用回填和未知引用拒绝。
 
 ## Evidence Boundary
 
-这些测试使用内存 Retriever 和模型替身，没有把真实 Embedding、pgvector、真实 Chat API 串成一次端到端调用。现有真实模型冒烟与 pgvector 外部测试分别验证各自边界，不能合并解释为“真实 RAG 已验收”。当前规则也不等于完成跨文档冲突裁决、引用原文片段校验、恶意知识内容扫描或检索型 Prompt Injection 的生产防护。
+这些测试使用内存 Retriever 和模型替身，没有把 Provider Embedding、pgvector 和 Chat API 串成一次端到端调用。模型接口 Smoke 与 pgvector 外部测试各自检查一段链路，不能据此推断整条 RAG 链路满足目标环境要求。跨文档冲突裁决、引用原文片段校验、恶意知识内容扫描和检索型 Prompt Injection 防护也不在当前范围内。

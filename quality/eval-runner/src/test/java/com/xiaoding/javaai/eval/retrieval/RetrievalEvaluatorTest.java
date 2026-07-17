@@ -74,6 +74,40 @@ class RetrievalEvaluatorTest {
     }
 
     @Test
+    void recordsAClientErrorAndContinuesWithTheRemainingCases() {
+        RetrievalEvalDataset dataset = new RetrievalEvalDataset("retrieval-v1", List.of(
+                new RetrievalEvalCase("unavailable", "问题一", Set.of("chunk-1")),
+                new RetrievalEvalCase("available", "问题二", Set.of("chunk-2"))
+        ));
+        AtomicInteger calls = new AtomicInteger();
+        RetrievalEvaluationClient client = (baseUrl, token, question, topK) -> {
+            calls.incrementAndGet();
+            if (question.endsWith("一")) {
+                throw new RetrievalEvaluationClientException("knowledge retrieval request returned HTTP 503");
+            }
+            return new RetrievalClientResult("embedding-v1", List.of("chunk-2"), 20);
+        };
+
+        RetrievalEvaluationReport report = new RetrievalEvaluator(client, Clock.systemUTC()).evaluate(
+                dataset,
+                URI.create("https://knowledge.example.test"),
+                "delegated-token",
+                1,
+                "commit-123",
+                new RetrievalThresholds(0, 0, 0, 1, 100)
+        );
+
+        assertEquals(2, calls.get());
+        assertTrue(!report.passed());
+        assertEquals(List.of("unavailable"), report.metrics().failedCaseIds());
+        assertEquals(RetrievalCaseStatus.ERROR, report.cases().getFirst().status());
+        assertEquals(List.of(), report.cases().getFirst().retrievedChunkIds());
+        assertTrue(report.cases().getFirst().error().contains("HTTP 503"));
+        assertEquals(RetrievalCaseStatus.COMPLETED, report.cases().get(1).status());
+        assertEquals(Set.of("embedding-v1"), report.embeddingModels());
+    }
+
+    @Test
     void rejectsAnInvalidTopKBeforeCallingTheEnvironment() {
         AtomicInteger calls = new AtomicInteger();
         RetrievalEvaluationClient client = (baseUrl, token, question, topK) -> {

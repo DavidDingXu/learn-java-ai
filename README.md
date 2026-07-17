@@ -8,30 +8,31 @@
 
 - 三个可启动的 Java 21 HTTP 应用和健康检查。
 - 一个依赖轻量的 Eval Runner 入口。
-- 一个使用真实 Java 8 编译的独立客户端工程。
+- 一个由 JDK 8 独立编译和测试的老系统客户端工程。
 - Spring AI Alibaba、LangChain4j、AgentScope 和协议互操作四个有实现、有测试的隔离实验构建。
 - macOS/Linux 与 Windows 两套验证脚本。
 - 不依赖外部数据库、模型密钥或业务网络的日常测试路径。
 - Knowledge Service 的 Spring AI、WebFlux、可靠性和可观测依赖边界。
 - Customer BFF 的客户 JWT、RFC 8693 Token Exchange、下游客户端认证与 audience/scope 隔离。
-- 测试替身与正式运行配置隔离，以及真实 JDK 21/JDK 8 CI 校验。
-- 第一条固定政策上下文问答、Spring AI 业务适配器、确定性模型协议回归测试和真实模型验证入口。
+- 测试替身与正式运行配置隔离，以及 JDK 21/JDK 8 CI 校验。
+- 第一条固定政策上下文问答、Spring AI 业务适配器、确定性模型协议回归测试和模型接口 Smoke 入口。
 - 版本化 Prompt、信任分区、结构化输出、业务校验和事件格式稳定的 SSE。
 - 面向知识回答用例的超时、并发、断路器和安全读重试。
-- 独立 HTTP Eval Runner、5 条 Golden Set、接口回归评测和真实模型评测。
+- 独立 HTTP Eval Runner、5 条 Golden Set、接口回归评测和模型评测入口。
 - Micrometer Observation、Spring AI 原生观测和 HTTP Trace 关联。
-- 知识文档版本冲突、重复内容、上传校验、本地文件对象存储和确定性政策切分。
+- 受 `knowledge:write` 保护的知识文档上传与发布接口、JWT 租户隔离、JDBC 持久化、版本冲突、重复内容校验、本地文件对象存储和确定性政策切分。
 - PostgreSQL/pgvector 结构、Embedding 模型隔离、TopK 前 ACL 与有效期过滤。
 - 向量与 trigram 混合检索、RRF 融合、可配置候选预算和受控 Rerank 边界。
 - JWT 中租户、主体和部门范围到检索 SQL 的完整传递。
-- 索引任务租约、尝试预算、原子领取、JDBC 队列和确定性文档版本索引服务。
+- Flyway V1-V4 数据库结构、发布事务内的 ACL 与索引任务创建、任务租约、原子领取、对象正文回读和 pgvector 分块写入。
+- 业务发布版本与检索版本分离；新索引写完前继续读取上一版，写入时通过 `leaseAttempt` fencing 拒绝失去租约的 Worker。
 - 版本化检索 Golden Set、受 `knowledge:eval` 保护的评测接口、Recall@K、HitRate@K、MRR、重复率、p95 延迟和阈值检查。
 - C 端完整回答与 SSE 接口、会话/尝试标识，以及明确的取消和异常状态。
 - 带 TTL、消息窗口、Token 估算、裁剪和事实隔离摘要的短时会话。
 - 绑定回答尝试的反馈、可追踪重试和不可变工单升级快照。
 - Ticket Agent Service 的委托 JWT 校验、幂等键、请求指纹、重复返回与冲突拒绝。
 - Ticket Agent Service 的 PostgreSQL/Flyway 任务、确认执行状态和审计持久化，以及不在数据库事务中调用远程 Tool 的两阶段执行边界。
-- 受限步数 Agent 状态机、Spring AI 2.0 结构化规划、模型元数据和真实模型烟测。
+- 受限步数 Agent 状态机、Spring AI 2.0 结构化规划、模型元数据和模型接口烟测。
 - 服务端 Tool 目录、参数白名单、只读知识查询、写操作风险分级和人工确认单。
 - 确认幂等、乐观版本、确定性拒绝与未知执行结果分流、低敏审计事件。
 - Knowledge Service 与 Java 8 Legacy Tool 的 HTTP 适配器，以及开发联调用委托 JWT 签发器。
@@ -47,10 +48,10 @@
 - AgentScope 2.0 Tool 权限复用、人工确认事件、MCP 外部 Tool 注册和 A2A 任务状态边界。
 - MCP Java SDK 2.0.0 的 Streamable HTTP 初始化、工具发现和只读调用互操作。
 - A2A Java SDK 1.1.0.Final 的 Agent Card 发现、Skill 准入、JSON-RPC 消息发送与 Task 映射。
-- 50 条检索、30 条 Agent 和 30 条安全合成回归数据；公司落地必须替换或扩展为真实业务分布。
+- 50 条检索、30 条 Agent 和 30 条安全合成回归数据；公司落地时需要按业务分布替换或扩展。
 - Customer BFF、Knowledge Service、Ticket Agent Service 和 JDK8 Legacy Tool 四份 OpenAPI 文档。
 
-当前代码覆盖真实模型调用、企业 RAG、C 端会话与信任交互、幂等工单升级、受控 Agent、Java 8 客户端、安全回归、标准指标、跨平台发布检查，以及框架和协议隔离实验。业务接口始终要求受信身份，不把租户和客户身份放进请求体。Labs 覆盖依赖解析、API 调用、协议互操作和业务边界回归，但尚未与生产 Provider、MCP Server 或远程 Agent 在公司网络联调。运行配置使用 PostgreSQL/Flyway 持久化 Ticket Agent 状态，并使用 PostgreSQL/pgvector 支撑知识检索；目标数据库仍需完成迁移、并发、备份恢复和容量验证。Customer BFF 当前的进程内会话与限流适配器需要在多实例部署前替换为共享实现。S3 兼容对象存储、生产索引写入、真实 IdP Token Exchange、外部 JDK8 Tool 服务、正式 Customer Web、持久 UNKNOWN 对账和端到端容量验证仍需公司环境完成。
+当前代码覆盖模型调用、企业 RAG、C 端会话与信任交互、幂等工单升级、受控 Agent、Java 8 客户端、安全回归、标准指标、跨平台发布检查，以及框架和协议隔离实验。业务接口要求受信身份，不从请求体读取租户和客户身份。Knowledge Service 使用 PostgreSQL/pgvector 保存文档元数据、ACL、索引任务、分块和检索版本指针；上传原文默认写入本地文件目录。多实例部署前，应把原文适配器换成 S3 兼容对象存储，并在目标数据库上完成迁移、并发、备份恢复和容量测试。Customer BFF 的进程内会话与限流也需要换成共享实现。目标 IdP、外部 JDK8 Tool、Customer Web、UNKNOWN 对账和端到端容量测试仍需在公司环境接入。
 
 ## 模块边界
 
@@ -86,7 +87,7 @@ deploy                           部署清单和环境说明
 ## 技术基线
 
 - 主 reactor：Java 21 字节码、Spring Boot 4.1.0、Spring AI BOM 2.0.0。
-- labs reactor：Spring AI Alibaba 1.1.2.3、LangChain4j 1.17.2、AgentScope 2.0.0、MCP Java SDK 2.0.0、A2A Java SDK 1.1.0.Final。
+- labs reactor：Spring AI Alibaba 1.1.2.3、LangChain4j 1.18.0、AgentScope 2.0.0、MCP Java SDK 2.0.0、A2A Java SDK 1.1.0.Final。
 - JDK8 客户端：Java 8、独立 Maven 构建。
 - Maven Wrapper：3.9.14。
 
@@ -96,11 +97,11 @@ deploy                           部署清单和环境说明
 
 至少准备：
 
-- Node.js，用于仓库契约测试。
-- 一个包含 `java` 和 `javac` 的 JDK 21 或更高版本。使用高于 21 的 JDK 时只能验证 `--release 21` 编译兼容性，CI 仍需在真实 JDK 21 上运行。
+- Node.js 24 或更高版本，用于仓库契约测试和本地联调脚本。
+- 一个包含 `java` 和 `javac` 的 JDK 21 或更高版本。使用高于 21 的 JDK 时只能验证 `--release 21` 编译兼容性，CI 仍需在 JDK 21 上运行。
 - 一个包含 `java` 和 `javac` 的完整 JDK 8，用于独立客户端构建。
 
-本地可使用高于 21 的完整 JDK 编译 Java 21 字节码，但 CI 仍需在真实 JDK 21 上运行；老系统客户端必须使用独立完整 JDK 8。具体配置见 [本地工具链手册](docs/runbooks/local-toolchain.md)。
+本地可使用高于 21 的完整 JDK 编译 Java 21 字节码，但 CI 仍需在 JDK 21 上运行；老系统客户端必须使用独立完整 JDK 8。具体配置见 [本地工具链手册](docs/runbooks/local-toolchain.md)。
 
 ## 一次跑完
 
@@ -149,7 +150,7 @@ Windows 可使用 `mvnw.cmd` 和对应 JDK 环境变量执行相同 POM。
 
 三个应用都提供 Actuator health。Knowledge Service 提供知识回答和 SSE，Customer BFF 提供 C 端回答、SSE、反馈、重试和工单升级，Ticket Agent Service 提供任务接收、运行、查询、确认与审计：
 
-先从示例生成唯一的本地参数文件并填写真实连接信息：
+先从示例生成本地参数文件并填写连接信息：
 
 ```bash
 cp .env.example .env
@@ -171,7 +172,7 @@ curl http://localhost:8081/actuator/health
 
 期望返回包含 `"status":"UP"` 的 JSON。`/actuator/env` 不对外暴露。
 
-知识模型命令见 [真实模型 Smoke](docs/runbooks/live-model-smoke.md)，模型、检索和 Agent 评测见 [模型及检索评测](docs/runbooks/model-interaction-eval.md)。安全回归见 [AI Security Regression](docs/runbooks/security-regression.md)，统一参数和启动方式见 [Runtime Configuration](docs/runbooks/runtime-configuration.md)，发布入口见 [Release Checklist](docs/runbooks/release-checklist.md)。Ticket Agent 的真实模型烟测使用 `scripts/run-agent-live-model-smoke.sh` 或对应 PowerShell 脚本。检索和 Agent 评测通过显式 URL 与凭证连接目标测试环境，本机或 CI 均运行同一个 Eval Runner。
+知识文档上传、发布和索引见 [Knowledge Ingestion](docs/runbooks/knowledge-ingestion.md)。模型接口 Smoke 见 [Live Model Smoke](docs/runbooks/live-model-smoke.md)，模型、检索和 Agent 评测见 [模型及检索评测](docs/runbooks/model-interaction-eval.md)。安全回归见 [AI Security Regression](docs/runbooks/security-regression.md)，统一参数和启动方式见 [Runtime Configuration](docs/runbooks/runtime-configuration.md)，发布入口见 [Release Checklist](docs/runbooks/release-checklist.md)。Ticket Agent 的模型接口烟测使用 `scripts/run-agent-live-model-smoke.sh` 或对应 PowerShell 脚本。检索和 Agent 评测通过显式 URL 与凭证连接目标测试环境，本机或 CI 均运行同一个 Eval Runner。
 
 ## 外部环境检查
 
@@ -188,7 +189,7 @@ $env:JAVA_AI_EXTERNAL_BASE_URL = "https://test.example.com"
 .\scripts\verify-integration.ps1
 ```
 
-该脚本只检查健康端点，不覆盖数据库、向量检索、对象存储、模型或端到端业务。pgvector 使用 `external-integration` Maven profile 和独立 CI 工作流验证，健康检查不能替代这项验证。
+该脚本只检查健康端点，不覆盖数据库、向量检索、对象存储、模型或端到端业务。`external-integration` Maven profile 提供 PostgreSQL/pgvector 集成测试入口；是否通过以目标测试库上的具体运行结果为准，不能从健康检查推断。
 
 ## 环境变量示例
 
@@ -196,4 +197,4 @@ $env:JAVA_AI_EXTERNAL_BASE_URL = "https://test.example.com"
 
 ## 验证结果
 
-架构和框架边界复核见 [Architecture Review](docs/reports/lesson-02-architecture-review.md) 与 [Framework Decision](docs/reports/lesson-03-framework-decision.md)。模型调用、Golden Set 和真实模型验证见 [Model Engineering](docs/reports/milestone-12.md)，各业务增量的构建结果和明确未覆盖项位于 `docs/reports/`。
+架构和框架边界复核见 [Architecture Review](docs/reports/lesson-02-architecture-review.md) 与 [Framework Decision](docs/reports/lesson-03-framework-decision.md)。模型调用和 Golden Set 见 [Model Engineering](docs/reports/milestone-12.md)，各业务增量的测试范围与未覆盖项位于 `docs/reports/`。

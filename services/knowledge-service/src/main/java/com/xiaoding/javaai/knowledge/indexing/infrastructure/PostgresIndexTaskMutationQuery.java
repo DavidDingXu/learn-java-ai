@@ -37,6 +37,32 @@ public record PostgresIndexTaskMutationQuery(String sql, List<Object> parameters
         );
     }
 
+    public static PostgresIndexTaskMutationQuery renewLease(
+            UUID taskId,
+            String workerId,
+            int leaseAttempt,
+            Instant now,
+            Duration leaseDuration
+    ) {
+        validateLease(taskId, workerId, leaseAttempt, now);
+        if (leaseDuration == null || leaseDuration.isZero() || leaseDuration.isNegative()) {
+            throw new IllegalArgumentException("leaseDuration must be positive");
+        }
+        return new PostgresIndexTaskMutationQuery(
+                """
+                UPDATE index_task
+                   SET lease_until = ?,
+                       updated_at = ?
+                 WHERE task_id = ?
+                   AND status = 'RUNNING'
+                   AND lease_owner = ?
+                   AND attempts = ?
+                   AND lease_until > ?
+                """,
+                List.of(now.plus(leaseDuration), now, taskId, workerId.strip(), leaseAttempt, now)
+        );
+    }
+
     public static PostgresIndexTaskMutationQuery fail(
             UUID taskId,
             String workerId,

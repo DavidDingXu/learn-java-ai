@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RetrievalReplacementExperimentTest {
 
     @Test
-    void evaluatesDomesticEmbeddingAndRerankAgainstTheSameGoldenSet() {
+    void evaluatesFixedRankingCasesWithTheReplacementMetrics() {
         DomesticRetrievalProfile profile = new DomesticRetrievalProfile(
                 "text-embedding-v4", 1024, "gte-rerank-v2", 3);
         RetrievalReplacementExperiment experiment = new RetrievalReplacementExperiment(profile);

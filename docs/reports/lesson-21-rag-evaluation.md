@@ -13,7 +13,7 @@ Status: VERIFIED_LOCAL_EVALUATION_CONTRACT
 ## Verified
 
 - 每个样例必须包含稳定 case ID、至少一个期望 chunk ID 和有序检索结果。
-- 先按原始排名截取 TopK，再对命中集合去重；重复结果会占用真实名次，并通过 `duplicateRateAtK` 单独暴露。
+- 先按原始排名截取 TopK，再对命中集合去重；重复结果会占用排序名额，并通过 `duplicateRateAtK` 单独暴露。
 - `Recall@K` 按每条样例先计算召回比例再做宏平均，适用于一题对应多个正确 chunk 的情况。
 - `HitRate@K` 统计至少命中一个正确 chunk 的样例比例，`MRR` 使用第一个正确 chunk 的倒数排名。
 - 只要样例在 TopK 内没有找全期望 chunk，就进入 `failedCaseIds`，聚合分数不会隐藏坏案例。
@@ -36,4 +36,4 @@ Status: VERIFIED_LOCAL_EVALUATION_CONTRACT
 
 ## Evidence Boundary
 
-本地测试覆盖评测规则、公式和运行编排，不提供真实 Recall@K 结论。真实指标必须对已准备文档、ACL 和向量索引的共享测试环境运行 `scripts/run-retrieval-eval.sh` 或 PowerShell 等价脚本。本仓库尚未覆盖 Precision@K、nDCG、禁止召回、ACL 泄漏率、时效命中率、分组基线和回答忠实度；这些不能由当前聚合指标代替。
+本地测试覆盖评测规则、公式和运行编排，不提供共享环境的 Recall@K 结论。计算目标指标前，必须先准备文档、ACL 和向量索引，再运行 `scripts/run-retrieval-eval.sh` 或 PowerShell 等价脚本。本仓库尚未覆盖 Precision@K、nDCG、禁止召回、ACL 泄漏率、时效命中率、分组基线和回答忠实度；这些不能由当前聚合指标代替。

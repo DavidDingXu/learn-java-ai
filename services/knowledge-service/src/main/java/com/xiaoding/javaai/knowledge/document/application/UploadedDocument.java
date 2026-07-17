@@ -9,6 +9,7 @@ public record UploadedDocument(
         DocumentId documentId,
         TenantId tenantId,
         int versionNumber,
+        long revision,
         ContentHash contentHash,
         ObjectKey objectKey
 ) {

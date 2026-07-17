@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PgVectorSearchQueryTest {
 
     @Test
-    void applies_tenant_acl_version_and_effective_time_before_topk_limit() {
+    void applies_tenant_acl_search_version_and_business_effective_time_before_topk_limit() {
         PgVectorSearchQuery query = PgVectorSearchQuery.create(
                 new float[]{0.1f, 0.2f, 0.3f},
                 "embedding-v1",
@@ -32,8 +32,11 @@ class PgVectorSearchQueryTest {
         assertThat(sql.indexOf("dc.tenant_id = ?")).isBetween(0, limitIndex);
         assertThat(sql.indexOf("dc.embedding_model = ?")).isBetween(0, limitIndex);
         assertThat(sql.indexOf("kd.status = 'active'")).isBetween(0, limitIndex);
-        assertThat(sql.indexOf("dv.status = 'published'")).isBetween(0, limitIndex);
-        assertThat(sql.indexOf("dv.effective_from <= ?")).isBetween(0, limitIndex);
+        assertThat(sql.indexOf("join document_search_version dsv")).isBetween(0, limitIndex);
+        assertThat(sql.indexOf("dsv.version_number = dc.version_number")).isBetween(0, limitIndex);
+        assertThat(sql.indexOf("active_dv.status = 'published'")).isBetween(0, limitIndex);
+        assertThat(sql.indexOf("active_dv.effective_from <= ?")).isBetween(0, limitIndex);
+        assertThat(sql).doesNotContain("join document_version dv");
         assertThat(sql.indexOf("acl.subject_type = 'user'")).isBetween(0, limitIndex);
         assertThat(sql.indexOf("acl.subject_type = 'department'")).isBetween(0, limitIndex);
         assertThat(sql.indexOf("order by dc.embedding <=> ?::vector")).isBetween(0, limitIndex);

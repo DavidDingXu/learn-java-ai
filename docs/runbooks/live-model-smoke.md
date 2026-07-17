@@ -2,16 +2,16 @@
 
 ## Purpose
 
-该任务只验证一件事：Knowledge Service 能否通过当前 Spring AI 适配器调用一个真实的 OpenAI 兼容 Chat endpoint，并把回答、模型元数据、Token 用量和政策引用写入脱敏报告。它不验证 RAG、委托身份、工单、数据库或生产容量。
+该任务只检查一件事：Knowledge Service 能否通过当前 Spring AI 适配器调用配置的 OpenAI 兼容 Chat endpoint，并把回答、模型元数据、Token 用量和政策引用写入脱敏报告。它不检查 RAG、委托身份、工单、数据库或生产容量。
 
 脚本直接调用应用端口，不经过 HTTP，因此不验证 JWT 或入站 Trace。HTTP Golden Set 和 Trace 证据由 `model-interaction-eval.md` 中的 live eval 提供。Knowledge Service 的公开接口默认仍受拒绝或 JWT 策略保护。
 
-确定性模型协议回归进入默认测试，真实模型调用只在显式提供凭证时运行。前者检查请求与响应映射，后者检查当前模型端点能否调用；两项结果不能互相替代。
+确定性协议回归进入默认测试，模型端点调用只在显式提供凭证时运行。前者检查请求与响应映射，后者检查当前端点能否调用；两项结果不能互相替代。
 
 ## Required Environment
 
 - `JAVA_AI_MAIN_JAVA_HOME`：完整 JDK21 或更新版本。
-- `JAVA_AI_CHAT_API_KEY`：真实模型密钥。
+- `JAVA_AI_CHAT_API_KEY`：模型接口密钥。
 - `JAVA_AI_CHAT_BASE_URL`：OpenAI 兼容 API 根地址，必须包含服务实际使用的 API 前缀，例如 `https://provider.example.com/v1`。网站首页返回 HTML 时不能作为该值。
 - `JAVA_AI_CHAT_MODEL`：已在该账号和 endpoint 上开通的模型名。
 - `JAVA_AI_LIVE_REPORT_PATH`：可选，默认覆盖 `docs/reports/lesson-04-live-model-smoke.md`。
@@ -23,7 +23,7 @@
 ```bash
 export JAVA_AI_MAIN_JAVA_HOME=/path/to/jdk-21
 export JAVA_AI_CHAT_API_KEY=***
-export JAVA_AI_CHAT_BASE_URL=https://provider.example.com
+export JAVA_AI_CHAT_BASE_URL=https://provider.example.com/v1
 export JAVA_AI_CHAT_MODEL=provider-model-name
 scripts/run-live-model-smoke.sh
 ```
@@ -33,7 +33,7 @@ scripts/run-live-model-smoke.sh
 ```powershell
 $env:JAVA_AI_MAIN_JAVA_HOME = "C:\Java\jdk-21"
 $env:JAVA_AI_CHAT_API_KEY = "***"
-$env:JAVA_AI_CHAT_BASE_URL = "https://provider.example.com"
+$env:JAVA_AI_CHAT_BASE_URL = "https://provider.example.com/v1"
 $env:JAVA_AI_CHAT_MODEL = "provider-model-name"
 .\scripts\run-live-model-smoke.ps1
 ```

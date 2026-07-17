@@ -7,5 +7,6 @@ public record ToolAuthorizationDecision(
         String subjectId,
         String toolName,
         PermissionBehavior behavior,
+        String ruleSource,
         String reason) {
 }

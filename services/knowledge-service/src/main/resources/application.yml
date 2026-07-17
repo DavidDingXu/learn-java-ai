@@ -8,6 +8,8 @@ spring:
     name: knowledge-service
   reactor:
     context-propagation: auto
+  codec:
+    max-in-memory-size: 6MB
   jackson:
     deserialization:
       fail-on-unknown-properties: true
@@ -79,9 +81,13 @@ java-ai:
       audience: ${JAVA_AI_JWT_AUDIENCE:knowledge-service}
       jwk-set-uri: ${JAVA_AI_JWT_JWK_SET_URI:}
       hmac-secret: ${JAVA_AI_DEV_JWT_HMAC_SECRET:}
-      allowed-actors: ${JAVA_AI_JWT_ALLOWED_ACTORS:customer-bff,ticket-agent-service}
+      allowed-actors: ${JAVA_AI_JWT_ALLOWED_ACTORS:customer-bff,ticket-agent-service,knowledge-admin-service}
   knowledge:
     context-source: retrieval
+    ingestion:
+      enabled: true
+    object-store:
+      local-root: ${JAVA_AI_KNOWLEDGE_OBJECT_ROOT:./var/knowledge-objects}
     postgres:
       jdbc-url: ${JAVA_AI_POSTGRES_URL}
       username: ${JAVA_AI_POSTGRES_USER}
@@ -90,8 +96,18 @@ java-ai:
     retrieval:
       mode: hybrid
       top-k: ${JAVA_AI_RETRIEVAL_TOP_K:6}
-      embedding-dimensions: ${JAVA_AI_EMBEDDING_DIMENSIONS:1536}
       candidate-k: ${JAVA_AI_RETRIEVAL_CANDIDATE_K:20}
       lexical-search: true
       rewrite-query: false
       rerank: false
+    indexing:
+      worker-id: ${JAVA_AI_INDEX_WORKER_ID:knowledge-indexer-local}
+      scheduler-enabled: ${JAVA_AI_INDEX_SCHEDULER_ENABLED:true}
+      scheduler-initial-delay: ${JAVA_AI_INDEX_SCHEDULER_INITIAL_DELAY:5s}
+      scheduler-delay: ${JAVA_AI_INDEX_SCHEDULER_DELAY:1s}
+      lease-duration: ${JAVA_AI_INDEX_LEASE_DURATION:45s}
+      retry-delay: ${JAVA_AI_INDEX_RETRY_DELAY:2m}
+      maximum-attempts: ${JAVA_AI_INDEX_MAXIMUM_ATTEMPTS:3}
+      max-chunk-characters: ${JAVA_AI_INDEX_MAX_CHUNK_CHARACTERS:1000}
+      chunk-policy-version: ${JAVA_AI_CHUNK_POLICY_VERSION:policy-chunk-v1}
+      embedding-batch-size: ${JAVA_AI_EMBEDDING_BATCH_SIZE:16}

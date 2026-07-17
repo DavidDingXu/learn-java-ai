@@ -8,7 +8,7 @@ Date: 2026-07-14
 
 The main services use Spring Boot 4.1 and Spring AI 2.0. The Spring AI Alibaba 1.1.2.x stable line is based on the Spring AI 1.1 and Spring Boot 3.5 generation. LangChain4j and AgentScope own separate model, tool, memory and protocol abstractions. Importing these dependencies into the main reactor would turn a business migration experiment into an application-wide dependency migration.
 
-The column needs executable comparisons, not API screenshots. Each experiment must therefore keep a business contract stable while replacing only the framework-facing adapter.
+A migration decision needs executable comparisons, not API screenshots. Each experiment must therefore keep a business interface stable while replacing only the framework-facing adapter.
 
 ## Decision
 
@@ -32,7 +32,7 @@ Positive:
 
 Costs:
 
-- Small business contracts are repeated in labs.
+- Small business interfaces are repeated in labs.
 - A successful experiment still needs a production ADR, integration tests and rollout plan.
 - Cross-framework examples cannot share framework DTOs or helper libraries.
 

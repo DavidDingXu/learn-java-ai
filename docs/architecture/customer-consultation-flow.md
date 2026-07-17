@@ -2,7 +2,7 @@
 
 ## Purpose
 
-这条流程依次处理 C 端咨询、知识回答、工单升级和 JDK8 人工确认。第一版选择同步 HTTP/OpenAPI，是因为每次调用都有明确发起方、结果接收方和超时边界；异步消息只在后续出现真实的削峰、重放或跨事务需求时引入。
+这条流程依次处理 C 端咨询、知识回答、工单升级和 JDK8 人工确认。第一版选择同步 HTTP/OpenAPI，是因为每次调用都有明确发起方、结果接收方和超时边界；异步消息只在出现明确的削峰、重放或跨事务需求时引入。
 
 ## Target Sequence
 
@@ -32,7 +32,7 @@ sequenceDiagram
     end
 ```
 
-当前已经实现 Customer BFF 的客户 JWT 边界、RFC 8693 Token Exchange、Knowledge HTTP/SSE 调用、短时会话、反馈、重试和幂等工单升级；Ticket Agent Service 已实现受限规划、Tool 目录、知识查询、风险分级、版本绑定确认、确认幂等、审计、PostgreSQL/Flyway 持久化和 HTTP 下游适配器；独立 Java 8 客户端已能查询任务并提交确认。正式 Customer Web、目标数据库迁移与容量测试、真实 IdP、外部 JDK8 Tool 服务和完整端到端联调仍需在公司环境完成。
+当前已经实现 Customer BFF 的客户 JWT 边界、RFC 8693 Token Exchange、Knowledge HTTP/SSE 调用、短时会话、反馈、重试和幂等工单升级；Ticket Agent Service 已实现受限规划、Tool 目录、知识查询、风险分级、版本绑定确认、确认幂等、审计、PostgreSQL/Flyway 持久化和 HTTP 下游适配器；独立 Java 8 客户端已能查询任务并提交确认。Customer Web、目标数据库迁移与容量测试、公司 IdP、外部 JDK8 Tool 服务和完整端到端联调仍需在公司环境完成。
 
 ## Integration Boundaries
 

@@ -19,8 +19,7 @@ public final class LocalFileDocumentObjectStore implements DocumentObjectStore {
 
     @Override
     public void put(ObjectKey key, String mediaType, byte[] content) {
-        Path target = root.resolve(key.value()).normalize();
-        if (!target.startsWith(root)) throw new InvalidObjectKeyException(key.value());
+        Path target = resolve(key);
 
         try {
             Files.createDirectories(target.getParent());
@@ -34,6 +33,22 @@ public final class LocalFileDocumentObjectStore implements DocumentObjectStore {
         } catch (IOException error) {
             throw new DocumentObjectStorageException("failed to store document object " + key.value(), error);
         }
+    }
+
+    @Override
+    public byte[] get(ObjectKey key) {
+        Path source = resolve(key);
+        try {
+            return Files.readAllBytes(source);
+        } catch (IOException error) {
+            throw new DocumentObjectStorageException("failed to read document object " + key.value(), error);
+        }
+    }
+
+    private Path resolve(ObjectKey key) {
+        Path resolved = root.resolve(key.value()).normalize();
+        if (!resolved.startsWith(root)) throw new InvalidObjectKeyException(key.value());
+        return resolved;
     }
 
     private static void moveAtomicallyWhenSupported(Path source, Path target) throws IOException {

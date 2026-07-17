@@ -24,6 +24,7 @@ class LocalFileDocumentObjectStoreTest {
         store.put(key, "text/markdown", "policy".getBytes(StandardCharsets.UTF_8));
 
         assertThat(Files.readString(root.resolve(key.value()))).isEqualTo("policy");
+        assertThat(store.get(key)).isEqualTo("policy".getBytes(StandardCharsets.UTF_8));
     }
 
     @Test

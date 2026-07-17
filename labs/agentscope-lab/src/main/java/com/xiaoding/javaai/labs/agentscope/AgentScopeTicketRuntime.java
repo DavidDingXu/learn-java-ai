@@ -11,6 +11,7 @@ import io.agentscope.core.tool.AgentTool;
 import io.agentscope.core.tool.ToolBase;
 import io.agentscope.core.tool.Toolkit;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -22,6 +23,12 @@ public final class AgentScopeTicketRuntime {
     private AgentScopeTicketRuntime(Toolkit toolkit, PermissionEngine permissionEngine) {
         this.toolkit = toolkit;
         this.permissionEngine = permissionEngine;
+    }
+
+    public static AgentScopeTicketRuntime create(Toolkit toolkit, PermissionContextState permissions) {
+        return new AgentScopeTicketRuntime(
+                Objects.requireNonNull(toolkit, "toolkit must not be null"),
+                new PermissionEngine(Objects.requireNonNull(permissions, "permissions must not be null")));
     }
 
     public static AgentScopeTicketRuntime createDefault(TicketBusinessTools tools) {
@@ -36,7 +43,7 @@ public final class AgentScopeTicketRuntime {
                 .addDenyRule("export_all_customers",
                         new PermissionRule("export_all_customers", null, PermissionBehavior.DENY, "data-policy"))
                 .build();
-        return new AgentScopeTicketRuntime(toolkit, new PermissionEngine(permissions));
+        return create(toolkit, permissions);
     }
 
     public ToolAuthorizationDecision authorize(
@@ -48,12 +55,13 @@ public final class AgentScopeTicketRuntime {
         if (!(tool instanceof ToolBase toolBase)) {
             throw new IllegalArgumentException("unknown or unsupported tool: " + toolName);
         }
+        Map<String, Object> toolInput = input == null ? Map.of() : Map.copyOf(input);
         RuntimeContext context = RuntimeContext.builder()
                 .sessionId(identity.tenantId() + ":" + identity.subjectId())
                 .userId(identity.subjectId())
                 .put(AgentExecutionIdentity.class, identity)
                 .build();
-        PermissionDecision decision = permissionEngine.checkPermission(toolBase, input).block();
+        PermissionDecision decision = permissionEngine.checkPermission(toolBase, toolInput).block();
         if (decision == null) {
             throw new IllegalStateException("permission engine produced no decision");
         }
@@ -63,6 +71,29 @@ public final class AgentScopeTicketRuntime {
                 trustedIdentity.subjectId(),
                 toolName,
                 decision.getBehavior(),
-                decision.getDecisionReason() == null ? decision.getMessage() : decision.getDecisionReason());
+                matchingRuleSource(toolBase, toolInput, decision.getBehavior()),
+                normalizedReason(decision));
+    }
+
+    private String matchingRuleSource(
+            ToolBase tool,
+            Map<String, Object> input,
+            PermissionBehavior behavior) {
+        Map<String, List<PermissionRule>> rules = switch (behavior) {
+            case ALLOW -> permissionEngine.getAllowRules();
+            case ASK -> permissionEngine.getAskRules();
+            case DENY -> permissionEngine.getDenyRules();
+            case PASSTHROUGH -> Map.of();
+        };
+        return rules.getOrDefault(tool.getName(), List.of()).stream()
+                .filter(rule -> tool.matchRule(rule.ruleContent(), input))
+                .map(PermissionRule::source)
+                .findFirst()
+                .orElse("permission-engine-default");
+    }
+
+    private static String normalizedReason(PermissionDecision decision) {
+        String reason = decision.getDecisionReason();
+        return reason == null || "Rule: null".equals(reason) ? decision.getMessage() : reason;
     }
 }

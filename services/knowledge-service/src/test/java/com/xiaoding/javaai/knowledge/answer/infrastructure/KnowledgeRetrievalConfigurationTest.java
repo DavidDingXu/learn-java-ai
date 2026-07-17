@@ -28,8 +28,7 @@ class KnowledgeRetrievalConfigurationTest {
                     "java-ai.knowledge.retrieval.mode=hybrid",
                     "java-ai.knowledge.retrieval.lexical-search=true",
                     "java-ai.knowledge.retrieval.candidate-k=20",
-                    "java-ai.knowledge.retrieval.top-k=6",
-                    "java-ai.knowledge.retrieval.embedding-dimensions=1536"
+                    "java-ai.knowledge.retrieval.top-k=6"
             )
             .withBean(DataSource.class, StubDataSource::new)
             .withBean(ObjectMapper.class, ObjectMapper::new)

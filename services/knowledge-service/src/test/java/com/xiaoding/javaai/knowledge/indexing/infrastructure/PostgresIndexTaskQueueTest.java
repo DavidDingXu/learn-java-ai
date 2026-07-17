@@ -1,6 +1,7 @@
 package com.xiaoding.javaai.knowledge.indexing.infrastructure;
 
 import com.xiaoding.javaai.knowledge.indexing.application.IndexTaskType;
+import com.xiaoding.javaai.knowledge.indexing.application.IndexTaskLeaseLostException;
 import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;

@@ -22,7 +22,7 @@
         <java.version>21</java.version>
         <maven.compiler.release>21</maven.compiler.release>
         <spring-ai-alibaba.version>1.1.2.3</spring-ai-alibaba.version>
-        <langchain4j.version>1.17.2</langchain4j.version>
+        <langchain4j.version>1.18.0</langchain4j.version>
         <agentscope.version>2.0.0</agentscope.version>
         <mcp-java-sdk.version>2.0.0</mcp-java-sdk.version>
         <a2a-java-sdk.version>1.1.0.Final</a2a-java-sdk.version>

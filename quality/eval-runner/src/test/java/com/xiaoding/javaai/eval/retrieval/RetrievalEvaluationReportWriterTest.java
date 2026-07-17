@@ -23,9 +23,16 @@ class RetrievalEvaluationReportWriterTest {
                 new RetrievalThresholds(0.75, 0.85, 0.6, 0.02, 800),
                 420,
                 false,
-                List.of(new RetrievalCaseReport(
-                        "bad-case", List.of("chunk-1", "chunk-2"), List.of("chunk-1"), 420, "embedding-v1"
-                ))
+                List.of(
+                        new RetrievalCaseReport(
+                                "bad-case", List.of("chunk-1", "chunk-2"), List.of("chunk-1"),
+                                420, "embedding-v1"
+                        ),
+                        new RetrievalCaseReport(
+                                "http-error", List.of("chunk-3"), List.of(), 80, null,
+                                RetrievalCaseStatus.ERROR, "knowledge retrieval request returned HTTP 503"
+                        )
+                )
         );
         Path json = Files.createTempFile("retrieval-report", ".json");
         Path markdown = Files.createTempFile("retrieval-report", ".md");
@@ -34,7 +41,10 @@ class RetrievalEvaluationReportWriterTest {
 
         assertTrue(Files.readString(json).contains("duplicateRateAtK"));
         assertTrue(Files.readString(json).contains("bad-case"));
+        assertTrue(Files.readString(json).contains("\"status\" : \"ERROR\""));
         assertTrue(Files.readString(markdown).contains("Recall@3"));
         assertTrue(Files.readString(markdown).contains("| bad-case | FAIL |"));
+        assertTrue(Files.readString(markdown).contains("| http-error | ERROR |"));
+        assertTrue(Files.readString(markdown).contains("HTTP 503"));
     }
 }

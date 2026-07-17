@@ -55,4 +55,21 @@ class PostgresIndexTaskMutationQueryTest {
                 NOW
         );
     }
+
+    @Test
+    void renewal_extends_only_the_current_unexpired_lease_attempt() {
+        PostgresIndexTaskMutationQuery query = PostgresIndexTaskMutationQuery.renewLease(
+                TASK_ID, "indexer-a", 2, NOW, Duration.ofSeconds(45)
+        );
+
+        String sql = query.sql().toLowerCase();
+        assertThat(sql).contains("set lease_until = ?");
+        assertThat(sql).contains("status = 'running'");
+        assertThat(sql).contains("lease_owner = ?");
+        assertThat(sql).contains("attempts = ?");
+        assertThat(sql).contains("lease_until > ?");
+        assertThat(query.parameters()).containsExactly(
+                NOW.plusSeconds(45), NOW, TASK_ID, "indexer-a", 2, NOW
+        );
+    }
 }

@@ -48,6 +48,11 @@ public class DelegatedJwtConfiguration {
 
     private static NimbusJwtDecoder createDecoder(Environment environment) {
         String secret = environment.getProperty("java-ai.security.jwt.hmac-secret", "");
+        String jwkSetUri = environment.getProperty("java-ai.security.jwt.jwk-set-uri", "");
+        if (StringUtils.hasText(secret) && StringUtils.hasText(jwkSetUri)) {
+            throw new IllegalStateException(
+                    "Configure exactly one JWT verification source: jwk-set-uri or hmac-secret");
+        }
         if (StringUtils.hasText(secret)) {
             byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
             if (bytes.length < 32) throw new IllegalStateException("Development JWT HMAC secret must contain at least 32 bytes");
@@ -55,7 +60,6 @@ public class DelegatedJwtConfiguration {
                     .macAlgorithm(MacAlgorithm.HS256)
                     .build();
         }
-        String jwkSetUri = environment.getProperty("java-ai.security.jwt.jwk-set-uri", "");
         if (StringUtils.hasText(jwkSetUri)) return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
         throw new IllegalStateException("Ticket JWT security requires jwk-set-uri or a development hmac-secret");
     }

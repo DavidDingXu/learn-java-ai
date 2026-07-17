@@ -30,4 +30,4 @@ Status: VERIFIED_LOCAL_RETRIEVAL_COMPOSITION
 
 ## Evidence Boundary
 
-当前测试覆盖应用层组合算法和 PostgreSQL `pg_trgm` 基础适配。项目尚未提供中文分词、Query Rewrite 或 Reranker 生产适配器，也没有用真实模型和真实语料验证相关性、延迟与成本。RRF 的 `rankConstant=60` 和候选预算不是生产调优结论；是否启用混合检索与 Rerank 必须由检索评测数据决定。
+当前测试覆盖应用层组合算法和 PostgreSQL `pg_trgm` 基础适配。项目没有提供中文分词、Query Rewrite 或 Reranker 的公司级适配器，也没有使用目标语料测量相关性、延迟与成本。RRF 的 `rankConstant=60` 和候选预算只是默认参数；是否启用混合检索与 Rerank 应由检索评测数据决定。

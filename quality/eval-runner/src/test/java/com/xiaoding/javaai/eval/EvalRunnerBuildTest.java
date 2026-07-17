@@ -8,6 +8,6 @@ class EvalRunnerBuildTest {
 
     @Test
     void reportsPhaseFBuildVersion() {
-        assertEquals("phase-f", EvalRunner.version());
+        assertEquals("0.1.0", EvalRunner.version());
     }
 }

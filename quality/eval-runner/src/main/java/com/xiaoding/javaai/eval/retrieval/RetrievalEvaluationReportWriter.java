@@ -36,12 +36,15 @@ public final class RetrievalEvaluationReportWriter {
     private static String markdown(RetrievalEvaluationReport report) {
         StringBuilder cases = new StringBuilder();
         for (RetrievalCaseReport evalCase : report.cases()) {
-            boolean passed = evalCase.retrievedChunkIds().containsAll(evalCase.expectedChunkIds());
+            String result = evalCase.status() == RetrievalCaseStatus.ERROR
+                    ? "ERROR"
+                    : evalCase.retrievedChunkIds().containsAll(evalCase.expectedChunkIds()) ? "PASS" : "FAIL";
             cases.append("| ").append(evalCase.caseId())
-                    .append(" | ").append(passed ? "PASS" : "FAIL")
+                    .append(" | ").append(result)
                     .append(" | ").append(evalCase.latencyMillis())
                     .append(" | ").append(String.join(", ", evalCase.expectedChunkIds()))
                     .append(" | ").append(String.join(", ", evalCase.retrievedChunkIds()))
+                    .append(" | ").append(markdownCell(evalCase.error()))
                     .append(" |\n");
         }
         RetrievalMetrics metrics = report.metrics();
@@ -60,8 +63,8 @@ public final class RetrievalEvaluationReportWriter {
                 - DuplicateRate@%d: %.4f (maximum %.4f)
                 - P95 latency: %d ms (maximum %d ms)
 
-                | Case | Result | Latency ms | Expected chunks | Retrieved chunks |
-                |---|---:|---:|---|---|
+                | Case | Result | Latency ms | Expected chunks | Retrieved chunks | Error |
+                |---|---:|---:|---|---|---|
                 %s
                 """.formatted(
                 report.datasetVersion(), report.commit(), report.executedAt(),
@@ -72,6 +75,10 @@ public final class RetrievalEvaluationReportWriter {
                 metrics.k(), metrics.duplicateRateAtK(), thresholds.maximumDuplicateRateAtK(),
                 report.p95LatencyMillis(), thresholds.maximumP95LatencyMillis(), cases
         )).stripTrailing() + System.lineSeparator();
+    }
+
+    private static String markdownCell(String value) {
+        return value == null ? "" : value.replace("|", "\\|").replaceAll("[\\r\\n]+", " ");
     }
 
     private static void createParent(Path path) throws IOException {

@@ -64,8 +64,8 @@ test("live evidence binds lesson 04 and milestone 12 to one implementation", () 
   assert.doesNotMatch(reports, /sk-[A-Za-z0-9]{12,}|memberai\.tech/);
 });
 
-test("lesson 10 states the real streaming evidence boundary", () => {
+test("lesson 10 separates a model smoke call from the target SSE chain", () => {
   const report = read("docs/reports/lesson-10-sse-streaming.md");
   assert.match(report, /VERIFIED_PROTOCOL_AND_SERVICE/);
-  assert.match(report, /没有把普通 `LIVE_MODEL` 报告冒充真实 SSE 报告/);
+  assert.match(report, /普通 `LIVE_MODEL` 调用不能代替目标 SSE 链路/);
 });

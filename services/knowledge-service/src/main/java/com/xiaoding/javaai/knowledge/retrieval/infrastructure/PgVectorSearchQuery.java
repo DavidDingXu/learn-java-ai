@@ -49,20 +49,26 @@ public record PgVectorSearchQuery(String sql, List<Object> parameters) {
                        dc.content,
                        1 - (dc.embedding <=> ?::vector) AS score
                   FROM document_chunk dc
-                  JOIN document_version dv
-                    ON dv.tenant_id = dc.tenant_id
-                   AND dv.document_id = dc.document_id
-                   AND dv.version_number = dc.version_number
+                  JOIN document_search_version dsv
+                    ON dsv.tenant_id = dc.tenant_id
+                   AND dsv.document_id = dc.document_id
+                   AND dsv.version_number = dc.version_number
                   JOIN knowledge_document kd
                     ON kd.tenant_id = dc.tenant_id
                    AND kd.document_id = dc.document_id
                  WHERE dc.tenant_id = ?
                    AND dc.embedding_model = ?
                    AND kd.status = 'ACTIVE'
-                   AND dv.status = 'PUBLISHED'
-                   AND dv.effective_from <= ?
-                   AND (dv.effective_until IS NULL OR dv.effective_until > ?)
                    AND dc.embedding IS NOT NULL
+                   AND EXISTS (
+                        SELECT 1
+                          FROM document_version active_dv
+                         WHERE active_dv.tenant_id = dc.tenant_id
+                           AND active_dv.document_id = dc.document_id
+                           AND active_dv.status = 'PUBLISHED'
+                           AND active_dv.effective_from <= ?
+                           AND (active_dv.effective_until IS NULL OR active_dv.effective_until > ?)
+                   )
                    AND EXISTS (
                         SELECT 1
                           FROM document_acl acl

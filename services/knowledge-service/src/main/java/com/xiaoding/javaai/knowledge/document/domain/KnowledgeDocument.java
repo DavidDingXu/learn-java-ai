@@ -3,6 +3,7 @@ package com.xiaoding.javaai.knowledge.document.domain;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 
 public final class KnowledgeDocument {
@@ -38,6 +39,26 @@ public final class KnowledgeDocument {
             Instant createdAt
     ) {
         return new KnowledgeDocument(id, tenantId, title, createdBy, createdAt);
+    }
+
+    public static KnowledgeDocument restore(
+            DocumentId id,
+            TenantId tenantId,
+            String title,
+            ActorId createdBy,
+            Instant createdAt,
+            long revision,
+            List<DocumentVersion> versions
+    ) {
+        if (revision < 0) throw new IllegalArgumentException("revision must not be negative");
+        KnowledgeDocument document = new KnowledgeDocument(id, tenantId, title, createdBy, createdAt);
+        for (DocumentVersion version : versions) {
+            if (document.versions.put(version.number(), version) != null) {
+                throw new IllegalArgumentException("duplicate document version " + version.number());
+            }
+        }
+        document.revision = revision;
+        return document;
     }
 
     public DocumentVersion addVersion(
@@ -94,6 +115,10 @@ public final class KnowledgeDocument {
         return versions.values().stream()
                 .filter(version -> version.status() == DocumentVersionStatus.PUBLISHED)
                 .findFirst();
+    }
+
+    public List<DocumentVersion> versions() {
+        return List.copyOf(versions.values());
     }
 
     public DocumentId id() {

@@ -12,7 +12,7 @@ Status: VERIFIED
 - Provider 模型名、Prompt Token、Completion Token、总 Token 和 finish reason 被映射为项目自有类型。
 - 应用层和 Web 层不暴露 Spring AI 或 Provider SDK 类型。
 - Provider 缺失 usage 时使用 0，不伪造成本；项目业务校验会拒绝完全缺失的 usage 对象。
-- 真实模型报告已记录模型、Token 和 finish reason。
+- 模型端点报告记录模型、Token 和 finish reason。
 
 ## Replacement Boundary
 

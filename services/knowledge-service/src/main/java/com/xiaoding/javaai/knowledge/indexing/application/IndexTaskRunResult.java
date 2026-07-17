@@ -3,5 +3,6 @@ package com.xiaoding.javaai.knowledge.indexing.application;
 public enum IndexTaskRunResult {
     IDLE,
     SUCCEEDED,
-    FAILED
+    FAILED,
+    LOST_LEASE
 }

@@ -8,7 +8,7 @@ Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 - Work-unit independence and side-effect facts select single-agent, multi-agent or human-required execution.
 - Side effects produce a real AgentScope `RequireUserConfirmEvent`.
-- Tests bind the confirmation event to the current task.
+- Tests cover the single-agent, multi-agent and human-required branches and verify the AgentScope confirmation event type.
 
 ## Verification
 
@@ -18,4 +18,4 @@ Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## External Boundary
 
-The policy does not claim remote multi-agent execution. Production needs durable tasks, delegated identity, budgets, timeout and result contracts.
+The policy does not claim remote multi-agent execution. Production needs durable tasks, confirmation-to-task binding, delegated identity, budgets, timeout and result contracts.

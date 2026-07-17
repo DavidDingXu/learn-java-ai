@@ -21,4 +21,4 @@ Implementation commit: `b8fd7c46e2329e48cdbdbedfcc58e8097afe306d`
 
 ## External Boundary
 
-The deployed `security-eval` command requires a dedicated test tenant and signed tokens. The 30 teaching cases prove the gate design and core boundary assertions, not complete production security coverage.
+The deployed `security-eval` command requires a dedicated test tenant and signed tokens. The 30 synthetic security cases verify the gate design and core boundary assertions, not complete production security coverage.

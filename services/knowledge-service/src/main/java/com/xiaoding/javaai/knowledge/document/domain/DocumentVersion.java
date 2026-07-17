@@ -33,6 +33,26 @@ public final class DocumentVersion {
         this.status = DocumentVersionStatus.DRAFT;
     }
 
+    public static DocumentVersion restore(
+            int number,
+            ContentHash contentHash,
+            ObjectKey objectKey,
+            String mediaType,
+            ActorId createdBy,
+            Instant createdAt,
+            DocumentVersionStatus status,
+            Instant effectiveFrom,
+            Instant effectiveUntil
+    ) {
+        DocumentVersion version = new DocumentVersion(
+                number, contentHash, objectKey, mediaType, createdBy, createdAt
+        );
+        version.status = status;
+        version.effectiveFrom = effectiveFrom;
+        version.effectiveUntil = effectiveUntil;
+        return version;
+    }
+
     void publish(Instant effectiveFrom, Instant effectiveUntil) {
         this.status = DocumentVersionStatus.PUBLISHED;
         this.effectiveFrom = effectiveFrom;
