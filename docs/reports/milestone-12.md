@@ -10,9 +10,9 @@ The milestone contains versioned trust-partitioned prompts, structured output an
 
 ## Verification
 
-- Workspace Node contracts: 122 passed.
-- Knowledge Service: 85 tests passed.
-- Eval Runner: 26 tests passed.
+- Project contract checks: 56 passed.
+- Knowledge Service: 110 tests passed.
+- Eval Runner: 27 tests passed.
 - Contract Golden Set: 5 passed, 0 failed.
 - Live Golden Set: 5 passed, 0 failed.
 - Java 21 reactor, framework labs and standalone JDK8 build passed.
