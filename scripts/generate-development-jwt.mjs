@@ -31,19 +31,31 @@ function base64Url(value) {
 }
 
 function createToken() {
-  const secret = required(process.env.JAVA_AI_DEV_JWT_HMAC_SECRET, "JAVA_AI_DEV_JWT_HMAC_SECRET");
+  const profile = argumentValue("profile", "service");
+  if (profile !== "service" && profile !== "customer") {
+    throw new Error("--profile must be service or customer");
+  }
+  const customerProfile = profile === "customer";
+  const secretVariable = customerProfile
+    ? "JAVA_AI_CUSTOMER_JWT_HMAC_SECRET"
+    : "JAVA_AI_DEV_JWT_HMAC_SECRET";
+  const secret = required(process.env[secretVariable], secretVariable);
   if (Buffer.byteLength(secret, "utf8") < 32) {
-    throw new Error("JAVA_AI_DEV_JWT_HMAC_SECRET must contain at least 32 bytes");
+    throw new Error(`${secretVariable} must contain at least 32 bytes`);
   }
 
-  const issuer = required(process.env.JAVA_AI_JWT_ISSUER, "JAVA_AI_JWT_ISSUER");
-  const audience = argumentValue("audience", process.env.JAVA_AI_JWT_AUDIENCE ?? "knowledge-service");
-  const scope = required(argumentValue("scope"), "--scope");
-  const subject = required(argumentValue("subject", "editor-42"), "--subject");
+  const issuerVariable = customerProfile ? "JAVA_AI_CUSTOMER_JWT_ISSUER" : "JAVA_AI_JWT_ISSUER";
+  const issuer = required(process.env[issuerVariable], issuerVariable);
+  const audience = argumentValue(
+    "audience",
+    customerProfile ? "customer-bff" : process.env.JAVA_AI_JWT_AUDIENCE ?? "knowledge-service",
+  );
+  const scope = required(argumentValue("scope", customerProfile ? "consultation:use" : undefined), "--scope");
+  const subject = required(argumentValue("subject", customerProfile ? "customer-42" : "editor-42"), "--subject");
   const tenant = required(argumentValue("tenant", "tenant-a"), "--tenant");
-  const actor = required(argumentValue("actor", "customer-bff"), "--actor");
+  const actor = customerProfile ? null : required(argumentValue("actor", "customer-bff"), "--actor");
   const departments = list(argumentValue("departments", "support"));
-  const roles = list(argumentValue("roles", "EDITOR"));
+  const roles = list(argumentValue("roles", customerProfile ? "customer" : "EDITOR"));
   const lifetimeSeconds = Number.parseInt(argumentValue("lifetime-seconds", "900"), 10);
   if (!Number.isInteger(lifetimeSeconds) || lifetimeSeconds < 60 || lifetimeSeconds > 3600) {
     throw new Error("--lifetime-seconds must be an integer between 60 and 3600");
@@ -51,7 +63,7 @@ function createToken() {
 
   const issuedAt = Math.floor(Date.now() / 1000);
   const header = base64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = base64Url(JSON.stringify({
+  const claims = {
     iss: issuer,
     sub: subject,
     aud: [audience],
@@ -61,8 +73,9 @@ function createToken() {
     tenantId: tenant,
     roles,
     departmentIds: departments,
-    act: { sub: actor },
-  }));
+    ...(actor ? { act: { sub: actor } } : {}),
+  };
+  const payload = base64Url(JSON.stringify(claims));
   const signingInput = `${header}.${payload}`;
   const signature = createHmac("sha256", secret).update(signingInput).digest("base64url");
   return `${signingInput}.${signature}`;

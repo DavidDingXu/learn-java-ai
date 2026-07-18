@@ -7,6 +7,7 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
 $MavenWrapper = Join-Path $ProjectRoot "mvnw.cmd"
+$CustomerWeb = Join-Path $ProjectRoot "apps\customer-web"
 
 function Stop-WithError {
     param(
@@ -161,6 +162,24 @@ if (-not (Test-Path $MavenWrapper)) {
 if ($null -eq (Get-Command node.exe -ErrorAction SilentlyContinue)) {
     Stop-WithError "Node.js is required for repository contract tests."
 }
+if ($null -eq (Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
+    Stop-WithError "npm is required to verify Customer Web."
+}
+
+$NodeMajorOutput = (& node.exe -p 'process.versions.node.split(".")[0]' 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $NodeMajorOutput -notmatch '^\d+$') {
+    Stop-WithError "Unable to determine the Node.js major version."
+}
+$NodeMajor = [int]$NodeMajorOutput
+if ($NodeMajor -lt 24) {
+    Stop-WithError "Node.js 24 or newer is required; found major $NodeMajor."
+}
+if (-not (Test-Path (Join-Path $CustomerWeb "package.json"))) {
+    Stop-WithError "Customer Web package.json is missing."
+}
+if (-not (Test-Path (Join-Path $CustomerWeb "package-lock.json"))) {
+    Stop-WithError "Customer Web package-lock.json is missing."
+}
 
 $MainJavaHome = Select-Jdk -Kind Main -OverrideVariable "JAVA_AI_MAIN_JAVA_HOME"
 $Jdk8Home = Select-Jdk -Kind Java8 -OverrideVariable "JAVA_AI_JDK8_HOME"
@@ -179,8 +198,12 @@ if ($ProjectTests.Count -eq 0) {
 $NodeTests = @($ProjectTests.FullName)
 
 Invoke-CheckedNative -Command "node.exe" -Arguments (@("--test") + $NodeTests) -Description "Node contract tests"
+Invoke-CheckedNative -Command "npm.cmd" -Arguments @("--prefix", $CustomerWeb, "ci", "--no-audit", "--no-fund") -Description "Customer Web dependency installation"
+Invoke-CheckedNative -Command "npm.cmd" -Arguments @("--prefix", $CustomerWeb, "run", "typecheck") -Description "Customer Web typecheck"
+Invoke-CheckedNative -Command "npm.cmd" -Arguments @("--prefix", $CustomerWeb, "test") -Description "Customer Web tests"
+Invoke-CheckedNative -Command "npm.cmd" -Arguments @("--prefix", $CustomerWeb, "run", "build") -Description "Customer Web production build"
 Invoke-MavenWithJdk -JavaHome $MainJavaHome -Arguments @("-f", (Join-Path $ProjectRoot "pom.xml"), "verify") -Description "root reactor"
 Invoke-MavenWithJdk -JavaHome $MainJavaHome -Arguments @("-f", (Join-Path $ProjectRoot "labs\pom.xml"), "verify") -Description "labs reactor"
 Invoke-MavenWithJdk -JavaHome $Jdk8Home -Arguments @("-f", (Join-Path $ProjectRoot "integrations\jdk8-client\pom.xml"), "verify") -Description "Java 8 client"
 
-Write-Host "Project unit verification passed for root, labs, Java 8 client, and project contracts."
+Write-Host "Project verification passed for Customer Web, root, labs, Java 8 client, and project contracts."

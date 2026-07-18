@@ -167,6 +167,15 @@ components:
           enum: [HELPFUL, NOT_HELPFUL]
         reasonCode: { type: [string, 'null'], maxLength: 64 }
         comment: { type: [string, 'null'], maxLength: 500 }
+      allOf:
+        - if:
+            properties:
+              rating: { const: NOT_HELPFUL }
+            required: [rating]
+          then:
+            required: [reasonCode]
+            properties:
+              reasonCode: { type: string, minLength: 1, maxLength: 64 }
     ConsultationHandoffRequest:
       type: object
       additionalProperties: false

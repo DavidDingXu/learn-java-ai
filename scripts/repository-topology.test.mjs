@@ -199,6 +199,22 @@ test("non-Java products and contracts stay outside Maven reactors", () => {
   assert.deepEqual(findPomFiles("contracts"), []);
 });
 
+test("Customer Web is an independently verifiable Node 24 product", () => {
+  const packageJson = JSON.parse(read("apps/customer-web/package.json"));
+  read("apps/customer-web/package-lock.json");
+
+  assert.equal(packageJson.private, true);
+  assert.match(packageJson.engines?.node ?? "", /24/);
+  for (const scriptName of ["typecheck", "test", "build"]) {
+    assert.equal(
+      typeof packageJson.scripts?.[scriptName],
+      "string",
+      `apps/customer-web/package.json must define scripts.${scriptName}`,
+    );
+    assert.notEqual(packageJson.scripts[scriptName].trim(), "");
+  }
+});
+
 test("mainline POMs keep infrastructure and model provider ownership explicit", () => {
   const allowedLabDependencies = new Map([
     ["labs/spring-ai-alibaba-lab/pom.xml", new Set([

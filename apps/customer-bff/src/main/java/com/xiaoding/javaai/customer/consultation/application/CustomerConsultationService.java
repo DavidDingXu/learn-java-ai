@@ -197,7 +197,10 @@ public final class CustomerConsultationService {
     ) {
         Flux<CustomerStreamEvent> downstream = knowledgeTokenClient.exchange(customer)
                 .flatMapMany(token -> streamClient.stream(token, state.request))
-                .concatMap(event -> mapStreamEvent(state, event));
+                .concatMap(event -> mapStreamEvent(state, event))
+                .onErrorResume(error -> failStream(state, "KNOWLEDGE_STREAM_FAILED")
+                        .thenReturn(new CustomerStreamEvent.Error(
+                                "KNOWLEDGE_STREAM_FAILED", "回答生成中断，请稍后重试")));
         return downstream.startWith(new CustomerStreamEvent.SessionStarted(
                 state.conversationId, state.attemptId, null));
     }

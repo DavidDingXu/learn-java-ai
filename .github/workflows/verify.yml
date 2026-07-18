@@ -13,6 +13,8 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: apps/customer-web/package-lock.json
 
       - name: Install JDK 8
         uses: actions/setup-java@v5

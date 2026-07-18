@@ -2,7 +2,7 @@
 
 ## Status
 
-Knowledge Service 已实现受 JWT 保护的文档上传与发布、JDBC/Flyway 持久化、pgvector 索引写入和检索；Customer BFF 已实现客户身份、委托令牌、完整回答、SSE、短时会话、反馈、重试和升级工单；Ticket Agent Service 已实现可信任务身份、受限步数规划、服务端 Tool 目录、人工确认、幂等、JDBC/Flyway 持久化、审计和 HTTP 下游适配器；JDK8 客户端已能查询任务并提交确认。Customer Web、目标 PostgreSQL 容量、公司 IdP 与下游联调、持久 UNKNOWN 对账和端到端容量测试仍需在目标环境完成。
+Knowledge Service 已实现受 JWT 保护的文档上传与发布、JDBC/Flyway 持久化、pgvector 索引写入和检索；Customer BFF 已实现客户身份、委托令牌、完整回答、SSE、短时会话、反馈、重试和升级工单；Customer Web 已实现流式咨询、引用展示、反馈、重试和转人工页面；Ticket Agent Service 已实现可信任务身份、受限步数规划、服务端 Tool 目录、人工确认、幂等、JDBC/Flyway 持久化、审计和 HTTP 下游适配器；JDK8 客户端已能查询任务并提交确认。目标 PostgreSQL 容量、公司 IdP、生产网关与下游联调、持久 UNKNOWN 对账和端到端容量测试仍需在目标环境完成。
 
 下图同时包含当前可运行连线和后续目标。BFF 到 Knowledge 的回答/SSE、BFF 到 Ticket 的幂等升级，以及 JDK8 客户端到 Ticket 的查询和确认已经有代码；生产 CRM 的业务写入实现、回调部署和外部环境验收仍不能从图中推断已经交付。
 
@@ -35,7 +35,7 @@ Customer BFF 是渠道边界，不复制知识或工单领域。JDK8 系统仍�
 | Main reactor | Knowledge、Ticket、BFF、Eval Runner 可构建；RAG、C 端会话和幂等工单升级已形成连续 HTTP 链路 | Java 21 业务主线 |
 | Framework labs | 三个隔离模块可独立构建 | 使用同一业务接口、规则和数据集的框架迁移实验 |
 | JDK8 client | 使用 JDK 8 独立编译和测试 | 老系统通过版本化 HTTP/OpenAPI 接口接入 |
-| Customer Web | 仅保留独立产品边界 | C 端交互与流式回答展示 |
+| Customer Web | React 应用可独立构建，已接入 BFF 的命名 SSE、引用、反馈、重试和工单升级接口 | C 端咨询交互；生产登录由公司身份系统适配 |
 
 ## Integration Rules
 

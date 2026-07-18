@@ -25,8 +25,35 @@ test("unit scripts cover all independent build boundaries", () => {
     assert.match(content, /integrations[\\/]jdk8-client[\\/]pom\.xml/);
     assert.match(content, /JAVA_AI_MAIN_JAVA_HOME/);
     assert.match(content, /JAVA_AI_JDK8_HOME/);
+    assert.match(content, /apps[\\/]customer-web/);
+    assert.match(content, /npm(?:\.cmd)?/);
+    assert.match(content, /(?:^|["'\s])ci(?:["'\s]|$)/m);
+    assert.match(content, /typecheck/);
+    assert.match(content, /test/);
+    assert.match(content, /build/);
     assert.doesNotMatch(content, /column[\\/]scripts|JAVA_AI_REQUIRE_COLUMN_TESTS/);
   }
+
+  assert.match(shell, /npm --prefix "\$CUSTOMER_WEB_DIR" ci/);
+  assert.match(shell, /npm --prefix "\$CUSTOMER_WEB_DIR" run typecheck/);
+  assert.match(shell, /npm --prefix "\$CUSTOMER_WEB_DIR" test/);
+  assert.match(shell, /npm --prefix "\$CUSTOMER_WEB_DIR" run build/);
+  assert.match(powershell, /@\("--prefix", \$CustomerWeb, "ci"/);
+  assert.match(powershell, /@\("--prefix", \$CustomerWeb, "run", "typecheck"\)/);
+  assert.match(powershell, /@\("--prefix", \$CustomerWeb, "test"\)/);
+  assert.match(powershell, /@\("--prefix", \$CustomerWeb, "run", "build"\)/);
+});
+
+test("GitHub Verify reaches Customer Web through the shared build entrypoint", () => {
+  const workflow = read(".github/workflows/verify.yml");
+  const buildShell = read("scripts/verify-build.sh");
+  const buildPowershell = read("scripts/verify-build.ps1");
+
+  assert.match(workflow, /actions\/setup-node@v6/);
+  assert.match(workflow, /node-version:\s*24/);
+  assert.match(workflow, /scripts\/verify-build\.sh/);
+  assert.match(buildShell, /verify-unit\.sh/);
+  assert.match(buildPowershell, /verify-unit\.ps1/);
 });
 
 test("Spring Boot modules are HTTP applications packaged as executable jars", () => {

@@ -51,7 +51,7 @@
 - 50 条检索、30 条 Agent 和 30 条安全合成回归数据；公司落地时需要按业务分布替换或扩展。
 - Customer BFF、Knowledge Service、Ticket Agent Service 和 JDK8 Legacy Tool 四份 OpenAPI 文档。
 
-当前代码覆盖模型调用、企业 RAG、C 端会话与信任交互、幂等工单升级、受控 Agent、Java 8 客户端、安全回归、标准指标、跨平台发布检查，以及框架和协议隔离实验。业务接口要求受信身份，不从请求体读取租户和客户身份。Knowledge Service 使用 PostgreSQL/pgvector 保存文档元数据、ACL、索引任务、分块和检索版本指针；上传原文默认写入本地文件目录。多实例部署前，应把原文适配器换成 S3 兼容对象存储，并在目标数据库上完成迁移、并发、备份恢复和容量测试。Customer BFF 的进程内会话与限流也需要换成共享实现。目标 IdP、外部 JDK8 Tool、Customer Web、UNKNOWN 对账和端到端容量测试仍需在公司环境接入。
+当前代码覆盖模型调用、企业 RAG、C 端会话与交互页面、幂等工单升级、受控 Agent、Java 8 客户端、安全回归、标准指标、跨平台发布检查，以及框架和协议隔离实验。业务接口要求受信身份，不从请求体读取租户和客户身份。Knowledge Service 使用 PostgreSQL/pgvector 保存文档元数据、ACL、索引任务、分块和检索版本指针；上传原文默认写入本地文件目录。多实例部署前，应把原文适配器换成 S3 兼容对象存储，并在目标数据库上完成迁移、并发、备份恢复和容量测试。Customer BFF 的进程内会话与限流也需要换成共享实现。目标 IdP、外部 JDK8 Tool、生产网关、UNKNOWN 对账和端到端容量测试仍需在公司环境接入。
 
 ## 模块边界
 

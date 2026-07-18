@@ -132,6 +132,36 @@ class CustomerConsultationServiceTest {
                 .requireAttempt("attempt-1").status().name()).isEqualTo("COMPLETED");
     }
 
+    @Test
+    void converts_a_downstream_transport_failure_to_a_terminal_error_event() {
+        ArrayDeque<String> ids = new ArrayDeque<>(List.of("conversation-1", "attempt-1"));
+        DelegatedTokenClient tokenClient = source -> Mono.just(
+                new DelegatedAccessToken("delegated-token", NOW.plusSeconds(300)));
+        InMemoryConsultationSessionStore store = new InMemoryConsultationSessionStore();
+        CustomerConsultationService service = new CustomerConsultationService(
+                store,
+                (token, request) -> Mono.just(answer()),
+                (token, request) -> Flux.concat(
+                        Flux.just(new KnowledgeAnswerStreamClient.Delta("退款通常在")),
+                        Flux.error(new IllegalStateException("upstream connection reset"))),
+                acceptingTicketClient(), tokenClient, tokenClient,
+                (identity, now) -> true,
+                new ConversationWindowPolicy(8, 800, 500), ids::removeFirst,
+                CLOCK, Duration.ofMinutes(30)
+        );
+
+        StepVerifier.create(service.stream(customer(),
+                        new AnswerCustomerQuestion(null, "退款多久到账？")))
+                .expectNextMatches(event -> event instanceof CustomerStreamEvent.SessionStarted)
+                .expectNextMatches(event -> event instanceof CustomerStreamEvent.Delta)
+                .expectNext(new CustomerStreamEvent.Error(
+                        "KNOWLEDGE_STREAM_FAILED", "回答生成中断，请稍后重试"))
+                .verifyComplete();
+
+        assertThat(store.findById("conversation-1").block()
+                .requireAttempt("attempt-1").status().name()).isEqualTo("FAILED");
+    }
+
     private static CustomerConsultationService service(
             KnowledgeAnswerClient knowledge,
             TicketTaskClient ticket

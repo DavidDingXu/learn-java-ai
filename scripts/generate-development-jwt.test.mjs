@@ -57,3 +57,26 @@ test("rejects a missing scope and a short signing secret", () => {
   assert.equal(shortSecret.status, 2);
   assert.match(shortSecret.stderr, /at least 32 bytes/);
 });
+
+test("generates a customer token from the customer profile settings", () => {
+  const customerSecret = "customer-development-secret-32-bytes-minimum";
+  const result = run(["--profile", "customer"], {
+    JAVA_AI_CUSTOMER_JWT_HMAC_SECRET: customerSecret,
+    JAVA_AI_CUSTOMER_JWT_ISSUER: "https://customer-identity.test",
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  const [header, payload, signature] = result.stdout.trim().split(".");
+  assert.equal(
+    createHmac("sha256", customerSecret).update(`${header}.${payload}`).digest("base64url"),
+    signature,
+  );
+
+  const claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+  assert.equal(claims.iss, "https://customer-identity.test");
+  assert.deepEqual(claims.aud, ["customer-bff"]);
+  assert.equal(claims.scope, "consultation:use");
+  assert.equal(claims.sub, "customer-42");
+  assert.deepEqual(claims.roles, ["customer"]);
+  assert.equal(claims.act, undefined);
+});

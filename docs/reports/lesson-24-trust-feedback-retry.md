@@ -9,6 +9,7 @@ Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 - C 端回答 DTO 保留引用、拒答原因、conversation、attempt 和 trace，不暴露 Provider 模型对象或 Token 元数据。
 - 引用继续由 Knowledge Service 根据本次授权上下文校验，BFF 只转换为渠道 DTO。
 - 反馈必须绑定已完成的回答尝试；`NOT_HELPFUL` 必须携带稳定原因码，评论有长度上限。
+- `NOT_HELPFUL` 的条件要求同时进入 Bean Validation 和 OpenAPI 3.1，接口文档不再允许运行时必然失败的空原因请求。
 - 同一尝试的反馈使用 PUT 语义，可按业务规则更新，不创建无归属的匿名评价。
 - 重试创建新 attempt，并通过 `retryOfAttemptId` 指回原回答；旧回答、旧引用和旧反馈保持不变。
 - 会话归属校验在反馈、重试和工单升级前重复执行，不能只在首次提问时检查。
@@ -18,9 +19,11 @@ Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 
 ```bash
 ./mvnw -pl apps/customer-bff \
-  -Dtest=ConsultationSessionTest,CustomerConsultationServiceTest,CustomerConsultationControllerTest \
+  -Dtest=ConsultationSessionTest,CustomerConsultationServiceTest,CustomerConsultationControllerTest,AnswerFeedbackRequestTest \
   test
 ```
+
+Customer Web 的反馈、重试和移动端展示验证记录在 `docs/reports/lesson-22-customer-web.md`。
 
 ## Production Boundary
 

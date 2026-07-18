@@ -32,7 +32,7 @@ sequenceDiagram
     end
 ```
 
-当前已经实现 Customer BFF 的客户 JWT 边界、RFC 8693 Token Exchange、Knowledge HTTP/SSE 调用、短时会话、反馈、重试和幂等工单升级；Ticket Agent Service 已实现受限规划、Tool 目录、知识查询、风险分级、版本绑定确认、确认幂等、审计、PostgreSQL/Flyway 持久化和 HTTP 下游适配器；独立 Java 8 客户端已能查询任务并提交确认。Customer Web、目标数据库迁移与容量测试、公司 IdP、外部 JDK8 Tool 服务和完整端到端联调仍需在公司环境完成。
+当前已经实现 Customer Web 的流式咨询、引用、反馈、重试和转人工页面，Customer BFF 的客户 JWT 边界、RFC 8693 Token Exchange、Knowledge HTTP/SSE 调用、短时会话和幂等工单升级；Ticket Agent Service 已实现受限规划、Tool 目录、知识查询、风险分级、版本绑定确认、确认幂等、审计、PostgreSQL/Flyway 持久化和 HTTP 下游适配器；独立 Java 8 客户端已能查询任务并提交确认。目标数据库迁移与容量测试、公司 IdP、生产网关、外部 JDK8 Tool 服务和完整端到端联调仍需在公司环境完成。
 
 ## Integration Boundaries
 

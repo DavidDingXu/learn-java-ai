@@ -44,6 +44,11 @@ public class CustomerJwtConfiguration {
 
     private static NimbusReactiveJwtDecoder createDecoder(Environment environment) {
         String secret = environment.getProperty("java-ai.security.customer-jwt.hmac-secret", "");
+        String jwkSetUri = environment.getProperty("java-ai.security.customer-jwt.jwk-set-uri", "");
+        if (StringUtils.hasText(secret) && StringUtils.hasText(jwkSetUri)) {
+            throw new IllegalStateException(
+                    "Configure exactly one customer JWT verification source: jwk-set-uri or hmac-secret");
+        }
         if (StringUtils.hasText(secret)) {
             byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
             if (bytes.length < 32) {
@@ -53,7 +58,6 @@ public class CustomerJwtConfiguration {
                     .macAlgorithm(MacAlgorithm.HS256)
                     .build();
         }
-        String jwkSetUri = environment.getProperty("java-ai.security.customer-jwt.jwk-set-uri", "");
         if (StringUtils.hasText(jwkSetUri)) {
             return NimbusReactiveJwtDecoder.withJwkSetUri(jwkSetUri).build();
         }

@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 PROJECT_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 MVNW="$PROJECT_ROOT/mvnw"
+CUSTOMER_WEB_DIR="$PROJECT_ROOT/apps/customer-web"
 
 SELECTED_JDK=""
 SELECTED_MAJOR=""
@@ -125,6 +126,13 @@ run_maven() {
 
 [[ -x "$MVNW" ]] || die 2 "Maven wrapper is missing or not executable: $MVNW"
 command -v node >/dev/null 2>&1 || die 2 "Node.js is required for repository contract tests."
+command -v npm >/dev/null 2>&1 || die 2 "npm is required to verify Customer Web."
+
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+[[ "$NODE_MAJOR" =~ ^[0-9]+$ ]] || die 2 "Unable to determine the Node.js major version."
+(( NODE_MAJOR >= 24 )) || die 2 "Node.js 24 or newer is required; found major $NODE_MAJOR."
+[[ -f "$CUSTOMER_WEB_DIR/package.json" ]] || die 2 "Customer Web package.json is missing."
+[[ -f "$CUSTOMER_WEB_DIR/package-lock.json" ]] || die 2 "Customer Web package-lock.json is missing."
 
 scan_main_jdk
 MAIN_JAVA_HOME="$SELECTED_JDK"
@@ -148,8 +156,13 @@ done
 
 node --test "${node_tests[@]}"
 
+npm --prefix "$CUSTOMER_WEB_DIR" ci --no-audit --no-fund
+npm --prefix "$CUSTOMER_WEB_DIR" run typecheck
+npm --prefix "$CUSTOMER_WEB_DIR" test
+npm --prefix "$CUSTOMER_WEB_DIR" run build
+
 run_maven "$MAIN_JAVA_HOME" -f "$PROJECT_ROOT/pom.xml" verify
 run_maven "$MAIN_JAVA_HOME" -f "$PROJECT_ROOT/labs/pom.xml" verify
 run_maven "$JDK8_HOME" -f "$PROJECT_ROOT/integrations/jdk8-client/pom.xml" verify
 
-printf 'Project unit verification passed for root, labs, Java 8 client, and project contracts.\n'
+printf 'Project verification passed for Customer Web, root, labs, Java 8 client, and project contracts.\n'
