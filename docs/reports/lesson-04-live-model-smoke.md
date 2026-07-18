@@ -2,14 +2,14 @@
 
 Status: LIVE_MODEL
 
-- Executed at: 2026-07-14T05:10:43.563747Z
-- Commit: `d9fd1db812f132e25fe7bd82c02bddeba7fd1107`
+- Executed at: 2026-07-18T03:29:34.807824Z
+- Commit: `63af06c6f288c281bdf1abec8b2842073801806f`
 - Execution mode: `LIVE_MODEL`
-- Model: `gpt-5.4`
+- Model: `gpt-5.5`
 - Finish reason: `stop`
 - Prompt tokens: 1043
-- Completion tokens: 119
-- Total tokens: 1162
+- Completion tokens: 171
+- Total tokens: 1214
 - Trace ID: `untraced`
 - Citations: `refund-policy/v1#arrival-time`
 
@@ -19,9 +19,9 @@ Status: LIVE_MODEL
 
 ## Answer
 
-结论：退款审核通过后未立即到账属正常情况。平台会按原支付渠道发起退款，不同渠道处理速度不同，通常需要1到5个工作日到账。
+结论：退款审核通过后仍未到账，通常是因为原支付渠道处理需要时间，一般为 1 到 5 个工作日，银行卡、信用卡和第三方支付渠道速度不同。
 
-下一步：如果还未超过5个工作日，建议先耐心等待并核对原支付账户；如果已超过5个工作日仍未到账，请提供订单号和退款审核通过时间，由客服查询支付渠道回执。
+下一步：请先核对原支付账户；如果已超过 5 个工作日仍未到账，可提供订单号和退款审核通过时间，由客服查询支付渠道回执。无法承诺具体到账时刻。
 
 ## Redaction
 
