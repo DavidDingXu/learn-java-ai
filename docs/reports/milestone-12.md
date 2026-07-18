@@ -4,7 +4,7 @@ Status: VERIFIED_LIVE_MODEL
 
 ## Implementation
 
-Commit: `d9fd1db812f132e25fe7bd82c02bddeba7fd1107`
+Commit: `5db09381614cae240bd1fefd0e0e7b04252458d0`
 
 The milestone contains versioned trust-partitioned prompts, structured output and business validation, SSE contracts, use-case resilience, low-cardinality observations and an independent HTTP Eval Runner.
 
@@ -19,4 +19,4 @@ The milestone contains versioned trust-partitioned prompts, structured output an
 
 ## Tag Rule
 
-`milestone-12-model-engineering` must point to implementation commit `d9fd1db812f132e25fe7bd82c02bddeba7fd1107`. Later article, screenshot or report commits do not replace this implementation evidence point.
+`milestone-12-model-engineering` must point to implementation commit `5db09381614cae240bd1fefd0e0e7b04252458d0`. Later article, screenshot or report commits do not replace this implementation evidence point.
