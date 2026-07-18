@@ -19,6 +19,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
 import javax.sql.DataSource;
+import java.time.Clock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,6 +44,7 @@ class KnowledgeIngestionConfigurationTest {
             assertThat(context).hasSingleBean(IndexTaskQueue.class);
             assertThat(context).hasSingleBean(DocumentVersionIndexer.class);
             assertThat(context).hasSingleBean(IndexTaskWorker.class);
+            assertThat(context).hasSingleBean(Clock.class);
         });
     }
 
@@ -68,6 +70,11 @@ class KnowledgeIngestionConfigurationTest {
         @Bean
         KnowledgeEmbeddingModel knowledgeEmbeddingModel() {
             return new DeterministicHashEmbeddingModel(16);
+        }
+
+        @Bean
+        Clock clock() {
+            return Clock.systemUTC();
         }
     }
 }

@@ -40,11 +40,6 @@ import java.util.concurrent.ScheduledExecutorService;
 public class KnowledgeIngestionConfiguration {
 
     @Bean
-    Clock knowledgeIngestionClock() {
-        return Clock.systemUTC();
-    }
-
-    @Bean
     DocumentObjectStore documentObjectStore(
             @Value("${java-ai.knowledge.object-store.local-root}") Path localRoot
     ) {
@@ -78,10 +73,10 @@ public class KnowledgeIngestionConfiguration {
     @Bean
     DocumentPublicationService documentPublicationService(
             JdbcKnowledgeDocumentRepository repository,
-            Clock knowledgeIngestionClock
+            Clock clock
     ) {
         return new DocumentPublicationService(
-                repository, repository, UUID::randomUUID, knowledgeIngestionClock
+                repository, repository, UUID::randomUUID, clock
         );
     }
 
@@ -115,9 +110,9 @@ public class KnowledgeIngestionConfiguration {
     KnowledgeChunkIndexSink knowledgeChunkIndexSink(
             DataSource dataSource,
             ObjectMapper objectMapper,
-            Clock knowledgeIngestionClock
+            Clock clock
     ) {
-        return new PgVectorKnowledgeChunkIndexSink(dataSource, objectMapper, knowledgeIngestionClock);
+        return new PgVectorKnowledgeChunkIndexSink(dataSource, objectMapper, clock);
     }
 
     @Bean
@@ -146,7 +141,7 @@ public class KnowledgeIngestionConfiguration {
     IndexTaskWorker indexTaskWorker(
             IndexTaskQueue queue,
             DocumentVersionIndexer indexer,
-            Clock knowledgeIngestionClock,
+            Clock clock,
             @Value("${java-ai.knowledge.indexing.worker-id}") String workerId,
             @Value("${java-ai.knowledge.indexing.lease-duration:45s}") String leaseDuration,
             @Value("${java-ai.knowledge.indexing.retry-delay:2m}") String retryDelay,
@@ -154,7 +149,7 @@ public class KnowledgeIngestionConfiguration {
             ScheduledExecutorService indexTaskLeaseRenewalExecutor
     ) {
         return new IndexTaskWorker(
-                workerId, queue, indexer, knowledgeIngestionClock::instant,
+                workerId, queue, indexer, clock::instant,
                 DurationStyle.detectAndParse(leaseDuration),
                 DurationStyle.detectAndParse(retryDelay),
                 maximumAttempts,
