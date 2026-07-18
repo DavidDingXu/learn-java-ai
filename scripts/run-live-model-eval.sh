@@ -50,8 +50,10 @@ env JAVA_HOME="$MAIN_JAVA_HOME" PATH="$MAIN_JAVA_HOME/bin:$PATH" \
   "$MAIN_JAVA_HOME/bin/java" \
   -jar "$ROOT_DIR/services/knowledge-service/target/knowledge-service-0.1.0-SNAPSHOT.jar" \
   --java-ai.knowledge.context-source=classpath \
+  --java-ai.knowledge.ingestion.enabled=false \
   --spring.ai.model.embedding=none \
   --spring.flyway.enabled=false \
+  --spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration \
   --server.address=127.0.0.1 \
   --server.port="$PORT" \
   "${SECURITY_ARGS[@]}" \

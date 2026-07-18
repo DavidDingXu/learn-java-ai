@@ -93,7 +93,10 @@ test("live evaluation scripts configure the current delegated actor allowlist", 
     assert.doesNotMatch(script, /java-ai\.security\.jwt\.required-actor/);
     assert.doesNotMatch(script, /spring\.profiles\.active/);
     assert.match(script, /java-ai\.knowledge\.context-source=classpath/);
+    assert.match(script, /java-ai\.knowledge\.ingestion\.enabled=false/);
     assert.match(script, /spring\.ai\.model\.embedding=none/);
     assert.match(script, /spring\.flyway\.enabled=false/);
+    assert.match(script, /DataSourceAutoConfiguration/);
+    assert.match(script, /FlywayAutoConfiguration/);
   }
 });

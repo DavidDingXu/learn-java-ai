@@ -31,8 +31,10 @@ $ServiceJar = Join-Path $RootDir "services/knowledge-service/target/knowledge-se
 $ServiceArgs = @(
   "-jar", $ServiceJar,
   "--java-ai.knowledge.context-source=classpath",
+  "--java-ai.knowledge.ingestion.enabled=false",
   "--spring.ai.model.embedding=none",
   "--spring.flyway.enabled=false",
+  "--spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration",
   "--server.address=127.0.0.1",
   "--server.port=$Port"
 )
