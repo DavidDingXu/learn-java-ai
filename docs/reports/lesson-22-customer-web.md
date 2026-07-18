@@ -2,6 +2,8 @@
 
 Status: VERIFIED_LOCAL_BROWSER_AND_BUILD
 
+Implementation commit: `b39c693e74ac488df3a03603f37f548a3a1fe288`
+
 ## 覆盖范围
 
 Customer Web 是 `apps/customer-web` 下的独立 React 应用。它只调用 Customer BFF，已经实现 POST SSE、引用展示、反馈、重新生成、工单升级、主动取消和桌面端/移动端响应式布局。
