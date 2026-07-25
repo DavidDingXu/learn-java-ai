@@ -43,6 +43,7 @@
 - Agent Run 使用公平信号量限制并发，并提供稳定的 429 错误码与响应格式，以及异常路径的许可释放测试。
 - 每个服务一份运行配置、统一 `.env` 参数入口、测试隔离和跨平台验证命令。
 - 跨平台 release gate：全构建、接口与规则回归、Java 8、敏感信息扫描和可选外部健康检查。
+- Pull Request 依赖变更审查，新增高危漏洞时阻止合并。
 - DashScope Provider 适配、国内 Embedding/Rerank 同集评测和 Spring AI Alibaba 人工确认 Graph。
 - LangChain4j AI Services、租户受限 RAG、Tool 循环、结构化输出和按业务能力共存策略。
 - AgentScope 2.0 Tool 权限复用、人工确认事件、MCP 外部 Tool 注册和 A2A 任务状态边界。

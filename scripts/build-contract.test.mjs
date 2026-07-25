@@ -156,6 +156,15 @@ test("CI proves real JDK 21 and separate JDK 8 builds", () => {
   assert.match(verifyWorkflow, /verify-build\.sh/);
 });
 
+test("pull requests reject newly introduced high-severity dependency vulnerabilities", () => {
+  const workflow = read(".github/workflows/dependency-review.yml");
+
+  assert.match(workflow, /pull_request:/);
+  assert.match(workflow, /actions\/dependency-review-action@v5/);
+  assert.match(workflow, /fail-on-severity:\s*high/);
+  assert.match(workflow, /contents:\s*read/);
+});
+
 test("Failsafe loads compiled classes instead of the repackaged Boot jar", () => {
   const pom = read("services/knowledge-service/pom.xml");
 
