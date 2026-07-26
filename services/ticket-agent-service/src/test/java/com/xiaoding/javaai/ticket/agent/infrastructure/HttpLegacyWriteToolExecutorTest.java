@@ -1,5 +1,7 @@
 package com.xiaoding.javaai.ticket.agent.infrastructure;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaoding.javaai.ticket.agent.application.DownstreamAccessTokenProvider;
 import com.xiaoding.javaai.ticket.agent.application.RemoteExecutionUncertainException;
 import com.xiaoding.javaai.ticket.agent.application.ToolExecutionRejectedException;
@@ -139,6 +141,58 @@ class HttpLegacyWriteToolExecutorTest {
                 .isInstanceOf(RemoteExecutionUncertainException.class)
                 .hasMessageContaining("response");
         assertThat(server.getRequestCount()).isEqualTo(1);
+    }
+
+    @Test
+    void treats_an_unknown_success_status_as_unknown_instead_of_completing_the_task() {
+        server.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody("""
+                        {"actionId":"action-100","status":"PENDING","duplicate":false,"auditId":"legacy-audit-100"}
+                        """));
+        HttpLegacyWriteToolExecutor executor = new HttpLegacyWriteToolExecutor(
+                RestClient.builder(), server.url("/").toString(),
+                (task, audience, scope) -> "legacy-service-token",
+                Duration.ofSeconds(2));
+
+        assertThatThrownBy(() -> executor.execute(
+                task(), confirmation(), "tool:tenant-a:action-100"))
+                .isInstanceOf(RemoteExecutionUncertainException.class)
+                .hasMessageContaining("response");
+        assertThat(server.getRequestCount()).isEqualTo(1);
+    }
+
+    @Test
+    void treats_request_serialization_failure_as_a_local_error_before_send() {
+        ObjectMapper failingMapper = new ObjectMapper() {
+            @Override
+            public String writeValueAsString(Object value) throws JsonProcessingException {
+                throw new JsonProcessingException("serialization failed") { };
+            }
+        };
+        HttpLegacyWriteToolExecutor executor = new HttpLegacyWriteToolExecutor(
+                RestClient.builder(), server.url("/").toString(),
+                (task, audience, scope) -> "legacy-service-token",
+                Duration.ofSeconds(2), failingMapper);
+
+        assertThatThrownBy(() -> executor.execute(
+                task(), confirmation(), "tool:tenant-a:action-100"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("serialize legacy tool request");
+        assertThat(server.getRequestCount()).isZero();
+    }
+
+    @Test
+    void rejects_a_blank_idempotency_key_before_send() {
+        HttpLegacyWriteToolExecutor executor = new HttpLegacyWriteToolExecutor(
+                RestClient.builder(), server.url("/").toString(),
+                (task, audience, scope) -> "legacy-service-token",
+                Duration.ofSeconds(2));
+
+        assertThatThrownBy(() -> executor.execute(task(), confirmation(), " "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("idempotencyKey");
+        assertThat(server.getRequestCount()).isZero();
     }
 
     private static ConfirmationRequest confirmation() {

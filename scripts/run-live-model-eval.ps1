@@ -4,11 +4,15 @@ $RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 . (Join-Path $PSScriptRoot "main-java-runtime.ps1")
 $ReportPrefix = if ($args.Count -gt 0) { $args[0] } else { Join-Path $RootDir "docs/reports/lesson-12-live-model-eval" }
 $Port = if ($env:JAVA_AI_EVAL_PORT) { $env:JAVA_AI_EVAL_PORT } else { "18081" }
+$ConfigFile = Join-Path $RootDir "config\application.yml"
 
-foreach ($Name in @("JAVA_AI_CHAT_API_KEY", "JAVA_AI_CHAT_BASE_URL", "JAVA_AI_CHAT_MODEL", "JAVA_AI_MAIN_JAVA_HOME", "JAVA_AI_EVAL_BEARER_TOKEN", "JAVA_AI_JWT_ISSUER")) {
+foreach ($Name in @("JAVA_AI_EVAL_BEARER_TOKEN", "JAVA_AI_JWT_ISSUER")) {
   if (-not (Get-Item "Env:$Name" -ErrorAction SilentlyContinue).Value) {
     throw "$Name is required."
   }
+}
+if (-not (Test-Path $ConfigFile)) {
+  throw "Missing local demo config: $ConfigFile"
 }
 
 if (-not $env:JAVA_AI_DEV_JWT_HMAC_SECRET -and -not $env:JAVA_AI_JWT_JWK_SET_URI) {
@@ -29,6 +33,7 @@ if ($env:JAVA_AI_DEV_JWT_HMAC_SECRET) {
 }
 $ServiceJar = Join-Path $RootDir "services/knowledge-service/target/knowledge-service-0.1.0-SNAPSHOT.jar"
 $ServiceArgs = @(
+  "-Dspring.config.additional-location=file:$ConfigFile",
   "-jar", $ServiceJar,
   "--java-ai.knowledge.context-source=classpath",
   "--java-ai.knowledge.ingestion.enabled=false",
@@ -60,7 +65,7 @@ try {
     }
     if (-not $Healthy) { throw "Knowledge Service did not become healthy." }
 
-    & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar") `
+    & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar") `
       model-eval `
       --dataset (Join-Path $RootDir "datasets/model-interaction/golden-set-v2.jsonl") `
       --base-url "http://127.0.0.1:$Port" `

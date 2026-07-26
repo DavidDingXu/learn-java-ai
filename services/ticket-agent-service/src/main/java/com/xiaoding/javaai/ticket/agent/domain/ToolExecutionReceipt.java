@@ -9,6 +9,9 @@ public record ToolExecutionReceipt(
     public ToolExecutionReceipt {
         actionId = requireText(actionId, "actionId");
         status = requireText(status, "status");
+        if (!"SUCCEEDED".equals(status)) {
+            throw new IllegalArgumentException("status must be SUCCEEDED");
+        }
         auditId = requireText(auditId, "auditId");
     }
 

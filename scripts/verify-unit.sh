@@ -5,6 +5,7 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 PROJECT_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 MVNW="$PROJECT_ROOT/mvnw"
 CUSTOMER_WEB_DIR="$PROJECT_ROOT/apps/customer-web"
+. "$SCRIPT_DIR/main-java-runtime.sh"
 
 SELECTED_JDK=""
 SELECTED_MAJOR=""
@@ -16,80 +17,23 @@ die() {
   exit "$exit_code"
 }
 
-javac_major() {
-  local java_home="$1"
-  local output
-  local version
-
-  output="$("$java_home/bin/javac" -version 2>&1)" || return 1
-  version="${output#javac }"
-  version="${version%%_*}"
-  if [[ "$version" == 1.* ]]; then
-    version="${version#1.}"
-  fi
-  printf '%s\n' "${version%%.*}"
-}
-
-try_main_jdk() {
-  local candidate="$1"
-  local major
-
-  [[ -x "$candidate/bin/java" && -x "$candidate/bin/javac" ]] || return 1
-  major="$(javac_major "$candidate")" || return 1
-  [[ "$major" =~ ^[0-9]+$ ]] || return 1
-  (( major >= 21 )) || return 1
-  SELECTED_JDK="$candidate"
-  SELECTED_MAJOR="$major"
-}
-
 try_jdk8() {
   local candidate="$1"
-  local major
+  local java_major
+  local javac_major
 
+  [[ -f "$candidate/release" ]] || return 1
   [[ -x "$candidate/bin/java" && -x "$candidate/bin/javac" ]] || return 1
-  major="$(javac_major "$candidate")" || return 1
-  [[ "$major" == "8" ]] || return 1
+  java_major="$(java_ai_java_major "$candidate")" || return 1
+  javac_major="$(java_ai_javac_major "$candidate")" || return 1
+  [[ "$java_major" == "8" && "$javac_major" == "8" ]] || return 1
   SELECTED_JDK="$candidate"
-  SELECTED_MAJOR="$major"
-}
-
-scan_main_jdk() {
-  local candidate
-
-  if [[ -n "${JAVA_AI_MAIN_JAVA_HOME:-}" ]]; then
-    try_main_jdk "$JAVA_AI_MAIN_JAVA_HOME" ||
-      die 2 "JAVA_AI_MAIN_JAVA_HOME is not a full JDK with javac major >= 21: $JAVA_AI_MAIN_JAVA_HOME"
-    return
-  fi
-
-  if [[ -n "${JAVA_HOME:-}" ]] && try_main_jdk "$JAVA_HOME"; then
-    return
-  fi
-
-  if [[ "$(uname -s)" == "Darwin" && -x /usr/libexec/java_home ]]; then
-    candidate="$(/usr/libexec/java_home -v 21 2>/dev/null || true)"
-    if [[ -n "$candidate" ]] && try_main_jdk "$candidate"; then
-      return
-    fi
-  fi
-
-  for candidate in \
-    /Library/Java/JavaVirtualMachines/*/Contents/Home \
-    "$HOME"/Library/Java/JavaVirtualMachines/*/Contents/Home \
-    /opt/homebrew/opt/openjdk*/libexec/openjdk.jdk/Contents/Home \
-    /usr/lib/jvm/* \
-    "$HOME"/.sdkman/candidates/java/*; do
-    [[ -d "$candidate" ]] || continue
-    if try_main_jdk "$candidate"; then
-      return
-    fi
-  done
-
-  die 2 "No full JDK >= 21 found. Set JAVA_AI_MAIN_JAVA_HOME to a JDK home containing bin/java and bin/javac."
+  SELECTED_MAJOR="$javac_major"
 }
 
 scan_jdk8() {
   local candidate
+  local javac_path
 
   SELECTED_JDK=""
   SELECTED_MAJOR=""
@@ -104,6 +48,14 @@ scan_jdk8() {
     return
   fi
 
+  javac_path="$(command -v javac 2>/dev/null || true)"
+  if [[ -n "$javac_path" ]]; then
+    candidate="$(CDPATH= cd -- "$(dirname -- "$javac_path")/.." 2>/dev/null && pwd || true)"
+    if [[ -n "$candidate" ]] && try_jdk8 "$candidate"; then
+      return
+    fi
+  fi
+
   for candidate in \
     /Library/Java/JavaVirtualMachines/*/Contents/Home \
     "$HOME"/Library/Java/JavaVirtualMachines/*/Contents/Home \
@@ -115,7 +67,7 @@ scan_jdk8() {
     fi
   done
 
-  die 2 "No full JDK 8 found. Set JAVA_AI_JDK8_HOME to a JDK 8 home containing bin/java and bin/javac."
+  die 2 "No full JDK 8 was found. Install a JDK 8 containing bin/java and bin/javac, then rerun the command."
 }
 
 run_maven() {
@@ -134,9 +86,7 @@ NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
 [[ -f "$CUSTOMER_WEB_DIR/package.json" ]] || die 2 "Customer Web package.json is missing."
 [[ -f "$CUSTOMER_WEB_DIR/package-lock.json" ]] || die 2 "Customer Web package-lock.json is missing."
 
-scan_main_jdk
-MAIN_JAVA_HOME="$SELECTED_JDK"
-MAIN_JAVA_MAJOR="$SELECTED_MAJOR"
+enter_java_ai_main_jdk || exit $?
 
 scan_jdk8
 JDK8_HOME="$SELECTED_JDK"

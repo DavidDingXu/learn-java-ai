@@ -21,7 +21,7 @@ Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
   -Dsurefire.failIfNoSpecifiedTests=false test
 
 ./mvnw -pl quality/eval-runner -Dtest=ContractValidatorTest test package
-java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar contract-validate contracts
+java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar contract-validate contracts
 ```
 
 接口定义解析结果：4 份 OpenAPI、2 份 JSON Schema、2 个正向夹具和 2 个负向夹具全部通过。

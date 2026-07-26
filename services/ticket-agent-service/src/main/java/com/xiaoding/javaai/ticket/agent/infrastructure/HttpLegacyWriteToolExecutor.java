@@ -10,6 +10,7 @@ import com.xiaoding.javaai.ticket.agent.domain.ConfirmationRequest;
 import com.xiaoding.javaai.ticket.agent.domain.ToolExecutionReceipt;
 import com.xiaoding.javaai.ticket.task.AgentTask;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.MediaType;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -59,18 +60,21 @@ public final class HttpLegacyWriteToolExecutor implements LegacyWriteToolExecuto
         String token = requireText(
                 tokenProvider.tokenFor(task, "legacy-tool-service", "legacy:tool:execute"),
                 "legacy access token");
+        String normalizedIdempotencyKey = requireText(idempotencyKey, "idempotencyKey");
+        String requestBody = serializeRequest(new ToolRequest(
+                confirmation.actionId(),
+                task.request().caseId(),
+                confirmation.toolName(),
+                confirmation.arguments()));
         try {
             ToolResponse response = restClient.post()
                     .uri("/api/v1/tool-actions")
+                    .contentType(MediaType.APPLICATION_JSON)
                     .headers(headers -> {
                         headers.setBearerAuth(token);
-                        headers.set("Idempotency-Key", requireText(idempotencyKey, "idempotencyKey"));
+                        headers.set("Idempotency-Key", normalizedIdempotencyKey);
                     })
-                    .body(new ToolRequest(
-                            confirmation.actionId(),
-                            task.request().caseId(),
-                            confirmation.toolName(),
-                            confirmation.arguments()))
+                    .body(requestBody)
                     .retrieve()
                     .body(ToolResponse.class);
             if (response == null) {
@@ -98,6 +102,14 @@ public final class HttpLegacyWriteToolExecutor implements LegacyWriteToolExecuto
         } catch (RestClientException | IllegalArgumentException error) {
             throw new RemoteExecutionUncertainException(
                     "legacy tool outcome is unknown because the response could not be validated");
+        }
+    }
+
+    private String serializeRequest(ToolRequest request) {
+        try {
+            return objectMapper.writeValueAsString(request);
+        } catch (JsonProcessingException error) {
+            throw new IllegalStateException("unable to serialize legacy tool request", error);
         }
     }
 

@@ -8,8 +8,7 @@ foreach ($Name in @(
   "JAVA_AI_AGENT_BASE_URL",
   "JAVA_AI_AGENT_CREATE_TOKEN",
   "JAVA_AI_AGENT_RUN_TOKEN",
-  "JAVA_AI_AGENT_READ_TOKEN",
-  "JAVA_AI_MAIN_JAVA_HOME"
+  "JAVA_AI_AGENT_READ_TOKEN"
 )) {
   $Item = Get-Item "Env:$Name" -ErrorAction SilentlyContinue
   if (-not $Item -or -not $Item.Value) { throw "$Name is required." }
@@ -24,7 +23,7 @@ try {
     -Dsurefire.failIfNoSpecifiedTests=false test package
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-  & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar") `
+  & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar") `
     security-eval `
     --dataset (Join-Path $RootDir "datasets/security/agent-security-v1.jsonl") `
     --base-url $env:JAVA_AI_AGENT_BASE_URL `

@@ -6,7 +6,9 @@ import com.xiaoding.javaai.knowledge.answer.application.KnowledgeAnswer;
 import com.xiaoding.javaai.knowledge.document.domain.TenantId;
 import com.xiaoding.javaai.knowledge.retrieval.application.KnowledgeAccessScope;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -29,14 +31,21 @@ class LiveModelSmokeIT {
     @DynamicPropertySource
     static void liveModelProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.ai.model.chat", () -> "openai");
-        registry.add("spring.ai.openai.api-key", () -> requiredEnvironment("JAVA_AI_CHAT_API_KEY"));
-        registry.add("spring.ai.openai.base-url", () -> requiredEnvironment("JAVA_AI_CHAT_BASE_URL"));
-        registry.add("spring.ai.openai.chat.model", () -> requiredEnvironment("JAVA_AI_CHAT_MODEL"));
         registry.add("java-ai.runtime.external-integrations-enabled", () -> true);
     }
 
     @Autowired
     private AnswerKnowledgeQuestion answerKnowledgeQuestion;
+
+    @Value("${spring.ai.openai.api-key:}")
+    private String apiKey;
+
+    @BeforeEach
+    void requireConfiguredApiKey() {
+        if (apiKey.isBlank() || "replace-with-your-api-key".equals(apiKey)) {
+            throw new IllegalStateException("请先在 config/application.yml 中填写 spring.ai.openai.api-key");
+        }
+    }
 
     @Test
     void callsTheConfiguredModelAndWritesRedactedEvidence() throws IOException {
@@ -126,11 +135,4 @@ class LiveModelSmokeIT {
         return value;
     }
 
-    private static String requiredEnvironment(String name) {
-        String value = System.getenv(name);
-        if (value == null || value.isBlank()) {
-            throw new IllegalStateException("Missing required environment variable: " + name);
-        }
-        return value;
-    }
 }

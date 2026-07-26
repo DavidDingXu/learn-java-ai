@@ -114,9 +114,12 @@ test("each service exposes one production-facing runtime configuration", () => {
   }
 
   const knowledge = read("services/knowledge-service/src/main/resources/application.yml");
+  const demoModelConfig = read("config/application.yml");
   assert.match(knowledge, /chat:\s*openai/);
   assert.match(knowledge, /embedding:\s*openai/);
-  assert.match(knowledge, /\$\{JAVA_AI_CHAT_API_KEY}/);
+  assert.match(demoModelConfig, /api-key:\s*replace-with-your-api-key/);
+  assert.match(demoModelConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);
+  assert.doesNotMatch(knowledge, /JAVA_AI_CHAT_(?:API_KEY|BASE_URL|MODEL)/);
   assert.match(knowledge, /\$\{JAVA_AI_POSTGRES_URL}/);
   assert.doesNotMatch(knowledge, /execution-mode|LOCAL_DISABLED|PROVIDER_PROTOCOL_FIXTURE/);
 

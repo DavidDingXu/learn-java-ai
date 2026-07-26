@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { execFile, spawnSync } from "node:child_process";
-import { readFileSync, statSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -23,7 +24,6 @@ test("unit scripts cover all independent build boundaries", () => {
     assert.match(content, /pom\.xml/);
     assert.match(content, /labs[\\/]pom\.xml/);
     assert.match(content, /integrations[\\/]jdk8-client[\\/]pom\.xml/);
-    assert.match(content, /JAVA_AI_MAIN_JAVA_HOME/);
     assert.match(content, /JAVA_AI_JDK8_HOME/);
     assert.match(content, /apps[\\/]customer-web/);
     assert.match(content, /npm(?:\.cmd)?/);
@@ -34,10 +34,13 @@ test("unit scripts cover all independent build boundaries", () => {
     assert.doesNotMatch(content, /column[\\/]scripts|JAVA_AI_REQUIRE_COLUMN_TESTS/);
   }
 
+  assert.match(`${shell}\n${read("scripts/main-java-runtime.sh")}`, /JAVA_AI_MAIN_JAVA_HOME/);
+  assert.match(powershell, /JAVA_AI_MAIN_JAVA_HOME/);
   assert.match(shell, /npm --prefix "\$CUSTOMER_WEB_DIR" ci/);
   assert.match(shell, /npm --prefix "\$CUSTOMER_WEB_DIR" run typecheck/);
   assert.match(shell, /npm --prefix "\$CUSTOMER_WEB_DIR" test/);
   assert.match(shell, /npm --prefix "\$CUSTOMER_WEB_DIR" run build/);
+  assert.match(`${shell}\n${read("scripts/main-java-runtime.sh")}`, /command -v javac/);
   assert.match(powershell, /@\("--prefix", \$CustomerWeb, "ci"/);
   assert.match(powershell, /@\("--prefix", \$CustomerWeb, "run", "typecheck"\)/);
   assert.match(powershell, /@\("--prefix", \$CustomerWeb, "test"\)/);
@@ -145,6 +148,27 @@ test("retrieval evaluation scripts target an authenticated external environment"
   }
 });
 
+test("evaluation scripts use an attached executable jar instead of reshading the main artifact", () => {
+  const evalPom = read("quality/eval-runner/pom.xml");
+  assert.match(evalPom, /<shadedArtifactAttached>true<\/shadedArtifactAttached>/);
+  assert.match(evalPom, /<shadedClassifierName>all<\/shadedClassifierName>/);
+
+  for (const relativePath of [
+    "scripts/run-contract-eval.sh",
+    "scripts/run-contract-eval.ps1",
+    "scripts/run-live-model-eval.sh",
+    "scripts/run-live-model-eval.ps1",
+    "scripts/run-retrieval-eval.sh",
+    "scripts/run-retrieval-eval.ps1",
+    "scripts/run-agent-eval.sh",
+    "scripts/run-agent-eval.ps1",
+    "scripts/run-security-regression.sh",
+    "scripts/run-security-regression.ps1",
+  ]) {
+    assert.match(read(relativePath), /eval-runner-0\.1\.0-SNAPSHOT-all\.jar/, relativePath);
+  }
+});
+
 test("shell integration verification refuses a missing external environment", {
   skip: process.platform === "win32",
 }, () => {
@@ -223,6 +247,8 @@ test("PowerShell evaluation and smoke scripts run Maven with the selected main J
   assert.match(runtime, /bin\\java\.exe/);
   assert.match(runtime, /bin\\javac\.exe/);
   assert.match(runtime, /\$Major -lt 21/);
+  assert.match(runtime, /Get-Command javac\.exe/);
+  assert.match(runtime, /Eclipse Adoptium/);
 
   for (const relativePath of [
     "scripts/run-contract-eval.ps1",
@@ -238,5 +264,104 @@ test("PowerShell evaluation and smoke scripts run Maven with the selected main J
     assert.match(content, /Enter-JavaAiMainJdk/, relativePath);
     assert.match(content, /Restore-JavaAiEnvironment/, relativePath);
     assert.doesNotMatch(content, /(?:^|\s)java\s+-jar/, relativePath);
+  }
+});
+
+test("shell evaluation and smoke scripts auto-select the main JDK", () => {
+  const runtime = read("scripts/main-java-runtime.sh");
+  assert.match(runtime, /JAVA_AI_MAIN_JAVA_HOME/);
+  assert.match(runtime, /command -v javac/);
+  assert.match(runtime, /\/usr\/libexec\/java_home -v 21/);
+
+  for (const relativePath of [
+    "scripts/run-contract-eval.sh",
+    "scripts/run-live-model-eval.sh",
+    "scripts/run-live-model-smoke.sh",
+    "scripts/run-retrieval-eval.sh",
+    "scripts/run-agent-eval.sh",
+    "scripts/run-agent-live-model-smoke.sh",
+    "scripts/run-security-regression.sh",
+  ]) {
+    const content = read(relativePath);
+    assert.match(content, /main-java-runtime\.sh/, relativePath);
+    assert.match(content, /enter_java_ai_main_jdk/, relativePath);
+    assert.doesNotMatch(content, /JAVA_AI_MAIN_JAVA_HOME must/, relativePath);
+  }
+});
+
+test("shell main JDK discovery rejects a launcher directory that cannot run as JAVA_HOME", {
+  skip: process.platform === "win32",
+}, () => {
+  const tempRoot = mkdtempSync(path.join(tmpdir(), "java-ai-launcher-home-"));
+  const fakeBin = path.join(tempRoot, "bin");
+  mkdirSync(fakeBin, { recursive: true });
+  writeFileSync(
+    path.join(fakeBin, "java"),
+    "#!/usr/bin/env bash\n[[ \"${JAVA_HOME:-}\" != \"$1\" ]] || exit 1\nprintf 'openjdk version \\\"21.0.2\\\"\\n' >&2\n",
+  );
+  writeFileSync(path.join(fakeBin, "javac"), "#!/usr/bin/env bash\nprintf 'javac 21.0.2\\n'\n");
+  chmodSync(path.join(fakeBin, "java"), 0o755);
+  chmodSync(path.join(fakeBin, "javac"), 0o755);
+
+  try {
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; if java_ai_try_main_jdk "$2"; then exit 99; fi',
+        "bash",
+        path.join(projectRoot, "scripts/main-java-runtime.sh"),
+        tempRoot,
+      ],
+      { cwd: projectRoot, encoding: "utf8" },
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("unit verification reuses the shared main JDK discovery", () => {
+  const shell = read("scripts/verify-unit.sh");
+  assert.match(shell, /main-java-runtime\.sh/);
+  assert.match(shell, /enter_java_ai_main_jdk/);
+  assert.doesNotMatch(shell, /scan_main_jdk\(\)/);
+  assert.doesNotMatch(shell, /try_main_jdk\(\)/);
+});
+
+test("shell main JDK discovery recovers from a stale JAVA_HOME", {
+  skip: process.platform === "win32",
+}, () => {
+  const tempRoot = mkdtempSync(path.join(tmpdir(), "java-ai-main-jdk-"));
+  const fakeHome = path.join(tempRoot, "jdk-21");
+  const fakeBin = path.join(fakeHome, "bin");
+  mkdirSync(fakeBin, { recursive: true });
+  writeFileSync(path.join(fakeBin, "java"), "#!/usr/bin/env bash\nprintf 'openjdk version \\\"21.0.2\\\"\\n' >&2\n");
+  writeFileSync(path.join(fakeBin, "javac"), "#!/usr/bin/env bash\nprintf 'javac 21.0.2\\n'\n");
+  chmodSync(path.join(fakeBin, "java"), 0o755);
+  chmodSync(path.join(fakeBin, "javac"), 0o755);
+  writeFileSync(path.join(fakeHome, "release"), 'JAVA_VERSION="21.0.2"\n');
+
+  try {
+    const result = spawnSync(
+      "bash",
+      ["-c", 'source "$1"; enter_java_ai_main_jdk; printf "%s" "$MAIN_JAVA_HOME"', "bash", path.join(projectRoot, "scripts/main-java-runtime.sh")],
+      {
+        cwd: projectRoot,
+        env: {
+          ...process.env,
+          JAVA_HOME: path.join(tempRoot, "stale-java-home"),
+          JAVA_AI_MAIN_JAVA_HOME: "",
+          PATH: `${fakeBin}:/usr/bin:/bin`,
+        },
+        encoding: "utf8",
+      },
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, fakeHome);
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
   }
 });

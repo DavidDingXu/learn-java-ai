@@ -13,61 +13,36 @@
 
 ## macOS/Linux
 
-Set explicit homes before running the full verification:
+安装完整 JDK 21+ 和 JDK 8 后，直接运行：
 
 ```bash
-export JAVA_AI_MAIN_JAVA_HOME=/path/to/full-jdk-21-or-newer
-export JAVA_AI_JDK8_HOME=/path/to/full-jdk8
-
-test -x "$JAVA_AI_MAIN_JAVA_HOME/bin/java"
-test -x "$JAVA_AI_MAIN_JAVA_HOME/bin/javac"
-test -x "$JAVA_AI_JDK8_HOME/bin/java"
-test -x "$JAVA_AI_JDK8_HOME/bin/javac"
-
 scripts/verify-unit.sh
 ```
 
-On managed macOS machines, `/usr/libexec/java_home -v 1.8` may return a browser JRE without `javac`. Do not use that result unless both binaries exist and `javac -version` reports Java 8.
+脚本会检查当前 `JAVA_HOME`、`PATH` 和常见 JDK 安装目录，只接受同时包含 `java` 与 `javac` 的完整 JDK。macOS 的 `/usr/libexec/java_home -v 1.8` 可能返回不含 `javac` 的旧浏览器 JRE，因此脚本不会把它作为 JDK 8 自动发现来源。
 
 ## Windows PowerShell
 
-Use JDK installation roots, not paths to individual executables:
+安装完整 JDK 21+ 和 JDK 8 后，直接运行：
 
 ```powershell
-$env:JAVA_AI_MAIN_JAVA_HOME = "C:\\Java\\jdk-21"
-$env:JAVA_AI_JDK8_HOME = "C:\\Java\\jdk8"
 .\scripts\verify-unit.ps1
 ```
 
-The script verifies `java.exe` and `javac.exe`, checks the major versions, runs Node contracts and invokes `mvnw.cmd` for all three Maven boundaries.
+脚本会从 `JAVA_HOME`、`PATH`、`Program Files` 和用户 `.jdks` 目录寻找 JDK，校验 `java.exe`、`javac.exe` 与主版本，再执行三个 Maven 构建边界和 Node 检查。
 
 PowerShell files are statically checked on macOS. A release that promises Windows support still needs a real Windows run with the command output retained.
 
 ## Run One Build
 
-Main reactor:
+主 reactor 和框架实验使用当前 JDK 21+：
 
 ```bash
-JAVA_HOME="$JAVA_AI_MAIN_JAVA_HOME" \
-PATH="$JAVA_HOME/bin:$PATH" \
 ./mvnw verify
-```
-
-Labs:
-
-```bash
-JAVA_HOME="$JAVA_AI_MAIN_JAVA_HOME" \
-PATH="$JAVA_HOME/bin:$PATH" \
 ./mvnw -f labs/pom.xml verify
 ```
 
-Java 8 client:
-
-```bash
-JAVA_HOME="$JAVA_AI_JDK8_HOME" \
-PATH="$JAVA_HOME/bin:$PATH" \
-./mvnw -f integrations/jdk8-client/pom.xml verify
-```
+Java 8 客户端需要切换到 JDK 8。正常情况下直接使用统一的 `verify-unit` 脚本即可，它会自动选择并隔离两个 JDK。
 
 ## External Health Smoke
 
@@ -82,7 +57,7 @@ Missing configuration exits with code 2. A successful run proves only that `/act
 
 ## Development And External Infrastructure
 
-日常代码回归使用 `src/test` 下的确定性配置、单元测试以及接口和规则测试。需要连接数据库、模型、对象存储或外部业务系统时，通过根目录 `.env` 或部署系统显式注入参数：
+日常代码回归使用 `src/test` 下的确定性配置、单元测试以及接口和规则测试，不需要模型密钥或 `.env`。真实模型演示读取 `config/application.yml`。只有连接数据库、对象存储、身份平台或外部业务系统时，才需要根目录 `.env` 或部署系统参数：
 
 - 统一管理的测试环境；
 - 允许启动容器的 CI Runner；
@@ -94,11 +69,13 @@ Missing configuration exits with code 2. A successful run proves only that `/act
 
 ### Java 8 build reports no compiler
 
-`JAVA_AI_JDK8_HOME` points to a JRE. Select a full JDK 8 and confirm `bin/javac` exists.
+自动发现的 Java 8 目录只有 JRE。安装完整 JDK 8，并确认安装目录中存在 `bin/javac`。
 
 ### Main reactor reports the wrong Java version
 
-Set `JAVA_AI_MAIN_JAVA_HOME` explicitly. The script requires javac major 21 or newer.
+确认已安装完整 JDK 21 或更新版本，并且 `javac -version` 可以正常执行。脚本会跳过无效的旧 `JAVA_HOME`，继续检查 `PATH` 和常见安装目录。
+
+只有机器同时安装了多套同版本 JDK、自动发现结果又不是预期版本时，才需要用 `JAVA_AI_MAIN_JAVA_HOME` 或 `JAVA_AI_JDK8_HOME` 临时覆盖。它们是排障选项，不是正常运行前置步骤。
 
 ### External verification exits with code 2
 

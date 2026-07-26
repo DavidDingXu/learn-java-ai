@@ -6,17 +6,13 @@ Knowledge Service 的 RAG 写入链路包含上传原文、保存文档与版本
 
 准备一个已安装 `vector` 与 `pg_trgm` 扩展的 PostgreSQL 数据库，以及支持 Embedding 的 OpenAI 兼容接口。若同时验证知识问答，该接口还需支持 Chat。应用启动时由 Flyway 按顺序执行 V1-V4：V1 创建文档、版本、ACL、任务和向量分块，V2 创建 trigram 索引，V3 增加发布审计字段，V4 创建检索版本指针。
 
-在 `.env` 中至少填写：
+模型配置统一填写在项目根目录 `config/application.yml`。在 `.env` 中只填写这条完整链路需要的数据库、对象存储和身份参数：
 
 ```properties
 JAVA_AI_POSTGRES_URL=jdbc:postgresql://database.example.com:5432/java_ai_knowledge
 JAVA_AI_POSTGRES_USER=java_ai_knowledge
 JAVA_AI_POSTGRES_PASSWORD=replace-me
 JAVA_AI_KNOWLEDGE_OBJECT_ROOT=./var/knowledge-objects
-JAVA_AI_CHAT_API_KEY=replace-me
-JAVA_AI_CHAT_BASE_URL=https://provider.example.com/v1
-JAVA_AI_CHAT_MODEL=provider-chat-model
-JAVA_AI_EMBEDDING_MODEL=provider-embedding-model
 JAVA_AI_INDEX_WORKER_ID=knowledge-indexer-local
 JAVA_AI_JWT_ISSUER=https://identity.example.com
 JAVA_AI_JWT_AUDIENCE=knowledge-service

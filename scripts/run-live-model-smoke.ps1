@@ -8,6 +8,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
 . (Join-Path $PSScriptRoot "main-java-runtime.ps1")
 $MavenWrapper = Join-Path $ProjectRoot "mvnw.cmd"
+$ConfigFile = Join-Path $ProjectRoot "config\application.yml"
 $ReportPath = if ([string]::IsNullOrWhiteSpace($env:JAVA_AI_LIVE_REPORT_PATH)) {
     Join-Path $ProjectRoot "docs\reports\lesson-04-live-model-smoke.md"
 } else {
@@ -20,10 +21,8 @@ function Stop-WithError {
     exit 2
 }
 
-foreach ($Name in @("JAVA_AI_CHAT_API_KEY", "JAVA_AI_CHAT_BASE_URL", "JAVA_AI_CHAT_MODEL")) {
-    if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($Name))) {
-        Stop-WithError "$Name is required for the live model smoke test."
-    }
+if (-not (Test-Path $ConfigFile)) {
+    Stop-WithError "Missing local demo config: $ConfigFile"
 }
 
 $Commit = (& git -C $ProjectRoot rev-parse HEAD 2>$null | Out-String).Trim()
@@ -37,6 +36,7 @@ try {
         -f (Join-Path $ProjectRoot "pom.xml") `
         -pl services/knowledge-service `
         -Dtest=LiveModelSmokeIT `
+        "-Dspring.config.additional-location=file:$ConfigFile" `
         "-Djava-ai.smoke.report-path=$ReportPath" `
         "-Djava-ai.smoke.commit=$Commit" `
         test

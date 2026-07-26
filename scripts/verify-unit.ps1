@@ -113,9 +113,9 @@ function Select-Jdk {
     }
 
     if ($Kind -eq "Main") {
-        Stop-WithError "No full JDK >= 21 found. Set JAVA_AI_MAIN_JAVA_HOME."
+        Stop-WithError "No full JDK 21 or newer was found. Install a JDK containing bin\java.exe and bin\javac.exe, then rerun the command."
     }
-    Stop-WithError "No full JDK 8 found. Set JAVA_AI_JDK8_HOME."
+    Stop-WithError "No full JDK 8 was found. Install a JDK 8 containing bin\java.exe and bin\javac.exe, then rerun the command."
 }
 
 function Invoke-CheckedNative {

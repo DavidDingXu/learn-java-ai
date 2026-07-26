@@ -1,0 +1,12 @@
+# Local tests and article demos use this file so readers do not need to export model variables.
+# Replace only the API key when using OpenAI. For another compatible provider, also update its URL and model names.
+# Never commit a real production key. Production deployments must override this value through a secret manager.
+spring:
+  ai:
+    openai:
+      api-key: replace-with-your-api-key
+      base-url: https://api.openai.com/v1
+      chat:
+        model: gpt-4.1-mini
+      embedding:
+        model: text-embedding-3-small

@@ -5,6 +5,7 @@ import com.xiaoding.javaai.knowledge.retrieval.application.KnowledgeRetrievalRes
 import com.xiaoding.javaai.knowledge.retrieval.application.RetrieveKnowledgeQuery;
 import com.xiaoding.javaai.knowledge.retrieval.application.RetrievedKnowledgeChunk;
 import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeRetriever;
+import jakarta.validation.Validation;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -17,6 +18,19 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KnowledgeRetrievalEvaluationControllerTest {
+
+    @Test
+    void rejectsAnOversizedEvaluationQuestionBeforeRetrieval() {
+        try (var validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            var violations = validatorFactory.getValidator().validate(
+                    new KnowledgeRetrievalEvaluationRequest("x".repeat(2001), 5)
+            );
+
+            assertThat(violations)
+                    .anySatisfy(violation -> assertThat(violation.getPropertyPath().toString())
+                            .isEqualTo("question"));
+        }
+    }
 
     @Test
     void evaluatesRetrievalWithScopeFromTheDelegatedToken() {

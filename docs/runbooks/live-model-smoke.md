@@ -4,37 +4,36 @@
 
 该任务只检查一件事：Knowledge Service 能否通过当前 Spring AI 适配器调用配置的 OpenAI 兼容 Chat endpoint，并把回答、模型元数据、Token 用量和政策引用写入脱敏报告。它不检查 RAG、委托身份、工单、数据库或生产容量。
 
-脚本直接调用应用端口，不经过 HTTP，因此不验证 JWT 或入站 Trace。HTTP Golden Set 和 Trace 证据由 `model-interaction-eval.md` 中的 live eval 提供。Knowledge Service 的公开接口默认仍受拒绝或 JWT 策略保护。
+脚本直接调用应用用例，不经过 HTTP，因此不验证 JWT 或入站 Trace。HTTP Golden Set 和 Trace 证据由 `model-interaction-eval.md` 中的 live eval 提供。Knowledge Service 的公开接口默认仍受拒绝或 JWT 策略保护。
 
-确定性协议回归进入默认测试，模型端点调用只在显式提供凭证时运行。前者检查请求与响应映射，后者检查当前端点能否调用；两项结果不能互相替代。
+确定性协议回归进入默认测试，模型端点调用只由下面的独立脚本触发。前者检查请求与响应映射，后者检查当前端点能否调用；两项结果不能互相替代。
 
-## Required Environment
+该脚本不是应用启动入口。它自动选择 JDK、加载本地模型配置、运行指定 Java 集成测试并生成报告。需要手工访问 HTTP 接口时，应启动 Knowledge Service；那条路径还需要数据库、JWT 和检索等完整系统配置。
 
-- `JAVA_AI_MAIN_JAVA_HOME`：完整 JDK21 或更新版本。
-- `JAVA_AI_CHAT_API_KEY`：模型接口密钥。
-- `JAVA_AI_CHAT_BASE_URL`：OpenAI 兼容 API 根地址，必须包含服务实际使用的 API 前缀，例如 `https://provider.example.com/v1`。网站首页返回 HTML 时不能作为该值。
-- `JAVA_AI_CHAT_MODEL`：已在该账号和 endpoint 上开通的模型名。
-- `JAVA_AI_LIVE_REPORT_PATH`：可选，默认覆盖 `docs/reports/lesson-04-live-model-smoke.md`。
+## 本地演示配置
 
-密钥不能写入受版本控制的文件、报告或 Git。公司环境应通过密钥管理系统或受保护 CI Environment 注入；本地忽略的 `.env` 也应限制权限并定期轮换。
+项目根目录的 `config/application.yml` 已给出 OpenAI API 地址和演示模型。使用 OpenAI 时，只需把下面的占位值换成自己的 API Key：
+
+```yaml
+spring:
+  ai:
+    openai:
+      api-key: replace-with-your-api-key
+```
+
+如果使用其他 OpenAI 兼容服务，再在同一文件中修改 `base-url`、`chat.model` 和 `embedding.model`。脚本会自动寻找本机已安装的完整 JDK 21 或更新版本，不需要配置 Java 环境变量。
+
+这份 YAML 采用明文占位值是为了降低本地演示门槛。不要提交填写了真实密钥的文件。生产环境必须通过 Secret Manager、Vault 或部署平台 Secret 覆盖 `spring.ai.openai.api-key`，不能把真实密钥保存在仓库或镜像中。
 
 ## macOS / Linux
 
 ```bash
-export JAVA_AI_MAIN_JAVA_HOME=/path/to/jdk-21
-export JAVA_AI_CHAT_API_KEY=***
-export JAVA_AI_CHAT_BASE_URL=https://provider.example.com/v1
-export JAVA_AI_CHAT_MODEL=provider-model-name
 scripts/run-live-model-smoke.sh
 ```
 
 ## Windows PowerShell
 
 ```powershell
-$env:JAVA_AI_MAIN_JAVA_HOME = "C:\Java\jdk-21"
-$env:JAVA_AI_CHAT_API_KEY = "***"
-$env:JAVA_AI_CHAT_BASE_URL = "https://provider.example.com/v1"
-$env:JAVA_AI_CHAT_MODEL = "provider-model-name"
 .\scripts\run-live-model-smoke.ps1
 ```
 
@@ -49,8 +48,8 @@ $env:JAVA_AI_CHAT_MODEL = "provider-model-name"
 - 模型输出通过 JSON Schema 转换、引用校验和业务动作校验。
 - 报告不包含 API key 和 base URL。
 
-缺少任一变量、JDK 不完整、Provider 鉴权失败、模型名错误、超时或响应映射失败时，脚本必须非零退出。
+API Key 仍是占位值、未安装完整 JDK、Provider 鉴权失败、模型名错误、超时或响应映射失败时，脚本都会非零退出。
 
 ## Evidence Handling
 
-报告写入 `docs/reports/lesson-04-live-model-smoke.md`，并绑定运行时的 Commit SHA。提交报告前需要复核回答中没有客户数据、内部 endpoint 或其他敏感信息。只有报告状态为 `LIVE_MODEL` 且对应提交已通过默认验证时，才允许创建 `milestone-04-real-model` 标签。
+报告写入 `docs/reports/lesson-04-live-model-smoke.md`，并记录运行时的 Commit SHA。报告不会写入 API Key 和 Provider 地址；对外分享前仍需检查模型回答中是否包含客户数据或内部信息。

@@ -14,9 +14,9 @@
 - 不依赖外部数据库、模型密钥或业务网络的日常测试路径。
 - Knowledge Service 的 Spring AI、WebFlux、可靠性和可观测依赖边界。
 - Customer BFF 的客户 JWT、RFC 8693 Token Exchange、下游客户端认证与 audience/scope 隔离。
-- 测试替身与正式运行配置隔离，以及 JDK 21/JDK 8 CI 校验。
-- 第一条固定政策上下文问答、Spring AI 业务适配器、确定性模型协议回归测试和模型接口 Smoke 入口。
-- 版本化 Prompt、信任分区、结构化输出、业务校验和事件格式稳定的 SSE。
+- 单元测试启用固定返回结果的假模型和假服务，正式运行不启用这些测试实现，并通过 JDK 21/JDK 8 CI 校验。
+- 第一条固定政策上下文问答、Spring AI 业务适配器、固定模型响应的协议回归测试和真实模型接口 Smoke 入口。
+- 版本化 Prompt，将系统规则、可信知识和用户输入分开组装，配套结构化输出、业务校验和事件格式稳定的 SSE。
 - 面向知识回答用例的超时、并发、断路器和安全读重试。
 - 独立 HTTP Eval Runner、5 条 Golden Set、接口回归评测和模型评测入口。
 - Micrometer Observation、Spring AI 原生观测和 HTTP Trace 关联。
@@ -41,7 +41,7 @@
 - Injection 绕过确认、合成 PII 审计泄露和身份字段污染的安全回归数据集与跨平台入口。
 - Ticket Agent 规划次数、Token 分布、Tool 结果与耗时的 Micrometer 指标，并暴露受管理网络保护的 Prometheus 端点。
 - Agent Run 使用公平信号量限制并发，并提供稳定的 429 错误码与响应格式，以及异常路径的许可释放测试。
-- 每个服务一份运行配置、统一 `.env` 参数入口、测试隔离和跨平台验证命令。
+- 每个服务一份运行配置、统一模型演示配置、测试隔离和跨平台验证命令。
 - 跨平台 release gate：全构建、接口与规则回归、Java 8、敏感信息扫描和可选外部健康检查。
 - Pull Request 依赖变更审查，新增高危漏洞时阻止合并。
 - DashScope Provider 适配、国内 Embedding/Rerank 同集评测和 Spring AI Alibaba 人工确认 Graph。
@@ -109,20 +109,34 @@ deploy                           部署清单和环境说明
 macOS/Linux：
 
 ```bash
-export JAVA_AI_MAIN_JAVA_HOME=/path/to/jdk-21-or-newer
-export JAVA_AI_JDK8_HOME=/path/to/full-jdk8
 scripts/verify-unit.sh
 ```
 
 Windows PowerShell：
 
 ```powershell
-$env:JAVA_AI_MAIN_JAVA_HOME = "C:\\Java\\jdk-21"
-$env:JAVA_AI_JDK8_HOME = "C:\\Java\\jdk8"
 .\scripts\verify-unit.ps1
 ```
 
-脚本会运行项目 Node 契约、主 reactor、labs reactor 和 Java 8 客户端。
+脚本会自动寻找本机的 JDK 21+ 与 JDK 8，并运行项目 Node 契约、主 reactor、labs reactor 和 Java 8 客户端。正常使用不需要配置 Java 环境变量。
+
+## 运行真实模型专项验证
+
+项目根目录的 `config/application.yml` 已提供 OpenAI API 地址、Chat 模型和 Embedding 模型默认值。使用 OpenAI 时只需填写 `spring.ai.openai.api-key`，然后运行：
+
+```bash
+scripts/run-live-model-smoke.sh
+```
+
+Windows PowerShell：
+
+```powershell
+.\scripts\run-live-model-smoke.ps1
+```
+
+这两个脚本只运行指定的 Java 集成测试，用于检查模型连接、响应映射和业务校验，不会启动完整服务。完整服务启动见后面的“启动服务骨架”。
+
+这份配置是为了方便本地测试和文章演示。不要提交真实 API Key；生产环境必须通过密钥管理系统或部署平台 Secret 覆盖该配置。普通单元测试不会读取真实密钥，也不会访问模型接口。
 
 ## 分别构建
 
@@ -138,20 +152,13 @@ $env:JAVA_AI_JDK8_HOME = "C:\\Java\\jdk8"
 ./mvnw -f labs/pom.xml verify
 ```
 
-Java 8 客户端：
-
-```bash
-JAVA_HOME=/path/to/full-jdk8 PATH="$JAVA_HOME/bin:$PATH" \
-  ./mvnw -f integrations/jdk8-client/pom.xml verify
-```
-
-Windows 可使用 `mvnw.cmd` 和对应 JDK 环境变量执行相同 POM。
+Java 8 客户端需要真实 JDK 8 编译。直接执行前面的 `scripts/verify-unit.sh` 或 `scripts/verify-unit.ps1`，脚本会自动选择完整 JDK 8，无需手工切换 `JAVA_HOME`。
 
 ## 启动服务骨架
 
 三个应用都提供 Actuator health。Knowledge Service 提供知识回答和 SSE，Customer BFF 提供 C 端回答、SSE、反馈、重试和工单升级，Ticket Agent Service 提供任务接收、运行、查询、确认与审计：
 
-先从示例生成本地参数文件并填写连接信息：
+完整启动三个服务还需要真实数据库、身份平台和下游服务。先从示例生成本地参数文件并填写这些连接信息：
 
 ```bash
 cp .env.example .env
@@ -194,7 +201,7 @@ $env:JAVA_AI_EXTERNAL_BASE_URL = "https://test.example.com"
 
 ## 环境变量示例
 
-`.env.example` 只列出当前代码和验证脚本实际消费的变量。模型、Embedding、数据库和委托 JWT 均通过环境变量注入，不写入源码或默认配置。
+`.env.example` 只服务于完整系统联调，列出数据库、身份和外部服务等真实连接参数。普通测试不需要它；模型 Smoke 使用 `config/application.yml`。生产部署仍应由密钥系统覆盖所有敏感值。
 
 ## 验证结果
 

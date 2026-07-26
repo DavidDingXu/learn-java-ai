@@ -2,20 +2,27 @@
 
 ## One Configuration Model
 
-Knowledge Service、Ticket Agent Service 和 Customer BFF 各自只保留一份主 `application.yml`。三个文件使用相同原则：
+Knowledge Service、Ticket Agent Service 和 Customer BFF 各自只保留一份主 `application.yml`。本地模型演示另有一份项目级 `config/application.yml`，避免读者在多个终端重复配置模型参数。配置遵循以下原则：
 
 1. 非敏感默认值写在 YAML，例如端口、超时和连接池上限。
-2. 模型密钥、数据库密码、身份参数和下游地址引用 `JAVA_AI_*` 环境变量。
-3. 三个服务都通过 `spring.config.import` 读取项目根目录 `.env`。
-4. 必填参数缺失时启动失败，不静默关闭运行适配器，也不返回固定业务答案。
+2. 普通测试使用 `src/test/resources/application-test.yml`，不访问模型、数据库或外部业务系统。
+3. 真实模型演示读取项目级 `config/application.yml`，只要求填写 API Key。
+4. 完整系统联调的数据库、身份和下游参数通过根目录 `.env` 提供。
+5. 生产密钥由 Secret Manager、Vault 或部署平台 Secret 覆盖，不能保存在仓库 YAML 中。
 
 ## Prepare The Configuration
+
+只验证真实模型时，修改 `config/application.yml` 中的 `spring.ai.openai.api-key`，然后运行模型 Smoke 脚本即可。OpenAI 地址和演示模型已有默认值；使用兼容服务时，再修改同一文件中的地址和模型名。
+
+完整启动三个服务时才需要准备 `.env`：
 
 ```bash
 cp .env.example .env
 ```
 
-按 `.env.example` 的分组填写模型、Knowledge 数据库、知识原文目录、索引 Worker、Ticket 数据库、身份平台和下游服务参数。`.env` 已被 `.gitignore` 排除，仍应限制本机文件权限；生产部署应由密钥系统和平台配置覆盖，不上传 `.env`。
+按 `.env.example` 的分组填写 Knowledge 数据库、知识原文目录、索引 Worker、Ticket 数据库、身份平台和下游服务参数。`.env` 已被 `.gitignore` 排除，仍应限制本机文件权限；生产部署应由密钥系统和平台配置覆盖，不上传 `.env`。
+
+`config/application.yml` 是为了本地演示方便而保留的受版本控制模板。真实 API Key 写入后绝不能提交；生产环境使用 `SPRING_AI_OPENAI_API_KEY` 等 Spring Boot 标准外部配置覆盖。
 
 JWT 验签只能配置一种来源。本地联调使用 `JAVA_AI_DEV_JWT_HMAC_SECRET` 时，`JAVA_AI_JWT_JWK_SET_URI` 必须留空；接入公司 JWKS 时则反过来。两项同时非空会启动失败，避免部署时因残留开发密钥降级为 HMAC 验签。
 
@@ -41,7 +48,7 @@ Knowledge Service 启动时执行 Flyway 迁移，并把上传原文写入 `JAVA
 
 ## Test Isolation
 
-`src/test/resources/application-test.yml` 关闭模型和外部连接，并为需要状态的测试选择内存适配器。Spring Boot 上下文测试显式使用 `@ActiveProfiles("test")`；模型协议测试和模型接口 Smoke 通过测试属性覆盖必要参数。
+`src/test/resources/application-test.yml` 关闭模型和外部连接，并为需要状态的测试选择内存适配器。Spring Boot 上下文测试显式使用 `@ActiveProfiles("test")`；模型协议测试使用本地 HTTP Fixture，模型接口 Smoke 才显式加载项目级 `config/application.yml`。
 
 这套测试配置不会打进生产 Jar，正常启动应用时也不需要切换 Profile。快速代码回归统一执行：
 
@@ -51,9 +58,9 @@ scripts/verify-unit.sh
 
 ## Deployment Injection
 
-公司测试、预生产和生产部署使用同一组配置键，只替换值：
+公司测试、预生产和生产部署使用同一组配置结构，只替换值：
 
-- 密钥由 Secret Manager、Vault 或平台 Secret 注入；
+- 模型密钥通过 `SPRING_AI_OPENAI_API_KEY` 由 Secret Manager、Vault 或平台 Secret 注入；
 - PostgreSQL/pgvector 使用独立数据库或 Schema 与最小权限账号；
 - JWT issuer、JWK Set URI 和 audience 与目标 IdP 对齐；
 - Knowledge、Ticket 和 Legacy Tool 地址由服务发现或平台变量提供；

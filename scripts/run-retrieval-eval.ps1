@@ -4,7 +4,7 @@ $RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 . (Join-Path $PSScriptRoot "main-java-runtime.ps1")
 $ReportPrefix = if ($args.Count -gt 0) { $args[0] } else { Join-Path $RootDir "docs/reports/lesson-21-retrieval-eval" }
 
-foreach ($Name in @("JAVA_AI_RETRIEVAL_BASE_URL", "JAVA_AI_RETRIEVAL_EVAL_BEARER_TOKEN", "JAVA_AI_MAIN_JAVA_HOME")) {
+foreach ($Name in @("JAVA_AI_RETRIEVAL_BASE_URL", "JAVA_AI_RETRIEVAL_EVAL_BEARER_TOKEN")) {
   if (-not (Get-Item "Env:$Name" -ErrorAction SilentlyContinue).Value) {
     throw "$Name is required."
   }
@@ -17,7 +17,7 @@ try {
     -pl quality/eval-runner -am package -DskipTests
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-  & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar") `
+  & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar") `
     retrieval-eval `
     --dataset (Join-Path $RootDir "datasets/retrieval/golden-set-v1.jsonl") `
     --base-url $env:JAVA_AI_RETRIEVAL_BASE_URL `

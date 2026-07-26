@@ -2,25 +2,20 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+. "$ROOT_DIR/scripts/main-java-runtime.sh"
+enter_java_ai_main_jdk
 REPORT_PREFIX=${1:-"$ROOT_DIR/docs/reports/lesson-12-live-model-eval"}
 PORT=${JAVA_AI_EVAL_PORT:-18081}
-MAIN_JAVA_HOME=${JAVA_AI_MAIN_JAVA_HOME:-${JAVA_HOME:-}}
+CONFIG_FILE="$ROOT_DIR/config/application.yml"
 
 require_env() {
   local name=$1
   [[ -n "${!name:-}" ]] || { printf 'ERROR: %s is required.\n' "$name" >&2; exit 2; }
 }
 
-require_env JAVA_AI_CHAT_API_KEY
-require_env JAVA_AI_CHAT_BASE_URL
-require_env JAVA_AI_CHAT_MODEL
 require_env JAVA_AI_EVAL_BEARER_TOKEN
 require_env JAVA_AI_JWT_ISSUER
-[[ -n "$MAIN_JAVA_HOME" && -x "$MAIN_JAVA_HOME/bin/java" ]] || {
-  printf 'ERROR: JAVA_AI_MAIN_JAVA_HOME must point to JDK 21 or newer.\n' >&2
-  exit 2
-}
-
+[[ -f "$CONFIG_FILE" ]] || { printf 'ERROR: Missing local demo config: %s\n' "$CONFIG_FILE" >&2; exit 2; }
 [[ -n "${JAVA_AI_DEV_JWT_HMAC_SECRET:-}" || -n "${JAVA_AI_JWT_JWK_SET_URI:-}" ]] || {
   printf 'ERROR: JAVA_AI_DEV_JWT_HMAC_SECRET or JAVA_AI_JWT_JWK_SET_URI is required.\n' >&2
   exit 2
@@ -44,10 +39,8 @@ env JAVA_HOME="$MAIN_JAVA_HOME" PATH="$MAIN_JAVA_HOME/bin:$PATH" \
   -pl services/knowledge-service,quality/eval-runner -am package -DskipTests
 
 env JAVA_HOME="$MAIN_JAVA_HOME" PATH="$MAIN_JAVA_HOME/bin:$PATH" \
-  JAVA_AI_CHAT_API_KEY="$JAVA_AI_CHAT_API_KEY" \
-  JAVA_AI_CHAT_BASE_URL="$JAVA_AI_CHAT_BASE_URL" \
-  JAVA_AI_CHAT_MODEL="$JAVA_AI_CHAT_MODEL" \
   "$MAIN_JAVA_HOME/bin/java" \
+  -Dspring.config.additional-location="file:$CONFIG_FILE" \
   -jar "$ROOT_DIR/services/knowledge-service/target/knowledge-service-0.1.0-SNAPSHOT.jar" \
   --java-ai.knowledge.context-source=classpath \
   --java-ai.knowledge.ingestion.enabled=false \
@@ -73,7 +66,7 @@ curl --fail --silent "http://127.0.0.1:$PORT/actuator/health" >/dev/null || {
 }
 
 "$MAIN_JAVA_HOME/bin/java" \
-  -jar "$ROOT_DIR/quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar" \
+  -jar "$ROOT_DIR/quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar" \
   model-eval \
   --dataset "$ROOT_DIR/datasets/model-interaction/golden-set-v2.jsonl" \
   --base-url "http://127.0.0.1:$PORT" \

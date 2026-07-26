@@ -1,5 +1,7 @@
 package com.xiaoding.javaai.legacy.ticket;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
@@ -140,6 +142,25 @@ class TicketAgentClientTest {
             assertEquals("confirm:task-100:decision-1", error.getIdempotencyKey());
             assertEquals(1, requests.get());
         }
+    }
+
+    @Test
+    void treats_local_request_serialization_failure_as_known_before_transport() {
+        ObjectMapper failingMapper = new ObjectMapper() {
+            @Override
+            public String writeValueAsString(Object value) throws JsonProcessingException {
+                throw new JsonProcessingException("serialization failed") { };
+            }
+        };
+
+        IllegalStateException error = assertThrows(
+                IllegalStateException.class,
+                () -> TicketAgentClient.serializeConfirmationRequest(
+                        failingMapper,
+                        new ConfirmToolActionRequest(
+                                "confirmation-100", 2L, "APPROVE", "approve")));
+
+        assertTrue(error.getMessage().contains("serialize confirmation request"));
     }
 
     private TicketAgentClient client(int responseTimeoutMillis) {

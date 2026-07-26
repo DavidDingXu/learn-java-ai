@@ -10,7 +10,7 @@ try {
   & (Join-Path $RootDir "mvnw.cmd") -f (Join-Path $RootDir "pom.xml") -pl quality/eval-runner -am package -DskipTests
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-  & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT.jar") `
+  & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar") `
     contract-eval `
     --dataset (Join-Path $RootDir "datasets/model-interaction/golden-set-v2.jsonl") `
     --report $ReportPrefix `

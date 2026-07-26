@@ -1,5 +1,6 @@
 package com.xiaoding.javaai.legacy.ticket;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -91,20 +92,28 @@ public final class TicketAgentClient implements AutoCloseable {
         String safeTaskId = requireSafeId(taskId, "taskId");
         String key = requireIdempotencyKey(idempotencyKey);
         if (command == null) throw new IllegalArgumentException("command must not be null");
+        String requestBody = serializeConfirmationRequest(objectMapper, command);
         HttpPut request = new HttpPut(
                 baseUrl + "/api/v1/agent/tasks/" + safeTaskId + "/confirmation");
         authorize(request);
         request.setHeader("Idempotency-Key", key);
+        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
         try {
-            request.setEntity(new StringEntity(
-                    objectMapper.writeValueAsString(command),
-                    ContentType.APPLICATION_JSON));
             return httpClient.execute(request, response -> parseResponse(
                     response.getCode(), response.getEntity(), ConfirmationDecisionReceipt.class));
-        } catch (TicketAgentClientException error) {
-            throw error;
         } catch (IOException error) {
             throw new ConfirmationOutcomeUnknownException(key, error);
+        }
+    }
+
+    static String serializeConfirmationRequest(
+            ObjectMapper objectMapper,
+            ConfirmToolActionRequest command
+    ) {
+        try {
+            return objectMapper.writeValueAsString(command);
+        } catch (JsonProcessingException error) {
+            throw new IllegalStateException("unable to serialize confirmation request", error);
         }
     }
 
