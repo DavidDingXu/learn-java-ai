@@ -51,8 +51,17 @@ test("contract and live eval reports use the same dataset without conflating mod
   assert.equal(contract.commit, implementationCommit(contractMarkdown));
   assert.equal(live.commit, implementationCommit(liveMarkdown));
   if (contract.commit !== live.commit) {
-    assert.match(evidenceSummary, /不能作为同一实现的效果对比/);
+    assert.match(
+      evidenceSummary,
+      /只有代码、数据集和 Prompt 版本一致的结果才具有可比性/,
+    );
   }
+  assert.equal(
+    evidenceSummary.match(/`[0-9a-f]{40}`/g)?.length,
+    1,
+    "evidence summary may bind its own implementation commit but must not narrate cross-report commit reconciliation",
+  );
+  assert.doesNotMatch(evidenceSummary, /当前契约报告|历史真实模型报告|当前代码的真实模型结论/);
   assert.ok(live.results.every((result) => /^[0-9a-f]{32}$/.test(result.traceId)));
 });
 
