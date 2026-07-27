@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -65,6 +66,7 @@ public final class AgentTaskHttpEvaluationClient implements AgentEvaluationClien
                     nullableField(confirmation, "toolName"),
                     nullableField(confirmation, "risk"),
                     nullableField(confirmation, "requiredRole"),
+                    stringMap(confirmation, "arguments"),
                     eventTypes,
                     eventDetails,
                     Duration.ofNanos(System.nanoTime() - startedAt).toMillis());
@@ -117,6 +119,24 @@ public final class AgentTaskHttpEvaluationClient implements AgentEvaluationClien
         if (node == null || node.isMissingNode() || node.isNull()) return null;
         String value = node.path(name).asText();
         return value.isBlank() ? null : value;
+    }
+
+    private static Map<String, String> stringMap(JsonNode node, String name) {
+        if (node == null || node.isMissingNode() || node.isNull()) return Map.of();
+        JsonNode value = node.path(name);
+        if (value.isMissingNode() || value.isNull()) return Map.of();
+        if (!value.isObject()) {
+            throw new AgentEvaluationClientException("response field is not an object: " + name);
+        }
+        Map<String, String> result = new LinkedHashMap<>();
+        value.fields().forEachRemaining(entry -> {
+            if (!entry.getValue().isTextual()) {
+                throw new AgentEvaluationClientException(
+                        "response argument is not a string: " + entry.getKey());
+            }
+            result.put(entry.getKey(), entry.getValue().textValue());
+        });
+        return Map.copyOf(result);
     }
 
     private static String requireSafeId(String value) {

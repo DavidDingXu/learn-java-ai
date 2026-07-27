@@ -16,7 +16,14 @@ public final class ModelInteractionEvaluator {
         this.client = client;
     }
 
-    public EvalReport evaluate(EvalDataset dataset, URI baseUrl, EvalMode mode, String commit) {
+    public EvalReport evaluate(
+            EvalDataset dataset,
+            URI baseUrl,
+            EvalMode mode,
+            String commit,
+            String promptVersion,
+            String environmentId
+    ) {
         List<EvalCaseResult> results = new ArrayList<>();
         Set<String> models = new LinkedHashSet<>();
         int totalTokens = 0;
@@ -33,14 +40,14 @@ public final class ModelInteractionEvaluator {
                 ));
             } catch (RuntimeException exception) {
                 results.add(new EvalCaseResult(
-                        evalCase.id(), false, exception.getMessage(),
+                        evalCase.id(), false, failureReason(exception),
                         Duration.between(started, Instant.now()).toMillis(), "unavailable"
                 ));
             }
         }
         int passed = (int) results.stream().filter(EvalCaseResult::passed).count();
         return new EvalReport(
-                dataset.version(), mode, commit, modelName(models), Instant.now(),
+                dataset.version(), mode, commit, modelName(models), promptVersion, environmentId, Instant.now(),
                 passed, results.size() - passed, 0, totalTokens, results
         );
     }
@@ -69,5 +76,12 @@ public final class ModelInteractionEvaluator {
     private static String modelName(Set<String> models) {
         if (models.isEmpty()) return "unavailable";
         return models.size() == 1 ? models.iterator().next() : "mixed";
+    }
+
+    private static String failureReason(RuntimeException exception) {
+        if (exception instanceof KnowledgeAnswerClientException) {
+            return exception.getMessage();
+        }
+        return "evaluation request failed";
     }
 }

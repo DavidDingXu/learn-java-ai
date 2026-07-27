@@ -3,28 +3,38 @@ package com.xiaoding.javaai.labs.agentscope;
 import io.agentscope.core.model.ToolSchema;
 import io.agentscope.core.tool.Toolkit;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 public final class EnterpriseMcpRegistry {
 
     private final Toolkit toolkit;
-    private final Set<String> allowedServers;
+    private final Map<String, URI> managedServers;
     private final Set<String> allowedTools;
 
-    public EnterpriseMcpRegistry(Toolkit toolkit, Set<String> allowedServers, Set<String> allowedTools) {
+    public EnterpriseMcpRegistry(
+            Toolkit toolkit,
+            Map<String, URI> managedServers,
+            Set<String> allowedTools
+    ) {
         this.toolkit = Objects.requireNonNull(toolkit, "toolkit must not be null");
-        this.allowedServers = Set.copyOf(allowedServers);
+        this.managedServers = Map.copyOf(managedServers);
+        this.managedServers.forEach(EnterpriseMcpRegistry::validateManagedEndpoint);
         this.allowedTools = Set.copyOf(allowedTools);
     }
 
     public McpRegistrationReceipt register(McpServerDescriptor server, List<McpToolDescriptor> tools) {
-        validateServer(server);
+        URI managedEndpoint = resolveManagedEndpoint(server);
+        List<McpToolDescriptor> discoveredTools = List.copyOf(
+                Objects.requireNonNull(tools, "tools must not be null"));
+        discoveredTools.forEach(this::validateTool);
+
         List<String> registered = new ArrayList<>();
-        for (McpToolDescriptor tool : tools) {
-            validateTool(tool);
+        for (McpToolDescriptor tool : discoveredTools) {
             toolkit.registerSchema(ToolSchema.builder()
                     .name(tool.name())
                     .description(tool.description())
@@ -33,16 +43,26 @@ public final class EnterpriseMcpRegistry {
                     .build());
             registered.add(tool.name());
         }
-        return new McpRegistrationReceipt(server.serverId(), server.endpoint(), registered);
+        return new McpRegistrationReceipt(server.serverId(), managedEndpoint, registered);
     }
 
-    private void validateServer(McpServerDescriptor server) {
-        if (server == null || !allowedServers.contains(server.serverId())) {
+    private URI resolveManagedEndpoint(McpServerDescriptor server) {
+        URI endpoint = server == null ? null : managedServers.get(server.serverId());
+        if (endpoint == null) {
             throw new IllegalArgumentException("MCP server is not allowlisted");
         }
-        if (server.endpoint() == null || !"https".equalsIgnoreCase(server.endpoint().getScheme())
-                || server.endpoint().getHost() == null) {
-            throw new IllegalArgumentException("MCP endpoint must use HTTPS with a host");
+        return endpoint;
+    }
+
+    private static void validateManagedEndpoint(String serverId, URI endpoint) {
+        if (serverId == null || serverId.isBlank() || endpoint == null
+                || !"https".equalsIgnoreCase(endpoint.getScheme())
+                || endpoint.getHost() == null
+                || endpoint.getUserInfo() != null
+                || endpoint.getQuery() != null
+                || endpoint.getFragment() != null) {
+            throw new IllegalArgumentException(
+                    "managed MCP endpoints must use HTTPS without user info, query or fragment");
         }
     }
 

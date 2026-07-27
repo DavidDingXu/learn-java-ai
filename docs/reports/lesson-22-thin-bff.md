@@ -11,7 +11,8 @@ Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 - Token Exchange 支持客户端 Basic 认证、显式超时和表单协议；下游仍独立校验签名、issuer、audience、actor、tenant 与 scope。
 - 完整回答和 SSE 都通过 WebClient 调用 Knowledge Service；BFF 不引入 Spring AI，也不复制检索、Prompt 或回答校验规则。
 - SSE 公开稳定的 `session`、`metadata`、`delta`、`heartbeat`、`citation`、`completed` 和 `error` 事件。
-- 流式尝试只有收到 `completed` 后才进入完成状态；断流、错误或取消都会把本次尝试标记为失败。
+- `completed` 的 `refused` 与 `refusalReason` 会同累积正文、引用和 Trace 一起保存；保存成功后流式尝试才进入完成状态。
+- 断流、错误或取消都会把本次尝试标记为失败。
 - 下游传输异常会转换为稳定的 `KNOWLEDGE_STREAM_FAILED` 事件，不把内部异常直接暴露给已经开始接收 SSE 的浏览器。
 - 单机限流键由 JWT 中的租户与客户主体组成，请求体无法伪造限流身份。
 - Customer JWT 同时配置 JWKS 与开发 HMAC 时启动失败，避免不同环境静默选择错误的校验源。

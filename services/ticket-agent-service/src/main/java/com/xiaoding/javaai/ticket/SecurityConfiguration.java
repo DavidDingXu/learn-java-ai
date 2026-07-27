@@ -34,8 +34,7 @@ public class SecurityConfiguration {
                             .authenticationEntryPoint(unauthorized)
                             .jwt(jwt -> jwt.decoder(decoder)))
                     .authorizeHttpRequests(authorize -> authorize
-                            .requestMatchers(
-                                    "/actuator/health", "/actuator/prometheus", "/actuator/env", "/error")
+                            .requestMatchers("/actuator/health", "/error")
                             .permitAll()
                             .requestMatchers(HttpMethod.POST, "/api/v1/agent/tasks")
                             .hasAuthority("SCOPE_ticket:task:create")
@@ -48,8 +47,7 @@ public class SecurityConfiguration {
                             .anyRequest().denyAll());
         } else {
             http.authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers(
-                            "/actuator/health", "/actuator/prometheus", "/actuator/env", "/error")
+                    .requestMatchers("/actuator/health", "/error")
                     .permitAll()
                     .anyRequest().denyAll());
         }

@@ -29,17 +29,7 @@ Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 
 ## External pgvector Verification
 
-外部测试会清空并重建目标数据库，只能使用一次性或专用测试库：
-
-```bash
-export JAVA_AI_POSTGRES_URL='jdbc:postgresql://127.0.0.1:5432/java_ai_test'
-export JAVA_AI_POSTGRES_USER='java_ai'
-export JAVA_AI_POSTGRES_PASSWORD='replace-with-test-password'
-
-./mvnw -pl services/knowledge-service verify -Pexternal-integration
-```
-
-`PgVectorExternalIT` 写入一个当前用户可读文档、一个仅 finance 部门可读文档和一个其他租户文档，在 `topK=1` 时应只返回 `allowed-chunk`。是否满足该行为以专用测试库上的运行结果为准。
+外部测试会清空并重建目标数据库，只能使用一次性或专用测试库，不属于默认演示步骤。`PgVectorExternalIT` 写入一个当前用户可读文档、一个仅 finance 部门可读文档和一个其他租户文档，在 `topK=1` 时应只返回 `allowed-chunk`。Knowledge Service 的生产连接项位于 `application.yml` 的 `production` 段，真实密码必须由部署平台的密钥系统覆盖。是否满足该行为以专用测试库上的运行结果为准。
 
 ## Evidence Boundary
 

@@ -124,20 +124,33 @@ public final class PolicyDocumentChunker {
             List<String> headingPath,
             String text
     ) {
-        String material = command.tenantId().value() + "|"
-                + command.documentId().value() + "|"
-                + command.documentVersion() + "|"
-                + command.chunkPolicyVersion() + "|"
-                + ordinal + "|"
-                + String.join("/", headingPath) + "|"
-                + text;
+        StringBuilder material = new StringBuilder();
+        append(material, "tenantId");
+        append(material, command.tenantId().value());
+        append(material, "documentId");
+        append(material, command.documentId().value());
+        append(material, "documentVersion");
+        append(material, Integer.toString(command.documentVersion()));
+        append(material, "chunkPolicyVersion");
+        append(material, command.chunkPolicyVersion());
+        append(material, "ordinal");
+        append(material, Integer.toString(ordinal));
+        append(material, "headingPath");
+        append(material, Integer.toString(headingPath.size()));
+        headingPath.forEach(heading -> append(material, heading));
+        append(material, "text");
+        append(material, text);
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
-                    .digest(material.getBytes(StandardCharsets.UTF_8));
-            return "chunk-" + HexFormat.of().formatHex(digest, 0, 12);
+                    .digest(material.toString().getBytes(StandardCharsets.UTF_8));
+            return "chunk-" + HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException error) {
             throw new IllegalStateException("SHA-256 is not available", error);
         }
+    }
+
+    private static void append(StringBuilder material, String value) {
+        material.append(value.length()).append(':').append(value).append(';');
     }
 
     private record DraftChunk(List<String> headingPath, String text) {

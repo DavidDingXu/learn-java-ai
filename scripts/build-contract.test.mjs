@@ -89,7 +89,7 @@ test("eval runner owns contract tooling and remains independent of services", ()
   assert.doesNotMatch(pom, /knowledge-service|ticket-agent-service|customer-bff|spring-ai-/);
 });
 
-test("each service exposes one production-facing runtime configuration", () => {
+test("each service has one runtime config with explicit demo and production boundaries", () => {
   const services = [
     "services/knowledge-service",
     "services/ticket-agent-service",
@@ -104,8 +104,10 @@ test("each service exposes one production-facing runtime configuration", () => {
     assert.deepEqual(runtimeConfigs, ["application.yml"], `${service} runtime configs`);
 
     const runtime = read(`${service}/src/main/resources/application.yml`);
-    assert.doesNotMatch(runtime, /spring:\s*[\s\S]*?profiles:|on-profile:|local-lite|shared-dev/);
-    assert.match(runtime, /import:\s*optional:file:\.env\[\.properties\]/);
+    assert.match(runtime, /profiles:\s*\n\s+default:\s*demo/);
+    assert.match(runtime, /on-profile:\s*demo/);
+    assert.match(runtime, /on-profile:\s*production/);
+    assert.doesNotMatch(runtime, /\.env|\$\{JAVA_AI_[A-Z0-9_]+/);
     assert.equal(
       existsSync(path.join(projectRoot, service, "src/test/resources/application-test.yml")),
       true,
@@ -115,22 +117,30 @@ test("each service exposes one production-facing runtime configuration", () => {
 
   const knowledge = read("services/knowledge-service/src/main/resources/application.yml");
   const demoModelConfig = read("config/application.yml");
-  assert.match(knowledge, /chat:\s*openai/);
-  assert.match(knowledge, /embedding:\s*openai/);
+  assert.match(knowledge, /on-profile:\s*demo[\s\S]*?chat:\s*none/);
+  assert.match(knowledge, /on-profile:\s*production[\s\S]*?chat:\s*openai/);
+  assert.match(knowledge, /on-profile:\s*production[\s\S]*?embedding:\s*openai/);
+  assert.match(knowledge, /password:\s*replace-with-secret-manager/);
   assert.match(demoModelConfig, /api-key:\s*replace-with-your-api-key/);
   assert.match(demoModelConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);
-  assert.doesNotMatch(knowledge, /JAVA_AI_CHAT_(?:API_KEY|BASE_URL|MODEL)/);
-  assert.match(knowledge, /\$\{JAVA_AI_POSTGRES_URL}/);
   assert.doesNotMatch(knowledge, /execution-mode|LOCAL_DISABLED|PROVIDER_PROTOCOL_FIXTURE/);
 
   const ticket = read("services/ticket-agent-service/src/main/resources/application.yml");
-  assert.match(ticket, /persistence:\s*[\s\S]*?mode:\s*jdbc/);
-  assert.match(ticket, /\$\{JAVA_AI_TICKET_DB_URL}/);
-  assert.match(ticket, /downstream-enabled:\s*true/);
+  assert.match(ticket, /on-profile:\s*demo[\s\S]*?mode:\s*memory/);
+  assert.match(ticket, /on-profile:\s*production[\s\S]*?mode:\s*jdbc/);
+  assert.match(ticket, /on-profile:\s*production[\s\S]*?downstream-enabled:\s*false/);
 
   const bff = read("apps/customer-bff/src/main/resources/application.yml");
-  assert.match(bff, /\$\{JAVA_AI_TOKEN_EXCHANGE_ENDPOINT}/);
-  assert.match(bff, /\$\{JAVA_AI_KNOWLEDGE_BASE_URL}/);
+  assert.match(bff, /on-profile:\s*demo[\s\S]*?external-integrations-enabled:\s*false/);
+  assert.match(bff, /on-profile:\s*production[\s\S]*?external-integrations-enabled:\s*true/);
+
+  for (const startupTest of [
+    "services/knowledge-service/src/test/java/com/xiaoding/javaai/knowledge/KnowledgeServiceDemoStartupTest.java",
+    "services/ticket-agent-service/src/test/java/com/xiaoding/javaai/ticket/TicketAgentDemoStartupTest.java",
+    "apps/customer-bff/src/test/java/com/xiaoding/javaai/customer/CustomerBffDemoStartupTest.java",
+  ]) {
+    assert.equal(existsSync(path.join(projectRoot, startupTest)), true, startupTest);
+  }
 });
 
 test("build verification is cross-platform and self-contained", {

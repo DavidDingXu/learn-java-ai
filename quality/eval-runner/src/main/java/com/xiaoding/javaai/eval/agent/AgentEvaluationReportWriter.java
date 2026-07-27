@@ -19,6 +19,7 @@ public final class AgentEvaluationReportWriter {
             Map<String, Object> json = new LinkedHashMap<>();
             json.put("datasetVersion", report.datasetVersion());
             json.put("commit", report.commit());
+            json.put("runId", report.runId());
             json.put("executedAt", report.executedAt().toString());
             json.put("passedCount", report.passedCount());
             json.put("failedCount", report.failedCount());
@@ -40,6 +41,7 @@ public final class AgentEvaluationReportWriter {
                     .append(" | ").append(value(evalCase.actualTool()))
                     .append(" | ").append(value(evalCase.actualRisk()))
                     .append(" | ").append(value(evalCase.actualRole()))
+                    .append(" | ").append(value(evalCase.actualArguments()))
                     .append(" | ").append(evalCase.latencyMillis())
                     .append(" | ").append(String.join("; ", evalCase.reasons()))
                     .append(" |\n");
@@ -49,16 +51,17 @@ public final class AgentEvaluationReportWriter {
 
                 - Dataset: `%s`
                 - Commit: `%s`
+                - Run ID: `%s`
                 - Executed at: `%s`
                 - Result: **%s**
                 - Passed: %d
                 - Failed: %d
 
-                | Case | Result | State | Tool | Risk | Required role | Latency ms | Reason |
-                |---|---:|---|---|---|---|---:|---|
+                | Case | Result | State | Tool | Risk | Required role | Arguments | Latency ms | Reason |
+                |---|---:|---|---|---|---|---|---:|---|
                 %s
                 """.formatted(
-                report.datasetVersion(), report.commit(), report.executedAt(),
+                report.datasetVersion(), report.commit(), report.runId(), report.executedAt(),
                 report.passed() ? "PASS" : "FAIL",
                 report.passedCount(), report.failedCount(), rows)).stripTrailing()
                 + System.lineSeparator();
@@ -66,6 +69,11 @@ public final class AgentEvaluationReportWriter {
 
     private static String value(String value) {
         return value == null || value.isBlank() ? "-" : value;
+    }
+
+    private static String value(Map<String, String> value) {
+        if (value == null || value.isEmpty()) return "-";
+        return value.toString().replace("|", "\\|").replaceAll("\\s+", " ");
     }
 
     private static void createParent(Path path) throws IOException {

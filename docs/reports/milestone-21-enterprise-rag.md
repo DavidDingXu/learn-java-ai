@@ -22,16 +22,7 @@ Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 ./mvnw -pl services/knowledge-service,quality/eval-runner test
 ```
 
-专用 PostgreSQL/pgvector 测试库：
-
-```bash
-export JAVA_AI_POSTGRES_URL='jdbc:postgresql://127.0.0.1:5432/java_ai_test'
-export JAVA_AI_POSTGRES_USER='java_ai'
-export JAVA_AI_POSTGRES_PASSWORD='replace-with-test-password'
-./mvnw -pl services/knowledge-service verify -Pexternal-integration
-```
-
-外部 profile 会执行 `Flyway.clean()`，只能连接一次性或专用测试库，不能连接共享库或生产库。Windows 可使用 `mvnw.cmd` 并设置相同环境变量。
+外部 PostgreSQL/pgvector 验证由目标测试流水线执行，流水线提供一次性数据库连接信息后运行 `./mvnw -pl services/knowledge-service verify -Pexternal-integration`。该 profile 会执行 `Flyway.clean()`，只能连接一次性或专用测试库，不能连接共享库或生产库。这项验证不是本地 demo 的前置条件。
 
 ## Remaining Environment Work
 

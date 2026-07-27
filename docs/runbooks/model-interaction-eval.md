@@ -1,77 +1,92 @@
-# Model Interaction Eval Runbook
+# 模型、检索与 Agent 评测
 
-## Contract Mode
+## 本地先跑无外部依赖的契约评测
 
-Contract mode starts a loopback HTTP fixture and never calls a real model:
-
-```bash
-scripts/run-contract-eval.sh
-```
-
-PowerShell:
-
-```powershell
-.\scripts\run-contract-eval.ps1
-```
-
-## Live Mode
-
-Live mode requires the model variables plus a short-lived delegated token in `JAVA_AI_EVAL_BEARER_TOKEN`. The token must contain the production-equivalent issuer, audience, actor, `knowledge:answer` scope, tenant and subject claims. Configure validation with `JAVA_AI_JWT_ISSUER` and either `JAVA_AI_JWT_JWK_SET_URI` or `JAVA_AI_DEV_JWT_HMAC_SECRET`.
-
-The script binds Knowledge Service to `127.0.0.1`, but it does not disable authentication. Eval Runner sends the token as `Authorization: Bearer ...`, so the test crosses the same identity boundary as a normal HTTP request.
+契约模式会在进程内启动确定性 HTTP Fixture，不访问真实模型、数据库或身份平台。先构建可执行 Eval Runner：
 
 ```bash
-scripts/run-live-model-eval.sh
+./mvnw -pl quality/eval-runner -am package -DskipTests
 ```
 
-PowerShell:
-
-```powershell
-.\scripts\run-live-model-eval.ps1
-```
-
-## Reports
-
-Both commands write JSON and Markdown. Reports must state mode, dataset version, model, code version, result counts, Token totals, latency, Trace ID and bad cases. API keys, bearer tokens and Provider base URLs must never be written.
-
-## Retrieval Evaluation
-
-Retrieval evaluation targets an already prepared Knowledge Service environment. The token in `JAVA_AI_RETRIEVAL_EVAL_BEARER_TOKEN` must carry `knowledge:eval` scope plus the tenant, subject, department, issuer, audience and actor claims accepted by that environment.
-
-macOS or Linux:
+再直接运行 Java：
 
 ```bash
-JAVA_AI_RETRIEVAL_BASE_URL=https://knowledge-test.example.com \
-JAVA_AI_RETRIEVAL_EVAL_BEARER_TOKEN=short-lived-token \
-scripts/run-retrieval-eval.sh
+java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
+  contract-eval \
+  --dataset datasets/model-interaction/golden-set-v2.jsonl \
+  --prompt-version knowledge-answer-v1 \
+  --environment-id local-contract-fixture \
+  --report docs/reports/local-contract-eval \
+  --commit working-tree
 ```
 
-PowerShell:
+Windows PowerShell 使用相同的 Maven 和 `java -jar` 参数，将换行符改为反引号。这条路径适合日常回归，但只检查数据集、HTTP 客户端、字段映射、阈值和报告逻辑。
 
-```powershell
-$env:JAVA_AI_RETRIEVAL_BASE_URL = "https://knowledge-test.example.com"
-$env:JAVA_AI_RETRIEVAL_EVAL_BEARER_TOKEN = "short-lived-token"
-.\scripts\run-retrieval-eval.ps1
-```
+## 真实模型评测走公开 HTTP 边界
 
-The environment must contain the versioned documents, ACLs and embeddings referenced by `datasets/retrieval/golden-set-v1.jsonl`. The runner records actual rankings, embedding model, Recall@K, HitRate@K, MRR, duplicate rate and p95 latency. It exits non-zero when a threshold fails or one run returns multiple embedding models.
+真实模型评测应指向已启用 JWT 和模型 Provider 的 Knowledge Service。模型、数据库和身份参数由目标环境 `application.yml` 与部署密钥系统提供，读者无需为本地契约评测配置这些值。
 
-## Agent Evaluation
-
-Agent evaluation targets a deployed Ticket Agent Service and uses three short-lived delegated tokens instead of one broad test credential:
-
-- `JAVA_AI_AGENT_CREATE_TOKEN`: actor `customer-bff`, scope `ticket:task:create`.
-- `JAVA_AI_AGENT_RUN_TOKEN`: actor `ticket-agent-worker`, scope `ticket:task:run`.
-- `JAVA_AI_AGENT_READ_TOKEN`: actor `jdk8-crm`, scope `ticket:task:read`.
-
-The runner creates a task, runs it to a terminal or confirmation state, and reads the audit trail. It never calls the confirmation endpoint, so any write-execution audit event is a failed side-effect boundary.
+准备一枚包含正确 issuer、audience、actor、tenant、subject 和 `knowledge:answer` scope 的短时令牌后，运行：
 
 ```bash
-JAVA_AI_AGENT_BASE_URL=https://ticket-agent-test.example.com \
-JAVA_AI_AGENT_CREATE_TOKEN=create-token \
-JAVA_AI_AGENT_RUN_TOKEN=run-token \
-JAVA_AI_AGENT_READ_TOKEN=read-token \
-scripts/run-agent-eval.sh
+java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
+  model-eval \
+  --dataset datasets/model-interaction/golden-set-v2.jsonl \
+  --base-url https://knowledge-test.example.com \
+  --mode LIVE_MODEL \
+  --bearer-token '<SHORT_LIVED_TOKEN>' \
+  --prompt-version knowledge-answer-v1 \
+  --environment-id knowledge-test \
+  --report docs/reports/model-live-eval \
+  --commit '<CANDIDATE_COMMIT>'
 ```
 
-PowerShell uses the same variables with `scripts/run-agent-eval.ps1`. Reports contain task state, selected Tool, risk, required role, audit event types and latency. They never contain bearer tokens, Prompt bodies or business context.
+候选 Commit、数据集、Prompt、模型和服务环境必须保持一致。报告会保存模式、数据集版本、模型、代码版本、结果计数、Token、延迟、Trace ID 和失败样例，不得保存 API Key、Bearer Token 或私有 Provider 地址。
+
+## 检索评测使用已准备的知识环境
+
+目标 Knowledge Service 需要预先导入 `datasets/retrieval/golden-set-v1.jsonl` 引用的版本化文档、ACL 和 Embedding。短时令牌必须包含 `knowledge:eval` scope，以及目标环境接受的 tenant、subject、department、issuer、audience 和 actor。
+
+```bash
+java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
+  retrieval-eval \
+  --dataset datasets/retrieval/golden-set-v1.jsonl \
+  --base-url https://knowledge-test.example.com \
+  --bearer-token '<SHORT_LIVED_TOKEN>' \
+  --top-k 5 \
+  --min-recall 0.80 \
+  --min-hit-rate 0.90 \
+  --min-mrr 0.60 \
+  --max-duplicate-rate 0.02 \
+  --max-p95-ms 1500 \
+  --report docs/reports/retrieval-eval \
+  --commit '<CANDIDATE_COMMIT>'
+```
+
+Runner 记录实际排名、Embedding 模型、Recall@K、HitRate@K、MRR、重复率和 p95 延迟。任一阈值失败，或一轮结果出现多个 Embedding 模型，进程都会非零退出。
+
+## Agent 评测使用三枚最小权限令牌
+
+Agent 评测指向已部署的 Ticket Agent Service，不使用一枚全权测试凭证：
+
+- 创建令牌：actor 为 `customer-bff`，scope 为 `ticket:task:create`；
+- 运行令牌：actor 为 `ticket-agent-worker`，scope 为 `ticket:task:run`；
+- 读取令牌：actor 为 `jdk8-crm`，scope 为 `ticket:task:read`。
+
+```bash
+java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
+  agent-eval \
+  --dataset datasets/agent/golden-set-v2.jsonl \
+  --base-url https://ticket-agent-test.example.com \
+  --create-token '<CREATE_TOKEN>' \
+  --run-token '<RUN_TOKEN>' \
+  --read-token '<READ_TOKEN>' \
+  --report docs/reports/agent-eval \
+  --commit '<CANDIDATE_COMMIT>'
+```
+
+Runner 会创建任务、运行到终态或等待确认状态，再读取审计时间线。它不调用确认接口，因此数据集执行期间出现任何写 Tool 成功审计，都表示副作用边界失守。
+
+## 凭证和报告边界
+
+上述令牌参数只适合隔离的短时评测会话。共享流水线中应由凭证系统在运行时注入，并禁止命令回显和日志记录。若令牌曾进入命令历史或 CI 日志，立即撤销，不要等待自然过期。

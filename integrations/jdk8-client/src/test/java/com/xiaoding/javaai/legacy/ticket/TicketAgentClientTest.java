@@ -81,13 +81,15 @@ class TicketAgentClientTest {
         });
 
         try (TicketAgentClient client = client(1000)) {
+            String key = TicketAgentClient.confirmationIdempotencyKey(
+                    "task-100", "confirmation-100");
             ConfirmationDecisionReceipt receipt = client.confirm(
                     "task-100",
-                    "confirm:task-100:decision-1",
+                    key,
                     new ConfirmToolActionRequest(
                             "confirmation-100", 2L, "APPROVE", "已核对工单"));
 
-            assertEquals("confirm:task-100:decision-1", idempotencyKey.get());
+            assertEquals(key, idempotencyKey.get());
             assertTrue(requestBody.get().contains("\"expectedTaskVersion\":2"));
             assertFalse(requestBody.get().contains("tenantId"));
             assertFalse(requestBody.get().contains("roles"));
@@ -97,17 +99,32 @@ class TicketAgentClientTest {
     }
 
     @Test
+    void builds_an_opaque_confirmation_key_without_field_boundary_collisions() {
+        String key = TicketAgentClient.confirmationIdempotencyKey(
+                "task-100", "confirmation-100");
+        String firstBoundary = TicketAgentClient.confirmationIdempotencyKey("a:b", "c");
+        String secondBoundary = TicketAgentClient.confirmationIdempotencyKey("a", "b:c");
+
+        assertTrue(key.matches("confirm:v1:[0-9a-f]{64}"));
+        assertFalse(key.contains("task-100"));
+        assertFalse(key.contains("confirmation-100"));
+        assertFalse(firstBoundary.equals(secondBoundary));
+    }
+
+    @Test
     void maps_a_business_conflict_without_marking_it_retryable() throws Exception {
         server.createContext("/api/v1/agent/tasks/task-100/confirmation", exchange -> respond(
                 exchange, 409,
                 "{\"code\":\"CONFIRMATION_IDEMPOTENCY_CONFLICT\",\"message\":\"key conflict\"}"));
 
         try (TicketAgentClient client = client(1000)) {
+            String key = TicketAgentClient.confirmationIdempotencyKey(
+                    "task-100", "confirmation-100");
             TicketAgentClientException error = assertThrows(
                     TicketAgentClientException.class,
                     () -> client.confirm(
                             "task-100",
-                            "confirm:task-100:decision-1",
+                            key,
                             new ConfirmToolActionRequest(
                                     "confirmation-100", 2L, "APPROVE", "approve")));
 
@@ -131,15 +148,17 @@ class TicketAgentClientTest {
         });
 
         try (TicketAgentClient client = client(100)) {
+            String key = TicketAgentClient.confirmationIdempotencyKey(
+                    "task-100", "confirmation-100");
             ConfirmationOutcomeUnknownException error = assertThrows(
                     ConfirmationOutcomeUnknownException.class,
                     () -> client.confirm(
                             "task-100",
-                            "confirm:task-100:decision-1",
+                            key,
                             new ConfirmToolActionRequest(
                                     "confirmation-100", 2L, "APPROVE", "approve")));
 
-            assertEquals("confirm:task-100:decision-1", error.getIdempotencyKey());
+            assertEquals(key, error.getIdempotencyKey());
             assertEquals(1, requests.get());
         }
     }

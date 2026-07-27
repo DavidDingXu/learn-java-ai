@@ -20,7 +20,9 @@ describe("HttpCustomerBffClient", () => {
     let receiver: unknown;
     const browserFetch = vi.fn(function (this: unknown) {
       receiver = this;
-      return Promise.resolve(sseResponse("event: completed\ndata: {}\n\n"));
+      return Promise.resolve(sseResponse(
+        'event: completed\ndata: {"refused":false,"refusalReason":null}\n\n',
+      ));
     });
     vi.stubGlobal("fetch", browserFetch);
     try {
@@ -51,7 +53,7 @@ describe("HttpCustomerBffClient", () => {
       'data: {"citation":{"documentId":"refund-policy","version":"1","sectionId":"10","title":"退款政策"}}',
       "",
       "event: completed",
-      "data: {}",
+      'data: {"refused":true,"refusalReason":"缺少退款审核状态"}',
       "",
       "",
     ].join("\n")));
@@ -76,6 +78,11 @@ describe("HttpCustomerBffClient", () => {
       body: JSON.stringify({ question: "多久到账？" }),
     }));
     expect(events.map((event) => event.type)).toEqual(["session", "citation", "completed"]);
+    expect(events.at(-1)).toEqual({
+      type: "completed",
+      refused: true,
+      refusalReason: "缺少退款审核状态",
+    });
   });
 
   it("maps a JSON API error and falls back to the HTTP status for an empty response", async () => {
@@ -103,5 +110,28 @@ describe("HttpCustomerBffClient", () => {
       status: 401,
     }));
     expect(CustomerBffApiError).toBeDefined();
+  });
+
+  it("rejects a completed event without explicit refusal fields", async () => {
+    const client = new HttpCustomerBffClient({
+      baseUrl: "",
+      accessToken: () => "customer-token",
+      fetcher: vi.fn<typeof fetch>().mockResolvedValue(sseResponse(
+        'event: completed\ndata: {"refused":false}\n\n',
+      )),
+    });
+
+    const consume = async () => {
+      for await (const ignored of client.streamAnswer(
+        { question: "多久到账？" },
+        new AbortController().signal,
+      )) {
+        void ignored;
+      }
+    };
+
+    await expect(consume()).rejects.toEqual(expect.objectContaining({
+      code: "INVALID_STREAM_EVENT",
+    }));
   });
 });

@@ -19,6 +19,7 @@ public final class StreamingKnowledgeAnswerService implements StreamKnowledgeAns
     private final TraceIdProvider traceIdProvider;
     private final String promptVersion;
     private final String systemInstruction;
+    private final KnowledgeAnswerValidator validator = new KnowledgeAnswerValidator();
 
     public StreamingKnowledgeAnswerService(
             PolicyContextSource contextSource,
@@ -36,34 +37,51 @@ public final class StreamingKnowledgeAnswerService implements StreamKnowledgeAns
 
     @Override
     public Flux<AnswerStreamEvent> stream(AnswerKnowledgeQuestionCommand command) {
-        return Flux.defer(() -> contextSource.load(new PolicyContextQuery(
+        return Flux.defer(() -> {
+            long startedNanos = System.nanoTime();
+            return contextSource.load(new PolicyContextQuery(
                         command.question(), command.accessScope(), command.effectiveAt()
                 ))
-                .flatMapMany(contexts -> streamWithContext(command, contexts)));
+                    .flatMapMany(contexts -> streamWithContext(command, contexts, startedNanos));
+        });
     }
 
     private Flux<AnswerStreamEvent> streamWithContext(
             AnswerKnowledgeQuestionCommand command,
-            List<PolicyContext> contexts
+            List<PolicyContext> contexts,
+            long startedNanos
     ) {
-        long startedNanos = System.nanoTime();
         AtomicLong firstTokenNanos = new AtomicLong();
-        AtomicReference<String> model = new AtomicReference<>("unknown");
+        AtomicReference<String> model = new AtomicReference<>();
         AtomicReference<ModelUsage> usage = new AtomicReference<>();
         AtomicReference<String> finishReason = new AtomicReference<>("unknown");
+        AtomicReference<ModelStreamDecision> decision = new AtomicReference<>();
+        StringBuilder answer = new StringBuilder();
         GroundedPrompt prompt = new GroundedPrompt(
                 systemInstruction, promptVersion, command.question(),
                 command.conversationContext(), contexts
         );
 
         Flux<AnswerStreamEvent> modelEvents = streamModel.stream(prompt)
-                .handle((chunk, sink) -> {
+                .<AnswerStreamEvent>handle((chunk, sink) -> {
                     if (chunk.model() != null && !chunk.model().isBlank()) model.set(chunk.model());
                     if (chunk.usage() != null) usage.set(chunk.usage());
                     if (chunk.finishReason() != null && !chunk.finishReason().isBlank()) {
                         finishReason.set(chunk.finishReason());
                     }
+                    if (chunk.decision() != null) {
+                        if (!decision.compareAndSet(null, chunk.decision())) {
+                            throw new InvalidModelAnswerException("model stream decision is duplicated");
+                        }
+                        validator.validateDecision(chunk.decision(), contexts);
+                    }
                     if (chunk.delta() != null && !chunk.delta().isEmpty()) {
+                        if (decision.get() == null) {
+                            throw new InvalidModelAnswerException(
+                                    "model stream emitted answer text before its decision"
+                            );
+                        }
+                        answer.append(chunk.delta());
                         firstTokenNanos.compareAndSet(0, System.nanoTime());
                         sink.next(new AnswerStreamEvent.DeltaEvent(chunk.delta()));
                     }
@@ -78,18 +96,27 @@ public final class StreamingKnowledgeAnswerService implements StreamKnowledgeAns
         ));
 
         Flux<AnswerStreamEvent> terminal = Flux.defer(() -> {
-            ModelUsage terminalUsage = usage.get();
-            if (terminalUsage == null || isEmpty(terminalUsage)) {
-                return Flux.error(new InvalidModelAnswerException("model usage is missing"));
-            }
+            ModelStreamDecision terminalDecision = decision.get();
+            validator.validateDecision(terminalDecision, contexts);
+            ModelAnswerDraft draft = validator.validate(new ModelAnswerDraft(
+                    answer.toString(),
+                    terminalDecision.citedSectionIds(),
+                    terminalDecision.refused(),
+                    terminalDecision.refusalReason(),
+                    model.get(),
+                    usage.get(),
+                    finishReason.get()
+            ), contexts);
             long first = firstTokenNanos.get();
             long ttftMillis = first == 0 ? -1 : Duration.ofNanos(first - startedNanos).toMillis();
             Flux<AnswerStreamEvent> citations = Flux.fromIterable(contexts)
+                    .filter(context -> draft.citedSectionIds().contains(context.sectionId()))
                     .map(context -> (AnswerStreamEvent) new AnswerStreamEvent.CitationEvent(new Citation(
                             context.documentId(), context.version(), context.sectionId(), context.title()
                     )));
             return Flux.concat(citations, Flux.just(new AnswerStreamEvent.CompletedEvent(
-                    model.get(), terminalUsage, finishReason.get(), ttftMillis
+                    draft.model(), draft.usage(), draft.finishReason(), ttftMillis,
+                    draft.refused(), draft.refusalReason()
             )));
         });
 
@@ -110,9 +137,4 @@ public final class StreamingKnowledgeAnswerService implements StreamKnowledgeAns
                 : "The model stream ended unexpectedly";
     }
 
-    private static boolean isEmpty(ModelUsage usage) {
-        return usage.promptTokens() == 0
-                && usage.completionTokens() == 0
-                && usage.totalTokens() == 0;
-    }
 }

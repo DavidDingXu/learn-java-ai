@@ -81,8 +81,8 @@ public final class EvalRunner {
         }
         System.out.println("eval-runner " + version());
         System.out.println("usage: contract-validate <contracts-directory>");
-        System.out.println("       contract-eval --dataset <jsonl> --report <path-prefix> --commit <sha>");
-        System.out.println("       model-eval --dataset <jsonl> --base-url <url> --mode <LIVE_MODEL|CONTRACT_FIXTURE> --bearer-token <token> --report <path-prefix> --commit <sha>");
+        System.out.println("       contract-eval --dataset <jsonl> --prompt-version <id> --environment-id <id> --report <path-prefix> --commit <sha>");
+        System.out.println("       model-eval --dataset <jsonl> --base-url <url> --mode <LIVE_MODEL|CONTRACT_FIXTURE> --bearer-token <token> --prompt-version <id> --environment-id <id> --report <path-prefix> --commit <sha>");
         System.out.println("       retrieval-eval --dataset <jsonl> --base-url <url> --bearer-token <token> --top-k <n> --min-recall <ratio> --min-hit-rate <ratio> --min-mrr <ratio> --max-duplicate-rate <ratio> --max-p95-ms <ms> --report <path-prefix> --commit <sha>");
         System.out.println("       agent-eval --dataset <jsonl> --base-url <url> --create-token <token> --run-token <token> --read-token <token> --report <path-prefix> --commit <sha>");
         System.out.println("       security-eval --dataset <jsonl> --base-url <url> --create-token <token> --run-token <token> --read-token <token> --report <path-prefix> --commit <sha>");
@@ -157,7 +157,14 @@ public final class EvalRunner {
                 ? required(options, "bearer-token")
                 : options.get("bearer-token");
         EvalReport report = new ModelInteractionEvaluator(new KnowledgeAnswerHttpClient(bearerToken))
-                .evaluate(dataset, baseUrl, mode, required(options, "commit"));
+                .evaluate(
+                        dataset,
+                        baseUrl,
+                        mode,
+                        required(options, "commit"),
+                        required(options, "prompt-version"),
+                        required(options, "environment-id")
+                );
         Path reportPrefix = Path.of(required(options, "report"));
         new EvalReportWriter().write(
                 report,

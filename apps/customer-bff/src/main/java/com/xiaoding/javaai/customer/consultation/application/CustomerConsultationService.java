@@ -224,21 +224,31 @@ public final class CustomerConsultationService {
                 state.citations.add(citation.citation());
                 yield Mono.just(new CustomerStreamEvent.Citation(citation.citation()));
             }
-            case KnowledgeAnswerStreamClient.Completed ignored -> completeStream(state)
-                    .thenReturn(new CustomerStreamEvent.Completed());
+            case KnowledgeAnswerStreamClient.Completed completed -> completeStream(state, completed)
+                    .thenReturn(new CustomerStreamEvent.Completed(
+                            completed.refused(), completed.refusalReason()));
             case KnowledgeAnswerStreamClient.Error error -> failStream(state, error.code())
                     .thenReturn(new CustomerStreamEvent.Error(error.code(), error.message()));
         };
     }
 
-    private Mono<Void> completeStream(StreamState state) {
+    private Mono<Void> completeStream(
+            StreamState state,
+            KnowledgeAnswerStreamClient.Completed completed
+    ) {
         if (state.answer.isEmpty()) {
             return failStream(state, "EMPTY_STREAM_ANSWER")
                     .then(Mono.error(new IllegalStateException("knowledge stream completed without an answer")));
         }
+        if (state.traceId == null || state.traceId.isBlank()) {
+            return failStream(state, "MISSING_STREAM_METADATA")
+                    .then(Mono.error(new IllegalStateException(
+                            "knowledge stream completed without metadata"
+                    )));
+        }
         KnowledgeAnswerView answer = new KnowledgeAnswerView(
                 state.answer.toString(), List.copyOf(state.citations),
-                false, null, state.traceId == null ? "missing-trace" : state.traceId);
+                completed.refused(), completed.refusalReason(), state.traceId);
         return complete(state.conversationId, state.attemptId, answer, Instant.now(clock))
                 .doOnSuccess(ignored -> state.terminal.set(true))
                 .then();

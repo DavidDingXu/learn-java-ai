@@ -57,6 +57,7 @@ public final class AgentEvalDatasetLoader {
             String expectedTool,
             String expectedRisk,
             String expectedRole,
+            Map<String, String> expectedArguments,
             List<String> forbiddenAuditEvents,
             List<String> forbiddenAuditFragments
     ) {
@@ -65,7 +66,7 @@ public final class AgentEvalDatasetLoader {
             return new AgentEvalCase(
                     id, objective, businessContext, expectedState,
                     expectedTool, expectedRisk, expectedRole,
-                    forbiddenAuditEvents, forbiddenAuditFragments);
+                    expectedArguments, forbiddenAuditEvents, forbiddenAuditFragments);
         }
     }
 }

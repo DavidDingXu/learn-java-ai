@@ -13,6 +13,8 @@ try {
   & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar") `
     contract-eval `
     --dataset (Join-Path $RootDir "datasets/model-interaction/golden-set-v2.jsonl") `
+    --prompt-version knowledge-answer-v1 `
+    --environment-id local-contract-fixture `
     --report $ReportPrefix `
     --commit $Commit
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

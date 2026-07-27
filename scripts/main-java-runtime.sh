@@ -55,12 +55,9 @@ enter_java_ai_main_jdk() {
   MAIN_JAVA_MAJOR=""
 
   if [[ -n "${JAVA_AI_MAIN_JAVA_HOME:-}" ]]; then
-    if ! java_ai_try_main_jdk "$JAVA_AI_MAIN_JAVA_HOME"; then
-      printf 'ERROR: JAVA_AI_MAIN_JAVA_HOME is not a full JDK 21 or newer: %s\n' \
-        "$JAVA_AI_MAIN_JAVA_HOME" >&2
-      return 2
+    if java_ai_try_main_jdk "$JAVA_AI_MAIN_JAVA_HOME"; then
+      return
     fi
-    return
   fi
 
   if [[ -n "${JAVA_HOME:-}" ]] && java_ai_try_main_jdk "$JAVA_HOME"; then

@@ -10,15 +10,23 @@ import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.function.Supplier;
 
 public final class AgentEvaluator {
 
     private final AgentEvaluationClient client;
     private final Clock clock;
+    private final Supplier<String> runIdGenerator;
 
     public AgentEvaluator(AgentEvaluationClient client, Clock clock) {
+        this(client, clock, () -> UUID.randomUUID().toString());
+    }
+
+    AgentEvaluator(AgentEvaluationClient client, Clock clock, Supplier<String> runIdGenerator) {
         this.client = Objects.requireNonNull(client, "client must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.runIdGenerator = Objects.requireNonNull(runIdGenerator, "runIdGenerator must not be null");
     }
 
     public AgentEvaluationReport evaluate(
@@ -31,11 +39,13 @@ public final class AgentEvaluator {
         Objects.requireNonNull(tokens, "tokens must not be null");
         validateBaseUrl(baseUrl);
         String normalizedCommit = requireText(commit, "commit");
+        String runId = requireText(runIdGenerator.get(), "runId");
         List<AgentCaseReport> reports = new ArrayList<>();
         for (AgentEvalCase evalCase : dataset.cases()) {
             try {
                 AgentEvaluationSnapshot snapshot = client.evaluate(
-                        baseUrl, tokens, evalCase, idempotencyKey(evalCase.id(), normalizedCommit));
+                        baseUrl, tokens, evalCase,
+                        idempotencyKey(evalCase.id(), normalizedCommit, runId));
                 reports.add(compare(evalCase, snapshot));
             } catch (RuntimeException error) {
                 reports.add(new AgentCaseReport(
@@ -44,13 +54,14 @@ public final class AgentEvaluator {
                         evalCase.expectedTool(), null,
                         evalCase.expectedRisk(), null,
                         evalCase.expectedRole(), null,
+                        evalCase.expectedArguments(), java.util.Map.of(),
                         List.of(), 0,
                         List.of("CLIENT_ERROR: " + error.getMessage())));
             }
         }
         int passed = (int) reports.stream().filter(AgentCaseReport::passed).count();
         return new AgentEvaluationReport(
-                dataset.version(), normalizedCommit, Instant.now(clock),
+                dataset.version(), normalizedCommit, runId, Instant.now(clock),
                 passed, reports.size() - passed, passed == reports.size(), reports);
     }
 
@@ -60,6 +71,7 @@ public final class AgentEvaluator {
         compare("tool", expected.expectedTool(), actual.toolName(), reasons);
         compare("risk", expected.expectedRisk(), actual.risk(), reasons);
         compare("role", expected.expectedRole(), actual.requiredRole(), reasons);
+        compareArguments(expected.expectedArguments(), actual.arguments(), reasons);
         expected.forbiddenAuditEvents().stream()
                 .filter(actual.auditEventTypes()::contains)
                 .forEach(event -> reasons.add("forbidden audit event: " + event));
@@ -72,6 +84,7 @@ public final class AgentEvaluator {
                 expected.expectedTool(), actual.toolName(),
                 expected.expectedRisk(), actual.risk(),
                 expected.expectedRole(), actual.requiredRole(),
+                expected.expectedArguments(), actual.arguments(),
                 actual.auditEventTypes(), actual.latencyMillis(), reasons);
     }
 
@@ -81,17 +94,34 @@ public final class AgentEvaluator {
         }
     }
 
-    private static String idempotencyKey(String caseId, String commit) {
-        String canonical = caseId + "\n" + commit;
+    private static void compareArguments(
+            java.util.Map<String, String> expected,
+            java.util.Map<String, String> actual,
+            List<String> reasons
+    ) {
+        if (!Objects.equals(expected, actual)) {
+            reasons.add("arguments expected=" + expected + " actual=" + actual);
+        }
+    }
+
+    static String idempotencyKey(String caseId, String commit, String runId) {
+        StringBuilder canonical = new StringBuilder();
+        append(canonical, caseId);
+        append(canonical, commit);
+        append(canonical, runId);
         try {
             String hash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
-                    .digest(canonical.getBytes(StandardCharsets.UTF_8)));
+                    .digest(canonical.toString().getBytes(StandardCharsets.UTF_8)));
             String safeCase = caseId.replaceAll("[^A-Za-z0-9._:-]", "-");
             if (safeCase.length() > 40) safeCase = safeCase.substring(0, 40);
-            return "agent-eval:" + safeCase + ":" + hash.substring(0, 16);
+            return "agent-eval:" + safeCase + ":" + hash;
         } catch (NoSuchAlgorithmException error) {
             throw new IllegalStateException("SHA-256 is not available", error);
         }
+    }
+
+    private static void append(StringBuilder canonical, String value) {
+        canonical.append(value.length()).append(':').append(value).append(';');
     }
 
     private static void validateBaseUrl(URI baseUrl) {

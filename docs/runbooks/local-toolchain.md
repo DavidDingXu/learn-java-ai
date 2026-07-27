@@ -1,82 +1,101 @@
-# Local Toolchain Runbook
+# 本地构建与运行
 
-## Supported Build Boundaries
+## 读文章和跑演示只需要 JDK 21
 
-| Build | Required runtime | Entry point |
-|---|---|---|
-| Main reactor | full JDK 21 or newer; CI runs on JDK 21 | `pom.xml` |
-| Framework labs | full JDK 21 or newer | `labs/pom.xml` |
-| Legacy client | full JDK 8 exactly | `integrations/jdk8-client/pom.xml` |
-| Repository checks | Node.js 24 or newer | `scripts/*.test.mjs` |
+主项目使用 Java 21。安装包含 `java` 和 `javac` 的完整 JDK 21 后，可以直接运行 Maven Wrapper：
 
-使用高于 21 的 JDK 时，主模块仍通过 `--release 21` 生成 Java 21 字节码；这只能检查编译兼容性，不能替代 JDK 21 CI 运行。
+```bash
+./mvnw verify
+```
 
-## macOS/Linux
+Windows PowerShell：
 
-安装完整 JDK 21+ 和 JDK 8 后，直接运行：
+```powershell
+.\mvnw.cmd verify
+```
+
+Spring Boot 服务默认使用 `demo` Profile。它们会关闭真实模型、数据库、身份平台和远程 Tool，因此启动检查不需要先配密钥或外部地址：
+
+```bash
+./mvnw -pl services/knowledge-service spring-boot:run
+./mvnw -pl services/ticket-agent-service spring-boot:run
+./mvnw -pl apps/customer-bff spring-boot:run
+```
+
+三条命令分别在独立终端执行。Windows 将 `./mvnw` 换成 `.\mvnw.cmd`。默认启动只验证应用组装和本地端口，不代表真实模型或跨服务业务链路已经通过。
+
+## 真实模型演示只修改项目级 YAML
+
+需要调用真实模型时，在项目根目录 `config/application.yml` 中填写演示用 API Key。如果使用 OpenAI 兼容 Provider，再按实际协议修改 `base-url`、Chat 模型和 Embedding 模型。文章中的真实模型命令会显式读取这个文件。
+
+这种写法是为了降低学习和演示成本。真实密钥不能提交到 Git；生产部署必须由公司密钥系统覆盖 YAML 中的占位值。
+
+## 全仓检查才需要 JDK 8 和 Node.js
+
+JDK 8 只用于编译 `integrations/jdk8-client`，Node.js 24+ 只用于前端与仓库约束检查。当需要验证整个配套项目时，再安装完整 JDK 8 和 Node.js，然后运行：
 
 ```bash
 scripts/verify-unit.sh
 ```
 
-脚本会检查当前 `JAVA_HOME`、`PATH` 和常见 JDK 安装目录，只接受同时包含 `java` 与 `javac` 的完整 JDK。macOS 的 `/usr/libexec/java_home -v 1.8` 可能返回不含 `javac` 的旧浏览器 JRE，因此脚本不会把它作为 JDK 8 自动发现来源。
-
-## Windows PowerShell
-
-安装完整 JDK 21+ 和 JDK 8 后，直接运行：
+Windows PowerShell：
 
 ```powershell
 .\scripts\verify-unit.ps1
 ```
 
-脚本会从 `JAVA_HOME`、`PATH`、`Program Files` 和用户 `.jdks` 目录寻找 JDK，校验 `java.exe`、`javac.exe` 与主版本，再执行三个 Maven 构建边界和 Node 检查。
+聚合脚本会自动寻找完整 JDK 21+ 和 JDK 8，并依次执行：
 
-PowerShell files are statically checked on macOS. A release that promises Windows support still needs a real Windows run with the command output retained.
+- Java 21 主 reactor；
+- 隔离的框架 labs；
+- Java 8 老客户端；
+- Customer Web 的类型检查、测试和构建；
+- 仓库协议与边界检查。
 
-## Run One Build
+如果进程继承了失效的 Java 路径，脚本会忽略它并继续查找完整 JDK。macOS 的旧浏览器 JRE 不包含 `javac`，不会被选中。
 
-主 reactor 和框架实验使用当前 JDK 21+：
+## 分开运行各构建边界
+
+不需要每次都跑全仓脚本。修改主服务时：
 
 ```bash
 ./mvnw verify
+```
+
+修改框架对照实验时：
+
+```bash
 ./mvnw -f labs/pom.xml verify
 ```
 
-Java 8 客户端需要切换到 JDK 8。正常情况下直接使用统一的 `verify-unit` 脚本即可，它会自动选择并隔离两个 JDK。
-
-## External Health Smoke
-
-The external script requires an explicit deployed base URL:
+修改老系统客户端时，在 JDK 8 终端中执行：
 
 ```bash
-JAVA_AI_EXTERNAL_BASE_URL=https://test.example.com \
-scripts/verify-integration.sh
+./mvnw -f integrations/jdk8-client/pom.xml verify
 ```
 
-Missing configuration exits with code 2. A successful run proves only that `/actuator/health` returned HTTP 200 with `status=UP`. It does not validate model calls, databases, vector search, object storage or business workflows.
+使用高于 21 的 JDK 时，主模块仍通过 `--release 21` 生成 Java 21 字节码。这只检查编译兼容性，CI 仍需要在真实 JDK 21 JVM 上运行。
 
-## Development And External Infrastructure
+## 外部环境另行验证
 
-日常代码回归使用 `src/test` 下的确定性配置、单元测试以及接口和规则测试，不需要模型密钥或 `.env`。真实模型演示读取 `config/application.yml`。只有连接数据库、对象存储、身份平台或外部业务系统时，才需要根目录 `.env` 或部署系统参数：
+健康检查可以直接访问目标服务：
 
-- 统一管理的测试环境；
-- 允许启动容器的 CI Runner；
-- 远程开发环境。
+```bash
+curl --fail https://test.example.com/actuator/health
+```
 
-报告必须记录实际使用的环境和验证边界，不能用本地替代实现推导生产结论。
+返回 `status=UP` 只能证明该进程当前存活。真实模型、数据库、向量检索、对象存储、身份平台和业务链路要使用各自的集成测试和评测数据。
 
-## Common Failures
+## 常见问题
 
-### Java 8 build reports no compiler
+### Java 8 构建提示没有编译器
 
-自动发现的 Java 8 目录只有 JRE。安装完整 JDK 8，并确认安装目录中存在 `bin/javac`。
+当前机器只安装了 JRE。安装完整 JDK 8，并确认安装目录中存在 `bin/java` 和 `bin/javac`。
 
-### Main reactor reports the wrong Java version
+### 主项目提示 Java 版本不正确
 
-确认已安装完整 JDK 21 或更新版本，并且 `javac -version` 可以正常执行。脚本会跳过无效的旧 `JAVA_HOME`，继续检查 `PATH` 和常见安装目录。
+执行 `java -version` 和 `javac -version`，确认两者都来自完整 JDK 21 或更新版本。如果 IDE 已选择 JDK 21，也可以直接在 IDE 中运行对应的 JUnit 测试或 Spring Boot 启动类。
 
-只有机器同时安装了多套同版本 JDK、自动发现结果又不是预期版本时，才需要用 `JAVA_AI_MAIN_JAVA_HOME` 或 `JAVA_AI_JDK8_HOME` 临时覆盖。它们是排障选项，不是正常运行前置步骤。
+### 默认启动后为什么不会调用真实模型
 
-### External verification exits with code 2
-
-Set an absolute `http` or `https` `JAVA_AI_EXTERNAL_BASE_URL`. The script intentionally refuses to infer an environment.
+`demo` Profile 有意关闭外部依赖，用来检查应用组装和本地代码。需要真实模型结果时，运行文章指定的 Live Model 测试，并显式加载根目录 `config/application.yml`。

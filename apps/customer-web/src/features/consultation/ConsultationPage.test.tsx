@@ -19,7 +19,7 @@ async function* answerEvents(): AsyncGenerator<CustomerStreamEvent> {
       title: "退款政策",
     },
   };
-  yield { type: "completed" };
+  yield { type: "completed", refused: false, refusalReason: null };
 }
 
 function clientStub(): CustomerBffClient {
@@ -75,6 +75,32 @@ describe("ConsultationPage", () => {
     expect(screen.getByRole("button", { name: "转人工" })).toBeEnabled();
     expect(screen.queryByText("技术详情")).not.toBeInTheDocument();
     expect(screen.queryByText(/trace-1/)).not.toBeInTheDocument();
+  });
+
+  it("renders the refusal reason from the completed event", async () => {
+    const user = userEvent.setup();
+    const client = clientStub();
+    client.streamAnswer = vi.fn(async function* () {
+      yield {
+        type: "session" as const,
+        conversationId: "c-1",
+        attemptId: "a-1",
+        retryOfAttemptId: null,
+      };
+      yield { type: "delta" as const, text: "当前资料无法确认这笔退款的审核状态。" };
+      yield {
+        type: "completed" as const,
+        refused: true,
+        refusalReason: "缺少退款审核状态",
+      };
+    });
+    render(<ConsultationPage client={client} onSignOut={() => undefined} />);
+
+    await user.type(screen.getByLabelText("咨询问题"), "我的退款通过了吗？");
+    await user.click(screen.getByRole("button", { name: "发送" }));
+
+    expect(await screen.findByText("当前资料无法确认这笔退款的审核状态。")).toBeVisible();
+    expect(screen.getByText("缺少退款审核状态")).toBeVisible();
   });
 
   it("requires a reason for negative feedback and shows the accepted handoff receipt", async () => {

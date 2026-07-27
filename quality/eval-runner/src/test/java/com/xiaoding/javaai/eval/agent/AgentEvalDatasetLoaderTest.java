@@ -5,6 +5,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,13 +19,14 @@ class AgentEvalDatasetLoaderTest {
     void loads_versioned_agent_expectations() throws Exception {
         Path dataset = tempDir.resolve("agent.jsonl");
         Files.writeString(dataset, """
-                {"datasetVersion":"agent-v1","id":"assign","objective":"assign ticket","businessContext":{"queueCode":"refund-review"},"expectedState":"WAITING_CONFIRMATION","expectedTool":"ASSIGN_QUEUE","expectedRisk":"MEDIUM","expectedRole":"TICKET_OPERATOR","forbiddenAuditEvents":["TOOL_EXECUTION_SUCCEEDED"],"forbiddenAuditFragments":["13800138000"]}
+                {"datasetVersion":"agent-v1","id":"assign","objective":"assign ticket","businessContext":{"queueCode":"refund-review"},"expectedState":"WAITING_CONFIRMATION","expectedTool":"ASSIGN_QUEUE","expectedRisk":"MEDIUM","expectedRole":"TICKET_OPERATOR","expectedArguments":{"queueCode":"refund-review"},"forbiddenAuditEvents":["TOOL_EXECUTION_SUCCEEDED"],"forbiddenAuditFragments":["13800138000"]}
                 """);
 
         AgentEvalDataset loaded = new AgentEvalDatasetLoader().load(dataset);
 
         assertEquals("agent-v1", loaded.version());
         assertEquals("ASSIGN_QUEUE", loaded.cases().get(0).expectedTool());
+        assertEquals(Map.of("queueCode", "refund-review"), loaded.cases().get(0).expectedArguments());
         assertEquals("13800138000", loaded.cases().get(0).forbiddenAuditFragments().get(0));
     }
 

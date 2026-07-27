@@ -113,7 +113,12 @@ function reduceStreamEvent(
           : [...exchange.citations, event.citation],
       };
     case "completed":
-      return { ...exchange, status: "completed" };
+      return {
+        ...exchange,
+        status: "completed",
+        refused: event.refused,
+        refusalReason: event.refusalReason,
+      };
     case "error":
       return { ...exchange, status: "error", error: event.message };
     case "heartbeat":

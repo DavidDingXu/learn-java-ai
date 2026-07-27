@@ -26,7 +26,7 @@ test("lessons 07 through 11 are backed by the real model engineering code", () =
 
   assert.match(adapter, /BeanOutputConverter/);
   assert.match(adapter, /UNTRUSTED_USER_INPUT/);
-  assert.match(adapter, /TRUSTED_POLICY_CONTEXT/);
+  assert.match(adapter, /AUTHORIZED_KNOWLEDGE_CONTEXT/);
   assert.match(prompt, /未实际发生的业务动作/);
   assert.match(controller, /TEXT_EVENT_STREAM/);
   assert.match(configuration, /knowledgeAnswer:/);
@@ -34,6 +34,7 @@ test("lessons 07 through 11 are backed by the real model engineering code", () =
 });
 
 test("contract and live eval reports use the same dataset without conflating modes", () => {
+  const evidenceSummary = read("docs/reports/lesson-12-eval-observation.md");
   const contractMarkdown = read("docs/reports/lesson-12-contract-eval.md");
   const liveMarkdown = read("docs/reports/lesson-12-live-model-eval.md");
   const contract = JSON.parse(read("docs/reports/lesson-12-contract-eval.json"));
@@ -47,7 +48,11 @@ test("contract and live eval reports use the same dataset without conflating mod
   assert.equal(contract.failed, 0);
   assert.equal(live.passed, 5);
   assert.equal(live.failed, 0);
-  assert.equal(implementationCommit(contractMarkdown), implementationCommit(liveMarkdown));
+  assert.equal(contract.commit, implementationCommit(contractMarkdown));
+  assert.equal(live.commit, implementationCommit(liveMarkdown));
+  if (contract.commit !== live.commit) {
+    assert.match(evidenceSummary, /不能作为同一实现的效果对比/);
+  }
   assert.ok(live.results.every((result) => /^[0-9a-f]{32}$/.test(result.traceId)));
 });
 

@@ -100,10 +100,9 @@ function Select-Jdk {
 
     $Override = [Environment]::GetEnvironmentVariable($OverrideVariable)
     if (-not [string]::IsNullOrWhiteSpace($Override)) {
-        if (-not (Test-Jdk -JavaHome $Override -Kind $Kind)) {
-            Stop-WithError "$OverrideVariable does not point to a valid $Kind JDK: $Override"
+        if (Test-Jdk -JavaHome $Override -Kind $Kind) {
+            return $Override
         }
-        return $Override
     }
 
     foreach ($Candidate in Get-AutoJdkCandidates) {

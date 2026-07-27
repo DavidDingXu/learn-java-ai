@@ -8,6 +8,7 @@ Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 
 - C 端回答 DTO 保留引用、拒答原因、conversation、attempt 和 trace，不暴露 Provider 模型对象或 Token 元数据。
 - 引用继续由 Knowledge Service 根据本次授权上下文校验，BFF 只转换为渠道 DTO。
+- 流式 `completed` 显式携带拒答字段，BFF 保存拒答状态后再向 Customer Web 完成当前 attempt。
 - 反馈必须绑定已完成的回答尝试；`NOT_HELPFUL` 必须携带稳定原因码，评论有长度上限。
 - `NOT_HELPFUL` 的条件要求同时进入 Bean Validation 和 OpenAPI 3.1，接口文档不再允许运行时必然失败的空原因请求。
 - 同一尝试的反馈使用 PUT 语义，可按业务规则更新，不创建无归属的匿名评价。

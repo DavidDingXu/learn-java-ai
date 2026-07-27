@@ -23,7 +23,7 @@ try {
 
   & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar") `
     agent-eval `
-    --dataset (Join-Path $RootDir "datasets/agent/golden-set-v1.jsonl") `
+    --dataset (Join-Path $RootDir "datasets/agent/golden-set-v2.jsonl") `
     --base-url $env:JAVA_AI_AGENT_BASE_URL `
     --create-token $env:JAVA_AI_AGENT_CREATE_TOKEN `
     --run-token $env:JAVA_AI_AGENT_RUN_TOKEN `

@@ -2,6 +2,7 @@ package com.xiaoding.javaai.ticket.task;
 
 import com.xiaoding.javaai.ticket.agent.application.ConfirmationIdempotencyConflictException;
 import com.xiaoding.javaai.ticket.agent.application.AgentCapacityExceededException;
+import com.xiaoding.javaai.ticket.agent.application.AgentRunUnavailableException;
 import com.xiaoding.javaai.ticket.agent.infrastructure.AgentExternalIntegrationDisabledException;
 import com.xiaoding.javaai.ticket.agent.infrastructure.AgentModelNotConfiguredException;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,18 @@ class AgentTaskExceptionHandlerTest {
                 .getStatusCode().value()).isEqualTo(503);
         assertThat(handler.unavailable(new AgentExternalIntegrationDisabledException("knowledge read tool"))
                 .getStatusCode().value()).isEqualTo(503);
+    }
+
+    @Test
+    void maps_a_failed_agent_dependency_to_a_stable_service_unavailable_response() {
+        assertThat(handler.runUnavailable(new AgentRunUnavailableException(
+                "PLANNER_UNAVAILABLE", new IllegalStateException("provider secret"))))
+                .satisfies(response -> {
+                    assertThat(response.getStatusCode().value()).isEqualTo(503);
+                    assertThat(response.getBody().code()).isEqualTo("AGENT_RUN_UNAVAILABLE");
+                    assertThat(response.getBody().message()).isEqualTo("agent run dependency is unavailable");
+                    assertThat(response.getBody().message()).doesNotContain("provider secret");
+                });
     }
 
     @Test

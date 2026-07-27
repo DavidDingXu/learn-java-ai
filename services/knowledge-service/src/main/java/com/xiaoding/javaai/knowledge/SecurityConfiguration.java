@@ -39,7 +39,7 @@ public class SecurityConfiguration {
                             .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
                             .jwt(jwt -> jwt.jwtDecoder(jwtDecoder)))
                     .authorizeExchange(exchanges -> exchanges
-                            .pathMatchers("/actuator/health", "/actuator/env", "/error").permitAll()
+                            .pathMatchers("/actuator/health", "/error").permitAll()
                             .pathMatchers("/api/v1/knowledge/answers/**")
                             .hasAuthority("SCOPE_knowledge:answer")
                             .pathMatchers("/api/v1/knowledge/documents/**")
@@ -51,7 +51,7 @@ public class SecurityConfiguration {
                             .anyExchange().denyAll());
         } else {
             http.authorizeExchange(exchanges -> {
-                exchanges.pathMatchers("/actuator/health", "/actuator/env", "/error").permitAll();
+                exchanges.pathMatchers("/actuator/health", "/error").permitAll();
                 if (allowInsecureLocalHttp) {
                     exchanges.pathMatchers("/api/v1/knowledge/answers/**").permitAll();
                 }

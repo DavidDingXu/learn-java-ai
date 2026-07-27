@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 class TicketAgentOrchestratorTest {
@@ -122,6 +123,104 @@ class TicketAgentOrchestratorTest {
 
         assertThat(result.state()).isEqualTo(AgentTaskState.FAILED);
         assertThat(result.outcome()).contains("STEP_BUDGET_EXCEEDED");
+    }
+
+    @Test
+    void closes_the_running_task_and_records_a_safe_audit_when_the_planner_is_unavailable() {
+        InMemoryAgentTaskRepository repository = acceptedTask();
+        InMemoryAgentAuditTrail audit = new InMemoryAgentAuditTrail();
+        TicketAgentPlanner planner = context -> {
+            throw new IllegalStateException("provider rejected secret-token-123");
+        };
+        AgentReadToolExecutor executor = (call, task) -> fail("planner failure must not execute a tool");
+        TicketAgentOrchestrator orchestrator = orchestrator(repository, planner, executor, audit);
+
+        assertThatThrownBy(() -> orchestrator.run("task-100"))
+                .isInstanceOf(AgentRunUnavailableException.class)
+                .satisfies(error -> assertThat(((AgentRunUnavailableException) error).reasonCode())
+                        .isEqualTo("PLANNER_UNAVAILABLE"))
+                .hasMessage("agent run dependency is unavailable");
+
+        AgentTask failed = repository.findById("task-100").orElseThrow();
+        assertThat(failed.state()).isEqualTo(AgentTaskState.FAILED);
+        assertThat(failed.outcome()).isEqualTo("PLANNER_UNAVAILABLE");
+        assertThat(audit.findByTaskId("task-100"))
+                .extracting(AgentAuditEvent::eventType)
+                .containsExactly("AGENT_RUN_STARTED", "AGENT_TASK_FAILED");
+        assertThat(audit.findByTaskId("task-100").getLast().detail())
+                .isEqualTo("reasonCode=PLANNER_UNAVAILABLE, step=0")
+                .doesNotContain("secret-token-123");
+    }
+
+    @Test
+    void closes_the_running_task_and_records_a_safe_audit_when_the_read_tool_is_unavailable() {
+        InMemoryAgentTaskRepository repository = acceptedTask();
+        InMemoryAgentAuditTrail audit = new InMemoryAgentAuditTrail();
+        TicketAgentPlanner planner = context -> AgentPlanningResult.decisionOnly(
+                new AgentDecision.UseTool(
+                        "QUERY_KNOWLEDGE", Map.of("question", "退款多久到账？"), "查询当前制度"));
+        AgentReadToolExecutor executor = (call, task) -> {
+            throw new ReadToolUnavailableException(
+                    ReadToolUnavailableException.FailureKind.TRANSPORT_FAILURE,
+                    new IllegalStateException("knowledge response contained customer-secret-456"));
+        };
+        TicketAgentOrchestrator orchestrator = orchestrator(repository, planner, executor, audit);
+
+        assertThatThrownBy(() -> orchestrator.run("task-100"))
+                .isInstanceOf(AgentRunUnavailableException.class)
+                .satisfies(error -> assertThat(((AgentRunUnavailableException) error).reasonCode())
+                        .isEqualTo("READ_TOOL_UNAVAILABLE"))
+                .hasMessage("agent run dependency is unavailable");
+
+        AgentTask failed = repository.findById("task-100").orElseThrow();
+        assertThat(failed.state()).isEqualTo(AgentTaskState.FAILED);
+        assertThat(failed.outcome()).isEqualTo("READ_TOOL_UNAVAILABLE");
+        assertThat(audit.findByTaskId("task-100"))
+                .extracting(AgentAuditEvent::eventType)
+                .containsExactly("AGENT_RUN_STARTED", "AGENT_PLAN_RECORDED", "AGENT_TASK_FAILED");
+        assertThat(audit.findByTaskId("task-100").getLast().detail())
+                .isEqualTo("reasonCode=READ_TOOL_UNAVAILABLE, step=0, tool=QUERY_KNOWLEDGE, "
+                        + "dependencyFailure=TRANSPORT_FAILURE")
+                .doesNotContain("customer-secret-456");
+    }
+
+    @Test
+    void telemetry_failures_do_not_change_the_agent_business_result() {
+        InMemoryAgentTaskRepository repository = acceptedTask();
+        ArrayDeque<AgentDecision> decisions = new ArrayDeque<>(List.of(
+                new AgentDecision.UseTool(
+                        "QUERY_KNOWLEDGE", Map.of("question", "refund"), "query policy"),
+                new AgentDecision.Finish("resolved")
+        ));
+        AgentTelemetry unavailableTelemetry = new AgentTelemetry() {
+            @Override
+            public void recordPlan(AgentPlanningResult result) {
+                throw new IllegalStateException("meter registry unavailable");
+            }
+
+            @Override
+            public void recordTool(String toolName, String outcome, Duration duration) {
+                throw new IllegalStateException("meter registry unavailable");
+            }
+        };
+        TicketAgentOrchestrator orchestrator = new TicketAgentOrchestrator(
+                repository,
+                context -> AgentPlanningResult.decisionOnly(decisions.removeFirst()),
+                BusinessToolCatalog.standard(Set.of("refund-review", "tier-2")),
+                (call, task) -> new ToolObservation(
+                        call.toolName(), Map.of("answer", "five days"), CLOCK.instant()),
+                new InMemoryAgentAuditTrail(),
+                () -> "action-100",
+                () -> "confirmation-100",
+                CLOCK,
+                Duration.ofMinutes(15),
+                4,
+                unavailableTelemetry);
+
+        AgentTask result = orchestrator.run("task-100");
+
+        assertThat(result.state()).isEqualTo(AgentTaskState.COMPLETED);
+        assertThat(result.outcome()).isEqualTo("resolved");
     }
 
     private static TicketAgentOrchestrator orchestrator(

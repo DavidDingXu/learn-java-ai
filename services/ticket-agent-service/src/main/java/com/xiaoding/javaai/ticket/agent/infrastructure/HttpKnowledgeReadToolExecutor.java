@@ -2,11 +2,16 @@ package com.xiaoding.javaai.ticket.agent.infrastructure;
 
 import com.xiaoding.javaai.ticket.agent.application.AgentReadToolExecutor;
 import com.xiaoding.javaai.ticket.agent.application.DownstreamAccessTokenProvider;
+import com.xiaoding.javaai.ticket.agent.application.ReadToolUnavailableException;
 import com.xiaoding.javaai.ticket.agent.domain.PreparedToolCall;
 import com.xiaoding.javaai.ticket.agent.domain.ToolObservation;
 import com.xiaoding.javaai.ticket.task.AgentTask;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.net.http.HttpClient;
 import java.time.Clock;
@@ -45,13 +50,31 @@ public final class HttpKnowledgeReadToolExecutor implements AgentReadToolExecuto
         String token = requireText(
                 tokenProvider.tokenFor(task, "knowledge-service", "knowledge:answer"),
                 "knowledge access token");
-        KnowledgeResponse response = restClient.post()
-                .uri("/api/v1/knowledge/answers")
-                .headers(headers -> headers.setBearerAuth(token))
-                .body(new KnowledgeRequest(call.arguments().get("question")))
-                .retrieve()
-                .body(KnowledgeResponse.class);
-        if (response == null) throw new IllegalStateException("knowledge service returned an empty response");
+        KnowledgeResponse response;
+        try {
+            response = restClient.post()
+                    .uri("/api/v1/knowledge/answers")
+                    .headers(headers -> headers.setBearerAuth(token))
+                    .body(new KnowledgeRequest(call.arguments().get("question")))
+                    .retrieve()
+                    .body(KnowledgeResponse.class);
+        } catch (HttpClientErrorException error) {
+            ReadToolUnavailableException.FailureKind kind = error.getStatusCode().value() == 408
+                    || error.getStatusCode().value() == 429
+                    ? ReadToolUnavailableException.FailureKind.DEPENDENCY_UNAVAILABLE
+                    : ReadToolUnavailableException.FailureKind.REQUEST_REJECTED;
+            throw new ReadToolUnavailableException(kind, error);
+        } catch (HttpServerErrorException error) {
+            throw new ReadToolUnavailableException(
+                    ReadToolUnavailableException.FailureKind.DEPENDENCY_UNAVAILABLE, error);
+        } catch (ResourceAccessException error) {
+            throw new ReadToolUnavailableException(
+                    ReadToolUnavailableException.FailureKind.TRANSPORT_FAILURE, error);
+        } catch (RestClientException error) {
+            throw new ReadToolUnavailableException(
+                    ReadToolUnavailableException.FailureKind.INVALID_RESPONSE, error);
+        }
+        validateResponse(response);
         Map<String, String> result = new LinkedHashMap<>();
         result.put("answer", response.answer() == null ? "" : response.answer());
         result.put("refused", Boolean.toString(response.refused()));
@@ -63,6 +86,41 @@ public final class HttpKnowledgeReadToolExecutor implements AgentReadToolExecuto
                 .collect(Collectors.joining(",")));
         result.put("traceId", response.traceId() == null ? "" : response.traceId());
         return new ToolObservation(call.toolName(), result, clock.instant());
+    }
+
+    private static void validateResponse(KnowledgeResponse response) {
+        if (response == null) {
+            throw invalidResponse("knowledge service returned an empty response");
+        }
+        if (response.citations() == null) {
+            throw invalidResponse("knowledge service response omitted citations");
+        }
+        if (response.refused()) {
+            if (!hasText(response.refusalReason())) {
+                throw invalidResponse("knowledge refusal omitted its reason");
+            }
+        } else if (!hasText(response.answer())) {
+            throw invalidResponse("knowledge response omitted its answer");
+        }
+        if (!hasText(response.traceId())) {
+            throw invalidResponse("knowledge response omitted traceId");
+        }
+        for (CitationResponse citation : response.citations()) {
+            if (citation == null || !hasText(citation.documentId())
+                    || !hasText(citation.version()) || !hasText(citation.sectionId())) {
+                throw invalidResponse("knowledge response contained an invalid citation");
+            }
+        }
+    }
+
+    private static ReadToolUnavailableException invalidResponse(String message) {
+        return new ReadToolUnavailableException(
+                ReadToolUnavailableException.FailureKind.INVALID_RESPONSE,
+                new IllegalArgumentException(message));
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private static JdkClientHttpRequestFactory requestFactory(Duration timeout) {

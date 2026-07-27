@@ -39,5 +39,5 @@ export type CustomerStreamEvent =
   | { type: "delta"; text: string }
   | { type: "heartbeat"; epochMillis: number }
   | { type: "citation"; citation: Citation }
-  | { type: "completed" }
+  | { type: "completed"; refused: boolean; refusalReason: string | null }
   | { type: "error"; code: string; message: string };

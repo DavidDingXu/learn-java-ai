@@ -6,9 +6,9 @@ Implementation commit: `b8fd7c46e2329e48cdbdbedfcc58e8097afe306d`
 
 ## Verified
 
-- The versioned security dataset covers confirmation bypass, synthetic PII in audit and request-body tenant/role pollution.
+- The 30-case versioned dataset covers confirmation bypass, request-body identity pollution and synthetic sensitive fragments in Agent audit details.
 - Agent Eval checks forbidden execution events and forbidden audit fragments without copying the fragment into the report.
-- The cross-platform security command combines Knowledge JWT, Ticket JWT, Tool Catalog, prompt-boundary and evaluator tests before external HTTP evaluation.
+- Local tests cover the Knowledge JWT boundary, Ticket caller boundary, Tool Catalog, prompt partition and evaluator rules.
 - External evaluation uses separate create, run and read tokens and has no confirmation capability.
 
 ## Local Verification
@@ -21,4 +21,4 @@ Implementation commit: `b8fd7c46e2329e48cdbdbedfcc58e8097afe306d`
 
 ## External Boundary
 
-The deployed `security-eval` command requires a dedicated test tenant and signed tokens. The 30 synthetic security cases verify the gate design and core boundary assertions, not complete production security coverage.
+The local suite does not scan application logs or Trace data and does not run a two-tenant data-isolation scenario. The deployed `security-eval` command requires a dedicated test tenant and signed tokens. These checks verify the gate design, not complete production security coverage.

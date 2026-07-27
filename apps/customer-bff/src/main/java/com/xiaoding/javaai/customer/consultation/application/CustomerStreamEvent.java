@@ -27,7 +27,7 @@ public sealed interface CustomerStreamEvent permits
     record Citation(CitationView citation) implements CustomerStreamEvent {
     }
 
-    record Completed() implements CustomerStreamEvent {
+    record Completed(boolean refused, String refusalReason) implements CustomerStreamEvent {
     }
 
     record Error(String code, String message) implements CustomerStreamEvent {

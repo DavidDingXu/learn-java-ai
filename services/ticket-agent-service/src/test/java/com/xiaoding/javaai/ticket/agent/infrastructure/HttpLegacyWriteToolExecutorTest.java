@@ -32,6 +32,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HttpLegacyWriteToolExecutorTest {
 
+    private static final String TOOL_IDEMPOTENCY_KEY = "tool:v1:" + "a".repeat(64);
+
     private MockWebServer server;
 
     @BeforeEach
@@ -61,7 +63,7 @@ class HttpLegacyWriteToolExecutorTest {
                 RestClient.builder(), server.url("/").toString(), tokens, Duration.ofSeconds(2));
 
         ToolExecutionReceipt receipt = executor.execute(
-                task(), confirmation(), "tool:tenant-a:action-100");
+                task(), confirmation(), TOOL_IDEMPOTENCY_KEY);
 
         assertThat(receipt.status()).isEqualTo("SUCCEEDED");
         assertThat(receipt.auditId()).isEqualTo("legacy-audit-100");
@@ -69,7 +71,7 @@ class HttpLegacyWriteToolExecutorTest {
         assertThat(request).isNotNull();
         assertThat(request.getPath()).isEqualTo("/api/v1/tool-actions");
         assertThat(request.getHeader("Authorization")).isEqualTo("Bearer legacy-service-token");
-        assertThat(request.getHeader("Idempotency-Key")).isEqualTo("tool:tenant-a:action-100");
+        assertThat(request.getHeader("Idempotency-Key")).isEqualTo(TOOL_IDEMPOTENCY_KEY);
         assertThat(request.getBody().readUtf8())
                 .contains("action-100", "ticket-900", "ASSIGN_QUEUE", "refund-review")
                 .doesNotContain("tenant-a", "customer-42", "TICKET_OPERATOR");
@@ -84,7 +86,7 @@ class HttpLegacyWriteToolExecutorTest {
                 Duration.ofMillis(100));
 
         assertThatThrownBy(() -> executor.execute(
-                task(), confirmation(), "tool:tenant-a:action-100"))
+                task(), confirmation(), TOOL_IDEMPOTENCY_KEY))
                 .isInstanceOf(RemoteExecutionUncertainException.class);
 
         assertThat(server.getRequestCount()).isEqualTo(1);
@@ -104,7 +106,7 @@ class HttpLegacyWriteToolExecutorTest {
                 Duration.ofSeconds(2));
 
         assertThatThrownBy(() -> executor.execute(
-                task(), confirmation(), "tool:tenant-a:action-100"))
+                task(), confirmation(), TOOL_IDEMPOTENCY_KEY))
                 .isInstanceOf(ToolExecutionRejectedException.class)
                 .hasMessageContaining("QUEUE_CLOSED")
                 .hasMessageContaining("target queue is closed");
@@ -120,7 +122,7 @@ class HttpLegacyWriteToolExecutorTest {
                 Duration.ofSeconds(2));
 
         assertThatThrownBy(() -> executor.execute(
-                task(), confirmation(), "tool:tenant-a:action-100"))
+                task(), confirmation(), TOOL_IDEMPOTENCY_KEY))
                 .isInstanceOf(RemoteExecutionUncertainException.class)
                 .hasMessageContaining("503");
         assertThat(server.getRequestCount()).isEqualTo(1);
@@ -137,7 +139,7 @@ class HttpLegacyWriteToolExecutorTest {
                 Duration.ofSeconds(2));
 
         assertThatThrownBy(() -> executor.execute(
-                task(), confirmation(), "tool:tenant-a:action-100"))
+                task(), confirmation(), TOOL_IDEMPOTENCY_KEY))
                 .isInstanceOf(RemoteExecutionUncertainException.class)
                 .hasMessageContaining("response");
         assertThat(server.getRequestCount()).isEqualTo(1);
@@ -156,7 +158,7 @@ class HttpLegacyWriteToolExecutorTest {
                 Duration.ofSeconds(2));
 
         assertThatThrownBy(() -> executor.execute(
-                task(), confirmation(), "tool:tenant-a:action-100"))
+                task(), confirmation(), TOOL_IDEMPOTENCY_KEY))
                 .isInstanceOf(RemoteExecutionUncertainException.class)
                 .hasMessageContaining("response");
         assertThat(server.getRequestCount()).isEqualTo(1);
@@ -176,7 +178,7 @@ class HttpLegacyWriteToolExecutorTest {
                 Duration.ofSeconds(2), failingMapper);
 
         assertThatThrownBy(() -> executor.execute(
-                task(), confirmation(), "tool:tenant-a:action-100"))
+                task(), confirmation(), TOOL_IDEMPOTENCY_KEY))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("serialize legacy tool request");
         assertThat(server.getRequestCount()).isZero();

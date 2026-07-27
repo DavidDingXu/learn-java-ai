@@ -4,6 +4,7 @@ import com.xiaoding.javaai.ticket.agent.application.ConfirmToolAction;
 import com.xiaoding.javaai.ticket.agent.application.AgentRunAdmission;
 import com.xiaoding.javaai.ticket.agent.application.InMemoryAgentAuditTrail;
 import com.xiaoding.javaai.ticket.agent.application.InMemoryConfirmationDecisionStore;
+import com.xiaoding.javaai.ticket.agent.application.ToolActionFingerprint;
 import com.xiaoding.javaai.ticket.agent.application.ToolConfirmationService;
 import com.xiaoding.javaai.ticket.agent.domain.AgentTaskState;
 import com.xiaoding.javaai.ticket.agent.domain.ConfirmationDecision;
@@ -103,10 +104,11 @@ class AgentTaskWorkflowControllerTest {
         repository.accept(identity, "handoff-key", "fingerprint", () -> accepted);
         AgentTask running = repository.save(
                 accepted.start(Instant.parse("2026-07-13T08:01:00Z")), 0);
+        Map<String, String> arguments = Map.of("queueCode", "refund-review");
         repository.save(running.waitForConfirmation(new ConfirmationRequest(
                 "confirmation-100", "action-100", "ASSIGN_QUEUE",
                 ToolRisk.MEDIUM, "TICKET_OPERATOR",
-                Map.of("queueCode", "refund-review"), "fingerprint", 2,
+                arguments, ToolActionFingerprint.calculate("ASSIGN_QUEUE", arguments), 2,
                 Instant.parse("2026-07-13T08:20:00Z")),
                 Instant.parse("2026-07-13T08:02:00Z")), 1);
         return repository;

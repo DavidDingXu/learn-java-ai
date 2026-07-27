@@ -21,25 +21,51 @@ final class KnowledgeAnswerValidator {
         if (draft.model() == null || draft.model().isBlank()) {
             throw new InvalidModelAnswerException("model metadata is missing");
         }
-        if (draft.usage() == null) {
+        if (draft.usage() == null || isEmpty(draft.usage())) {
             throw new InvalidModelAnswerException("model usage is missing");
         }
-        Set<String> availableSections = new HashSet<>();
-        contexts.forEach(context -> availableSections.add(context.sectionId()));
-        for (String citedSectionId : draft.citedSectionIds()) {
-            if (!availableSections.contains(citedSectionId)) {
-                throw new InvalidModelAnswerException("unknown citation section: " + citedSectionId);
-            }
-        }
-        if (!draft.refused() && draft.citedSectionIds().isEmpty()) {
-            throw new InvalidModelAnswerException("a grounded answer must contain at least one citation");
-        }
-        if (draft.refused() && (draft.refusalReason() == null || draft.refusalReason().isBlank())) {
-            throw new InvalidModelAnswerException("a refused answer must contain a refusal reason");
-        }
+        validateDecision(
+                draft.citedSectionIds(), draft.refused(), draft.refusalReason(), contexts
+        );
         if (UNSUPPORTED_ACTION_CLAIMS.stream().anyMatch(draft.answer()::contains)) {
             throw new InvalidModelAnswerException("answer claims an unsupported business action");
         }
         return draft;
+    }
+
+    void validateDecision(ModelStreamDecision decision, List<PolicyContext> contexts) {
+        if (decision == null) {
+            throw new InvalidModelAnswerException("model stream decision is missing");
+        }
+        validateDecision(
+                decision.citedSectionIds(), decision.refused(), decision.refusalReason(), contexts
+        );
+    }
+
+    private void validateDecision(
+            List<String> citedSectionIds,
+            boolean refused,
+            String refusalReason,
+            List<PolicyContext> contexts
+    ) {
+        Set<String> availableSections = new HashSet<>();
+        contexts.forEach(context -> availableSections.add(context.sectionId()));
+        for (String citedSectionId : citedSectionIds) {
+            if (!availableSections.contains(citedSectionId)) {
+                throw new InvalidModelAnswerException("unknown citation section: " + citedSectionId);
+            }
+        }
+        if (!refused && citedSectionIds.isEmpty()) {
+            throw new InvalidModelAnswerException("a grounded answer must contain at least one citation");
+        }
+        if (refused && (refusalReason == null || refusalReason.isBlank())) {
+            throw new InvalidModelAnswerException("a refused answer must contain a refusal reason");
+        }
+    }
+
+    private static boolean isEmpty(ModelUsage usage) {
+        return usage.promptTokens() == 0
+                && usage.completionTokens() == 0
+                && usage.totalTokens() == 0;
     }
 }

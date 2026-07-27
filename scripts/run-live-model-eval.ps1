@@ -71,6 +71,8 @@ try {
       --base-url "http://127.0.0.1:$Port" `
       --mode LIVE_MODEL `
       --bearer-token $env:JAVA_AI_EVAL_BEARER_TOKEN `
+      --prompt-version knowledge-answer-v1 `
+      --environment-id local-live-model `
       --report $ReportPrefix `
       --commit $Commit
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

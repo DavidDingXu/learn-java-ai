@@ -20,6 +20,8 @@ import org.apache.hc.core5.util.Timeout;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.regex.Pattern;
 
 public final class TicketAgentClient implements AutoCloseable {
@@ -106,6 +108,21 @@ public final class TicketAgentClient implements AutoCloseable {
         }
     }
 
+    public static String confirmationIdempotencyKey(String taskId, String confirmationId) {
+        String safeTaskId = requireSafeId(taskId, "taskId");
+        String safeConfirmationId = requireSafeId(confirmationId, "confirmationId");
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            updateLengthPrefixed(digest, "taskId");
+            updateLengthPrefixed(digest, safeTaskId);
+            updateLengthPrefixed(digest, "confirmationId");
+            updateLengthPrefixed(digest, safeConfirmationId);
+            return "confirm:v1:" + toHex(digest.digest());
+        } catch (NoSuchAlgorithmException error) {
+            throw new IllegalStateException("SHA-256 is not available", error);
+        }
+    }
+
     static String serializeConfirmationRequest(
             ObjectMapper objectMapper,
             ConfirmToolActionRequest command
@@ -160,6 +177,26 @@ public final class TicketAgentClient implements AutoCloseable {
             throw new IllegalArgumentException("idempotencyKey length must be between 8 and 128");
         }
         return value.trim();
+    }
+
+    private static void updateLengthPrefixed(MessageDigest digest, String value) {
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        digest.update((byte) (bytes.length >>> 24));
+        digest.update((byte) (bytes.length >>> 16));
+        digest.update((byte) (bytes.length >>> 8));
+        digest.update((byte) bytes.length);
+        digest.update(bytes);
+    }
+
+    private static String toHex(byte[] bytes) {
+        char[] digits = "0123456789abcdef".toCharArray();
+        char[] result = new char[bytes.length * 2];
+        for (int index = 0; index < bytes.length; index += 1) {
+            int value = bytes[index] & 0xff;
+            result[index * 2] = digits[value >>> 4];
+            result[index * 2 + 1] = digits[value & 0x0f];
+        }
+        return new String(result);
     }
 
     @Override

@@ -23,7 +23,7 @@ final class MicrometerAgentTelemetry implements AgentTelemetry {
     @Override
     public void recordPlan(AgentPlanningResult result) {
         String decision = decisionType(result).toLowerCase(Locale.ROOT);
-        String finishReason = normalize(result.finishReason());
+        String finishReason = boundedFinishReason(result.finishReason());
         Counter.builder("java.ai.agent.plan")
                 .tag("decision", decision)
                 .tag("finish_reason", finishReason)
@@ -53,5 +53,14 @@ final class MicrometerAgentTelemetry implements AgentTelemetry {
     private static String normalize(String value) {
         if (value == null || value.isBlank()) return "unknown";
         return value.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_.:-]", "_");
+    }
+
+    private static String boundedFinishReason(String value) {
+        String normalized = normalize(value);
+        return switch (normalized) {
+            case "stop", "length", "tool_calls", "content_filter", "function_call",
+                    "end_turn", "max_tokens", "unknown", "not-applicable" -> normalized;
+            default -> "other";
+        };
     }
 }

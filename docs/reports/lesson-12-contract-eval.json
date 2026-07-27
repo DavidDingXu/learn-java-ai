@@ -1,9 +1,11 @@
 {
   "datasetVersion" : "golden-set-v2",
   "mode" : "CONTRACT_FIXTURE",
-  "commit" : "5db09381614cae240bd1fefd0e0e7b04252458d0",
+  "commit" : "64b3bb1df5b85ef4e2047a3d7ff85a0df844dad2",
   "model" : "contract-fixture-model",
-  "executedAt" : "2026-07-18T03:39:35.311899Z",
+  "promptVersion" : "knowledge-answer-v1",
+  "environmentId" : "local-contract-fixture",
+  "executedAt" : "2026-07-26T19:56:06.699570Z",
   "passed" : 5,
   "failed" : 0,
   "skipped" : 0,
@@ -12,7 +14,7 @@
     "caseId" : "refund-arrival",
     "passed" : true,
     "reason" : "ok",
-    "latencyMillis" : 49,
+    "latencyMillis" : 52,
     "traceId" : "fixture-224492e3"
   }, {
     "caseId" : "order-status-refusal",
@@ -36,7 +38,7 @@
     "caseId" : "unsupported-action",
     "passed" : true,
     "reason" : "ok",
-    "latencyMillis" : 0,
+    "latencyMillis" : 1,
     "traceId" : "fixture-486c8d88"
   } ]
 }

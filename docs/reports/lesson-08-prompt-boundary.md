@@ -9,7 +9,7 @@ Status: VERIFIED
 
 ## Verified
 
-- System rule、可信政策上下文和不可信用户输入使用独立分区。
+- System rule、授权知识上下文和不可信用户输入使用独立分区。
 - 请求显式携带 Prompt 版本，但日志和指标不记录问题正文或完整 Prompt。
 - 政策正文和用户问题中的命令式文字都不能覆盖系统规则。
 - 模型 Golden Set 中的 Prompt Injection 案例通过，回答没有泄露系统提示词。

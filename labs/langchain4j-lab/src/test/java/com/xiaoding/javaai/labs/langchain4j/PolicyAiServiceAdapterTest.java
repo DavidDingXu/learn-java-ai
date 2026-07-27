@@ -7,6 +7,7 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PolicyAiServiceAdapterTest {
@@ -21,6 +22,14 @@ class PolicyAiServiceAdapterTest {
         assertEquals("退款将在三个工作日内原路退回。", answer.text());
         assertTrue(model.request.messages().stream().anyMatch(message -> message.toString().contains("tenant-a")));
         assertTrue(model.request.messages().stream().anyMatch(message -> message.toString().contains("退款多久到账")));
+    }
+
+    @Test
+    void rejectsBlankModelAnswersAtTheBusinessBoundary() {
+        PolicyAnswerPort port = new LangChain4jPolicyAnswerAdapter(new CapturingModel("  "));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> port.answer(new PolicyQuestion("tenant-a", "退款多久到账？")));
     }
 
     private static final class CapturingModel implements ChatModel {

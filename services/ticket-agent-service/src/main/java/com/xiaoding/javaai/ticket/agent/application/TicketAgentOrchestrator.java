@@ -86,15 +86,9 @@ public final class TicketAgentOrchestrator implements RunAgentTask {
                 task.taskId(), "AGENT_RUN_STARTED", "ticket-agent-worker",
                 "taskVersion=" + task.version(), clock.instant());
         for (int step = 0; step < maxSteps; step++) {
-            AgentPlanningResult planning = planner.plan(new AgentPlanningContext(
-                    task.taskId(),
-                    task.request().objective(),
-                    task.request().businessContext(),
-                    task.observations(),
-                    toolCatalog.toolNames(),
-                    step));
+            AgentPlanningResult planning = plan(task, step);
             AgentDecision decision = planning.decision();
-            telemetry.recordPlan(planning);
+            recordPlanSafely(planning);
             auditTrail.append(
                     task.taskId(), "AGENT_PLAN_RECORDED", "ticket-agent-worker",
                     "step=" + step
@@ -125,15 +119,16 @@ public final class TicketAgentOrchestrator implements RunAgentTask {
                 ToolObservation observation;
                 try {
                     observation = readToolExecutor.execute(call, task);
-                    telemetry.recordTool(
-                            call.toolName(), "succeeded",
-                            Duration.ofNanos(System.nanoTime() - startedAt));
                 } catch (RuntimeException error) {
-                    telemetry.recordTool(
+                    recordToolSafely(
                             call.toolName(), "failed",
                             Duration.ofNanos(System.nanoTime() - startedAt));
-                    throw error;
+                    throw failUnavailable(
+                            task, "READ_TOOL_UNAVAILABLE", step, call.toolName(), error);
                 }
+                recordToolSafely(
+                        call.toolName(), "succeeded",
+                        Duration.ofNanos(System.nanoTime() - startedAt));
                 task = save(task.recordObservation(observation), task.version());
                 auditTrail.append(
                         task.taskId(), "READ_TOOL_SUCCEEDED", "ticket-agent-worker",
@@ -168,10 +163,64 @@ public final class TicketAgentOrchestrator implements RunAgentTask {
         return failed;
     }
 
+    private AgentPlanningResult plan(AgentTask task, int step) {
+        try {
+            return java.util.Objects.requireNonNull(planner.plan(new AgentPlanningContext(
+                            task.taskId(),
+                            task.request().objective(),
+                            task.request().businessContext(),
+                            task.observations(),
+                            toolCatalog.toolNames(),
+                            step)),
+                    "planner returned no result");
+        } catch (RuntimeException error) {
+            throw failUnavailable(task, "PLANNER_UNAVAILABLE", step, null, error);
+        }
+    }
+
+    private AgentRunUnavailableException failUnavailable(
+            AgentTask running,
+            String reasonCode,
+            int step,
+            String toolName,
+            RuntimeException cause
+    ) {
+        AgentTask failed = save(running.fail(reasonCode, clock.instant()), running.version());
+        String detail = "reasonCode=" + reasonCode + ", step=" + step;
+        if (toolName != null) detail += ", tool=" + toolName;
+        if (cause instanceof ReadToolUnavailableException readFailure) {
+            detail += ", dependencyFailure=" + readFailure.failureKind();
+        }
+        try {
+            auditTrail.append(
+                    failed.taskId(), "AGENT_TASK_FAILED", "ticket-agent-worker",
+                    detail, clock.instant());
+        } catch (RuntimeException auditFailure) {
+            cause.addSuppressed(auditFailure);
+        }
+        return new AgentRunUnavailableException(reasonCode, cause);
+    }
+
     private static String decisionType(AgentDecision decision) {
         if (decision instanceof AgentDecision.UseTool) return "USE_TOOL";
         if (decision instanceof AgentDecision.Finish) return "FINISH";
         return "REFUSE";
+    }
+
+    private void recordPlanSafely(AgentPlanningResult result) {
+        try {
+            telemetry.recordPlan(result);
+        } catch (RuntimeException ignored) {
+            // Metrics are diagnostic and must not alter the Agent task state.
+        }
+    }
+
+    private void recordToolSafely(String toolName, String outcome, Duration duration) {
+        try {
+            telemetry.recordTool(toolName, outcome, duration);
+        } catch (RuntimeException ignored) {
+            // Metrics are diagnostic and must not alter the Agent task state.
+        }
     }
 
     private AgentTask save(AgentTask updated, long expectedVersion) {

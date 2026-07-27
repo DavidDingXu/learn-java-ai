@@ -216,7 +216,7 @@ function mapStreamEvent(event: string, data: unknown): CustomerStreamEvent {
     case "citation":
       return { type: "citation", citation: citationField(event, payload.citation) };
     case "completed":
-      return { type: "completed" };
+      return completedEvent(event, payload);
     case "error":
       return {
         type: "error",
@@ -258,6 +258,27 @@ function numberField(event: string, payload: Record<string, unknown>, field: str
     throw invalidEvent(event, `${field} must be a number`);
   }
   return value;
+}
+
+function booleanField(event: string, payload: Record<string, unknown>, field: string): boolean {
+  const value = payload[field];
+  if (typeof value !== "boolean") throw invalidEvent(event, `${field} must be a boolean`);
+  return value;
+}
+
+function completedEvent(
+  event: string,
+  payload: Record<string, unknown>,
+): Extract<CustomerStreamEvent, { type: "completed" }> {
+  const refused = booleanField(event, payload, "refused");
+  if (!("refusalReason" in payload)) {
+    throw invalidEvent(event, "refusalReason must be present");
+  }
+  const refusalReason = nullableStringField(event, payload, "refusalReason");
+  if (refused && !refusalReason?.trim()) {
+    throw invalidEvent(event, "refusalReason is required when refused is true");
+  }
+  return { type: "completed", refused, refusalReason };
 }
 
 function citationField(event: string, value: unknown): Citation {

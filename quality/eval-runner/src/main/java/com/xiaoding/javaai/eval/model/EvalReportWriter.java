@@ -21,6 +21,8 @@ public final class EvalReportWriter {
             json.put("mode", report.mode());
             json.put("commit", report.commit());
             json.put("model", report.model());
+            json.put("promptVersion", report.promptVersion());
+            json.put("environmentId", report.environmentId());
             json.put("executedAt", report.executedAt().toString());
             json.put("passed", report.passed());
             json.put("failed", report.failed());
@@ -37,11 +39,11 @@ public final class EvalReportWriter {
     private static String markdown(EvalReport report) {
         StringBuilder cases = new StringBuilder();
         for (EvalCaseResult result : report.results()) {
-            cases.append("| ").append(result.caseId())
+            cases.append("| ").append(markdownCell(result.caseId()))
                     .append(" | ").append(result.passed() ? "PASS" : "FAIL")
                     .append(" | ").append(result.latencyMillis())
-                    .append(" | ").append(result.traceId())
-                    .append(" | ").append(result.reason().replace("|", "\\|"))
+                    .append(" | ").append(markdownCell(result.traceId()))
+                    .append(" | ").append(markdownCell(result.reason()))
                     .append(" |\n");
         }
         return ("""
@@ -51,6 +53,8 @@ public final class EvalReportWriter {
                 - Mode: `%s`
                 - Commit: `%s`
                 - Model: `%s`
+                - Prompt version: `%s`
+                - Environment: `%s`
                 - Executed at: `%s`
                 - Passed: %d
                 - Failed: %d
@@ -62,9 +66,15 @@ public final class EvalReportWriter {
                 %s
                 """.formatted(
                 report.datasetVersion(), report.mode(), report.commit(), report.model(),
+                report.promptVersion(), report.environmentId(),
                 report.executedAt(), report.passed(), report.failed(), report.skipped(),
                 report.totalTokens(), cases
         )).stripTrailing() + System.lineSeparator();
+    }
+
+    private static String markdownCell(String value) {
+        if (value == null) return "";
+        return value.replace("|", "\\|").replace('\r', ' ').replace('\n', ' ');
     }
 
     private static void createParent(Path path) throws IOException {

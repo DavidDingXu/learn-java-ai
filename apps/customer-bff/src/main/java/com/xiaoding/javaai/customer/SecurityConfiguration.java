@@ -33,13 +33,13 @@ class SecurityConfiguration {
             }
             http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtDecoder(decoder)))
                     .authorizeExchange(exchanges -> exchanges
-                            .pathMatchers("/actuator/health", "/actuator/env", "/error").permitAll()
+                            .pathMatchers("/actuator/health", "/error").permitAll()
                             .pathMatchers("/api/v1/customer/consultations/**")
                             .hasAuthority("SCOPE_consultation:use")
                             .anyExchange().denyAll());
         } else {
             http.authorizeExchange(exchanges -> exchanges
-                    .pathMatchers("/actuator/health", "/actuator/env", "/error").permitAll()
+                    .pathMatchers("/actuator/health", "/error").permitAll()
                     .anyExchange().denyAll());
         }
         return http.build();

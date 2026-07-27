@@ -51,4 +51,34 @@ class BusinessToolCatalogTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("queueCode");
     }
+
+    @Test
+    void rejects_an_unknown_tool() {
+        AgentDecision.UseTool proposal = new AgentDecision.UseTool(
+                "GRANT_ADMIN", Map.of(), "提升权限");
+
+        assertThatThrownBy(() -> catalog.prepare(proposal))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("unknown tool");
+    }
+
+    @Test
+    void rejects_an_invalid_refund_amount() {
+        AgentDecision.UseTool proposal = new AgentDecision.UseTool(
+                "ISSUE_REFUND", Map.of("amountMinor", "-100", "currency", "CNY"), "发起退款");
+
+        assertThatThrownBy(() -> catalog.prepare(proposal))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("amountMinor");
+    }
+
+    @Test
+    void rejects_an_unsupported_refund_currency() {
+        AgentDecision.UseTool proposal = new AgentDecision.UseTool(
+                "ISSUE_REFUND", Map.of("amountMinor", "100", "currency", "BTC"), "发起退款");
+
+        assertThatThrownBy(() -> catalog.prepare(proposal))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("currency");
+    }
 }

@@ -7,6 +7,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ModelInteractionEvaluatorTest {
@@ -31,7 +32,8 @@ class ModelInteractionEvaluatorTest {
         };
 
         EvalReport report = new ModelInteractionEvaluator(client).evaluate(
-                dataset, URI.create("http://localhost"), EvalMode.CONTRACT_FIXTURE, "commit-123"
+                dataset, URI.create("http://localhost"), EvalMode.CONTRACT_FIXTURE, "commit-123",
+                "knowledge-answer-v1", "local-contract-fixture"
         );
 
         assertEquals(2, report.passed());
@@ -50,7 +52,8 @@ class ModelInteractionEvaluatorTest {
         );
 
         EvalReport report = new ModelInteractionEvaluator(client).evaluate(
-                dataset, URI.create("http://localhost"), EvalMode.CONTRACT_FIXTURE, "commit-123"
+                dataset, URI.create("http://localhost"), EvalMode.CONTRACT_FIXTURE, "commit-123",
+                "knowledge-answer-v1", "local-contract-fixture"
         );
 
         assertEquals(1, report.failed());
@@ -72,10 +75,31 @@ class ModelInteractionEvaluatorTest {
         );
 
         EvalReport report = new ModelInteractionEvaluator(client).evaluate(
-                dataset, URI.create("http://localhost"), EvalMode.CONTRACT_FIXTURE, "commit-123"
+                dataset, URI.create("http://localhost"), EvalMode.CONTRACT_FIXTURE, "commit-123",
+                "knowledge-answer-v1", "local-contract-fixture"
         );
 
         assertEquals(1, report.passed());
         assertEquals(0, report.failed());
+    }
+
+    @Test
+    void doesNotCopyUnexpectedClientMessagesIntoTheReport() {
+        EvalDataset dataset = new EvalDataset("golden-v2", List.of(
+                new EvalCase("failed-request", "退款多久？", List.of(), false, List.of())
+        ));
+        KnowledgeAnswerClient client = (baseUrl, question) -> {
+            throw new RuntimeException("Bearer secret-token at https://private.provider.example");
+        };
+
+        EvalReport report = new ModelInteractionEvaluator(client).evaluate(
+                dataset, URI.create("http://localhost"), EvalMode.CONTRACT_FIXTURE, "commit-123",
+                "knowledge-answer-v1", "local-contract-fixture"
+        );
+
+        assertFalse(report.results().getFirst().passed());
+        assertNotEquals("Bearer secret-token at https://private.provider.example",
+                report.results().getFirst().reason());
+        assertEquals("evaluation request failed", report.results().getFirst().reason());
     }
 }

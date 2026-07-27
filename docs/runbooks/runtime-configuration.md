@@ -1,40 +1,20 @@
 # Runtime Configuration
 
-## One Configuration Model
+## Configuration Boundaries
 
-Knowledge Service、Ticket Agent Service 和 Customer BFF 各自只保留一份主 `application.yml`。本地模型演示另有一份项目级 `config/application.yml`，避免读者在多个终端重复配置模型参数。配置遵循以下原则：
+Knowledge Service、Ticket Agent Service 和 Customer BFF 各自只保留一份主 `application.yml`。每份文件都包含通用参数、默认 `demo` 文档和显式 `production` 文档。项目根目录另有 `config/application.yml`，只给真实模型专项测试提供模型参数。
 
-1. 非敏感默认值写在 YAML，例如端口、超时和连接池上限。
-2. 普通测试使用 `src/test/resources/application-test.yml`，不访问模型、数据库或外部业务系统。
-3. 真实模型演示读取项目级 `config/application.yml`，只要求填写 API Key。
-4. 完整系统联调的数据库、身份和下游参数通过根目录 `.env` 提供。
-5. 生产密钥由 Secret Manager、Vault 或部署平台 Secret 覆盖，不能保存在仓库 YAML 中。
+配置遵循以下规则：
 
-## Prepare The Configuration
+1. 普通启动使用默认 `demo`，不需要数据库、身份平台、模型或下游服务。
+2. 真实模型测试显式读取 `config/application.yml`，使用 OpenAI 时只填写 API Key。
+3. 数据库、身份、Token Exchange 和下游地址的配置结构直接保留在各服务 `application.yml` 的 `production` 文档中。
+4. 普通测试使用 `src/test/resources/application-test.yml`，不访问外部网络。
+5. 仓库中只保留不可用的密钥占位值；生产密钥必须由密钥系统或部署平台覆盖。
 
-只验证真实模型时，修改 `config/application.yml` 中的 `spring.ai.openai.api-key`，然后运行模型 Smoke 脚本即可。OpenAI 地址和演示模型已有默认值；使用兼容服务时，再修改同一文件中的地址和模型名。
+## Start The Demo Applications
 
-完整启动三个服务时才需要准备 `.env`：
-
-```bash
-cp .env.example .env
-```
-
-按 `.env.example` 的分组填写 Knowledge 数据库、知识原文目录、索引 Worker、Ticket 数据库、身份平台和下游服务参数。`.env` 已被 `.gitignore` 排除，仍应限制本机文件权限；生产部署应由密钥系统和平台配置覆盖，不上传 `.env`。
-
-`config/application.yml` 是为了本地演示方便而保留的受版本控制模板。真实 API Key 写入后绝不能提交；生产环境使用 `SPRING_AI_OPENAI_API_KEY` 等 Spring Boot 标准外部配置覆盖。
-
-JWT 验签只能配置一种来源。本地联调使用 `JAVA_AI_DEV_JWT_HMAC_SECRET` 时，`JAVA_AI_JWT_JWK_SET_URI` 必须留空；接入公司 JWKS 时则反过来。两项同时非空会启动失败，避免部署时因残留开发密钥降级为 HMAC 验签。
-
-检查关键参数是否仍为空：
-
-```bash
-rg -n '=$' .env
-```
-
-## Start The Services
-
-从项目根目录分别启动，确保三个进程读取同一个 `.env`：
+从项目根目录分别启动：
 
 ```bash
 ./mvnw -pl services/knowledge-service spring-boot:run
@@ -42,39 +22,71 @@ rg -n '=$' .env
 ./mvnw -pl apps/customer-bff spring-boot:run
 ```
 
-默认端口为 8081、8082 和 8080。先检查 health，再执行模型接口 Smoke、检索 Eval 或业务接口检查。health 只能确认进程和基础 Bean 已启动，不覆盖数据库查询、模型质量和端到端业务结果。
+Windows 使用相同的 Maven 参数，把入口换成 `mvnw.cmd`。默认端口为 8081、8082 和 8080。
 
-Knowledge Service 启动时执行 Flyway 迁移，并把上传原文写入 `JAVA_AI_KNOWLEDGE_OBJECT_ROOT`。索引 Worker 默认轮询待执行任务；需要排查单个任务时，可关闭 `JAVA_AI_INDEX_SCHEDULER_ENABLED`，再使用受 `knowledge:index` scope 保护的手动触发接口。完整操作见 [Knowledge Ingestion](knowledge-ingestion.md)。
+`demo` 路径只用于启动应用、检查 health 和阅读代码结构。被关闭的外部能力会明确返回不可用，不会返回固定答案或伪造下游成功。
+
+## Run A Real Model Test
+
+在 `config/application.yml` 中填写 `spring.ai.openai.api-key`。OpenAI 地址、Chat 模型和 Embedding 模型已有演示默认值；使用其他 OpenAI 兼容服务时，再修改同一文件中的地址和模型名。
+
+直接运行指定的 Java 集成测试：
+
+```bash
+./mvnw \
+  -pl services/knowledge-service \
+  -Dtest=LiveModelSmokeIT \
+  -Dspring.config.additional-location=file:config/application.yml \
+  -Djava-ai.smoke.report-path=target/live-model-smoke.md \
+  test
+```
+
+Windows PowerShell：
+
+```powershell
+.\mvnw.cmd `
+  -pl services/knowledge-service `
+  -Dtest=LiveModelSmokeIT `
+  -Dspring.config.additional-location=file:config/application.yml `
+  -Djava-ai.smoke.report-path=target/live-model-smoke.md `
+  test
+```
+
+该测试只检查模型协议、响应映射和业务校验，并把脱敏结果写入 `target/live-model-smoke.md`。它不验证数据库、身份链路、RAG 质量或端到端业务。
+
+`config/application.yml` 只为减少本地演示步骤而存在。填入真实 API Key 后不能提交该文件。
+
+## Production Configuration
+
+各服务 `application.yml` 的 `production` 文档列出真实适配器需要的完整 Spring 配置路径：
+
+- Knowledge Service：PostgreSQL/pgvector、Flyway、Chat/Embedding 模型、JWT 验签和索引任务。
+- Ticket Agent Service：PostgreSQL/Flyway、Chat 模型、JWT 验签、Knowledge 和 Legacy Tool 地址。
+- Customer BFF：客户 JWT、Token Exchange、Knowledge 和 Ticket 地址。
+
+文件中的 `replace-with-secret-manager` 和 `*.example.com` 都是不可用占位值。部署时，平台在不改变配置键的前提下覆盖真实值。生产 API Key、数据库密码、JWT 材料和客户端密钥不能保存在 Git、镜像层或测试报告中。
+
+Ticket Agent 的远程 Tool 在生产示例中仍然默认关闭。接入公司的短时服务令牌适配器之前，不应为了跑通演示而把开发 HMAC 签发器带进生产。
 
 ## Test Isolation
 
-`src/test/resources/application-test.yml` 关闭模型和外部连接，并为需要状态的测试选择内存适配器。Spring Boot 上下文测试显式使用 `@ActiveProfiles("test")`；模型协议测试使用本地 HTTP Fixture，模型接口 Smoke 才显式加载项目级 `config/application.yml`。
+`src/test/resources/application-test.yml` 关闭模型和外部连接，并为需要状态的测试选择内存适配器。Spring Boot 上下文测试显式使用 `@ActiveProfiles("test")`；模型协议测试使用本地 HTTP Fixture。
 
-这套测试配置不会打进生产 Jar，正常启动应用时也不需要切换 Profile。快速代码回归统一执行：
+日常回归直接运行：
 
 ```bash
-scripts/verify-unit.sh
+./mvnw verify
 ```
 
-## Deployment Injection
-
-公司测试、预生产和生产部署使用同一组配置结构，只替换值：
-
-- 模型密钥通过 `SPRING_AI_OPENAI_API_KEY` 由 Secret Manager、Vault 或平台 Secret 注入；
-- PostgreSQL/pgvector 使用独立数据库或 Schema 与最小权限账号；
-- JWT issuer、JWK Set URI 和 audience 与目标 IdP 对齐；
-- Knowledge、Ticket 和 Legacy Tool 地址由服务发现或平台变量提供；
-- 连接池、超时与并发上限依据容量测试调整。
-
-CI 同样调用 `verify-unit` 或 `release-gate`，并按任务需要注入临时数据库和测试凭证。CI 是命令执行位置，不是另一套应用配置。
+仓库中的 Shell 与 PowerShell 脚本只用于聚合多个构建边界、自动选择本机 JDK 或生成专项报告。它们不是启动 Java 服务的必要入口。
 
 ## Verification Scope
 
-| Check | Command or source | Covered scope |
+| Check | Entry point | Covered scope |
 |---|---|---|
-| Code regression | `scripts/verify-unit.sh` | Java/Node 接口检查、业务规则和构建边界 |
-| Provider API | model Smoke and Eval scripts | Provider 协议、模型响应和固定数据集结果 |
-| Integration | deployed service URLs and scoped tokens | 数据库、身份与跨服务行为 |
-| Production acceptance | capacity, SLO, migration and rollback reports | 目标环境是否满足上线条件 |
+| Code regression | `./mvnw verify` | Java 构建、接口契约和业务规则 |
+| Provider API | `LiveModelSmokeIT` | Provider 协议、模型响应和业务映射 |
+| Integration | 目标测试环境 | 数据库、身份、跨服务和下游回执 |
+| Production acceptance | 容量、可用性、迁移和回滚报告 | 目标环境是否满足上线条件 |
 
-这些检查使用同一套配置键，但覆盖范围不同，不能用其中一项代替另一项。
+这些检查使用同一组配置路径，但覆盖范围不同，不能用其中一项代替另一项。

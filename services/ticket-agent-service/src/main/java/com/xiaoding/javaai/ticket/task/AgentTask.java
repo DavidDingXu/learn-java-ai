@@ -196,6 +196,16 @@ public final class AgentTask {
                 now);
     }
 
+    public AgentTask preExecutionFailed(String reason, Instant now) {
+        requireState(AgentTaskState.EXECUTING);
+        return transition(
+                AgentTaskState.FAILED,
+                observations,
+                confirmation,
+                "LOCAL_PRE_EXECUTION_FAILED: " + requireText(reason, "reason"),
+                now);
+    }
+
     public AgentTask rejectConfirmation(String reason, Instant now) {
         requireState(AgentTaskState.WAITING_CONFIRMATION);
         return transition(

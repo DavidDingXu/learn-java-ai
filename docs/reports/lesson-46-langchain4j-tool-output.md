@@ -8,7 +8,7 @@ Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 - A real LangChain4j `@Tool` executes one read-only ticket query in a two-model-call loop.
 - The final JSON maps to `TicketDecision` and is validated against the current ticket id.
-- Tests assert one tool execution, two model calls and structured result validation.
+- Tests assert one tool execution and two model calls, then reject a structured result that names another ticket.
 
 ## Verification
 

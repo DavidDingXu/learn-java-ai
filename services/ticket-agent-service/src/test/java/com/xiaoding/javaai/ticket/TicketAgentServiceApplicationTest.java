@@ -40,6 +40,6 @@ class TicketAgentServiceApplicationTest {
         client.get()
                 .uri("/actuator/env")
                 .exchange()
-                .expectStatus().isNotFound();
+                .expectStatus().isUnauthorized();
     }
 }

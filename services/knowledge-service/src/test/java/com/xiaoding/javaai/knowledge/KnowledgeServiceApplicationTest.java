@@ -41,7 +41,7 @@ class KnowledgeServiceApplicationTest {
         webTestClient.get()
                 .uri("/actuator/env")
                 .exchange()
-                .expectStatus().isNotFound();
+                .expectStatus().isUnauthorized();
 
         webTestClient.post()
                 .uri("/api/v1/knowledge/answers")

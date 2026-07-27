@@ -8,6 +8,8 @@ public record EvalReport(
         EvalMode mode,
         String commit,
         String model,
+        String promptVersion,
+        String environmentId,
         Instant executedAt,
         int passed,
         int failed,
@@ -17,6 +19,15 @@ public record EvalReport(
 ) {
 
     public EvalReport {
+        promptVersion = requireIdentifier(promptVersion, "promptVersion");
+        environmentId = requireIdentifier(environmentId, "environmentId");
         results = List.copyOf(results);
+    }
+
+    private static String requireIdentifier(String value, String name) {
+        if (value == null || !value.matches("[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")) {
+            throw new IllegalArgumentException(name + " must be a low-sensitive identifier");
+        }
+        return value;
     }
 }

@@ -2,75 +2,77 @@
 
 Knowledge Service 的 RAG 写入链路包含上传原文、保存文档与版本、发布 ACL 和索引任务，以及 Worker 切分原文、生成 Embedding 并写入 pgvector。业务版本和检索版本分别管理；新版本索引完成前，已有文档继续使用上一版索引。
 
-## Prerequisites
+## 这条链路不属于默认演示
+
+默认 `demo` Profile 会关闭数据库、文档写入、真实模型和 JWT，用于直接启动应用与运行确定性测试。本 Runbook 说明的是目标环境写入链路，需要真实 PostgreSQL/pgvector、对象存储、Embedding Provider 和身份平台。
 
 准备一个已安装 `vector` 与 `pg_trgm` 扩展的 PostgreSQL 数据库，以及支持 Embedding 的 OpenAI 兼容接口。若同时验证知识问答，该接口还需支持 Chat。应用启动时由 Flyway 按顺序执行 V1-V4：V1 创建文档、版本、ACL、任务和向量分块，V2 创建 trigram 索引，V3 增加发布审计字段，V4 创建检索版本指针。
 
-模型配置统一填写在项目根目录 `config/application.yml`。在 `.env` 中只填写这条完整链路需要的数据库、对象存储和身份参数：
+## 所有运行参数都在 `application.yml`
 
-```properties
-JAVA_AI_POSTGRES_URL=jdbc:postgresql://database.example.com:5432/java_ai_knowledge
-JAVA_AI_POSTGRES_USER=java_ai_knowledge
-JAVA_AI_POSTGRES_PASSWORD=replace-me
-JAVA_AI_KNOWLEDGE_OBJECT_ROOT=./var/knowledge-objects
-JAVA_AI_INDEX_WORKER_ID=knowledge-indexer-local
-JAVA_AI_JWT_ISSUER=https://identity.example.com
-JAVA_AI_JWT_AUDIENCE=knowledge-service
-JAVA_AI_JWT_ALLOWED_ACTORS=customer-bff,ticket-agent-service,knowledge-admin-service
-JAVA_AI_JWT_JWK_SET_URI=https://identity.example.com/.well-known/jwks.json
+Knowledge Service 的 `application.yml` 已经给出 `production` 配置结构。在隔离的测试环境中，把占位值替换为实际地址与账号：
+
+```yaml
+spring:
+  ai:
+    openai:
+      api-key: replace-with-secret-manager
+      base-url: https://api.openai.com/v1
+      embedding:
+        model: text-embedding-3-small
+
+java-ai:
+  security:
+    jwt:
+      issuer: https://identity.example.com
+      audience: knowledge-service
+      jwk-set-uri: https://identity.example.com/.well-known/jwks.json
+      allowed-actors: customer-bff,ticket-agent-service,knowledge-admin-service
+  knowledge:
+    object-store:
+      local-root: ./var/knowledge-objects
+    postgres:
+      jdbc-url: jdbc:postgresql://database.example.com:5432/java_ai_knowledge
+      username: java_ai_knowledge
+      password: replace-with-secret-manager
 ```
 
-当前 Flyway Schema 将向量列定义为 `vector(1536)`，所选 Embedding 模型必须输出 1536 维向量。如果更换为其他维度，应新建向量列或索引版本，完成回填和检索评测后再切换，不是修改一个环境变量。
+为了演示配置位置，YAML 中保留了占位密码和 API Key。真实密钥不能提交到 Git；生产环境必须由公司密钥系统覆盖这些值。多实例部署也不应继续使用本地文件对象存储，需要替换为 S3 兼容实现。
+
+当前 Flyway Schema 将向量列定义为 `vector(1536)`，所选 Embedding 模型必须输出 1536 维向量。如果更换为其他维度，应新建向量列或索引版本，完成回填和检索评测后再切换，不是只修改模型名称。
 
 数据库账号需要对 Knowledge Schema 具备 Flyway 迁移和业务读写权限。正式环境通常把迁移账号与运行账号拆开，示例为了便于首次运行使用同一个连接。
 
-## Required Token Claims
+## 写入令牌的最小 Claim
 
 上传和发布使用 `knowledge:write` scope，手动执行一次 Worker 使用 `knowledge:index` scope。JWT 还必须包含：
 
 - `aud`：包含 `knowledge-service`；
 - `tenantId`：文档所属租户；
 - `sub`：执行上传或发布的编辑人；
-- `act.sub`：在 `JAVA_AI_JWT_ALLOWED_ACTORS` 中配置的调用服务。
+- `act.sub`：必须命中服务端 `allowed-actors` 白名单。
 
 接口不会接收请求头或请求体中的租户、编辑人字段。
 
-公司环境应从 IdP 或 Token Exchange 获取短时令牌。本地联调可以暂时使用 HMAC：在 `.env` 中留空 `JAVA_AI_JWT_JWK_SET_URI`，并为 `JAVA_AI_DEV_JWT_HMAC_SECRET` 填入至少 32 字节的随机密钥。随后生成两枚权限分离、默认 15 分钟过期的令牌：
+从 IdP 或 Token Exchange 获取两枚短时令牌：一枚只带 `knowledge:write`，另一枚只带 `knowledge:index`。后续命令中的 `<WRITE_TOKEN>` 和 `<INDEX_TOKEN>` 分别替换为这两枚令牌。不要把令牌写进脚本、命令历史或仓库文件。
+
+## 启动 Knowledge Service
+
+下面的步骤使用手动接口执行一条索引任务，因此先在 `production` 配置段关闭自动调度：
+
+```yaml
+java-ai:
+  knowledge:
+    indexing:
+      scheduler-enabled: false
+```
+
+如果保留自动调度，请跳过后面的手动 `run-once`，否则任务可能已经被调度器处理。
 
 ```bash
-export KNOWLEDGE_WRITE_TOKEN="$(node scripts/generate-development-jwt.mjs \
-  --scope knowledge:write --subject editor-42 --tenant tenant-a \
-  --actor knowledge-admin-service --departments support)"
-export KNOWLEDGE_INDEX_TOKEN="$(node scripts/generate-development-jwt.mjs \
-  --scope knowledge:index --subject indexer-local --tenant tenant-a \
-  --actor knowledge-admin-service --departments support)"
-```
-
-PowerShell 使用同一个脚本：
-
-```powershell
-$env:KNOWLEDGE_WRITE_TOKEN = node scripts/generate-development-jwt.mjs `
-  --scope knowledge:write --subject editor-42 --tenant tenant-a `
-  --actor knowledge-admin-service --departments support
-$env:KNOWLEDGE_INDEX_TOKEN = node scripts/generate-development-jwt.mjs `
-  --scope knowledge:index --subject indexer-local --tenant tenant-a `
-  --actor knowledge-admin-service --departments support
-```
-
-脚本会读取项目根目录的 `.env`，只向标准输出写入 JWT。它不会创建管理员权限，也不能代替公司的客户端认证、密钥轮换和撤销机制。
-
-## Start Knowledge Service
-
-下面的步骤使用手动接口执行一条索引任务，因此应在启动前设置：
-
-```properties
-JAVA_AI_INDEX_SCHEDULER_ENABLED=false
-```
-
-修改 `.env` 后需要重启服务。如果保留默认自动调度，请跳过后面的手动 `run-once`，否则任务可能已经被调度器处理。
-
-```bash
-./mvnw -pl services/knowledge-service spring-boot:run
+./mvnw -pl services/knowledge-service \
+  -Dspring-boot.run.profiles=production \
+  spring-boot:run
 ```
 
 确认 `/actuator/health` 返回 `UP` 后再上传文档。Health 不会替你验证 Embedding 质量或数据库容量。
@@ -81,7 +83,7 @@ JAVA_AI_INDEX_SCHEDULER_ENABLED=false
 
 ```bash
 curl --fail-with-body \
-  -H "Authorization: Bearer $KNOWLEDGE_WRITE_TOKEN" \
+  -H "Authorization: Bearer <WRITE_TOKEN>" \
   -F 'metadata={"title":"退款政策","expectedRevision":0};type=application/json' \
   -F 'file=@datasets/knowledge/refund-policy-chunking-v1.md;type=text/markdown' \
   http://localhost:8081/api/v1/knowledge/documents/refund-policy/versions
@@ -91,7 +93,7 @@ Windows PowerShell 使用 `curl.exe`，避免把 `curl` 解析成旧版 PowerShe
 
 ```powershell
 curl.exe --fail-with-body `
-  -H "Authorization: Bearer $env:KNOWLEDGE_WRITE_TOKEN" `
+  -H "Authorization: Bearer <WRITE_TOKEN>" `
   -F 'metadata={"title":"退款政策","expectedRevision":0};type=application/json' `
   -F 'file=@datasets/knowledge/refund-policy-chunking-v1.md;type=text/markdown' `
   http://localhost:8081/api/v1/knowledge/documents/refund-policy/versions
@@ -105,7 +107,7 @@ curl.exe --fail-with-body `
 
 ```bash
 curl --fail-with-body \
-  -H "Authorization: Bearer $KNOWLEDGE_WRITE_TOKEN" \
+  -H "Authorization: Bearer <WRITE_TOKEN>" \
   -H 'Content-Type: application/json' \
   -d '{
     "expectedRevision": 1,
@@ -134,7 +136,7 @@ $publishBody = @{
 
 Invoke-RestMethod -Method Post `
   -Uri "http://localhost:8081/api/v1/knowledge/documents/refund-policy/versions/1/publish" `
-  -Headers @{ Authorization = "Bearer $env:KNOWLEDGE_WRITE_TOKEN" } `
+  -Headers @{ Authorization = "Bearer <WRITE_TOKEN>" } `
   -ContentType "application/json" `
   -Body $publishBody
 ```
@@ -150,7 +152,7 @@ Invoke-RestMethod -Method Post `
 ```bash
 curl --fail-with-body \
   -X POST \
-  -H "Authorization: Bearer $KNOWLEDGE_INDEX_TOKEN" \
+  -H "Authorization: Bearer <INDEX_TOKEN>" \
   http://localhost:8081/internal/v1/knowledge/index-tasks/run-once
 ```
 
@@ -159,10 +161,10 @@ Windows PowerShell：
 ```powershell
 Invoke-RestMethod -Method Post `
   -Uri "http://localhost:8081/internal/v1/knowledge/index-tasks/run-once" `
-  -Headers @{ Authorization = "Bearer $env:KNOWLEDGE_INDEX_TOKEN" }
+  -Headers @{ Authorization = "Bearer <INDEX_TOKEN>" }
 ```
 
-返回值为 `SUCCEEDED`、`FAILED`、`IDLE` 或 `LOST_LEASE`。`LOST_LEASE` 表示当前 Worker 已不再拥有该任务，它不会再使用旧租约写入失败状态。普通失败任务按 `JAVA_AI_INDEX_RETRY_DELAY` 重试，达到 `JAVA_AI_INDEX_MAXIMUM_ATTEMPTS` 后进入 `DEAD`。
+返回值为 `SUCCEEDED`、`FAILED`、`IDLE` 或 `LOST_LEASE`。`LOST_LEASE` 表示当前 Worker 已不再拥有该任务，它不会再使用旧租约写入失败状态。普通失败任务按 `java-ai.knowledge.indexing.retry-delay` 重试，达到 `maximum-attempts` 后进入 `DEAD`。
 
 Worker 先在数据库事务外读取原文、切分并调用 Embedding 服务，期间每隔约一个租期的三分之一续租。续租、完成和失败写入都会校验任务 ID、Worker、`leaseAttempt` 和当前租约。进入短写事务后，sink 还会校验租户、文档、版本和任务类型；只有租约仍有效才会写入目标版本。新分块和 `document_search_version` 指针在同一个事务中提交。租约已丢失、分块写入失败、目标版本已被替代或已过期时，事务回滚，原检索版本不变。
 

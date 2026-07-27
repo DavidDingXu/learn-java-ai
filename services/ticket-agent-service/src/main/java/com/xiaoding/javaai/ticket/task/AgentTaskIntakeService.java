@@ -43,13 +43,19 @@ public final class AgentTaskIntakeService {
     }
 
     private static String fingerprint(AgentTaskRequest request) {
-        StringBuilder canonical = new StringBuilder()
-                .append(request.caseId()).append('\n')
-                .append(request.objective()).append('\n');
+        StringBuilder canonical = new StringBuilder();
+        append(canonical, "caseId");
+        append(canonical, request.caseId());
+        append(canonical, "objective");
+        append(canonical, request.objective());
+        append(canonical, "businessContext");
+        append(canonical, Integer.toString(request.businessContext().size()));
         request.businessContext().entrySet().stream()
                 .sorted(java.util.Map.Entry.comparingByKey())
-                .forEach(entry -> canonical.append(entry.getKey())
-                        .append('=').append(entry.getValue()).append('\n'));
+                .forEach(entry -> {
+                    append(canonical, entry.getKey());
+                    append(canonical, entry.getValue());
+                });
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(canonical.toString().getBytes(StandardCharsets.UTF_8));
@@ -57,6 +63,10 @@ public final class AgentTaskIntakeService {
         } catch (NoSuchAlgorithmException error) {
             throw new IllegalStateException("SHA-256 is not available", error);
         }
+    }
+
+    private static void append(StringBuilder canonical, String value) {
+        canonical.append(value.length()).append(':').append(value).append(';');
     }
 
     private static String requireKey(String value) {

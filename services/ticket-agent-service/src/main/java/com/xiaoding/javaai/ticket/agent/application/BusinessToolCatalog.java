@@ -5,10 +5,6 @@ import com.xiaoding.javaai.ticket.agent.domain.PreparedToolCall;
 import com.xiaoding.javaai.ticket.agent.domain.ToolEffect;
 import com.xiaoding.javaai.ticket.agent.domain.ToolRisk;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -54,7 +50,7 @@ public final class BusinessToolCatalog {
                 policy.requiredRole(),
                 arguments,
                 proposal.rationale(),
-                fingerprint(proposal.toolName(), arguments));
+                ToolActionFingerprint.calculate(proposal.toolName(), arguments));
     }
 
     private void validateArgumentNames(Map<String, String> arguments, Set<String> allowed) {
@@ -104,17 +100,6 @@ public final class BusinessToolCatalog {
 
     private static void enforceLength(String value, String name, int maxLength) {
         if (value.length() > maxLength) throw new IllegalArgumentException(name + " exceeds " + maxLength);
-    }
-
-    private static String fingerprint(String toolName, Map<String, String> arguments) {
-        StringBuilder canonical = new StringBuilder(toolName).append('\n');
-        arguments.forEach((key, value) -> canonical.append(key).append('=').append(value).append('\n'));
-        try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
-                    .digest(canonical.toString().getBytes(StandardCharsets.UTF_8)));
-        } catch (NoSuchAlgorithmException error) {
-            throw new IllegalStateException("SHA-256 is not available", error);
-        }
     }
 
     private record ToolPolicy(

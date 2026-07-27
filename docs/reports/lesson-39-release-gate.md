@@ -1,26 +1,17 @@
 # Lesson 39 Release Gate Evidence
 
-Status: VERIFIED_LOCAL_RELEASE_GATE_EXTERNAL_EVIDENCE_OPTIONAL
-
-Implementation commit: `b8fd7c46e2329e48cdbdbedfcc58e8097afe306d`
+Status: VERIFIED_GATE_BEHAVIOR_FINAL_BASELINE_REQUIRES_RERUN
 
 ## Verified
 
 - Cross-platform release scripts run the complete unit/build/contract boundary and scan tracked plus untracked non-ignored files for high-confidence secrets.
-- `JAVA_AI_RELEASE_REQUIRE_EXTERNAL=1` requires an explicit deployed base URL and runs the external health smoke.
+- The optional aggregate gate runs external health smoke only when the deployment pipeline explicitly supplies a target URL; local demo setup does not require this value.
 - Model, retrieval, Agent and security reports remain separate evidence with separate datasets and identities.
 - Release documentation covers migration, feature flags, metrics, unknown-result recovery and application/model/index/database rollback.
 
-## Unified Verification Result
+## Verification Result Boundary
 
-- Node and workspace contracts: 113 passed.
-- Knowledge Service: 85 tests passed.
-- Ticket Agent Service: 50 tests passed.
-- Customer BFF: 19 tests passed.
-- Eval Runner: 24 tests passed.
-- Main reactor total: 178 tests passed.
-- Framework labs reactor built successfully.
-- Independent Java 8 client: 6 tests passed.
+The repository has changed since the earlier fixed-count report. The final release commit must rerun the direct Maven/Node checks and, when full repository coverage is needed, the optional aggregate gate. Exact test counts and the final commit belong in the regenerated release report; older counts are not carried forward as current evidence.
 
 ## External Boundary
 

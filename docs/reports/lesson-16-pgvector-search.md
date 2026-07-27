@@ -33,17 +33,9 @@ Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 
 ## External pgvector Verification
 
-外部测试必须使用安装了 `vector` 扩展的专用数据库。测试会执行 `Flyway.clean()` 并重建结构，禁止指向共享或生产数据库。
+外部测试必须使用安装了 `vector` 扩展的专用数据库。`PgVectorExternalIT` 会执行 `Flyway.clean()` 并重建结构，禁止指向共享或生产数据库。这项破坏性验证不属于默认演示步骤。
 
-```bash
-export JAVA_AI_POSTGRES_URL='jdbc:postgresql://127.0.0.1:5432/java_ai_test'
-export JAVA_AI_POSTGRES_USER='java_ai'
-export JAVA_AI_POSTGRES_PASSWORD='replace-with-test-password'
-
-./mvnw -pl services/knowledge-service verify -Pexternal-integration
-```
-
-`PgVectorExternalIT` 会执行全部 Flyway 迁移，从三份跨租户、跨权限测试数据中只返回 `allowed-chunk`，并检查替换索引完成前读取上一版、完成后切换到新版。`.github/workflows/pgvector-integration.yml` 调用同一 Maven profile；具体环境是否通过应以该次测试报告为准。
+该测试执行全部 Flyway 迁移，从跨租户、跨权限测试数据中只返回 `allowed-chunk`，并检查替换索引完成前读取上一版、完成后切换到新版。Knowledge Service 的生产连接项位于 `application.yml` 的 `production` 段；仓库只保留占位值，真实密码必须由部署平台的密钥系统覆盖。具体环境是否通过应以该次测试报告为准。
 
 ## Evidence Boundary
 

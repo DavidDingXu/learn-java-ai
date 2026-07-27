@@ -22,7 +22,7 @@ env JAVA_HOME="$MAIN_JAVA_HOME" PATH="$MAIN_JAVA_HOME/bin:$PATH" \
 "$MAIN_JAVA_HOME/bin/java" \
   -jar "$ROOT_DIR/quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar" \
   agent-eval \
-  --dataset "$ROOT_DIR/datasets/agent/golden-set-v1.jsonl" \
+  --dataset "$ROOT_DIR/datasets/agent/golden-set-v2.jsonl" \
   --base-url "$JAVA_AI_AGENT_BASE_URL" \
   --create-token "$JAVA_AI_AGENT_CREATE_TOKEN" \
   --run-token "$JAVA_AI_AGENT_RUN_TOKEN" \

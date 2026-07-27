@@ -1,6 +1,11 @@
 package com.xiaoding.javaai.labs.agentscope;
 
-import java.net.URI;
+public record McpServerDescriptor(String serverId) {
 
-public record McpServerDescriptor(String serverId, URI endpoint) {
+    public McpServerDescriptor {
+        if (serverId == null || serverId.isBlank()) {
+            throw new IllegalArgumentException("MCP server ID must not be blank");
+        }
+        serverId = serverId.strip();
+    }
 }

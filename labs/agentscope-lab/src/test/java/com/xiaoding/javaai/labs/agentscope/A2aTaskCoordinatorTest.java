@@ -6,6 +6,7 @@ import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,7 +16,7 @@ class A2aTaskCoordinatorTest {
     @Test
     void keepsSubmissionIdempotentAndCallbacksMonotonic() {
         A2aTaskCoordinator coordinator = new A2aTaskCoordinator();
-        A2aTaskRequest request = new A2aTaskRequest("idem-1", "risk-agent", "分析 T-1", "hash-a");
+        A2aTaskRequest request = request("tenant-a", "idem-1", "T-1", "分析 T-1");
 
         A2aTask first = coordinator.submit(request, Instant.parse("2026-07-13T12:00:00Z"));
         A2aTask duplicate = coordinator.submit(request, Instant.parse("2026-07-13T12:00:01Z"));
@@ -29,7 +30,7 @@ class A2aTaskCoordinatorTest {
         assertThrows(IllegalStateException.class,
                 () -> coordinator.onCallback(first.taskId(), A2aTaskStatus.RUNNING, "late"));
         assertThrows(IllegalStateException.class,
-                () -> coordinator.markDeliveryUnknown(request.idempotencyKey()));
+                () -> coordinator.markDeliveryUnknown(request.tenantId(), request.idempotencyKey()));
 
         IllegalStateException changedReceipt = assertThrows(IllegalStateException.class,
                 () -> coordinator.onCallback(first.taskId(), A2aTaskStatus.COMPLETED, "receipt-2"));
@@ -42,22 +43,51 @@ class A2aTaskCoordinatorTest {
     @Test
     void conflictingIdempotencyAndTimeoutAreHandledExplicitly() {
         A2aTaskCoordinator coordinator = new A2aTaskCoordinator();
-        coordinator.submit(new A2aTaskRequest("idem-2", "risk-agent", "分析 T-2", "hash-a"), Instant.now());
+        coordinator.submit(request("tenant-a", "idem-2", "T-2", "分析 T-2"), Instant.now());
 
         assertThrows(IllegalArgumentException.class, () -> coordinator.submit(
-                new A2aTaskRequest("idem-2", "risk-agent", "分析 T-3", "hash-b"), Instant.now()));
-        A2aTask unknown = coordinator.markDeliveryUnknown("idem-2");
+                request("tenant-a", "idem-2", "T-3", "分析 T-3"), Instant.now()));
+        A2aTask unknown = coordinator.markDeliveryUnknown("tenant-a", "idem-2");
         assertEquals(A2aTaskStatus.UNKNOWN, unknown.status());
         assertNotNull(AgentScopeA2aClientBoundary.defaultConfig());
+    }
+
+    @Test
+    void computesTheFingerprintServerSideAndNamespacesKeysByTenant() {
+        A2aTaskCoordinator coordinator = new A2aTaskCoordinator();
+        A2aTaskRequest firstRequest = request("tenant-a", "idem-shared", "T-9", "分析  T-9\n的风险");
+        A2aTaskRequest normalizedDuplicate = request("tenant-a", "idem-shared", "T-9", "分析 T-9 的风险");
+        A2aTaskRequest anotherTenant = request("tenant-b", "idem-shared", "T-9", "分析 T-9 的风险");
+
+        A2aTask first = coordinator.submit(firstRequest, Instant.now());
+        A2aTask duplicate = coordinator.submit(normalizedDuplicate, Instant.now());
+        A2aTask isolated = coordinator.submit(anotherTenant, Instant.now());
+
+        assertEquals(firstRequest.requestFingerprint(), normalizedDuplicate.requestFingerprint());
+        assertEquals(first.taskId(), duplicate.taskId());
+        assertTrue(!first.taskId().equals(isolated.taskId()));
+        assertTrue(!firstRequest.requestFingerprint().equals(anotherTenant.requestFingerprint()));
+    }
+
+    @Test
+    void keepsFieldBoundariesUnambiguousInTheRequestFingerprint() {
+        A2aTaskRequest first = new A2aTaskRequest(
+                "tenant-a", "idem-boundary", "risk", "agent-review",
+                "T-9", "ticket:risk-summary", "分析 T-9", "v1");
+        A2aTaskRequest second = new A2aTaskRequest(
+                "tenant-a", "idem-boundary", "riska", "gent-review",
+                "T-9", "ticket:risk-summary", "分析 T-9", "v1");
+
+        assertNotEquals(first.requestFingerprint(), second.requestFingerprint());
     }
 
     @Test
     void acceptsAConfirmedTerminalResultAfterUnknownDelivery() {
         A2aTaskCoordinator coordinator = new A2aTaskCoordinator();
         A2aTask submitted = coordinator.submit(
-                new A2aTaskRequest("idem-3", "risk-agent", "分析 T-3", "hash-c"), Instant.now());
+                request("tenant-a", "idem-3", "T-3", "分析 T-3"), Instant.now());
 
-        coordinator.markDeliveryUnknown("idem-3");
+        coordinator.markDeliveryUnknown("tenant-a", "idem-3");
         A2aTask completed = coordinator.onCallback(
                 submitted.taskId(), A2aTaskStatus.COMPLETED, "receipt-3");
 
@@ -73,5 +103,22 @@ class A2aTaskCoordinatorTest {
                 () -> coordinator.onCallback("missing-task", A2aTaskStatus.COMPLETED, "receipt"));
 
         assertTrue(error.getMessage().contains("unknown A2A task"));
+    }
+
+    private static A2aTaskRequest request(
+            String tenantId,
+            String idempotencyKey,
+            String businessObjectId,
+            String instruction
+    ) {
+        return new A2aTaskRequest(
+                tenantId,
+                idempotencyKey,
+                "risk-agent",
+                "risk-review",
+                businessObjectId,
+                "ticket:risk-summary",
+                instruction,
+                "v1");
     }
 }

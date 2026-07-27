@@ -39,9 +39,9 @@ scan_jdk8() {
   SELECTED_MAJOR=""
 
   if [[ -n "${JAVA_AI_JDK8_HOME:-}" ]]; then
-    try_jdk8 "$JAVA_AI_JDK8_HOME" ||
-      die 2 "JAVA_AI_JDK8_HOME is not a full JDK 8: $JAVA_AI_JDK8_HOME"
-    return
+    if try_jdk8 "$JAVA_AI_JDK8_HOME"; then
+      return
+    fi
   fi
 
   if [[ -n "${JAVA_HOME:-}" ]] && try_jdk8 "$JAVA_HOME"; then

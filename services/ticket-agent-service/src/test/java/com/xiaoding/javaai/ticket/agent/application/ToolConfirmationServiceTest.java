@@ -17,7 +17,9 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,7 +37,8 @@ class ToolConfirmationServiceTest {
         AtomicInteger executions = new AtomicInteger();
         LegacyWriteToolExecutor executor = (task, confirmation, key) -> {
             executions.incrementAndGet();
-            assertThat(key).isEqualTo("tool:tenant-a:action-100");
+            assertThat(key).isEqualTo(
+                    ToolConfirmationService.toolIdempotencyKey("tenant-a", "action-100"));
             return new ToolExecutionReceipt("action-100", "SUCCEEDED", false, "legacy-audit-100");
         };
         ToolConfirmationService service = new ToolConfirmationService(
@@ -74,6 +77,34 @@ class ToolConfirmationServiceTest {
         assertThatThrownBy(() -> service.decide("task-100", actor, key, new ConfirmToolAction(
                 "confirmation-100", 2, ConfirmationDecision.APPROVE, "改为同意")))
                 .isInstanceOf(ConfirmationIdempotencyConflictException.class);
+    }
+
+    @Test
+    void confirmation_idempotency_encoding_preserves_request_and_identity_field_boundaries() {
+        ConfirmToolAction firstCommand = new ConfirmToolAction(
+                "segment", 2, ConfirmationDecision.APPROVE, "approve");
+        ConfirmToolAction secondCommand = new ConfirmToolAction(
+                "part\nsegment", 2, ConfirmationDecision.APPROVE, "approve");
+
+        assertThat(ToolConfirmationService.decisionFingerprint("task\npart", firstCommand))
+                .isNotEqualTo(ToolConfirmationService.decisionFingerprint("task", secondCommand));
+
+        ConfirmationActor firstActor = new ConfirmationActor(
+                "tenant\npart", "employee-7", "jdk8-crm", List.of("TICKET_OPERATOR"));
+        ConfirmationActor secondActor = new ConfirmationActor(
+                "tenant", "employee-7", "part\njdk8-crm", List.of("TICKET_OPERATOR"));
+        assertThat(ToolConfirmationService.principalScope(firstActor))
+                .isNotEqualTo(ToolConfirmationService.principalScope(secondActor));
+    }
+
+    @Test
+    void tool_idempotency_key_hides_tenant_data_and_preserves_field_boundaries() {
+        String key = ToolConfirmationService.toolIdempotencyKey("tenant-a", "action-100");
+
+        assertThat(key).matches("tool:v1:[0-9a-f]{64}");
+        assertThat(key).doesNotContain("tenant-a", "action-100");
+        assertThat(ToolConfirmationService.toolIdempotencyKey("tenant:a", "b"))
+                .isNotEqualTo(ToolConfirmationService.toolIdempotencyKey("tenant", "a:b"));
     }
 
     @Test
@@ -131,6 +162,31 @@ class ToolConfirmationServiceTest {
     }
 
     @Test
+    void rejects_a_confirmation_whose_action_snapshot_no_longer_matches_its_fingerprint() {
+        InMemoryAgentTaskRepository tasks = waitingTask(
+                Instant.parse("2026-07-13T08:20:00Z"),
+                Map.of("queueCode", "tier-2"),
+                ToolActionFingerprint.calculate(
+                        "ASSIGN_QUEUE", Map.of("queueCode", "refund-review")));
+        AtomicInteger executions = new AtomicInteger();
+        ToolConfirmationService service = service(tasks, (task, confirmation, key) -> {
+            executions.incrementAndGet();
+            return new ToolExecutionReceipt("action-100", "SUCCEEDED", false, "audit-100");
+        });
+
+        assertThatThrownBy(() -> service.decide(
+                "task-100", operator("tenant-a", "TICKET_OPERATOR"), "confirm:fingerprint",
+                new ConfirmToolAction(
+                        "confirmation-100", 2, ConfirmationDecision.APPROVE, "approve")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("fingerprint");
+
+        assertThat(executions).hasValue(0);
+        assertThat(tasks.findById("task-100").orElseThrow().state())
+                .isEqualTo(AgentTaskState.WAITING_CONFIRMATION);
+    }
+
+    @Test
     void stops_in_execution_uncertain_after_a_remote_timeout_and_does_not_auto_retry() {
         InMemoryAgentTaskRepository tasks = waitingTask(Instant.parse("2026-07-13T08:20:00Z"));
         AtomicInteger executions = new AtomicInteger();
@@ -150,6 +206,142 @@ class ToolConfirmationServiceTest {
         assertThat(executions).hasValue(1);
         assertThat(first.state()).isEqualTo(AgentTaskState.EXECUTION_UNCERTAIN);
         assertThat(duplicate.duplicate()).isTrue();
+    }
+
+    @Test
+    void moves_to_execution_uncertain_when_remote_succeeds_but_completion_cannot_be_saved() {
+        InMemoryAgentTaskRepository delegate = waitingTask(Instant.parse("2026-07-13T08:20:00Z"));
+        AgentTaskRepository tasks = failFirstCompletedSave(delegate);
+        InMemoryAgentAuditTrail audit = new InMemoryAgentAuditTrail();
+        AtomicInteger executions = new AtomicInteger();
+        ToolConfirmationService service = new ToolConfirmationService(
+                tasks,
+                new InMemoryConfirmationDecisionStore(),
+                (task, confirmation, key) -> {
+                    executions.incrementAndGet();
+                    return new ToolExecutionReceipt("action-100", "SUCCEEDED", false, "audit-100");
+                },
+                audit,
+                CLOCK);
+
+        ConfirmToolAction command = new ConfirmToolAction(
+                "confirmation-100", 2, ConfirmationDecision.APPROVE, "approve");
+        ConfirmationDecisionReceipt receipt = service.decide(
+                "task-100",
+                operator("tenant-a", "TICKET_OPERATOR"),
+                "confirm:save-failure",
+                command);
+        ConfirmationDecisionReceipt duplicate = service.decide(
+                "task-100",
+                operator("tenant-a", "TICKET_OPERATOR"),
+                "confirm:save-failure",
+                command);
+
+        assertThat(executions).hasValue(1);
+        assertThat(receipt.state()).isEqualTo(AgentTaskState.EXECUTION_UNCERTAIN);
+        assertThat(receipt.toolStatus()).isEqualTo("UNKNOWN");
+        assertThat(duplicate.duplicate()).isTrue();
+        assertThat(tasks.findById("task-100").orElseThrow().state())
+                .isEqualTo(AgentTaskState.EXECUTION_UNCERTAIN);
+        assertThat(tasks.findById("task-100").orElseThrow().outcome())
+                .isEqualTo("TOOL_EXECUTION_UNCERTAIN: LOCAL_COMPLETION_FAILED");
+        assertThat(audit.findByTaskId("task-100"))
+                .extracting(AgentAuditEvent::eventType)
+                .containsExactly(
+                        "CONFIRMATION_APPROVED",
+                        "TOOL_EXECUTION_SUCCEEDED",
+                        "TOOL_EXECUTION_UNCERTAIN");
+    }
+
+    @Test
+    void moves_to_execution_uncertain_when_remote_succeeds_but_success_audit_cannot_be_saved() {
+        InMemoryAgentTaskRepository tasks = waitingTask(Instant.parse("2026-07-13T08:20:00Z"));
+        InMemoryAgentAuditTrail recordedAudit = new InMemoryAgentAuditTrail();
+        AtomicInteger auditFailures = new AtomicInteger();
+        AgentAuditTrail audit = new AgentAuditTrail() {
+            @Override
+            public AgentAuditEvent append(
+                    String taskId,
+                    String eventType,
+                    String actorId,
+                    String detail,
+                    Instant occurredAt
+            ) {
+                if ("TOOL_EXECUTION_SUCCEEDED".equals(eventType)
+                        && auditFailures.getAndIncrement() == 0) {
+                    throw new IllegalStateException("audit store is unavailable");
+                }
+                return recordedAudit.append(taskId, eventType, actorId, detail, occurredAt);
+            }
+
+            @Override
+            public List<AgentAuditEvent> findByTaskId(String taskId) {
+                return recordedAudit.findByTaskId(taskId);
+            }
+        };
+        ToolConfirmationService service = new ToolConfirmationService(
+                tasks,
+                new InMemoryConfirmationDecisionStore(),
+                (task, confirmation, key) ->
+                        new ToolExecutionReceipt("action-100", "SUCCEEDED", false, "audit-100"),
+                audit,
+                CLOCK);
+
+        ConfirmationDecisionReceipt receipt = service.decide(
+                "task-100",
+                operator("tenant-a", "TICKET_OPERATOR"),
+                "confirm:audit-failure",
+                new ConfirmToolAction(
+                        "confirmation-100", 2, ConfirmationDecision.APPROVE, "approve"));
+
+        assertThat(receipt.state()).isEqualTo(AgentTaskState.EXECUTION_UNCERTAIN);
+        assertThat(tasks.findById("task-100").orElseThrow().state())
+                .isEqualTo(AgentTaskState.EXECUTION_UNCERTAIN);
+        assertThat(recordedAudit.findByTaskId("task-100"))
+                .extracting(AgentAuditEvent::eventType)
+                .containsExactly("CONFIRMATION_APPROVED", "TOOL_EXECUTION_UNCERTAIN");
+    }
+
+    @Test
+    void keeps_the_business_result_completed_when_success_metric_cannot_be_recorded() {
+        InMemoryAgentTaskRepository tasks = waitingTask(Instant.parse("2026-07-13T08:20:00Z"));
+        InMemoryAgentAuditTrail audit = new InMemoryAgentAuditTrail();
+        AgentTelemetry telemetry = new AgentTelemetry() {
+            @Override
+            public void recordPlan(AgentPlanningResult result) {
+            }
+
+            @Override
+            public void recordTool(String toolName, String outcome, java.time.Duration duration) {
+                if ("succeeded".equals(outcome)) {
+                    throw new IllegalStateException("meter registry is unavailable");
+                }
+            }
+        };
+        ToolConfirmationService service = new ToolConfirmationService(
+                tasks,
+                new InMemoryConfirmationDecisionStore(),
+                (task, confirmation, key) ->
+                        new ToolExecutionReceipt("action-100", "SUCCEEDED", false, "audit-100"),
+                audit,
+                CLOCK,
+                telemetry);
+
+        ConfirmationDecisionReceipt receipt = service.decide(
+                "task-100",
+                operator("tenant-a", "TICKET_OPERATOR"),
+                "confirm:metric-failure",
+                new ConfirmToolAction(
+                        "confirmation-100", 2, ConfirmationDecision.APPROVE, "approve"));
+
+        assertThat(receipt.state()).isEqualTo(AgentTaskState.COMPLETED);
+        assertThat(tasks.findById("task-100").orElseThrow().state())
+                .isEqualTo(AgentTaskState.COMPLETED);
+        assertThat(audit.findByTaskId("task-100"))
+                .extracting(AgentAuditEvent::eventType)
+                .containsExactly(
+                        "CONFIRMATION_APPROVED",
+                        "TOOL_EXECUTION_SUCCEEDED");
     }
 
     @Test
@@ -208,6 +400,53 @@ class ToolConfirmationServiceTest {
                 .containsExactly("CONFIRMATION_APPROVED", "TOOL_EXECUTION_FAILED");
     }
 
+    @Test
+    void closes_the_task_without_calling_the_remote_tool_when_approval_audit_cannot_be_saved() {
+        InMemoryAgentTaskRepository tasks = waitingTask(Instant.parse("2026-07-13T08:20:00Z"));
+        AtomicInteger executions = new AtomicInteger();
+        AgentAuditTrail unavailableAudit = new AgentAuditTrail() {
+            @Override
+            public AgentAuditEvent append(
+                    String taskId,
+                    String eventType,
+                    String actorId,
+                    String detail,
+                    Instant occurredAt
+            ) {
+                throw new IllegalStateException("audit store is unavailable");
+            }
+
+            @Override
+            public List<AgentAuditEvent> findByTaskId(String taskId) {
+                return List.of();
+            }
+        };
+        ToolConfirmationService service = new ToolConfirmationService(
+                tasks,
+                new InMemoryConfirmationDecisionStore(),
+                (task, confirmation, key) -> {
+                    executions.incrementAndGet();
+                    return new ToolExecutionReceipt("action-100", "SUCCEEDED", false, "audit-100");
+                },
+                unavailableAudit,
+                CLOCK);
+
+        assertThatThrownBy(() -> service.decide(
+                "task-100",
+                operator("tenant-a", "TICKET_OPERATOR"),
+                "confirm:audit-before-send",
+                new ConfirmToolAction(
+                        "confirmation-100", 2, ConfirmationDecision.APPROVE, "approve")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("audit store is unavailable");
+
+        assertThat(executions).hasValue(0);
+        assertThat(tasks.findById("task-100").orElseThrow().state())
+                .isEqualTo(AgentTaskState.FAILED);
+        assertThat(tasks.findById("task-100").orElseThrow().outcome())
+                .isEqualTo("LOCAL_PRE_EXECUTION_FAILED: APPROVAL_AUDIT_UNAVAILABLE");
+    }
+
     private static ToolConfirmationService service(
             AgentTaskRepository tasks,
             LegacyWriteToolExecutor executor
@@ -221,6 +460,18 @@ class ToolConfirmationServiceTest {
     }
 
     private static InMemoryAgentTaskRepository waitingTask(Instant expiresAt) {
+        Map<String, String> arguments = Map.of("queueCode", "refund-review");
+        return waitingTask(
+                expiresAt,
+                arguments,
+                ToolActionFingerprint.calculate("ASSIGN_QUEUE", arguments));
+    }
+
+    private static InMemoryAgentTaskRepository waitingTask(
+            Instant expiresAt,
+            Map<String, String> arguments,
+            String actionFingerprint
+    ) {
         InMemoryAgentTaskRepository repository = new InMemoryAgentTaskRepository();
         DelegatedTicketIdentity identity = new DelegatedTicketIdentity(
                 "tenant-a", "customer-42", "customer-bff", List.of("CUSTOMER"), List.of("retail"));
@@ -237,13 +488,41 @@ class ToolConfirmationServiceTest {
                 "ASSIGN_QUEUE",
                 ToolRisk.MEDIUM,
                 "TICKET_OPERATOR",
-                Map.of("queueCode", "refund-review"),
-                "action-fingerprint",
+                arguments,
+                actionFingerprint,
                 2,
                 expiresAt);
         repository.save(running.waitForConfirmation(
                 confirmation, Instant.parse("2026-07-13T08:02:00Z")), 1);
         return repository;
+    }
+
+    private static AgentTaskRepository failFirstCompletedSave(InMemoryAgentTaskRepository delegate) {
+        AtomicInteger failures = new AtomicInteger();
+        return new AgentTaskRepository() {
+            @Override
+            public TaskAcceptance accept(
+                    DelegatedTicketIdentity identity,
+                    String idempotencyKey,
+                    String fingerprint,
+                    Supplier<AgentTask> newTask
+            ) {
+                return delegate.accept(identity, idempotencyKey, fingerprint, newTask);
+            }
+
+            @Override
+            public Optional<AgentTask> findById(String taskId) {
+                return delegate.findById(taskId);
+            }
+
+            @Override
+            public AgentTask save(AgentTask task, long expectedVersion) {
+                if (task.state() == AgentTaskState.COMPLETED && failures.getAndIncrement() == 0) {
+                    throw new IllegalStateException("task completion store is unavailable");
+                }
+                return delegate.save(task, expectedVersion);
+            }
+        };
     }
 
     private static ConfirmationActor operator(String tenantId, String role) {

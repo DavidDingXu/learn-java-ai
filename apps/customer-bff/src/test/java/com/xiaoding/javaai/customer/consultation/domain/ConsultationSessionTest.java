@@ -37,7 +37,21 @@ class ConsultationSessionTest {
         assertThat(snapshot.citations()).extracting(CitationView::sectionId)
                 .containsExactly("arrival-time");
         assertThat(snapshot.idempotencyKey())
-                .isEqualTo("handoff:tenant-a:conversation-1:attempt-1");
+                .matches("handoff:v1:[0-9a-f]{64}")
+                .doesNotContain("tenant-a", "conversation-1", "attempt-1");
+    }
+
+    @Test
+    void handoff_idempotency_key_preserves_field_boundaries() {
+        ConsultationSession first = completedSession("a:b", "c", "d");
+        ConsultationSession second = completedSession("a", "b:c", "d");
+
+        String firstKey = first.createHandoffSnapshot("d", "CUSTOMER_REQUESTED_HUMAN", NOW)
+                .idempotencyKey();
+        String secondKey = second.createHandoffSnapshot("d", "CUSTOMER_REQUESTED_HUMAN", NOW)
+                .idempotencyKey();
+
+        assertThat(firstKey).isNotEqualTo(secondKey);
     }
 
     @Test
@@ -77,5 +91,15 @@ class ConsultationSessionTest {
                 null,
                 "trace-123"
         );
+    }
+
+    private static ConsultationSession completedSession(
+            String tenantId,
+            String conversationId,
+            String attemptId
+    ) {
+        return ConsultationSession.start(conversationId, tenantId, "customer-42", NOW, TTL)
+                .startAttempt(attemptId, "退款多久到账？", null, NOW, TTL)
+                .completeAttempt(attemptId, answer(), NOW.plusSeconds(1), TTL);
     }
 }

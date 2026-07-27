@@ -29,6 +29,8 @@ class DashScopeProviderAdapterTest {
         assertEquals("qwen-plus", options.getModel());
         assertEquals(0.2, options.getTemperature());
         assertEquals(512, options.getMaxTokens());
+        assertEquals(false, options.getEnableSearch());
+        assertEquals("你只能依据给定制度回答。", model.prompt.getSystemMessage().getText());
         assertEquals("退款多久到账？", model.prompt.getUserMessage().getText());
     }
 

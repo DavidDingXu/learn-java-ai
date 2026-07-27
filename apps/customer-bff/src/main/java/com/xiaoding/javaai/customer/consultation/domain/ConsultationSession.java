@@ -1,8 +1,13 @@
 package com.xiaoding.javaai.customer.consultation.domain;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +49,6 @@ public final class ConsultationSession {
         this.attempts = Map.copyOf(attempts);
         this.feedback = Map.copyOf(feedback);
     }
-
     public static ConsultationSession start(
             String conversationId,
             String tenantId,
@@ -148,10 +152,35 @@ public final class ConsultationSession {
                 feedback.get(attemptId),
                 summary,
                 requireText(reasonCode, "reasonCode"),
-                "handoff:" + tenantId + ":" + conversationId + ":" + attemptId,
+                handoffIdempotencyKey(tenantId, conversationId, attemptId),
                 answer.traceId(),
                 now
         );
+    }
+
+    private static String handoffIdempotencyKey(
+            String tenantId,
+            String conversationId,
+            String attemptId
+    ) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            updateLengthPrefixed(digest, "tenantId");
+            updateLengthPrefixed(digest, tenantId);
+            updateLengthPrefixed(digest, "conversationId");
+            updateLengthPrefixed(digest, conversationId);
+            updateLengthPrefixed(digest, "attemptId");
+            updateLengthPrefixed(digest, attemptId);
+            return "handoff:v1:" + HexFormat.of().formatHex(digest.digest());
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is not available", exception);
+        }
+    }
+
+    private static void updateLengthPrefixed(MessageDigest digest, String value) {
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        digest.update(ByteBuffer.allocate(Integer.BYTES).putInt(bytes.length).array());
+        digest.update(bytes);
     }
 
     ConsultationSession compacted(

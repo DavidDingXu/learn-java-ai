@@ -12,7 +12,8 @@ Status: VERIFIED_LIVE_MODEL
 - Eval Runner 独立读取 JSONL，通过公开 HTTP 接口评测，不依赖 Knowledge Service 内部类。
 - 接口夹具 5/5 通过，并明确标记 `CONTRACT_FIXTURE`。
 - 受控 Provider API 评测 5/5 通过，覆盖正常回答、证据不足拒答、Prompt Injection、敏感凭证和未授权写操作。
-- HTTP 评测结果包含有效 Trace ID，报告记录模型、Commit、Token、延迟和坏案例。
+- HTTP 评测结果包含有效 Trace ID。报告记录模型、Prompt 版本、低敏环境标识、Commit、整轮总 Token，以及每条样例的延迟和稳定失败原因。未预期的底层异常不会原样进入报告。
+- 当前契约报告绑定提交 `64b3bb1df5b85ef4e2047a3d7ff85a0df844dad2`，真实模型报告绑定较早提交 `5db09381614cae240bd1fefd0e0e7b04252458d0`。两份存档不能作为同一实现的效果对比；当前代码的真实模型结论需要重新运行后更新。
 - Observation 只使用固定操作标签 `context_load` 和 `model_call`，不把问题、Prompt、用户或租户写进指标标签。
 
 ## Replacement Boundary

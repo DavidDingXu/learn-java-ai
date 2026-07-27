@@ -118,7 +118,8 @@ class KnowledgeAnswerControllerTest {
                                 "trace-123", "knowledge-answer-v1"),
                         new AnswerStreamEvent.DeltaEvent("退款通常 1 到 5 个工作日到账。"),
                         new AnswerStreamEvent.CompletedEvent(
-                                "fixture-model", new ModelUsage(1, 1, 2), "stop", 42)
+                                "fixture-model", new ModelUsage(1, 1, 2), "stop", 42,
+                                false, null)
                 ),
                 CLOCK
         );
@@ -129,6 +130,10 @@ class KnowledgeAnswerControllerTest {
 
         assertThat(events).extracting(event -> event.event())
                 .containsExactly("metadata", "delta", "completed");
+        assertThat(events.get(2).data())
+                .isEqualTo(new AnswerStreamEvent.CompletedEvent(
+                        "fixture-model", new ModelUsage(1, 1, 2), "stop", 42,
+                        false, null));
     }
 
     private static KnowledgeAnswer answer() {

@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -22,8 +23,10 @@ class McpEnterpriseRegistryTest {
     void separatesToolRegistrationFromInvocationPermission() {
         Toolkit toolkit = new Toolkit();
         EnterpriseMcpRegistry registry = new EnterpriseMcpRegistry(
-                toolkit, Set.of("crm-mcp"), Set.of("query_customer", "query_customer_notes"));
-        McpServerDescriptor server = new McpServerDescriptor("crm-mcp", URI.create("https://mcp.example.com"));
+                toolkit,
+                Map.of("crm-mcp", URI.create("https://mcp.example.com/v1")),
+                Set.of("query_customer", "query_customer_notes"));
+        McpServerDescriptor server = new McpServerDescriptor("crm-mcp");
         McpToolDescriptor customer = new McpToolDescriptor(
                 "query_customer", "查询客户摘要", true,
                 Map.of("type", "object", "properties", Map.of("customer_id", Map.of("type", "string")), "required", List.of("customer_id")));
@@ -47,6 +50,7 @@ class McpEnterpriseRegistryTest {
                 identity, "query_customer_notes", Map.of("customer_id", "C-1"));
 
         assertEquals(List.of("query_customer", "query_customer_notes"), receipt.registeredTools());
+        assertEquals(URI.create("https://mcp.example.com/v1"), receipt.endpoint());
         assertTrue(toolkit.isExternalTool("query_customer"));
         assertEquals(PermissionBehavior.ALLOW, allowed.behavior());
         assertEquals("tenant-a", allowed.tenantId());
@@ -58,13 +62,36 @@ class McpEnterpriseRegistryTest {
 
     @Test
     void rejectsUntrustedTransportAndUndeclaredTools() {
-        EnterpriseMcpRegistry registry = new EnterpriseMcpRegistry(
-                new Toolkit(), Set.of("crm-mcp"), Set.of("query_customer"));
+        assertThrows(IllegalArgumentException.class, () -> new EnterpriseMcpRegistry(
+                new Toolkit(), Map.of("crm-mcp", URI.create("http://mcp.example.com")),
+                Set.of("query_customer")));
+
+        EnterpriseMcpRegistry registry = new EnterpriseMcpRegistry(new Toolkit(),
+                Map.of("crm-mcp", URI.create("https://mcp.example.com/v1")),
+                Set.of("query_customer"));
 
         assertThrows(IllegalArgumentException.class, () -> registry.register(
-                new McpServerDescriptor("crm-mcp", URI.create("http://mcp.example.com")), List.of()));
+                new McpServerDescriptor("unknown-mcp"), List.of()));
         assertThrows(IllegalArgumentException.class, () -> registry.register(
-                new McpServerDescriptor("crm-mcp", URI.create("https://mcp.example.com")),
+                new McpServerDescriptor("crm-mcp"),
                 List.of(new McpToolDescriptor("delete_customer", "删除客户", false, Map.of("type", "object")))));
+    }
+
+    @Test
+    void rejectsTheWholeDiscoveryBatchBeforeRegisteringAnyTool() {
+        Toolkit toolkit = new Toolkit();
+        EnterpriseMcpRegistry registry = new EnterpriseMcpRegistry(
+                toolkit,
+                Map.of("crm-mcp", URI.create("https://mcp.example.com/v1")),
+                Set.of("query_customer"));
+        McpToolDescriptor approved = new McpToolDescriptor(
+                "query_customer", "查询客户摘要", true, Map.of("type", "object"));
+        McpToolDescriptor unexpected = new McpToolDescriptor(
+                "export_customers", "导出客户", true, Map.of("type", "object"));
+
+        assertThrows(IllegalArgumentException.class, () -> registry.register(
+                new McpServerDescriptor("crm-mcp"), List.of(approved, unexpected)));
+
+        assertFalse(toolkit.isExternalTool("query_customer"));
     }
 }

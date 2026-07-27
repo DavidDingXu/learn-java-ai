@@ -6,8 +6,10 @@ Implementation baseline: `release-hardening-2026-07-14`
 
 ## Verified
 
-- Duplicate submissions with the same idempotency key and fingerprint reuse one task.
-- A changed fingerprint under the same key is rejected.
+- The server computes a normalized, length-prefixed SHA-256 request fingerprint from tenant and business request fields; callers do not supply a trusted hash.
+- A focused test keeps adjacent field boundaries unambiguous instead of relying on delimiter-based concatenation.
+- Duplicate submissions with the same tenant, idempotency key and request reuse one task; a changed request under the same key is rejected.
+- Identical idempotency keys in different tenant namespaces create isolated tasks.
 - Status transitions are monotonic; terminal states cannot regress and uncertain delivery can enter UNKNOWN before a confirmed terminal result arrives.
 - A repeated terminal callback is idempotent only when status and receipt match; conflicting terminal results are rejected as protocol conflicts.
 - Unknown task IDs are rejected without creating local state.
@@ -23,4 +25,4 @@ Implementation baseline: `release-hardening-2026-07-14`
 
 ## External Boundary
 
-The protocol test uses the official A2A client against a local standards-based Agent Card and JSON-RPC service. It does not prove production authentication, streaming, push notifications, long-running remote execution, callbacks or Inbox/Outbox persistence; those require the target agent and network environment.
+The protocol test uses the official A2A client against a local standards-based Agent Card and JSON-RPC service. It covers discovery, message sending and completed-task mapping, not remote status queries. It does not prove production authentication, streaming, push notifications, long-running remote execution, cancellation, callbacks or Inbox/Outbox persistence; those require the target agent and network environment.

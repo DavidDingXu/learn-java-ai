@@ -7,7 +7,7 @@ Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
 ## Verified
 
 - Approved tasks enter `EXECUTING` before the remote write begins.
-- The legacy request uses `tool:{tenant}:{actionId}` as a stable action idempotency key.
+- The legacy request uses a versioned SHA-256 key over length-prefixed tenant and action fields, while the original action ID remains in the request and audit records.
 - Valid 2xx receipts complete the task; explicit 4xx rejection fails it without automatic retry.
 - Timeout, 5xx, empty response, malformed response and action ID mismatch enter `EXECUTION_UNCERTAIN`.
 - Unexpected local runtime errors move the task out of `EXECUTING` to `FAILED` and remain visible to error handling.

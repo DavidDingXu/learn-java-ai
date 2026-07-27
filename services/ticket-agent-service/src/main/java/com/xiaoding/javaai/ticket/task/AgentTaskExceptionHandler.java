@@ -2,6 +2,7 @@ package com.xiaoding.javaai.ticket.task;
 
 import com.xiaoding.javaai.ticket.agent.application.ConfirmationIdempotencyConflictException;
 import com.xiaoding.javaai.ticket.agent.application.AgentCapacityExceededException;
+import com.xiaoding.javaai.ticket.agent.application.AgentRunUnavailableException;
 import com.xiaoding.javaai.ticket.agent.infrastructure.AgentExternalIntegrationDisabledException;
 import com.xiaoding.javaai.ticket.agent.infrastructure.AgentModelNotConfiguredException;
 import org.springframework.http.HttpStatus;
@@ -47,6 +48,12 @@ public final class AgentTaskExceptionHandler {
     ResponseEntity<ApiError> unavailable(RuntimeException error) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(new ApiError("AGENT_CAPABILITY_UNAVAILABLE", error.getMessage()));
+    }
+
+    @ExceptionHandler(AgentRunUnavailableException.class)
+    ResponseEntity<ApiError> runUnavailable(AgentRunUnavailableException error) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ApiError("AGENT_RUN_UNAVAILABLE", error.getMessage()));
     }
 
     @ExceptionHandler(AgentCapacityExceededException.class)

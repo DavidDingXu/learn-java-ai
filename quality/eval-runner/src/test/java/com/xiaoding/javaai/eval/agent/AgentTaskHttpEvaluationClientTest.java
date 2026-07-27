@@ -41,11 +41,13 @@ class AgentTaskHttpEvaluationClientTest {
                 new AgentEvalCase(
                         "assign", "assign ticket", Map.of("queueCode", "refund-review"),
                         "WAITING_CONFIRMATION", "ASSIGN_QUEUE", "MEDIUM", "TICKET_OPERATOR",
+                        Map.of("queueCode", "refund-review"),
                         List.of("TOOL_EXECUTION_SUCCEEDED"), List.of("customerPhone")),
                 "agent-eval:assign:commit");
 
         assertEquals("WAITING_CONFIRMATION", snapshot.state());
         assertEquals("ASSIGN_QUEUE", snapshot.toolName());
+        assertEquals(Map.of("queueCode", "refund-review"), snapshot.arguments());
         assertEquals(List.of("action"), snapshot.auditDetails());
         assertEquals(List.of(
                 "POST /api/v1/agent/tasks Bearer create-token",

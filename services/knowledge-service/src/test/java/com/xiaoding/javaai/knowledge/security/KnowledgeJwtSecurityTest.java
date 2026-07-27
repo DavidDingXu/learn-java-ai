@@ -26,15 +26,10 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @ActiveProfiles("test")
 @Import(KnowledgeJwtSecurityTest.StubAnswerConfiguration.class)
@@ -175,9 +170,9 @@ class KnowledgeJwtSecurityTest {
     }
 
     @Test
-    void accepts_development_script_tokens_and_keeps_write_and_index_scopes_separate() throws Exception {
-        String writeToken = developmentToken("knowledge:write");
-        String indexToken = developmentToken("knowledge:index");
+    void keeps_write_and_index_scopes_separate() {
+        String writeToken = token(TokenClaims.valid().withScope("knowledge:write"));
+        String indexToken = token(TokenClaims.valid().withScope("knowledge:index"));
 
         client.post()
                 .uri("/api/v1/knowledge/documents/refund-policy/versions/1/publish")
@@ -216,46 +211,6 @@ class KnowledgeJwtSecurityTest {
 
     private static String token(TokenClaims claims) {
         return token(claims, SECRET);
-    }
-
-    private static String developmentToken(String scope) throws Exception {
-        Path script = findProjectRoot().resolve("scripts/generate-development-jwt.mjs");
-        List<String> command = new ArrayList<>();
-        command.add("node");
-        command.add(script.toString());
-        command.addAll(List.of(
-                "--scope", scope,
-                "--subject", "editor-42",
-                "--tenant", "tenant-a",
-                "--actor", "customer-bff"
-        ));
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.environment().put("JAVA_AI_DEV_JWT_HMAC_SECRET", SECRET);
-        processBuilder.environment().put("JAVA_AI_JWT_ISSUER", ISSUER);
-        processBuilder.environment().put("JAVA_AI_JWT_AUDIENCE", "knowledge-service");
-        Process process = processBuilder.start();
-        boolean finished = process.waitFor(10, TimeUnit.SECONDS);
-        if (!finished) {
-            process.destroyForcibly();
-            throw new IllegalStateException("Development JWT generator did not finish within 10 seconds");
-        }
-        String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-        String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-        if (process.exitValue() != 0) {
-            throw new IllegalStateException("Development JWT generator failed: " + stderr);
-        }
-        return stdout;
-    }
-
-    private static Path findProjectRoot() throws IOException {
-        Path current = Path.of(System.getProperty("user.dir")).toRealPath();
-        while (current != null) {
-            if (Files.isRegularFile(current.resolve("scripts/generate-development-jwt.mjs"))) {
-                return current;
-            }
-            current = current.getParent();
-        }
-        throw new IllegalStateException("Cannot locate scripts/generate-development-jwt.mjs from user.dir");
     }
 
     private static String token(TokenClaims claims, String secret) {

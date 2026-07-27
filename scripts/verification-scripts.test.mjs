@@ -169,6 +169,16 @@ test("evaluation scripts use an attached executable jar instead of reshading the
   }
 });
 
+test("agent evaluation scripts use the argument-aware golden set", () => {
+  for (const relativePath of ["scripts/run-agent-eval.sh", "scripts/run-agent-eval.ps1"]) {
+    assert.match(
+      read(relativePath),
+      /datasets[\\/]agent[\\/]golden-set-v2\.jsonl/,
+      relativePath,
+    );
+  }
+});
+
 test("shell integration verification refuses a missing external environment", {
   skip: process.platform === "win32",
 }, () => {
@@ -330,7 +340,7 @@ test("unit verification reuses the shared main JDK discovery", () => {
   assert.doesNotMatch(shell, /try_main_jdk\(\)/);
 });
 
-test("shell main JDK discovery recovers from a stale JAVA_HOME", {
+test("shell main JDK discovery recovers from stale inherited Java paths", {
   skip: process.platform === "win32",
 }, () => {
   const tempRoot = mkdtempSync(path.join(tmpdir(), "java-ai-main-jdk-"));
@@ -352,7 +362,7 @@ test("shell main JDK discovery recovers from a stale JAVA_HOME", {
         env: {
           ...process.env,
           JAVA_HOME: path.join(tempRoot, "stale-java-home"),
-          JAVA_AI_MAIN_JAVA_HOME: "",
+          JAVA_AI_MAIN_JAVA_HOME: path.join(tempRoot, "stale-main-jdk-override"),
           PATH: `${fakeBin}:/usr/bin:/bin`,
         },
         encoding: "utf8",

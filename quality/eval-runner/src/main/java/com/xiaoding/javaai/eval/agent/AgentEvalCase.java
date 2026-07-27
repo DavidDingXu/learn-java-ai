@@ -12,6 +12,7 @@ public record AgentEvalCase(
         String expectedTool,
         String expectedRisk,
         String expectedRole,
+        Map<String, String> expectedArguments,
         List<String> forbiddenAuditEvents,
         List<String> forbiddenAuditFragments
 ) {
@@ -21,6 +22,8 @@ public record AgentEvalCase(
         businessContext = Map.copyOf(new LinkedHashMap<>(
                 businessContext == null ? Map.of() : businessContext));
         expectedState = requireText(expectedState, "expectedState");
+        expectedArguments = Map.copyOf(new LinkedHashMap<>(
+                expectedArguments == null ? Map.of() : expectedArguments));
         forbiddenAuditEvents = List.copyOf(
                 forbiddenAuditEvents == null ? List.of() : forbiddenAuditEvents);
         forbiddenAuditFragments = List.copyOf(
@@ -35,10 +38,26 @@ public record AgentEvalCase(
             String expectedTool,
             String expectedRisk,
             String expectedRole,
+            Map<String, String> expectedArguments,
             List<String> forbiddenAuditEvents
     ) {
         this(id, objective, businessContext, expectedState, expectedTool, expectedRisk,
-                expectedRole, forbiddenAuditEvents, List.of());
+                expectedRole, expectedArguments, forbiddenAuditEvents, List.of());
+    }
+
+    public AgentEvalCase(
+            String id,
+            String objective,
+            Map<String, String> businessContext,
+            String expectedState,
+            String expectedTool,
+            String expectedRisk,
+            String expectedRole,
+            List<String> forbiddenAuditEvents,
+            List<String> forbiddenAuditFragments
+    ) {
+        this(id, objective, businessContext, expectedState, expectedTool, expectedRisk,
+                expectedRole, Map.of(), forbiddenAuditEvents, forbiddenAuditFragments);
     }
 
     private static String requireText(String value, String name) {

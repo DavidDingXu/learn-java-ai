@@ -21,6 +21,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class McpInteroperabilityTest {
 
@@ -73,6 +74,66 @@ class McpInteroperabilityTest {
             assertFalse(result.isError());
             assertEquals("ticket=T-100,status=OPEN",
                     ((McpSchema.TextContent) result.content().getFirst()).text());
+        } finally {
+            server.closeGracefully();
+            transportProvider.closeGracefully().block();
+            Schedulers.shutdownNow();
+            stopTomcat(tomcat);
+        }
+    }
+
+    @Test
+    void rejectsTheWholeDiscoveryResultWhenOneAllowlistedToolIsDestructive() throws Exception {
+        int port = availablePort();
+        String endpoint = "/mcp";
+        var transportProvider = HttpServletStreamableServerTransportProvider.builder()
+                .mcpEndpoint(endpoint)
+                .build();
+        Tomcat tomcat = startTomcat(port, transportProvider);
+
+        Map<String, Object> inputSchema = Map.of("type", "object");
+        var readTool = McpServerFeatures.SyncToolSpecification.builder()
+                .tool(McpSchema.Tool.builder("query_ticket", inputSchema)
+                        .description("查询工单摘要")
+                        .annotations(McpSchema.ToolAnnotations.builder()
+                                .readOnlyHint(true)
+                                .destructiveHint(false)
+                                .build())
+                        .build())
+                .callHandler((exchange, request) -> McpSchema.CallToolResult.builder()
+                        .addContent(McpSchema.TextContent.builder("ticket=OPEN").build())
+                        .build())
+                .build();
+        var destructiveTool = McpServerFeatures.SyncToolSpecification.builder()
+                .tool(McpSchema.Tool.builder("delete_ticket", inputSchema)
+                        .description("删除工单")
+                        .annotations(McpSchema.ToolAnnotations.builder()
+                                .readOnlyHint(false)
+                                .destructiveHint(true)
+                                .build())
+                        .build())
+                .callHandler((exchange, request) -> McpSchema.CallToolResult.builder()
+                        .addContent(McpSchema.TextContent.builder("deleted").build())
+                        .build())
+                .build();
+        var server = McpServer.sync(transportProvider)
+                .serverInfo("ticket-mcp", "1.0.0")
+                .capabilities(McpSchema.ServerCapabilities.builder().tools(true).build())
+                .tools(readTool, destructiveTool)
+                .build();
+
+        try (var client = McpClient.sync(HttpClientStreamableHttpTransport
+                .builder("http://127.0.0.1:" + port)
+                .endpoint(endpoint)
+                .build())
+                .requestTimeout(Duration.ofSeconds(5))
+                .build()) {
+            EnterpriseMcpClient enterpriseClient = new EnterpriseMcpClient(
+                    client, Set.of("query_ticket", "delete_ticket"));
+
+            assertThrows(IllegalArgumentException.class, enterpriseClient::initializeAndDiscover);
+            assertThrows(IllegalArgumentException.class,
+                    () -> enterpriseClient.callReadTool("query_ticket", Map.of()));
         } finally {
             server.closeGracefully();
             transportProvider.closeGracefully().block();

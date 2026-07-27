@@ -48,7 +48,7 @@ class WebClientKnowledgeAnswerStreamClientTest {
                         data:{"citation":{"documentId":"refund-policy","version":"v1","sectionId":"arrival-time","title":"退款到账时间"}}
 
                         event:completed
-                        data:{"model":"model-a","usage":{"promptTokens":1,"completionTokens":1,"totalTokens":2},"finishReason":"stop","ttftMillis":20}
+                        data:{"model":"model-a","usage":{"promptTokens":1,"completionTokens":1,"totalTokens":2},"finishReason":"stop","ttftMillis":20,"refused":false,"refusalReason":null}
 
                         """));
         WebClientKnowledgeAnswerStreamClient client = new WebClientKnowledgeAnswerStreamClient(
@@ -66,11 +66,32 @@ class WebClientKnowledgeAnswerStreamClientTest {
                 .assertNext(event -> assertThat(event)
                         .isInstanceOf(KnowledgeAnswerStreamClient.Citation.class))
                 .assertNext(event -> assertThat(event)
-                        .isInstanceOf(KnowledgeAnswerStreamClient.Completed.class))
+                        .isEqualTo(new KnowledgeAnswerStreamClient.Completed(false, null)))
                 .verifyComplete();
 
         var request = server.takeRequest();
         assertThat(request.getPath()).isEqualTo("/api/v1/knowledge/answers/stream");
         assertThat(request.getHeader("Authorization")).isEqualTo("Bearer delegated-token");
+    }
+
+    @Test
+    void mapsTheRefusalDecisionFromTheCompletedEvent() {
+        server.enqueue(new MockResponse()
+                .setHeader("Content-Type", "text/event-stream")
+                .setBody("""
+                        event:completed
+                        data:{"model":"model-a","usage":{"promptTokens":1,"completionTokens":1,"totalTokens":2},"finishReason":"stop","ttftMillis":20,"refused":true,"refusalReason":"缺少退款审核状态"}
+
+                        """));
+        WebClientKnowledgeAnswerStreamClient client = new WebClientKnowledgeAnswerStreamClient(
+                WebClient.builder(), server.url("/").toString(), Duration.ofSeconds(2));
+
+        StepVerifier.create(client.stream(
+                        new DelegatedAccessToken("delegated-token", Instant.now().plusSeconds(60)),
+                        new KnowledgeAnswerClient.Request(
+                                "退款审核通过了吗？", new ConversationContextView("", List.of()))))
+                .expectNext(new KnowledgeAnswerStreamClient.Completed(
+                        true, "缺少退款审核状态"))
+                .verifyComplete();
     }
 }

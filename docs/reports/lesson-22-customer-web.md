@@ -27,7 +27,7 @@ npm --prefix apps/customer-web run build
 
 使用脱敏咨询数据和本地 Customer BFF 兼容端点，分别在 1440 x 1000 与 390 x 844 视口完成检查。
 
-- POST SSE 正常结束，页面渲染了两段增量文本和一条引用。
+- POST SSE 正常结束，页面渲染了两段增量文本和一条引用；拒答完成事件会更新 `refused` 和 `refusalReason`。
 - 有帮助/没帮助按钮只在收到 `completed` 后出现。
 - 提交 `NOT_HELPFUL` 前必须选择原因。
 - 重新生成会创建新的回答记录，不覆盖上一条回答。

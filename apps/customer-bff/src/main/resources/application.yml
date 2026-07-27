@@ -1,9 +1,11 @@
+# The default demo profile starts without an identity provider or downstream services.
+# Never commit real production secrets. Override production placeholders through the deployment secret manager.
 server:
   port: 8080
 
 spring:
-  config:
-    import: optional:file:.env[.properties]
+  profiles:
+    default: demo
   application:
     name: customer-bff
 
@@ -17,28 +19,6 @@ management:
       show-details: never
 
 java-ai:
-  runtime:
-    external-integrations-enabled: true
-  security:
-    customer-jwt:
-      enabled: true
-      issuer: ${JAVA_AI_CUSTOMER_JWT_ISSUER}
-      audience: customer-bff
-      jwk-set-uri: ${JAVA_AI_CUSTOMER_JWT_JWK_SET_URI:}
-      hmac-secret: ${JAVA_AI_CUSTOMER_JWT_HMAC_SECRET:}
-  identity:
-    token-endpoint: ${JAVA_AI_TOKEN_EXCHANGE_ENDPOINT}
-    client-id: ${JAVA_AI_TOKEN_EXCHANGE_CLIENT_ID}
-    client-secret: ${JAVA_AI_TOKEN_EXCHANGE_CLIENT_SECRET}
-    timeout: 5s
-  downstream:
-    knowledge:
-      base-url: ${JAVA_AI_KNOWLEDGE_BASE_URL}
-      timeout: 10s
-      stream-idle-timeout: 30s
-    ticket:
-      base-url: ${JAVA_AI_TICKET_BASE_URL}
-      timeout: 5s
   consultation:
     session-ttl: 30m
     max-turns: 8
@@ -47,3 +27,59 @@ java-ai:
     rate-limit:
       requests: 20
       window: 1m
+  identity:
+    timeout: 5s
+  downstream:
+    knowledge:
+      timeout: 10s
+      stream-idle-timeout: 30s
+    ticket:
+      timeout: 5s
+
+---
+spring:
+  config:
+    activate:
+      on-profile: demo
+
+java-ai:
+  runtime:
+    external-integrations-enabled: false
+  security:
+    customer-jwt:
+      enabled: false
+  identity:
+    token-endpoint: http://localhost/disabled
+    client-id: customer-bff-demo
+    client-secret: not-used-in-demo
+  downstream:
+    knowledge:
+      base-url: http://localhost:8081
+    ticket:
+      base-url: http://localhost:8082
+
+---
+spring:
+  config:
+    activate:
+      on-profile: production
+
+java-ai:
+  runtime:
+    external-integrations-enabled: true
+  security:
+    customer-jwt:
+      enabled: true
+      issuer: https://identity.example.com
+      audience: customer-bff
+      jwk-set-uri: https://identity.example.com/.well-known/jwks.json
+      hmac-secret: ""
+  identity:
+    token-endpoint: https://identity.example.com/oauth2/token
+    client-id: customer-bff
+    client-secret: replace-with-secret-manager
+  downstream:
+    knowledge:
+      base-url: http://knowledge-service:8081
+    ticket:
+      base-url: http://ticket-agent-service:8082

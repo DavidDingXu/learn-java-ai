@@ -3,9 +3,13 @@
 # Never commit a real production key. Production deployments must override this value through a secret manager.
 spring:
   ai:
+    model:
+      chat: openai
+      embedding: openai
     openai:
       api-key: replace-with-your-api-key
       base-url: https://api.openai.com/v1
+      max-retries: 0
       chat:
         model: gpt-4.1-mini
       embedding:

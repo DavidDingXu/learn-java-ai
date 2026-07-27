@@ -33,4 +33,22 @@ class MicrometerAgentTelemetryTest {
                         .extracting(tag -> tag.getKey())
                         .doesNotContain("task_id", "prompt", "question", "model"));
     }
+
+    @Test
+    void collapses_provider_specific_finish_reasons_to_a_bounded_tag() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        MicrometerAgentTelemetry telemetry = new MicrometerAgentTelemetry(registry);
+
+        telemetry.recordPlan(new AgentPlanningResult(
+                new AgentDecision.Finish("done"),
+                "provider-model", AgentModelUsage.unknown(), "provider-stop-7f92"));
+
+        assertThat(registry.get("java.ai.agent.plan")
+                .tag("decision", "finish")
+                .tag("finish_reason", "other")
+                .counter().count()).isEqualTo(1.0);
+        assertThat(registry.find("java.ai.agent.plan")
+                .tag("finish_reason", "provider-stop-7f92")
+                .counter()).isNull();
+    }
 }

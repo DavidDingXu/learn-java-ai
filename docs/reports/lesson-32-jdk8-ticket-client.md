@@ -16,11 +16,12 @@ Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
 ## Verification
 
 ```bash
-JAVA_HOME="$JAVA8_HOME" PATH="$JAVA8_HOME/bin:$PATH" \
-  ./mvnw -f integrations/jdk8-client/pom.xml verify
+./mvnw -f integrations/jdk8-client/pom.xml verify
 ```
 
-Result: 6 Java 8 tests passed in the unified verification run.
+该独立 POM 要求 Maven 由 JDK8 运行。在 IDE 或 Maven 运行配置中选择 JDK8 即可，无需配置项目专用环境变量。
+
+Result: 7 Java 8 tests passed in the latest focused verification run.
 
 ## Production Boundary
 

@@ -64,7 +64,7 @@ public final class WebClientKnowledgeAnswerStreamClient implements KnowledgeAnsw
             case "delta" -> new Delta(requiredText(data, "text"));
             case "heartbeat" -> new Heartbeat(data.path("epochMillis").asLong());
             case "citation" -> new Citation(citation(data.path("citation")));
-            case "completed" -> new Completed();
+            case "completed" -> completed(data);
             case "error" -> new Error(requiredText(data, "code"), requiredText(data, "message"));
             default -> throw new IllegalStateException("unknown knowledge stream event: " + event.event());
         };
@@ -79,12 +79,42 @@ public final class WebClientKnowledgeAnswerStreamClient implements KnowledgeAnsw
         );
     }
 
+    private static Completed completed(JsonNode node) {
+        boolean refused = requiredBoolean(node, "refused");
+        String refusalReason = nullableText(node, "refusalReason");
+        if (refused && (refusalReason == null || refusalReason.isBlank())) {
+            throw new IllegalStateException(
+                    "knowledge stream refused completion is missing refusalReason"
+            );
+        }
+        return new Completed(refused, refusalReason);
+    }
+
     private static String requiredText(JsonNode node, String field) {
         String value = node.path(field).asString();
         if (value == null || value.isBlank()) {
             throw new IllegalStateException("knowledge stream event is missing " + field);
         }
         return value;
+    }
+
+    private static boolean requiredBoolean(JsonNode node, String field) {
+        JsonNode value = node.path(field);
+        if (!value.isBoolean()) {
+            throw new IllegalStateException("knowledge stream event is missing " + field);
+        }
+        return value.asBoolean();
+    }
+
+    private static String nullableText(JsonNode node, String field) {
+        JsonNode value = node.path(field);
+        if (value.isNull()) return null;
+        if (!value.isString()) {
+            throw new IllegalStateException(
+                    "knowledge stream event has invalid " + field
+            );
+        }
+        return value.asString();
     }
 
     private record RequestBody(String question, ConversationContextBody conversationContext) {

@@ -16,7 +16,7 @@
 - Customer BFF 的客户 JWT、RFC 8693 Token Exchange、下游客户端认证与 audience/scope 隔离。
 - 单元测试启用固定返回结果的假模型和假服务，正式运行不启用这些测试实现，并通过 JDK 21/JDK 8 CI 校验。
 - 第一条固定政策上下文问答、Spring AI 业务适配器、固定模型响应的协议回归测试和真实模型接口 Smoke 入口。
-- 版本化 Prompt，将系统规则、可信知识和用户输入分开组装，配套结构化输出、业务校验和事件格式稳定的 SSE。
+- 版本化 Prompt，将系统规则、授权知识和不可信用户输入分开组装，配套结构化输出、业务校验和事件格式稳定的 SSE。
 - 面向知识回答用例的超时、并发、断路器和安全读重试。
 - 独立 HTTP Eval Runner、5 条 Golden Set、接口回归评测和模型评测入口。
 - Micrometer Observation、Spring AI 原生观测和 HTTP Trace 关联。
@@ -94,77 +94,57 @@ deploy                           部署清单和环境说明
 
 完整锁定见 [版本基线](docs/version-baseline.md)。这些是项目选择，不等同于“所有公司项目都必须使用的最新版本”。
 
-## 环境要求
+## 快速开始
 
-至少准备：
+启动主服务或运行日常测试，只需本机已安装一个包含 `java` 和 `javac` 的 JDK 21 或更高版本。项目自带 Maven Wrapper，不需要另行安装 Maven，也不需要配置项目专用的 Java 环境变量。
 
-- Node.js 24 或更高版本，用于仓库契约测试和本地联调脚本。
-- 一个包含 `java` 和 `javac` 的 JDK 21 或更高版本。使用高于 21 的 JDK 时只能验证 `--release 21` 编译兼容性，CI 仍需在 JDK 21 上运行。
-- 一个包含 `java` 和 `javac` 的完整 JDK 8，用于独立客户端构建。
-
-本地可使用高于 21 的完整 JDK 编译 Java 21 字节码，但 CI 仍需在 JDK 21 上运行；老系统客户端必须使用独立完整 JDK 8。具体配置见 [本地工具链手册](docs/runbooks/local-toolchain.md)。
-
-## 一次跑完
-
-macOS/Linux：
-
-```bash
-scripts/verify-unit.sh
-```
-
-Windows PowerShell：
-
-```powershell
-.\scripts\verify-unit.ps1
-```
-
-脚本会自动寻找本机的 JDK 21+ 与 JDK 8，并运行项目 Node 契约、主 reactor、labs reactor 和 Java 8 客户端。正常使用不需要配置 Java 环境变量。
-
-## 运行真实模型专项验证
-
-项目根目录的 `config/application.yml` 已提供 OpenAI API 地址、Chat 模型和 Embedding 模型默认值。使用 OpenAI 时只需填写 `spring.ai.openai.api-key`，然后运行：
-
-```bash
-scripts/run-live-model-smoke.sh
-```
-
-Windows PowerShell：
-
-```powershell
-.\scripts\run-live-model-smoke.ps1
-```
-
-这两个脚本只运行指定的 Java 集成测试，用于检查模型连接、响应映射和业务校验，不会启动完整服务。完整服务启动见后面的“启动服务骨架”。
-
-这份配置是为了方便本地测试和文章演示。不要提交真实 API Key；生产环境必须通过密钥管理系统或部署平台 Secret 覆盖该配置。普通单元测试不会读取真实密钥，也不会访问模型接口。
-
-## 分别构建
-
-主 reactor：
+运行主构建：
 
 ```bash
 ./mvnw verify
 ```
 
-框架实验：
+Windows 使用：
+
+```powershell
+.\mvnw.cmd verify
+```
+
+这条命令覆盖 Knowledge Service、Ticket Agent Service、Customer BFF 和 Eval Runner，不访问真实模型、数据库或外部业务网络。
+
+## 运行真实模型专项测试
+
+项目根目录的 `config/application.yml` 已提供 OpenAI API 地址、Chat 模型和 Embedding 模型默认值。使用 OpenAI 时只需填写 `spring.ai.openai.api-key`，然后直接运行 Java 集成测试：
+
+```bash
+./mvnw \
+  -pl services/knowledge-service \
+  -Dtest=LiveModelSmokeIT \
+  -Dspring.config.additional-location=file:config/application.yml \
+  test
+```
+
+该测试检查模型连接、响应映射和业务校验，不会启动完整服务。Windows 使用相同的 Maven 参数，把入口换成 `mvnw.cmd` 即可。
+
+这份配置是为了方便本地测试和文章演示。不要提交真实 API Key；生产环境必须通过密钥管理系统或部署平台 Secret 覆盖该配置。普通单元测试不会读取真实密钥，也不会访问模型接口。
+
+## 完整仓库验证
+
+框架实验使用独立构建：
 
 ```bash
 ./mvnw -f labs/pom.xml verify
 ```
 
-Java 8 客户端需要真实 JDK 8 编译。直接执行前面的 `scripts/verify-unit.sh` 或 `scripts/verify-unit.ps1`，脚本会自动选择完整 JDK 8，无需手工切换 `JAVA_HOME`。
+Java 8 客户端需要完整 JDK 8，仓库契约测试需要 Node.js 24 或更高版本。只有执行全仓库回归时才需要这两项工具。
 
-## 启动服务骨架
+仓库提供 `scripts/verify-unit.sh` 和对应的 PowerShell 脚本，用于一次运行 Node 契约、主构建、labs 和 Java 8 客户端。脚本会自动寻找本机已安装的完整 JDK；它是聚合验证入口，不是启动普通 Java 服务的前置条件。
 
-三个应用都提供 Actuator health。Knowledge Service 提供知识回答和 SSE，Customer BFF 提供 C 端回答、SSE、反馈、重试和工单升级，Ticket Agent Service 提供任务接收、运行、查询、确认与审计：
+## 直接启动三个服务
 
-完整启动三个服务还需要真实数据库、身份平台和下游服务。先从示例生成本地参数文件并填写这些连接信息：
+三个应用默认使用 `demo` Profile，不连接数据库、身份平台、模型或下游服务。Knowledge Service 关闭索引与模型能力，Ticket Agent 使用内存任务库并关闭远程 Tool，Customer BFF 关闭令牌交换与下游调用。这条路径用于启动应用、查看结构和检查 health；访问被关闭的外部能力时会明确返回不可用，不会伪造成功结果。
 
-```bash
-cp .env.example .env
-```
-
-三个服务都会通过 `spring.config.import` 读取项目根目录的 `.env`，无需切换 Spring Profile。然后分别启动：
+从项目根目录分别启动：
 
 ```bash
 ./mvnw -pl services/knowledge-service spring-boot:run
@@ -172,7 +152,7 @@ cp .env.example .env
 ./mvnw -pl apps/customer-bff spring-boot:run
 ```
 
-默认端口分别为 8081、8082 和 8080。验证示例：
+默认端口分别为 8081、8082 和 8080，无需先设置业务环境变量。验证示例：
 
 ```bash
 curl http://localhost:8081/actuator/health
@@ -180,28 +160,15 @@ curl http://localhost:8081/actuator/health
 
 期望返回包含 `"status":"UP"` 的 JSON。`/actuator/env` 不对外暴露。
 
-知识文档上传、发布和索引见 [Knowledge Ingestion](docs/runbooks/knowledge-ingestion.md)。模型接口 Smoke 见 [Live Model Smoke](docs/runbooks/live-model-smoke.md)，模型、检索和 Agent 评测见 [模型及检索评测](docs/runbooks/model-interaction-eval.md)。安全回归见 [AI Security Regression](docs/runbooks/security-regression.md)，统一参数和启动方式见 [Runtime Configuration](docs/runbooks/runtime-configuration.md)，发布入口见 [Release Checklist](docs/runbooks/release-checklist.md)。Ticket Agent 的模型接口烟测使用 `scripts/run-agent-live-model-smoke.sh` 或对应 PowerShell 脚本。检索和 Agent 评测通过显式 URL 与凭证连接目标测试环境，本机或 CI 均运行同一个 Eval Runner。
+知识文档上传、发布和索引见 [Knowledge Ingestion](docs/runbooks/knowledge-ingestion.md)。模型接口测试见 [Live Model Smoke](docs/runbooks/live-model-smoke.md)，模型、检索和 Agent 评测见 [模型及检索评测](docs/runbooks/model-interaction-eval.md)。安全回归见 [AI Security Regression](docs/runbooks/security-regression.md)，统一参数和启动方式见 [Runtime Configuration](docs/runbooks/runtime-configuration.md)。
 
-## 外部环境检查
+## 接入生产环境
 
-当前外部脚本只检查一个已部署服务的健康端点：
+每个服务的 `application.yml` 都包含一个 `production` 文档，列出真实数据库、模型、身份系统和下游服务所需的配置路径。仓库中的域名、账号和密钥都是不可用的占位值。
 
-```bash
-JAVA_AI_EXTERNAL_BASE_URL=https://test.example.com scripts/verify-integration.sh
-```
+本地演示为了减少步骤，允许在 `config/application.yml` 中临时填写模型 API Key，但填入真实值后不能提交。生产数据库密码、API Key、JWT 验签材料和客户端密钥必须由公司密钥系统或部署平台覆盖，不能进入 Git、镜像层或测试报告。
 
-Windows 使用：
-
-```powershell
-$env:JAVA_AI_EXTERNAL_BASE_URL = "https://test.example.com"
-.\scripts\verify-integration.ps1
-```
-
-该脚本只检查健康端点，不覆盖数据库、向量检索、对象存储、模型或端到端业务。`external-integration` Maven profile 提供 PostgreSQL/pgvector 集成测试入口；是否通过以目标测试库上的具体运行结果为准，不能从健康检查推断。
-
-## 环境变量示例
-
-`.env.example` 只服务于完整系统联调，列出数据库、身份和外部服务等真实连接参数。普通测试不需要它；模型 Smoke 使用 `config/application.yml`。生产部署仍应由密钥系统覆盖所有敏感值。
+启用 `production` 只代表应用改用真实适配器。是否具备上线条件，还需要在目标环境验证数据库迁移、JWT 链路、向量检索、下游回执、并发容量、告警与回滚，不能从本机 health 或单次模型请求外推。
 
 ## 验证结果
 

@@ -6,11 +6,12 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AgentScopeTicketRuntimeTest {
 
     @Test
-    void reusesToolIdentityAndConfirmationBoundaries() {
+    void mapsRegisteredToolsAndTrustedIdentityToPermissionDecisions() {
         AgentScopeTicketRuntime runtime = AgentScopeTicketRuntime.createDefault(new TicketBusinessTools());
         AgentExecutionIdentity identity = new AgentExecutionIdentity("tenant-a", "agent-user", "customer_service");
 
@@ -36,5 +37,15 @@ class AgentScopeTicketRuntimeTest {
         assertEquals("export_all_customers", export.toolName());
         assertEquals("data-policy", export.ruleSource());
         assertEquals("Permission to use export_all_customers has been denied", export.reason());
+    }
+
+    @Test
+    void rejectsUnknownToolsBeforePermissionEvaluation() {
+        AgentScopeTicketRuntime runtime = AgentScopeTicketRuntime.createDefault(new TicketBusinessTools());
+        AgentExecutionIdentity identity = new AgentExecutionIdentity(
+                "tenant-a", "agent-user", "customer_service");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> runtime.authorize(identity, "missing_tool", Map.of()));
     }
 }

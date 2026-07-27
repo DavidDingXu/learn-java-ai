@@ -22,7 +22,7 @@ public interface KnowledgeAnswerStreamClient {
     record Citation(CitationView citation) implements Event {
     }
 
-    record Completed() implements Event {
+    record Completed(boolean refused, String refusalReason) implements Event {
     }
 
     record Error(String code, String message) implements Event {

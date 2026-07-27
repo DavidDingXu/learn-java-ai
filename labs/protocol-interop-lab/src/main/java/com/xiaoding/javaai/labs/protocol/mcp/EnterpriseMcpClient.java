@@ -21,16 +21,18 @@ public final class EnterpriseMcpClient {
     public McpDiscoveryReceipt initializeAndDiscover() {
         McpSchema.InitializeResult initialized = client.initialize();
         discoveredTools.clear();
+        Map<String, McpSchema.Tool> validatedTools = new LinkedHashMap<>();
         for (McpSchema.Tool tool : client.listTools().tools()) {
             if (!allowedTools.contains(tool.name())) continue;
             validateReadTool(tool);
-            discoveredTools.put(tool.name(), tool);
+            validatedTools.put(tool.name(), tool);
         }
-        if (discoveredTools.size() != allowedTools.size()) {
+        if (validatedTools.size() != allowedTools.size()) {
             Set<String> missing = new java.util.LinkedHashSet<>(allowedTools);
-            missing.removeAll(discoveredTools.keySet());
+            missing.removeAll(validatedTools.keySet());
             throw new IllegalStateException("allowlisted MCP tools were not discovered: " + missing);
         }
+        discoveredTools.putAll(validatedTools);
         return new McpDiscoveryReceipt(
                 initialized.protocolVersion(),
                 initialized.serverInfo().name(),

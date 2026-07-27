@@ -7,7 +7,7 @@ Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 ## Verified
 
 - 工单升级只能引用已完成回答尝试，并生成包含问题、回答、引用、拒答、反馈、摘要、原因码和源 Trace 的不可变快照。
-- 幂等键固定为 `handoff:{tenant}:{conversation}:{attempt}`，网络超时后重试不会换键创建第二个任务。
+- 幂等键由 tenant、conversation 和 attempt 经过带字段边界的 SHA-256 计算，格式固定为 `handoff:v1:{digest}`。网络超时后重试不会换键，也不会在 Header 中暴露原始业务标识。
 - BFF 调 Ticket Agent 时只发送业务快照；tenant、customer、角色和部门继续来自委托 JWT，不进入请求体。
 - Ticket Agent 校验 `ticket-agent-service` audience、`customer-bff` actor 与 `ticket:task:create` scope。
 - Ticket Agent 对请求内容生成 SHA-256 指纹：同键同内容返回原 task 且标记 duplicate，同键异内容返回 409。

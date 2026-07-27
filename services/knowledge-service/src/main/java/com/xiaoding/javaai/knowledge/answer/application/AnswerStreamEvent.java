@@ -25,7 +25,9 @@ public sealed interface AnswerStreamEvent permits
             String model,
             ModelUsage usage,
             String finishReason,
-            long ttftMillis
+            long ttftMillis,
+            boolean refused,
+            String refusalReason
     ) implements AnswerStreamEvent {
     }
 

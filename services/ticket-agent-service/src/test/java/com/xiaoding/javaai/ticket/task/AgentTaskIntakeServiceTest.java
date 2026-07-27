@@ -48,6 +48,19 @@ class AgentTaskIntakeServiceTest {
     }
 
     @Test
+    void rejects_different_requests_even_when_delimiter_joining_would_look_identical() {
+        AgentTaskIntakeService service = new AgentTaskIntakeService(
+                () -> "task-100", new InMemoryAgentTaskRepository(), CLOCK);
+        String key = "handoff:tenant-a:collision-check";
+        AgentTaskRequest first = new AgentTaskRequest("case\nsegment", "objective", Map.of());
+        AgentTaskRequest second = new AgentTaskRequest("case", "segment\nobjective", Map.of());
+        service.accept(identity("tenant-a"), key, first);
+
+        assertThatThrownBy(() -> service.accept(identity("tenant-a"), key, second))
+                .isInstanceOf(IdempotencyConflictException.class);
+    }
+
+    @Test
     void scopes_idempotency_and_task_ownership_by_the_trusted_tenant() {
         ArrayDeque<String> ids = new ArrayDeque<>(List.of("task-a", "task-b"));
         InMemoryAgentTaskRepository repository = new InMemoryAgentTaskRepository();

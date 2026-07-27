@@ -94,6 +94,19 @@ test("Spring AI stays inside business-specific service adapters, not a universal
   assert.match(decision, /Replacement Conditions|替换条件/i);
 });
 
+test("service security never makes configuration or metrics endpoints anonymous", () => {
+  const securityConfigurations = [
+    read("apps/customer-bff/src/main/java/com/xiaoding/javaai/customer/SecurityConfiguration.java"),
+    read("services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/SecurityConfiguration.java"),
+    read("services/ticket-agent-service/src/main/java/com/xiaoding/javaai/ticket/SecurityConfiguration.java"),
+  ].join("\n");
+
+  assert.doesNotMatch(securityConfigurations, /pathMatchers\([^)]*\/actuator\/env/s);
+  assert.doesNotMatch(securityConfigurations, /requestMatchers\([^)]*\/actuator\/env/s);
+  assert.doesNotMatch(securityConfigurations, /pathMatchers\([^)]*\/actuator\/prometheus/s);
+  assert.doesNotMatch(securityConfigurations, /requestMatchers\([^)]*\/actuator\/prometheus/s);
+});
+
 test("framework matrix compares production candidates on the same decision axes", () => {
   const matrix = read("docs/decisions/framework-selection-matrix.md");
 

@@ -65,11 +65,11 @@ function Get-JavaAiMainJdkCandidates {
 function Enter-JavaAiMainJdk {
     $JavaHome = $null
     if (-not [string]::IsNullOrWhiteSpace($env:JAVA_AI_MAIN_JAVA_HOME)) {
-        if (-not (Test-JavaAiMainJdk -JavaHome $env:JAVA_AI_MAIN_JAVA_HOME)) {
-            throw "JAVA_AI_MAIN_JAVA_HOME is not a full JDK 21 or newer: $($env:JAVA_AI_MAIN_JAVA_HOME)"
+        if (Test-JavaAiMainJdk -JavaHome $env:JAVA_AI_MAIN_JAVA_HOME) {
+            $JavaHome = $env:JAVA_AI_MAIN_JAVA_HOME
         }
-        $JavaHome = $env:JAVA_AI_MAIN_JAVA_HOME
-    } else {
+    }
+    if ([string]::IsNullOrWhiteSpace($JavaHome)) {
         foreach ($Candidate in Get-JavaAiMainJdkCandidates) {
             if (Test-JavaAiMainJdk -JavaHome $Candidate) {
                 $JavaHome = $Candidate

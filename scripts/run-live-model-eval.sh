@@ -72,5 +72,7 @@ curl --fail --silent "http://127.0.0.1:$PORT/actuator/health" >/dev/null || {
   --base-url "http://127.0.0.1:$PORT" \
   --mode LIVE_MODEL \
   --bearer-token "$JAVA_AI_EVAL_BEARER_TOKEN" \
+  --prompt-version knowledge-answer-v1 \
+  --environment-id local-live-model \
   --report "$REPORT_PREFIX" \
   --commit "$COMMIT"

@@ -1,5 +1,6 @@
 package com.xiaoding.javaai.knowledge.answer.infrastructure;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaoding.javaai.knowledge.answer.application.GroundedPrompt;
 import com.xiaoding.javaai.knowledge.answer.application.ModelStreamChunk;
 import com.xiaoding.javaai.knowledge.answer.application.ModelUsage;
@@ -16,6 +17,7 @@ final class SpringAiKnowledgeAnswerStreamModel implements KnowledgeAnswerStreamM
 
     private final ChatClient chatClient;
     private final String configuredModel;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     SpringAiKnowledgeAnswerStreamModel(ChatClient.Builder builder, String configuredModel) {
         this.chatClient = builder.build();
@@ -24,22 +26,22 @@ final class SpringAiKnowledgeAnswerStreamModel implements KnowledgeAnswerStreamM
 
     @Override
     public Flux<ModelStreamChunk> stream(GroundedPrompt prompt) {
-        return chatClient.prompt()
-                .system(prompt.systemInstruction())
-                .user(streamingUserMessage(prompt))
-                .stream()
-                .chatResponse()
-                .map(this::toChunk);
+        return Flux.defer(() -> {
+            StreamingAnswerHeaderParser parser = new StreamingAnswerHeaderParser(objectMapper);
+            return chatClient.prompt()
+                    .system(prompt.systemInstruction())
+                    .user(streamingUserMessage(prompt))
+                    .stream()
+                    .chatResponse()
+                    .map(this::toChunk)
+                    .map(parser::parse);
+        });
     }
 
     private ModelStreamChunk toChunk(ChatResponse response) {
         ChatResponseMetadata metadata = response.getMetadata();
         Usage providerUsage = metadata == null ? null : metadata.getUsage();
-        ModelUsage usage = providerUsage == null ? null : new ModelUsage(
-                valueOrZero(providerUsage.getPromptTokens()),
-                valueOrZero(providerUsage.getCompletionTokens()),
-                valueOrZero(providerUsage.getTotalTokens())
-        );
+        ModelUsage usage = mapUsage(providerUsage);
         String model = metadata == null || metadata.getModel() == null
                 ? configuredModel : metadata.getModel();
         String finishReason = response.getResult() == null
@@ -49,11 +51,26 @@ final class SpringAiKnowledgeAnswerStreamModel implements KnowledgeAnswerStreamM
         return new ModelStreamChunk(delta, model, usage, finishReason);
     }
 
-    private static String streamingUserMessage(GroundedPrompt prompt) {
+    static String streamingUserMessage(GroundedPrompt prompt) {
         return SpringAiKnowledgeAnswerModel.buildUserMessage(
                 prompt,
-                "请直接输出给客户看的纯文本答案，不要输出 JSON、Markdown 或代码块。"
+                """
+                输出必须严格以这一段决策头开头，标签前不要添加任何文字：
+                <answer-decision>{"citedSectionIds":["本次上下文中的 sectionId"],"refused":false,"refusalReason":null}</answer-decision><answer-text>
+                citedSectionIds 只能选择 AUTHORIZED_KNOWLEDGE_CONTEXT 中存在的 sectionId。
+                证据不足时将 refused 设为 true、citedSectionIds 设为空数组，并提供具体的 refusalReason。
+                <answer-text> 后只输出给客户看的纯文本答案，不要输出 Markdown、代码块或结束标签。
+                """
         );
+    }
+
+    private static ModelUsage mapUsage(Usage usage) {
+        if (usage == null) return null;
+        int promptTokens = valueOrZero(usage.getPromptTokens());
+        int completionTokens = valueOrZero(usage.getCompletionTokens());
+        int totalTokens = valueOrZero(usage.getTotalTokens());
+        if (promptTokens == 0 && completionTokens == 0 && totalTokens == 0) return null;
+        return new ModelUsage(promptTokens, completionTokens, totalTokens);
     }
 
     private static String normalizeFinishReason(String finishReason) {

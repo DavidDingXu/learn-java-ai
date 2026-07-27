@@ -46,6 +46,28 @@ class PolicyDocumentChunkerTest {
     }
 
     @Test
+    void keeps_chunk_ids_distinct_when_identity_fields_contain_delimiters() {
+        PolicyDocumentChunker chunker = new PolicyDocumentChunker(120);
+        ChunkDocumentCommand first = new ChunkDocumentCommand(
+                new TenantId("tenant|refund"),
+                new DocumentId("policy"),
+                2,
+                "policy-chunker-v1",
+                "# 退款\n到账时间为一到五个工作日。"
+        );
+        ChunkDocumentCommand second = new ChunkDocumentCommand(
+                new TenantId("tenant"),
+                new DocumentId("refund|policy"),
+                2,
+                "policy-chunker-v1",
+                "# 退款\n到账时间为一到五个工作日。"
+        );
+
+        assertThat(chunker.chunk(first).getFirst().chunkId())
+                .isNotEqualTo(chunker.chunk(second).getFirst().chunkId());
+    }
+
+    @Test
     void splits_oversized_content_without_exceeding_the_policy_limit() {
         PolicyDocumentChunker chunker = new PolicyDocumentChunker(30);
 

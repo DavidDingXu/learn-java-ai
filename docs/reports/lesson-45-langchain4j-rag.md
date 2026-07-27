@@ -6,9 +6,10 @@ Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## Verified
 
-- The LangChain4j adapter uses the existing tenant-scoped `KnowledgeSearchPort`.
-- Authorized evidence and citations remain business DTOs outside framework memory and retrieval objects.
-- Tests reject cross-tenant or ungrounded results through the stable contract.
+- The isolated lab defines a minimal `KnowledgeSearchPort` aligned with the main retrieval semantics without importing Knowledge Service internals.
+- The LangChain4j adapter passes the original query, a request-scoped `KnowledgeAccessScope` and fixed TopK to that port.
+- Search results remain project-owned `KnowledgeSnippet` and `PolicyAnswer` DTOs outside framework retrieval objects.
+- The focused test verifies query/scope/TopK propagation and candidate source ID mapping into the model request and business answer.
 
 ## Verification
 
@@ -18,4 +19,4 @@ Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## External Boundary
 
-The lab does not duplicate the production pgvector index. Real retrieval comparison still uses the main Golden Set and target infrastructure.
+The `PolicyAnswer` source IDs are retrieved candidates, not parsed model citations. The lab does not authenticate a JWT, execute ACL SQL, reject a cross-tenant candidate or validate model-produced citations. It also does not duplicate the production pgvector index. Those behaviors require the main service integration tests, Golden Set and target infrastructure.

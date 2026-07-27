@@ -135,7 +135,7 @@ components:
     CustomerAnswerResponse:
       type: object
       additionalProperties: false
-      required: [conversationId, attemptId, answer, citations, refused, traceId]
+      required: [conversationId, attemptId, answer, citations, refused, refusalReason, traceId]
       properties:
         conversationId: { type: string }
         attemptId: { type: string }
@@ -230,6 +230,10 @@ components:
     CompletedEvent:
       type: object
       additionalProperties: false
+      required: [refused, refusalReason]
+      properties:
+        refused: { type: boolean }
+        refusalReason: { type: [string, 'null'] }
     ErrorEvent:
       type: object
       required: [code, message]

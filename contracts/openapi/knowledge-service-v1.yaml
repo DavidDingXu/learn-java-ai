@@ -444,13 +444,15 @@ components:
     CompletedEvent:
       type: object
       additionalProperties: false
-      required: [model, usage, finishReason, ttftMillis]
+      required: [model, usage, finishReason, ttftMillis, refused, refusalReason]
       properties:
         model: { type: string }
         usage:
           $ref: '#/components/schemas/ModelUsage'
         finishReason: { type: string }
         ttftMillis: { type: integer, format: int64 }
+        refused: { type: boolean }
+        refusalReason: { type: [string, 'null'] }
     ErrorEvent:
       type: object
       additionalProperties: false

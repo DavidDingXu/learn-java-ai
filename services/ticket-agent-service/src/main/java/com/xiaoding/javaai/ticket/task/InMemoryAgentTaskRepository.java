@@ -20,8 +20,7 @@ public final class InMemoryAgentTaskRepository implements AgentTaskRepository {
             String fingerprint,
             Supplier<AgentTask> newTask
     ) {
-        String scopedKey = String.join("\n",
-                identity.tenantId(), identity.subjectId(), identity.actorId(), idempotencyKey);
+        String scopedKey = scopedKey(identity, idempotencyKey);
         AtomicReference<TaskAcceptance> result = new AtomicReference<>();
         AtomicReference<RuntimeException> failure = new AtomicReference<>();
         tasksByScopedIdempotencyKey.compute(scopedKey, (ignored, existing) -> {
@@ -40,6 +39,19 @@ public final class InMemoryAgentTaskRepository implements AgentTaskRepository {
         });
         if (failure.get() != null) throw failure.get();
         return result.get();
+    }
+
+    private static String scopedKey(DelegatedTicketIdentity identity, String idempotencyKey) {
+        StringBuilder key = new StringBuilder();
+        append(key, identity.tenantId());
+        append(key, identity.subjectId());
+        append(key, identity.actorId());
+        append(key, idempotencyKey);
+        return key.toString();
+    }
+
+    private static void append(StringBuilder target, String value) {
+        target.append(value.length()).append(':').append(value).append(';');
     }
 
     @Override
