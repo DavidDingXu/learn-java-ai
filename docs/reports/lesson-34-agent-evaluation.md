@@ -1,25 +1,25 @@
-# Lesson 34 Agent Evaluation Evidence
+# 第 34 篇：Agent 评测验证记录
 
 Status: VERIFIED_AGENT_EVALUATION_PIPELINE
 
-Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
+## 已验证的行为
 
-## Verified
+- 30 条版本化路径样例记录目标、业务上下文、期望状态、工具、参数、风险、角色和禁止出现的审计事件。
+- Eval Runner 通过公开 HTTP 创建任务、运行任务并读取审计；创建、运行和读取分别使用最小权限令牌，Runner 没有确认权限。
+- 评测器逐条报告字段差异和客户端错误，不用一个平均分掩盖具体失败。
+- JSON 与 Markdown 报告关联数据集版本、代码版本、单条结果和延迟。
+- 路径集禁止确认前出现 Tool 执行事件；确定性业务测试另外覆盖未知工具、非法参数、过期或重复确认和幂等冲突。
 
-- The versioned JSONL dataset records objective, business context, expected state, tool, risk, role and forbidden audit events.
-- Eval Runner creates and runs tasks through public HTTP, then reads audit through a third endpoint.
-- Create, run and read use separate bearer tokens; Eval Runner has no confirmation capability.
-- The evaluator reports exact mismatches and client errors per case instead of hiding them in an average score.
-- JSON and Markdown reports bind dataset version, code version, case results and latency.
-- Forbidden execution events prevent a write-side-effect regression from passing evaluation.
-
-## Verification
+## 验证命令
 
 ```bash
 ./mvnw -pl quality/eval-runner \
   -Dtest=AgentEvalDatasetLoaderTest,AgentEvaluatorTest,AgentTaskHttpEvaluationClientTest,AgentEvaluationReportWriterTest test
+
+./mvnw -pl services/ticket-agent-service \
+  -Dtest=BusinessToolCatalogTest,TicketAgentOrchestratorTest,ToolConfirmationServiceTest,AgentTaskIntakeServiceTest test
 ```
 
-## External Boundary
+## 适用范围
 
-The three-case dataset proves the evaluation path, not production accuracy. Company gates must add de-identified high-risk, refusal, injection, authorization and parameter cases, and run against a dedicated tenant with no production write credentials.
+这套路径集验证确认前的工具选择、参数、风险和副作用边界，不代表生产准确率。公司门禁还需要加入脱敏的高风险、拒绝、注入和授权负向样例，并在没有生产写权限的专用租户运行。

@@ -5,8 +5,8 @@ import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestionC
 import com.xiaoding.javaai.knowledge.answer.application.KnowledgeAnswer;
 import com.xiaoding.javaai.knowledge.document.domain.TenantId;
 import com.xiaoding.javaai.knowledge.retrieval.application.KnowledgeAccessScope;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -41,8 +42,11 @@ class LiveModelSmokeIT {
     @Value("${spring.ai.openai.api-key:}")
     private String apiKey;
 
+    private Path reportPath;
+
     @BeforeEach
-    void requireConfiguredApiKey() {
+    void requireSmokeConfiguration() throws IOException {
+        reportPath = prepareReportPath(Path.of(requiredSystemProperty("java-ai.smoke.report-path")));
         if (apiKey.isBlank() || "replace-with-your-api-key".equals(apiKey)) {
             throw new IllegalStateException("请先在 config/application.yml 中填写 spring.ai.openai.api-key");
         }
@@ -68,16 +72,10 @@ class LiveModelSmokeIT {
         assertThat(answer.answer()).isNotBlank();
         assertThat(answer.citations()).isNotEmpty();
         assertThat(answer.model()).isNotBlank();
-        writeReport(answer, question);
+        writeReport(answer, question, reportPath);
     }
 
-    private static void writeReport(KnowledgeAnswer answer, String question) throws IOException {
-        Path reportPath = Path.of(requiredSystemProperty("java-ai.smoke.report-path"));
-        Path parent = reportPath.toAbsolutePath().getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
-        }
-
+    private static void writeReport(KnowledgeAnswer answer, String question, Path reportPath) throws IOException {
         String commit = System.getProperty("java-ai.smoke.commit", "unknown");
         String citationSummary = answer.citations().stream()
                 .map(citation -> "`%s/%s#%s`".formatted(
@@ -126,6 +124,18 @@ class LiveModelSmokeIT {
                 answer.answer()
         );
         Files.writeString(reportPath, report, StandardCharsets.UTF_8);
+    }
+
+    static Path prepareReportPath(Path reportPath) throws IOException {
+        Path absolutePath = reportPath.toAbsolutePath().normalize();
+        Path parent = absolutePath.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        try (var ignored = Files.newOutputStream(
+                absolutePath, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+            return absolutePath;
+        }
     }
 
     private static String requiredSystemProperty(String name) {

@@ -1,19 +1,15 @@
-# Milestone 39 Production Readiness
+# 里程碑 39：生产工程基线
 
-Status: VERIFIED_GATE_IMPLEMENTATION_FINAL_BASELINE_REQUIRES_RERUN
+Status: VERIFIED_LOCAL_GATE_IMPLEMENTATION
 
-## Implementation
+## 已完成的能力
 
-The milestone adds versioned Agent security cases, audit PII detection, low-cardinality Micrometer Agent telemetry, Prometheus exposure in shared development, bounded Agent Run admission, stable 429 errors, no-Docker environment modes and cross-platform release gates.
+这一阶段加入版本化 Agent 安全案例、审计 PII 检测、低基数 Micrometer 指标、受管 Prometheus 端点、Agent Run 并发限制、稳定 429 错误，以及跨平台发布门禁。
 
-## Verification
+## 验证范围
 
-The gate covers the Java 21 reactor, isolated framework labs, independent JDK8 client, frontend and Node contracts, column checks when present, and the tracked/untracked secret scan. The repository has changed since the previous fixed-count snapshot, so exact counts and the implementation commit must be regenerated from the final release baseline instead of reusing obsolete values.
+门禁覆盖 Java 21 主工程、隔离框架 labs、独立 JDK8 客户端、Customer Web、Node 契约检查，以及已跟踪和未忽略文件的敏感信息扫描。具体命令与边界见 `lesson-39-release-gate.md`。
 
-## External Boundary
+## 适用范围
 
-The milestone establishes executable gates, not production capacity. Company readiness still requires real JDK21 CI, Windows execution, production-like IdP and data services, load tests, dashboards, alert routes, persistent Agent state, Legacy Tool result queries and rollback exercises.
-
-## Tag Rule
-
-The immutable milestone or column tag must be created only after the final aggregate verification passes. Existing tags must not be moved to a different commit.
+这套基线提供可执行门禁，不代表生产容量已经验收。公司环境仍需验证实际 JDK21 CI、Windows 执行、IdP、数据服务、负载、看板、告警路由、持久 Agent 状态、Legacy Tool 结果查询和回滚演练。

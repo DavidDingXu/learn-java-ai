@@ -5,6 +5,7 @@ $RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $ReportPrefix = if ($args.Count -gt 0) { $args[0] } else { Join-Path $RootDir "docs/reports/lesson-12-live-model-eval" }
 $Port = if ($env:JAVA_AI_EVAL_PORT) { $env:JAVA_AI_EVAL_PORT } else { "18081" }
 $ConfigFile = Join-Path $RootDir "config\application.yml"
+$ExampleConfigFile = Join-Path $RootDir "config\application.example.yml"
 
 foreach ($Name in @("JAVA_AI_EVAL_BEARER_TOKEN", "JAVA_AI_JWT_ISSUER")) {
   if (-not (Get-Item "Env:$Name" -ErrorAction SilentlyContinue).Value) {
@@ -12,7 +13,8 @@ foreach ($Name in @("JAVA_AI_EVAL_BEARER_TOKEN", "JAVA_AI_JWT_ISSUER")) {
   }
 }
 if (-not (Test-Path $ConfigFile)) {
-  throw "Missing local demo config: $ConfigFile"
+  Copy-Item -Path $ExampleConfigFile -Destination $ConfigFile
+  throw "Created $ConfigFile. Replace spring.ai.openai.api-key, then run this command again."
 }
 
 if (-not $env:JAVA_AI_DEV_JWT_HMAC_SECRET -and -not $env:JAVA_AI_JWT_JWK_SET_URI) {
@@ -44,11 +46,20 @@ $ServiceArgs = @(
   "--server.port=$Port"
 )
 $ServiceArgs += $SecurityArgs
-$JavaRuntime = Enter-JavaAiMainJdk
+$CredentialDir = $null
+$BearerTokenFile = $null
+$JavaRuntime = $null
 try {
+  $JavaRuntime = Enter-JavaAiMainJdk
   & (Join-Path $RootDir "mvnw.cmd") -f (Join-Path $RootDir "pom.xml") `
     -pl services/knowledge-service,quality/eval-runner -am package -DskipTests
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  $CredentialDir = Join-Path ([IO.Path]::GetTempPath()) ("java-ai-model-eval-" + [Guid]::NewGuid())
+  $BearerTokenFile = Join-Path $CredentialDir "bearer-token"
+  New-Item -ItemType Directory -Path $CredentialDir | Out-Null
+  $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+  [IO.File]::WriteAllText($BearerTokenFile, $env:JAVA_AI_EVAL_BEARER_TOKEN, $Utf8NoBom)
 
   $Process = Start-Process -FilePath $JavaRuntime.Java -PassThru -NoNewWindow -ArgumentList $ServiceArgs
 
@@ -70,7 +81,7 @@ try {
       --dataset (Join-Path $RootDir "datasets/model-interaction/golden-set-v2.jsonl") `
       --base-url "http://127.0.0.1:$Port" `
       --mode LIVE_MODEL `
-      --bearer-token $env:JAVA_AI_EVAL_BEARER_TOKEN `
+      --bearer-token-file $BearerTokenFile `
       --prompt-version knowledge-answer-v1 `
       --environment-id local-live-model `
       --report $ReportPrefix `
@@ -80,5 +91,6 @@ try {
     Stop-Process -Id $Process.Id -ErrorAction SilentlyContinue
   }
 } finally {
-  Restore-JavaAiEnvironment $JavaRuntime
+  if ($JavaRuntime) { Restore-JavaAiEnvironment $JavaRuntime }
+  if ($CredentialDir) { Remove-Item -LiteralPath $CredentialDir -Recurse -Force -ErrorAction SilentlyContinue }
 }

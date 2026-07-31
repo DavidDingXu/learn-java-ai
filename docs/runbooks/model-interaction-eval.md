@@ -26,7 +26,7 @@ Windows PowerShell 使用相同的 Maven 和 `java -jar` 参数，将换行符�
 
 真实模型评测应指向已启用 JWT 和模型 Provider 的 Knowledge Service。模型、数据库和身份参数由目标环境 `application.yml` 与部署密钥系统提供，读者无需为本地契约评测配置这些值。
 
-准备一枚包含正确 issuer、audience、actor、tenant、subject 和 `knowledge:answer` scope 的短时令牌后，运行：
+准备一枚包含正确 issuer、audience、actor、tenant、subject 和 `knowledge:answer` scope 的短时令牌，把它写入权限受限且不会提交的 `target/eval-secrets/model-token` 文件，然后运行：
 
 ```bash
 java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
@@ -34,7 +34,7 @@ java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
   --dataset datasets/model-interaction/golden-set-v2.jsonl \
   --base-url https://knowledge-test.example.com \
   --mode LIVE_MODEL \
-  --bearer-token '<SHORT_LIVED_TOKEN>' \
+  --bearer-token-file target/eval-secrets/model-token \
   --prompt-version knowledge-answer-v1 \
   --environment-id knowledge-test \
   --report docs/reports/model-live-eval \
@@ -52,7 +52,7 @@ java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
   retrieval-eval \
   --dataset datasets/retrieval/golden-set-v1.jsonl \
   --base-url https://knowledge-test.example.com \
-  --bearer-token '<SHORT_LIVED_TOKEN>' \
+  --bearer-token-file target/eval-secrets/retrieval-token \
   --top-k 5 \
   --min-recall 0.80 \
   --min-hit-rate 0.90 \
@@ -73,14 +73,16 @@ Agent 评测指向已部署的 Ticket Agent Service，不使用一枚全权测�
 - 运行令牌：actor 为 `ticket-agent-worker`，scope 为 `ticket:task:run`；
 - 读取令牌：actor 为 `jdk8-crm`，scope 为 `ticket:task:read`。
 
+分别把三枚短时令牌写入 `target/eval-secrets/create-token`、`run-token` 和 `read-token`，再运行：
+
 ```bash
 java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
   agent-eval \
   --dataset datasets/agent/golden-set-v2.jsonl \
   --base-url https://ticket-agent-test.example.com \
-  --create-token '<CREATE_TOKEN>' \
-  --run-token '<RUN_TOKEN>' \
-  --read-token '<READ_TOKEN>' \
+  --create-token-file target/eval-secrets/create-token \
+  --run-token-file target/eval-secrets/run-token \
+  --read-token-file target/eval-secrets/read-token \
   --report docs/reports/agent-eval \
   --commit '<CANDIDATE_COMMIT>'
 ```
@@ -89,4 +91,4 @@ Runner 会创建任务、运行到终态或等待确认状态，再读取审计�
 
 ## 凭证和报告边界
 
-上述令牌参数只适合隔离的短时评测会话。共享流水线中应由凭证系统在运行时注入，并禁止命令回显和日志记录。若令牌曾进入命令历史或 CI 日志，立即撤销，不要等待自然过期。
+令牌文件只适合隔离的短时评测会话，使用后应立即删除。共享流水线中应由凭证系统在运行时创建受限临时文件，并禁止命令回显和日志记录。若令牌曾进入命令历史或 CI 日志，立即撤销，不要等待自然过期。

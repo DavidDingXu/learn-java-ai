@@ -4,7 +4,7 @@
 
 `VERIFIED_LOCAL_BOUNDARIES`
 
-Starting from commit `f1a0989`, the repository now has executable JWT delegation rules, HTTP/OpenAPI contracts, JSON Schema fixtures and a separately compiled JDK8 DTO boundary.
+项目提供可执行的 JWT 委托规则、HTTP/OpenAPI 契约、JSON Schema 样例和独立编译的 JDK8 DTO 边界。
 
 The milestone is satisfied when all of the following pass on one commit:
 
@@ -21,6 +21,6 @@ node --test scripts/lesson-05-06-contract.test.mjs
 - Public request contracts do not accept identity or authorization facts in JSON.
 - The legacy contract DTO compiles and runs on JDK8.
 
-## Release boundary
+## 适用范围
 
-The `milestone-06-boundaries` tag binds this evidence after the checks pass. Production identity-provider integration, real key rotation and external legacy deployment remain environment-specific acceptance work.
+这些检查验证本地身份与接口边界。生产身份平台接入、真实密钥轮换和外部老系统部署仍需在目标环境验收。

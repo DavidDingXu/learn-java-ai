@@ -26,9 +26,9 @@ Spring Boot 服务默认使用 `demo` Profile。它们会关闭真实模型、�
 
 ## 真实模型演示只修改项目级 YAML
 
-需要调用真实模型时，在项目根目录 `config/application.yml` 中填写演示用 API Key。如果使用 OpenAI 兼容 Provider，再按实际协议修改 `base-url`、Chat 模型和 Embedding 模型。文章中的真实模型命令会显式读取这个文件。
+需要调用真实模型时，先把 `config/application.example.yml` 复制为 `config/application.yml`，再填写演示用 API Key。如果使用 OpenAI 兼容 Provider，再按实际协议修改 `base-url`、Chat 模型和 Embedding 模型。文章中的真实模型命令会显式读取这个本地文件。
 
-这种写法是为了降低学习和演示成本。真实密钥不能提交到 Git；生产部署必须由公司密钥系统覆盖 YAML 中的占位值。
+本地文件已被 Git 忽略，读者不需要额外配置模型环境变量。生产部署必须由公司密钥系统覆盖同一 Spring 配置键。
 
 ## 全仓检查才需要 JDK 8 和 Node.js
 

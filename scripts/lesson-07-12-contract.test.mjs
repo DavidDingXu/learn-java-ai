@@ -53,19 +53,19 @@ test("contract and live eval reports use the same dataset without conflating mod
   if (contract.commit !== live.commit) {
     assert.match(
       evidenceSummary,
-      /只有代码、数据集和 Prompt 版本一致的结果才具有可比性/,
+      /代码、数据集、Prompt、模型与环境必须保持一致/,
     );
   }
   assert.equal(
-    evidenceSummary.match(/`[0-9a-f]{40}`/g)?.length,
-    1,
-    "evidence summary may bind its own implementation commit but must not narrate cross-report commit reconciliation",
+    evidenceSummary.match(/`[0-9a-f]{40}`/g)?.length ?? 0,
+    0,
+    "reader-facing evidence summary must not expose commit reconciliation details",
   );
   assert.doesNotMatch(evidenceSummary, /当前契约报告|历史真实模型报告|当前代码的真实模型结论/);
   assert.ok(live.results.every((result) => /^[0-9a-f]{32}$/.test(result.traceId)));
 });
 
-test("live evidence binds lesson 04 and milestone 12 to one implementation", () => {
+test("live evidence uses one implementation and milestone 12 explains its boundary", () => {
   const smoke = read("docs/reports/lesson-04-live-model-smoke.md");
   const milestone = read("docs/reports/milestone-12.md");
   const live = read("docs/reports/lesson-12-live-model-eval.md");
@@ -74,7 +74,8 @@ test("live evidence binds lesson 04 and milestone 12 to one implementation", () 
   assert.match(smoke, /Status: LIVE_MODEL/);
   assert.match(milestone, /VERIFIED_LIVE_MODEL/);
   assert.equal(implementationCommit(smoke), implementationCommit(live));
-  assert.equal(implementationCommit(live), implementationCommit(milestone));
+  assert.match(milestone, /接口契约模式与真实模型模式分别运行/);
+  assert.doesNotMatch(milestone, /Tag Rule|必须指向|must point/i);
   assert.doesNotMatch(reports, /sk-[A-Za-z0-9]{12,}|memberai\.tech/);
 });
 

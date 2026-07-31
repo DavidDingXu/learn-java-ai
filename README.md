@@ -6,51 +6,12 @@
 
 当前为可运行、可测试的工程基线，已经完成：
 
-- 三个可启动的 Java 21 HTTP 应用和健康检查。
-- 一个依赖轻量的 Eval Runner 入口。
-- 一个由 JDK 8 独立编译和测试的老系统客户端工程。
-- Spring AI Alibaba、LangChain4j、AgentScope 和协议互操作四个有实现、有测试的隔离实验构建。
-- macOS/Linux 与 Windows 两套验证脚本。
-- 不依赖外部数据库、模型密钥或业务网络的日常测试路径。
-- Knowledge Service 的 Spring AI、WebFlux、可靠性和可观测依赖边界。
-- Customer BFF 的客户 JWT、RFC 8693 Token Exchange、下游客户端认证与 audience/scope 隔离。
-- 单元测试启用固定返回结果的假模型和假服务，正式运行不启用这些测试实现，并通过 JDK 21/JDK 8 CI 校验。
-- 第一条固定政策上下文问答、Spring AI 业务适配器、固定模型响应的协议回归测试和真实模型接口 Smoke 入口。
-- 版本化 Prompt，将系统规则、授权知识和不可信用户输入分开组装，配套结构化输出、业务校验和事件格式稳定的 SSE。
-- 面向知识回答用例的超时、并发、断路器和安全读重试。
-- 独立 HTTP Eval Runner、5 条 Golden Set、接口回归评测和模型评测入口。
-- Micrometer Observation、Spring AI 原生观测和 HTTP Trace 关联。
-- 受 `knowledge:write` 保护的知识文档上传与发布接口、JWT 租户隔离、JDBC 持久化、版本冲突、重复内容校验、本地文件对象存储和确定性政策切分。
-- PostgreSQL/pgvector 结构、Embedding 模型隔离、TopK 前 ACL 与有效期过滤。
-- 向量与 trigram 混合检索、RRF 融合、可配置候选预算和受控 Rerank 边界。
-- JWT 中租户、主体和部门范围到检索 SQL 的完整传递。
-- Flyway V1-V4 数据库结构、发布事务内的 ACL 与索引任务创建、任务租约、原子领取、对象正文回读和 pgvector 分块写入。
-- 业务发布版本与检索版本分离；新索引写完前继续读取上一版，写入时通过 `leaseAttempt` fencing 拒绝失去租约的 Worker。
-- 版本化检索 Golden Set、受 `knowledge:eval` 保护的评测接口、Recall@K、HitRate@K、MRR、重复率、p95 延迟和阈值检查。
-- C 端完整回答与 SSE 接口、会话/尝试标识，以及明确的取消和异常状态。
-- 带 TTL、消息窗口、Token 估算、裁剪和事实隔离摘要的短时会话。
-- 绑定回答尝试的反馈、可追踪重试和不可变工单升级快照。
-- Ticket Agent Service 的委托 JWT 校验、幂等键、请求指纹、重复返回与冲突拒绝。
-- Ticket Agent Service 的 PostgreSQL/Flyway 任务、确认执行状态和审计持久化，以及不在数据库事务中调用远程 Tool 的两阶段执行边界。
-- 受限步数 Agent 状态机、Spring AI 2.0 结构化规划、模型元数据和模型接口烟测。
-- 服务端 Tool 目录、参数白名单、只读知识查询、写操作风险分级和人工确认单。
-- 确认幂等、乐观版本、确定性拒绝与未知执行结果分流、低敏审计事件。
-- Knowledge Service 与 Java 8 Legacy Tool 的 HTTP 适配器，以及开发联调用委托 JWT 签发器。
-- 独立 Java 8 任务查询与确认客户端，认证、连接池、超时、错误映射和未知结果异常。
-- Agent Golden Set、三令牌公开 HTTP 评测器和 JSON/Markdown 报告入口。
-- Injection 绕过确认、合成 PII 审计泄露和身份字段污染的安全回归数据集与跨平台入口。
-- Ticket Agent 规划次数、Token 分布、Tool 结果与耗时的 Micrometer 指标，并暴露受管理网络保护的 Prometheus 端点。
-- Agent Run 使用公平信号量限制并发，并提供稳定的 429 错误码与响应格式，以及异常路径的许可释放测试。
-- 每个服务一份运行配置、统一模型演示配置、测试隔离和跨平台验证命令。
-- 跨平台 release gate：全构建、接口与规则回归、Java 8、敏感信息扫描和可选外部健康检查。
-- Pull Request 依赖变更审查，新增高危漏洞时阻止合并。
-- DashScope Provider 适配、国内 Embedding/Rerank 同集评测和 Spring AI Alibaba 人工确认 Graph。
-- LangChain4j AI Services、租户受限 RAG、Tool 循环、结构化输出和按业务能力共存策略。
-- AgentScope 2.0 Tool 权限复用、人工确认事件、MCP 外部 Tool 注册和 A2A 任务状态边界。
-- MCP Java SDK 2.0.0 的 Streamable HTTP 初始化、工具发现和只读调用互操作。
-- A2A Java SDK 1.1.0.Final 的 Agent Card 发现、Skill 准入、JSON-RPC 消息发送与 Task 映射。
-- 50 条检索、30 条 Agent 和 30 条安全合成回归数据；公司落地时需要按业务分布替换或扩展。
-- Customer BFF、Knowledge Service、Ticket Agent Service 和 JDK8 Legacy Tool 四份 OpenAPI 文档。
+- **可直接运行。** 三个 Java 21 HTTP 应用、独立 Eval Runner 和 Java 8 客户端均有单独构建入口；默认 `demo` 不连接数据库、模型或公司网络，未启用的能力会明确返回不可用。
+- **企业 RAG。** Knowledge Service 覆盖文档上传与发布、版本冲突、租户和部门 ACL、增量索引、pgvector、混合检索、引用校验，以及 50 条检索样例和 Recall@K、HitRate@K、MRR、重复率、p95 指标。
+- **C 端咨询与受控 Agent。** Customer Web 与 BFF 覆盖 SSE、会话、反馈、重试和工单升级；Ticket Agent 覆盖结构化规划、Tool 参数校验、风险分级、人工确认、幂等、未知结果和审计；Java 8 客户端按 OpenAPI 查询任务并提交员工决定。
+- **质量与安全。** 项目提供模型、检索、Agent 和安全评测入口，30 条 Agent 路径样例、30 条安全合成样例，以及基于 Micrometer 的 Trace 与 Metric、低敏日志、并发限制、敏感信息扫描和跨平台发布门禁。
+- **框架与协议实验。** 独立 labs 分别验证 DashScope 请求与响应适配边界、Spring AI Alibaba 条件路由、LangChain4j 业务端口迁移、AgentScope Tool 注册与权限裁决，以及 MCP/A2A 官方 SDK 的本地互操作。
+- **生产接入边界。** `production` Profile 提供 PostgreSQL/Flyway、JWT 与下游 HTTP 适配器；公司 IdP、对象存储、共享会话与限流、真实 Legacy Tool、容量、告警和回滚仍需在目标环境完成配置与验收。
 
 当前代码覆盖模型调用、企业 RAG、C 端会话与交互页面、幂等工单升级、受控 Agent、Java 8 客户端、安全回归、标准指标、跨平台发布检查，以及框架和协议隔离实验。业务接口要求受信身份，不从请求体读取租户和客户身份。Knowledge Service 使用 PostgreSQL/pgvector 保存文档元数据、ACL、索引任务、分块和检索版本指针；上传原文默认写入本地文件目录。多实例部署前，应把原文适配器换成 S3 兼容对象存储，并在目标数据库上完成迁移、并发、备份恢复和容量测试。Customer BFF 的进程内会话与限流也需要换成共享实现。目标 IdP、外部 JDK8 Tool、生产网关、UNKNOWN 对账和端到端容量测试仍需在公司环境接入。
 
@@ -114,19 +75,26 @@ Windows 使用：
 
 ## 运行真实模型专项测试
 
-项目根目录的 `config/application.yml` 已提供 OpenAI API 地址、Chat 模型和 Embedding 模型默认值。使用 OpenAI 时只需填写 `spring.ai.openai.api-key`，然后直接运行 Java 集成测试：
+仓库只保留不含真实密钥的 `config/application.example.yml`。首次运行时复制为本地配置：
+
+```bash
+cp config/application.example.yml config/application.yml
+```
+
+Windows PowerShell 使用 `Copy-Item config/application.example.yml config/application.yml`。`config/application.yml` 已被 Git 忽略。使用 OpenAI 时只需在其中填写 `spring.ai.openai.api-key`，然后直接运行 Java 集成测试：
 
 ```bash
 ./mvnw \
   -pl services/knowledge-service \
   -Dtest=LiveModelSmokeIT \
   -Dspring.config.additional-location=file:config/application.yml \
+  -Djava-ai.smoke.report-path=target/live-model-smoke.md \
   test
 ```
 
 该测试检查模型连接、响应映射和业务校验，不会启动完整服务。Windows 使用相同的 Maven 参数，把入口换成 `mvnw.cmd` 即可。
 
-这份配置是为了方便本地测试和文章演示。不要提交真实 API Key；生产环境必须通过密钥管理系统或部署平台 Secret 覆盖该配置。普通单元测试不会读取真实密钥，也不会访问模型接口。
+本地 YAML 为了方便测试和文章演示，不是生产密钥方案。生产环境必须通过密钥管理系统或部署平台 Secret 覆盖同一配置键。普通单元测试不会读取真实密钥，也不会访问模型接口。
 
 ## 完整仓库验证
 
@@ -166,7 +134,7 @@ curl http://localhost:8081/actuator/health
 
 每个服务的 `application.yml` 都包含一个 `production` 文档，列出真实数据库、模型、身份系统和下游服务所需的配置路径。仓库中的域名、账号和密钥都是不可用的占位值。
 
-本地演示为了减少步骤，允许在 `config/application.yml` 中临时填写模型 API Key，但填入真实值后不能提交。生产数据库密码、API Key、JWT 验签材料和客户端密钥必须由公司密钥系统或部署平台覆盖，不能进入 Git、镜像层或测试报告。
+本地演示使用 Git 忽略的 `config/application.yml`。生产数据库密码、API Key、JWT 验签材料和客户端密钥必须由公司密钥系统或部署平台覆盖，不能进入 Git、镜像层或测试报告。
 
 启用 `production` 只代表应用改用真实适配器。是否具备上线条件，还需要在目标环境验证数据库迁移、JWT 链路、向量检索、下游回执、并发容量、告警与回滚，不能从本机 health 或单次模型请求外推。
 

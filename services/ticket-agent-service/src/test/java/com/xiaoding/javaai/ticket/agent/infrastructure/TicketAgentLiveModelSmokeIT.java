@@ -4,8 +4,8 @@ import com.xiaoding.javaai.ticket.agent.application.AgentPlanningContext;
 import com.xiaoding.javaai.ticket.agent.application.AgentPlanningResult;
 import com.xiaoding.javaai.ticket.agent.application.TicketAgentPlanner;
 import com.xiaoding.javaai.ticket.agent.domain.AgentDecision;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +41,11 @@ class TicketAgentLiveModelSmokeIT {
     @Value("${spring.ai.openai.api-key:}")
     private String apiKey;
 
+    private Path reportPath;
+
     @BeforeEach
-    void requireConfiguredApiKey() {
+    void requireSmokeConfiguration() throws IOException {
+        reportPath = prepareReportPath(Path.of(requiredSystemProperty("java-ai.agent-smoke.report-path")));
         if (apiKey.isBlank() || "replace-with-your-api-key".equals(apiKey)) {
             throw new IllegalStateException("请先在 config/application.yml 中填写 spring.ai.openai.api-key");
         }
@@ -63,13 +67,10 @@ class TicketAgentLiveModelSmokeIT {
         assertThat(result.decision()).isInstanceOfSatisfying(AgentDecision.UseTool.class, decision ->
                 assertThat(decision.toolName()).isEqualTo("QUERY_KNOWLEDGE"));
 
-        writeReport(result);
+        writeReport(result, reportPath);
     }
 
-    private static void writeReport(AgentPlanningResult result) throws IOException {
-        Path reportPath = Path.of(requiredSystemProperty("java-ai.agent-smoke.report-path"));
-        Path parent = reportPath.toAbsolutePath().getParent();
-        if (parent != null) Files.createDirectories(parent);
+    private static void writeReport(AgentPlanningResult result, Path reportPath) throws IOException {
         AgentDecision.UseTool decision = (AgentDecision.UseTool) result.decision();
         String report = """
                 # Ticket Agent Live Model Smoke
@@ -98,6 +99,18 @@ class TicketAgentLiveModelSmokeIT {
                 result.usage().totalTokens(),
                 decision.toolName());
         Files.writeString(reportPath, report, StandardCharsets.UTF_8);
+    }
+
+    static Path prepareReportPath(Path reportPath) throws IOException {
+        Path absolutePath = reportPath.toAbsolutePath().normalize();
+        Path parent = absolutePath.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        try (var ignored = Files.newOutputStream(
+                absolutePath, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+            return absolutePath;
+        }
     }
 
     private static String requiredSystemProperty(String name) {

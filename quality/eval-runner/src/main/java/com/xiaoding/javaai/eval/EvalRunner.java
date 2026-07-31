@@ -26,6 +26,8 @@ import com.xiaoding.javaai.eval.retrieval.RetrievalEvaluator;
 import com.xiaoding.javaai.eval.retrieval.RetrievalThresholds;
 
 import java.net.URI;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.LinkedHashMap;
@@ -82,10 +84,10 @@ public final class EvalRunner {
         System.out.println("eval-runner " + version());
         System.out.println("usage: contract-validate <contracts-directory>");
         System.out.println("       contract-eval --dataset <jsonl> --prompt-version <id> --environment-id <id> --report <path-prefix> --commit <sha>");
-        System.out.println("       model-eval --dataset <jsonl> --base-url <url> --mode <LIVE_MODEL|CONTRACT_FIXTURE> --bearer-token <token> --prompt-version <id> --environment-id <id> --report <path-prefix> --commit <sha>");
-        System.out.println("       retrieval-eval --dataset <jsonl> --base-url <url> --bearer-token <token> --top-k <n> --min-recall <ratio> --min-hit-rate <ratio> --min-mrr <ratio> --max-duplicate-rate <ratio> --max-p95-ms <ms> --report <path-prefix> --commit <sha>");
-        System.out.println("       agent-eval --dataset <jsonl> --base-url <url> --create-token <token> --run-token <token> --read-token <token> --report <path-prefix> --commit <sha>");
-        System.out.println("       security-eval --dataset <jsonl> --base-url <url> --create-token <token> --run-token <token> --read-token <token> --report <path-prefix> --commit <sha>");
+        System.out.println("       model-eval --dataset <jsonl> --base-url <url> --mode <LIVE_MODEL|CONTRACT_FIXTURE> --bearer-token-file <path> --prompt-version <id> --environment-id <id> --report <path-prefix> --commit <sha>");
+        System.out.println("       retrieval-eval --dataset <jsonl> --base-url <url> --bearer-token-file <path> --top-k <n> --min-recall <ratio> --min-hit-rate <ratio> --min-mrr <ratio> --max-duplicate-rate <ratio> --max-p95-ms <ms> --report <path-prefix> --commit <sha>");
+        System.out.println("       agent-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix> --commit <sha>");
+        System.out.println("       security-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix> --commit <sha>");
     }
 
     private static void runAgentEval(Map<String, String> options) {
@@ -97,9 +99,9 @@ public final class EvalRunner {
                         dataset,
                         URI.create(required(options, "base-url")),
                         new AgentEvaluationTokens(
-                                required(options, "create-token"),
-                                required(options, "run-token"),
-                                required(options, "read-token")),
+                                requiredCredential(options, "create-token"),
+                                requiredCredential(options, "run-token"),
+                                requiredCredential(options, "read-token")),
                         required(options, "commit"));
         Path reportPrefix = Path.of(required(options, "report"));
         new AgentEvaluationReportWriter().write(
@@ -129,7 +131,7 @@ public final class EvalRunner {
         ).evaluate(
                 dataset,
                 URI.create(required(options, "base-url")),
-                required(options, "bearer-token"),
+                requiredCredential(options, "bearer-token"),
                 requiredInt(options, "top-k"),
                 required(options, "commit"),
                 thresholds
@@ -154,8 +156,8 @@ public final class EvalRunner {
     private static void runEval(Map<String, String> options, URI baseUrl, EvalMode mode) {
         EvalDataset dataset = new EvalDatasetLoader().load(Path.of(required(options, "dataset")));
         String bearerToken = mode == EvalMode.LIVE_MODEL
-                ? required(options, "bearer-token")
-                : options.get("bearer-token");
+                ? requiredCredential(options, "bearer-token")
+                : optionalCredential(options, "bearer-token");
         EvalReport report = new ModelInteractionEvaluator(new KnowledgeAnswerHttpClient(bearerToken))
                 .evaluate(
                         dataset,
@@ -200,6 +202,35 @@ public final class EvalRunner {
             throw new IllegalArgumentException("missing required option --" + name);
         }
         return value;
+    }
+
+    static String requiredCredential(Map<String, String> options, String name) {
+        String credential = optionalCredential(options, name);
+        if (credential == null || credential.isBlank()) {
+            throw new IllegalArgumentException("missing required option --" + name + "-file");
+        }
+        return credential;
+    }
+
+    private static String optionalCredential(Map<String, String> options, String name) {
+        String inline = options.get(name);
+        String file = options.get(name + "-file");
+        if (inline != null && !inline.isBlank() && file != null && !file.isBlank()) {
+            throw new IllegalArgumentException(
+                    "use either --" + name + " or --" + name + "-file, not both");
+        }
+        if (file != null && !file.isBlank()) {
+            try {
+                String credential = Files.readString(Path.of(file)).trim();
+                if (credential.isBlank()) {
+                    throw new IllegalArgumentException("credential file is blank: " + file);
+                }
+                return credential;
+            } catch (IOException error) {
+                throw new IllegalArgumentException("cannot read credential file: " + file, error);
+            }
+        }
+        return inline == null ? null : inline.trim();
     }
 
     private static int requiredInt(Map<String, String> options, String name) {

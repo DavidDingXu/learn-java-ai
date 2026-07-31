@@ -11,17 +11,26 @@ foreach ($Name in @("JAVA_AI_RETRIEVAL_BASE_URL", "JAVA_AI_RETRIEVAL_EVAL_BEARER
 }
 
 $Commit = if ($env:JAVA_AI_EVAL_COMMIT) { $env:JAVA_AI_EVAL_COMMIT } else { git -C $RootDir rev-parse HEAD }
-$JavaRuntime = Enter-JavaAiMainJdk
+$CredentialDir = $null
+$BearerTokenFile = $null
+$JavaRuntime = $null
 try {
+  $JavaRuntime = Enter-JavaAiMainJdk
   & (Join-Path $RootDir "mvnw.cmd") -f (Join-Path $RootDir "pom.xml") `
     -pl quality/eval-runner -am package -DskipTests
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  $CredentialDir = Join-Path ([IO.Path]::GetTempPath()) ("java-ai-retrieval-eval-" + [Guid]::NewGuid())
+  $BearerTokenFile = Join-Path $CredentialDir "bearer-token"
+  New-Item -ItemType Directory -Path $CredentialDir | Out-Null
+  $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+  [IO.File]::WriteAllText($BearerTokenFile, $env:JAVA_AI_RETRIEVAL_EVAL_BEARER_TOKEN, $Utf8NoBom)
 
   & $JavaRuntime.Java -jar (Join-Path $RootDir "quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar") `
     retrieval-eval `
     --dataset (Join-Path $RootDir "datasets/retrieval/golden-set-v1.jsonl") `
     --base-url $env:JAVA_AI_RETRIEVAL_BASE_URL `
-    --bearer-token $env:JAVA_AI_RETRIEVAL_EVAL_BEARER_TOKEN `
+    --bearer-token-file $BearerTokenFile `
     --top-k $(if ($env:JAVA_AI_RETRIEVAL_EVAL_TOP_K) { $env:JAVA_AI_RETRIEVAL_EVAL_TOP_K } else { "5" }) `
     --min-recall $(if ($env:JAVA_AI_RETRIEVAL_MIN_RECALL) { $env:JAVA_AI_RETRIEVAL_MIN_RECALL } else { "0.80" }) `
     --min-hit-rate $(if ($env:JAVA_AI_RETRIEVAL_MIN_HIT_RATE) { $env:JAVA_AI_RETRIEVAL_MIN_HIT_RATE } else { "0.90" }) `
@@ -32,5 +41,6 @@ try {
     --commit $Commit
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 } finally {
-  Restore-JavaAiEnvironment $JavaRuntime
+  if ($JavaRuntime) { Restore-JavaAiEnvironment $JavaRuntime }
+  if ($CredentialDir) { Remove-Item -LiteralPath $CredentialDir -Recurse -Force -ErrorAction SilentlyContinue }
 }

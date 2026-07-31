@@ -10,3 +10,6 @@ coverage/
 
 .env
 *.log
+
+# Local model credentials. Keep config/application.example.yml tracked.
+config/application.yml

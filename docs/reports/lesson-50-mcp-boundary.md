@@ -2,8 +2,6 @@
 
 Status: VERIFIED_PROTOCOL_INTEROPERABILITY
 
-Implementation baseline: `release-hardening-2026-07-14`
-
 ## Verified
 
 - MCP Java SDK `2.0.0` runs against the `2025-11-25` protocol baseline.

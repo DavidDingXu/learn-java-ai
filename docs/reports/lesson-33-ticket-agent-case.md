@@ -20,7 +20,11 @@ Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
   -Dtest=TicketAgentOrchestratorTest,HttpKnowledgeReadToolExecutorTest,HttpLegacyWriteToolExecutorTest,TicketAgentJwtSecurityTest,KnowledgeJwtSecurityTest,AgentTaskWorkflowControllerTest \
   -Dsurefire.failIfNoSpecifiedTests=false test
 
-bash scripts/run-agent-live-model-smoke.sh
+./mvnw -pl services/ticket-agent-service \
+  -Dtest=TicketAgentLiveModelSmokeIT \
+  -Dspring.config.additional-location=file:config/application.yml \
+  -Djava-ai.agent-smoke.report-path=target/agent-live-model-smoke.md \
+  test
 ```
 
 ## External Boundary

@@ -328,10 +328,9 @@ test("reader guidance matches the current service and build boundaries", () => {
   assert.match(readme, /受控 Agent/);
   assert.match(readme, /安全回归/);
   assert.match(readme, /Micrometer/);
-  assert.match(readme, /release gate/);
-  assert.match(readme, /四个有实现、有测试的隔离实验/);
-  assert.match(readme, /MCP 外部 Tool/);
-  assert.match(readme, /A2A 任务状态边界/);
+  assert.match(readme, /跨平台发布门禁/);
+  assert.match(readme, /独立 labs/);
+  assert.match(readme, /MCP\/A2A 官方 SDK/);
   assert.match(readme, /MCP Java SDK 2\.0\.0/);
   assert.match(readme, /A2A Java SDK 1\.1\.0\.Final/);
   assert.match(readme, /Java 8.*客户端/);

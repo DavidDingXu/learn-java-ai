@@ -2,12 +2,12 @@
 
 ## Configuration Boundaries
 
-Knowledge Service、Ticket Agent Service 和 Customer BFF 各自只保留一份主 `application.yml`。每份文件都包含通用参数、默认 `demo` 文档和显式 `production` 文档。项目根目录另有 `config/application.yml`，只给真实模型专项测试提供模型参数。
+Knowledge Service、Ticket Agent Service 和 Customer BFF 各自只保留一份主 `application.yml`。每份文件都包含通用参数、默认 `demo` 文档和显式 `production` 文档。项目根目录还有可提交的 `config/application.example.yml`；真实模型测试读取由它复制出来的本地 `config/application.yml`。
 
 配置遵循以下规则：
 
 1. 普通启动使用默认 `demo`，不需要数据库、身份平台、模型或下游服务。
-2. 真实模型测试显式读取 `config/application.yml`，使用 OpenAI 时只填写 API Key。
+2. 真实模型测试显式读取 Git 忽略的 `config/application.yml`，使用 OpenAI 时只填写 API Key。
 3. 数据库、身份、Token Exchange 和下游地址的配置结构直接保留在各服务 `application.yml` 的 `production` 文档中。
 4. 普通测试使用 `src/test/resources/application-test.yml`，不访问外部网络。
 5. 仓库中只保留不可用的密钥占位值；生产密钥必须由密钥系统或部署平台覆盖。
@@ -28,7 +28,13 @@ Windows 使用相同的 Maven 参数，把入口换成 `mvnw.cmd`。默认端口
 
 ## Run A Real Model Test
 
-在 `config/application.yml` 中填写 `spring.ai.openai.api-key`。OpenAI 地址、Chat 模型和 Embedding 模型已有演示默认值；使用其他 OpenAI 兼容服务时，再修改同一文件中的地址和模型名。
+先复制演示配置，再填写 `spring.ai.openai.api-key`：
+
+```bash
+cp config/application.example.yml config/application.yml
+```
+
+Windows PowerShell 使用 `Copy-Item config/application.example.yml config/application.yml`。OpenAI 地址、Chat 模型和 Embedding 模型已有演示默认值；使用其他 OpenAI 兼容服务时，再修改同一文件中的地址和模型名。
 
 直接运行指定的 Java 集成测试：
 
@@ -54,7 +60,7 @@ Windows PowerShell：
 
 该测试只检查模型协议、响应映射和业务校验，并把脱敏结果写入 `target/live-model-smoke.md`。它不验证数据库、身份链路、RAG 质量或端到端业务。
 
-`config/application.yml` 只为减少本地演示步骤而存在。填入真实 API Key 后不能提交该文件。
+`config/application.yml` 只为减少本地演示步骤而存在，并已被 Git 忽略。
 
 ## Production Configuration
 

@@ -179,6 +179,51 @@ test("agent evaluation scripts use the argument-aware golden set", () => {
   }
 });
 
+test("evaluation scripts pass short-lived tokens through temporary files", () => {
+  const cases = [
+    ["scripts/run-live-model-eval.sh", ["bearer-token-file"]],
+    ["scripts/run-live-model-eval.ps1", ["bearer-token-file"]],
+    ["scripts/run-retrieval-eval.sh", ["bearer-token-file"]],
+    ["scripts/run-retrieval-eval.ps1", ["bearer-token-file"]],
+    ["scripts/run-agent-eval.sh", ["create-token-file", "run-token-file", "read-token-file"]],
+    ["scripts/run-agent-eval.ps1", ["create-token-file", "run-token-file", "read-token-file"]],
+    ["scripts/run-security-regression.sh", ["create-token-file", "run-token-file", "read-token-file"]],
+    ["scripts/run-security-regression.ps1", ["create-token-file", "run-token-file", "read-token-file"]],
+  ];
+
+  for (const [relativePath, options] of cases) {
+    const content = read(relativePath);
+    for (const option of options) assert.match(content, new RegExp(`--${option}`), relativePath);
+    assert.doesNotMatch(
+      content,
+      /--(?:bearer|create|run|read)-token(?:\s|`)+\$?(?:env:)?JAVA_AI_/,
+      relativePath,
+    );
+  }
+});
+
+test("evaluation scripts install credential cleanup before writing tokens", () => {
+  for (const relativePath of [
+    "scripts/run-live-model-eval.sh",
+    "scripts/run-retrieval-eval.sh",
+    "scripts/run-agent-eval.sh",
+    "scripts/run-security-regression.sh",
+  ]) {
+    const content = read(relativePath);
+    assert.ok(content.indexOf("trap cleanup EXIT") < content.indexOf("printf '%s'"), relativePath);
+  }
+
+  for (const relativePath of [
+    "scripts/run-live-model-eval.ps1",
+    "scripts/run-retrieval-eval.ps1",
+    "scripts/run-agent-eval.ps1",
+    "scripts/run-security-regression.ps1",
+  ]) {
+    const content = read(relativePath);
+    assert.ok(content.indexOf("try {") < content.indexOf("[IO.File]::WriteAllText"), relativePath);
+  }
+});
+
 test("shell integration verification refuses a missing external environment", {
   skip: process.platform === "win32",
 }, () => {

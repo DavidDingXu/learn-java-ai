@@ -7,6 +7,7 @@ enter_java_ai_main_jdk
 REPORT_PREFIX=${1:-"$ROOT_DIR/docs/reports/lesson-12-live-model-eval"}
 PORT=${JAVA_AI_EVAL_PORT:-18081}
 CONFIG_FILE="$ROOT_DIR/config/application.yml"
+EXAMPLE_CONFIG_FILE="$ROOT_DIR/config/application.example.yml"
 
 require_env() {
   local name=$1
@@ -15,11 +16,31 @@ require_env() {
 
 require_env JAVA_AI_EVAL_BEARER_TOKEN
 require_env JAVA_AI_JWT_ISSUER
-[[ -f "$CONFIG_FILE" ]] || { printf 'ERROR: Missing local demo config: %s\n' "$CONFIG_FILE" >&2; exit 2; }
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  cp "$EXAMPLE_CONFIG_FILE" "$CONFIG_FILE"
+  printf 'ERROR: Created %s. Replace spring.ai.openai.api-key, then run this command again.\n' "$CONFIG_FILE" >&2
+  exit 2
+fi
 [[ -n "${JAVA_AI_DEV_JWT_HMAC_SECRET:-}" || -n "${JAVA_AI_JWT_JWK_SET_URI:-}" ]] || {
   printf 'ERROR: JAVA_AI_DEV_JWT_HMAC_SECRET or JAVA_AI_JWT_JWK_SET_URI is required.\n' >&2
   exit 2
 }
+
+umask 077
+CREDENTIAL_DIR=""
+BEARER_TOKEN_FILE=""
+SERVICE_PID=""
+cleanup() {
+  if [[ -n "$SERVICE_PID" ]]; then
+    kill "$SERVICE_PID" 2>/dev/null || true
+    wait "$SERVICE_PID" 2>/dev/null || true
+  fi
+  if [[ -n "$CREDENTIAL_DIR" ]]; then
+    rm -f -- "$BEARER_TOKEN_FILE"
+    rmdir -- "$CREDENTIAL_DIR" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT
 
 SECURITY_ARGS=(
   "--java-ai.security.jwt.enabled=true"
@@ -38,6 +59,10 @@ env JAVA_HOME="$MAIN_JAVA_HOME" PATH="$MAIN_JAVA_HOME/bin:$PATH" \
   "$ROOT_DIR/mvnw" -f "$ROOT_DIR/pom.xml" \
   -pl services/knowledge-service,quality/eval-runner -am package -DskipTests
 
+CREDENTIAL_DIR=$(mktemp -d "${TMPDIR:-/tmp}/java-ai-model-eval.XXXXXX")
+BEARER_TOKEN_FILE="$CREDENTIAL_DIR/bearer-token"
+printf '%s' "$JAVA_AI_EVAL_BEARER_TOKEN" >"$BEARER_TOKEN_FILE"
+
 env JAVA_HOME="$MAIN_JAVA_HOME" PATH="$MAIN_JAVA_HOME/bin:$PATH" \
   "$MAIN_JAVA_HOME/bin/java" \
   -Dspring.config.additional-location="file:$CONFIG_FILE" \
@@ -52,7 +77,6 @@ env JAVA_HOME="$MAIN_JAVA_HOME" PATH="$MAIN_JAVA_HOME/bin:$PATH" \
   "${SECURITY_ARGS[@]}" \
   >"${TMPDIR:-/tmp}/java-ai-live-eval-service.log" 2>&1 &
 SERVICE_PID=$!
-trap 'kill "$SERVICE_PID" 2>/dev/null || true; wait "$SERVICE_PID" 2>/dev/null || true' EXIT
 
 for _ in $(seq 1 60); do
   if curl --fail --silent "http://127.0.0.1:$PORT/actuator/health" >/dev/null; then
@@ -71,7 +95,7 @@ curl --fail --silent "http://127.0.0.1:$PORT/actuator/health" >/dev/null || {
   --dataset "$ROOT_DIR/datasets/model-interaction/golden-set-v2.jsonl" \
   --base-url "http://127.0.0.1:$PORT" \
   --mode LIVE_MODEL \
-  --bearer-token "$JAVA_AI_EVAL_BEARER_TOKEN" \
+  --bearer-token-file "$BEARER_TOKEN_FILE" \
   --prompt-version knowledge-answer-v1 \
   --environment-id local-live-model \
   --report "$REPORT_PREFIX" \

@@ -78,9 +78,9 @@ test("lesson 05 and 06 reports bind security and contract evidence", () => {
     "docs/reports/milestone-06.md",
   ]) {
     const report = read(reportPath);
-    assert.match(report, /f1a0989/);
     assert.match(report, /HTTP\/OpenAPI|JWT|JDK8/);
     assert.doesNotMatch(report, /生产身份平台已验证|production identity platform verified/i);
+    assert.doesNotMatch(report, /Tag Rule|必须指向|must point/i);
   }
 });
 

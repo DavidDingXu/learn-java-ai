@@ -1,18 +1,26 @@
-# Lesson 39 Release Gate Evidence
+# 第 39 篇：发布门禁验证记录
 
-Status: VERIFIED_GATE_BEHAVIOR_FINAL_BASELINE_REQUIRES_RERUN
+Status: VERIFIED_LOCAL_RELEASE_GATE
 
-## Verified
+## 已验证的行为
 
-- Cross-platform release scripts run the complete unit/build/contract boundary and scan tracked plus untracked non-ignored files for high-confidence secrets.
-- The optional aggregate gate runs external health smoke only when the deployment pipeline explicitly supplies a target URL; local demo setup does not require this value.
-- Model, retrieval, Agent and security reports remain separate evidence with separate datasets and identities.
-- Release documentation covers migration, feature flags, metrics, unknown-result recovery and application/model/index/database rollback.
+- macOS/Linux 与 Windows 发布脚本覆盖 Java 主工程、隔离 labs、JDK8 客户端、Customer Web、接口契约和敏感信息扫描。
+- 日常本地验证不要求外部地址；只有部署流水线明确提供目标 URL 时，聚合门禁才运行外部健康检查。
+- 模型、检索、Agent 和安全评测各自保留数据集、身份与报告，不合并成一个笼统总分。
+- 发布文档覆盖数据库迁移、功能开关、指标、未知结果对账，以及应用、模型、索引和数据库回滚。
 
-## Verification Result Boundary
+## 验证命令
 
-The repository has changed since the earlier fixed-count report. The final release commit must rerun the direct Maven/Node checks and, when full repository coverage is needed, the optional aggregate gate. Exact test counts and the final commit belong in the regenerated release report; older counts are not carried forward as current evidence.
+```bash
+./mvnw verify
+./mvnw -f labs/pom.xml verify
+./mvnw -f integrations/jdk8-client/pom.xml verify
+npm --prefix apps/customer-web test
+node --test scripts/*.test.mjs
+```
 
-## External Boundary
+需要一次聚合全部构建和敏感信息扫描时，运行 `scripts/release-gate.sh` 或 PowerShell 等价入口。外部健康检查只在部署环境显式提供目标地址时启用。
 
-The default local gate does not claim a deployed model, database, vector index, object store or Legacy Tool is ready. A production release must require and retain the product-specific external reports used by the Go/No-Go decision.
+## 适用范围
+
+本地门禁不能证明已部署模型、数据库、向量索引、对象存储或 Legacy Tool 已经可用。生产发布还需要保存目标环境的模型评测、数据迁移、容量、告警和回滚演练结果。

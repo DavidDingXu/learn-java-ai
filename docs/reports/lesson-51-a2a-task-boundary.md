@@ -2,8 +2,6 @@
 
 Status: VERIFIED_CLIENT_INTEROPERABILITY_AND_LOCAL_TASK_CONTRACT
 
-Implementation baseline: `release-hardening-2026-07-14`
-
 ## Verified
 
 - The server computes a normalized, length-prefixed SHA-256 request fingerprint from tenant and business request fields; callers do not supply a trusted hash.

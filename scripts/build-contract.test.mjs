@@ -116,7 +116,7 @@ test("each service has one runtime config with explicit demo and production boun
   }
 
   const knowledge = read("services/knowledge-service/src/main/resources/application.yml");
-  const demoModelConfig = read("config/application.yml");
+  const demoModelConfig = read("config/application.example.yml");
   assert.match(knowledge, /on-profile:\s*demo[\s\S]*?chat:\s*none/);
   assert.match(knowledge, /on-profile:\s*production[\s\S]*?chat:\s*openai/);
   assert.match(knowledge, /on-profile:\s*production[\s\S]*?embedding:\s*openai/);
