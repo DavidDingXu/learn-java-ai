@@ -32,7 +32,7 @@ macOS/Linux：
 ```bash
 ./mvnw -pl services/knowledge-service \
   -Dtest=LiveModelSmokeIT \
-  -Dspring.config.additional-location=file:config/application.yml \
+  -Dspring.config.additional-location=file:../../config/application.yml \
   -Djava-ai.smoke.report-path=target/live-model-smoke.md \
   test
 ```
@@ -42,7 +42,7 @@ Windows PowerShell：
 ```powershell
 .\mvnw.cmd -pl services/knowledge-service `
   -Dtest=LiveModelSmokeIT `
-  "-Dspring.config.additional-location=file:config/application.yml" `
+  "-Dspring.config.additional-location=file:../../config/application.yml" `
   "-Djava-ai.smoke.report-path=target/live-model-smoke.md" `
   test
 ```

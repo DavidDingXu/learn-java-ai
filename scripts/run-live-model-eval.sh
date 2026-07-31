@@ -14,7 +14,6 @@ require_env() {
   [[ -n "${!name:-}" ]] || { printf 'ERROR: %s is required.\n' "$name" >&2; exit 2; }
 }
 
-require_env JAVA_AI_EVAL_BEARER_TOKEN
 require_env JAVA_AI_JWT_ISSUER
 if [[ ! -f "$CONFIG_FILE" ]]; then
   cp "$EXAMPLE_CONFIG_FILE" "$CONFIG_FILE"
@@ -25,6 +24,10 @@ fi
   printf 'ERROR: JAVA_AI_DEV_JWT_HMAC_SECRET or JAVA_AI_JWT_JWK_SET_URI is required.\n' >&2
   exit 2
 }
+if [[ -n "${JAVA_AI_JWT_JWK_SET_URI:-}" && -z "${JAVA_AI_EVAL_BEARER_TOKEN:-}" ]]; then
+  printf 'ERROR: JAVA_AI_EVAL_BEARER_TOKEN is required when JWT verification uses a JWK Set.\n' >&2
+  exit 2
+fi
 
 umask 077
 CREDENTIAL_DIR=""
@@ -59,9 +62,21 @@ env JAVA_HOME="$MAIN_JAVA_HOME" PATH="$MAIN_JAVA_HOME/bin:$PATH" \
   "$ROOT_DIR/mvnw" -f "$ROOT_DIR/pom.xml" \
   -pl services/knowledge-service,quality/eval-runner -am package -DskipTests
 
+EVAL_BEARER_TOKEN=${JAVA_AI_EVAL_BEARER_TOKEN:-}
+if [[ -z "$EVAL_BEARER_TOKEN" ]]; then
+  EVAL_ACTOR=${JAVA_AI_JWT_ALLOWED_ACTORS:-customer-bff}
+  EVAL_ACTOR=${EVAL_ACTOR%%,*}
+  EVAL_BEARER_TOKEN=$(node "$ROOT_DIR/scripts/generate-development-jwt.mjs" \
+    --scope knowledge:answer \
+    --audience "${JAVA_AI_JWT_AUDIENCE:-knowledge-service}" \
+    --subject model-evaluator \
+    --tenant tenant-a \
+    --actor "$EVAL_ACTOR")
+fi
+
 CREDENTIAL_DIR=$(mktemp -d "${TMPDIR:-/tmp}/java-ai-model-eval.XXXXXX")
 BEARER_TOKEN_FILE="$CREDENTIAL_DIR/bearer-token"
-printf '%s' "$JAVA_AI_EVAL_BEARER_TOKEN" >"$BEARER_TOKEN_FILE"
+printf '%s' "$EVAL_BEARER_TOKEN" >"$BEARER_TOKEN_FILE"
 
 env JAVA_HOME="$MAIN_JAVA_HOME" PATH="$MAIN_JAVA_HOME/bin:$PATH" \
   "$MAIN_JAVA_HOME/bin/java" \

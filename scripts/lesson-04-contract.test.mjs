@@ -34,7 +34,8 @@ test("Spring AI remains inside the knowledge infrastructure adapter", () => {
   }
 
   const adapter = read("services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/answer/infrastructure/SpringAiKnowledgeAnswerModel.java");
-  assert.match(adapter, /Mono\.fromCallable/);
+  assert.match(adapter, /Mono\.create/);
+  assert.match(adapter, /sink\.onCancel/);
   assert.match(adapter, /Schedulers\.boundedElastic\(\)/);
 });
 
@@ -87,6 +88,7 @@ test("live model smoke is cross-platform, YAML-configured and report-producing",
     assert.match(report, /Execution mode: `LIVE_MODEL`/);
     assert.match(report, /Trace ID: `(?:untraced|[0-9a-f]{32})`/);
     assert.doesNotMatch(report, /sk-[A-Za-z0-9]{12,}/);
+    assert.doesNotMatch(report, /Redaction|API key|base URL/i);
   } else {
     assert.match(report, /No model credentials were available|未提供模型凭据/i);
   }
@@ -104,6 +106,20 @@ test("local model credentials stay in an ignored YAML copied from the tracked ex
   assert.match(example, /api-key:\s*replace-with-your-api-key/);
   assert.match(shell, /cp\s+"\$EXAMPLE_CONFIG_FILE"\s+"\$CONFIG_FILE"/);
   assert.match(powershell, /Copy-Item\s+-Path\s+\$ExampleConfigFile\s+-Destination\s+\$ConfigFile/);
+});
+
+test("reader Maven smoke commands resolve the root YAML from the service module", () => {
+  for (const relativePath of [
+    "README.md",
+    "docs/runbooks/live-model-smoke.md",
+    "docs/runbooks/runtime-configuration.md",
+    "docs/reports/lesson-33-ticket-agent-case.md",
+    "docs/reports/lesson-38-runtime-configuration.md",
+  ]) {
+    const content = read(relativePath);
+    assert.doesNotMatch(content, /file:config\/application\.yml/);
+    assert.match(content, /file:\.\.\/\.\.\/config\/application\.yml/);
+  }
 });
 
 test("live model tests validate the report path before calling the provider", () => {
@@ -125,6 +141,7 @@ test("live model tests validate the report path before calling the provider", ()
     const validation = source.indexOf(`requiredSystemProperty("${property}")`);
     assert.notEqual(validation, -1, `${relativePath} must require ${property}`);
     assert.ok(validation < source.indexOf(providerCall), `${relativePath} must validate before ${providerCall}`);
+    assert.doesNotMatch(source, /The report excludes|never written to this report|## Redaction/i);
   }
 });
 

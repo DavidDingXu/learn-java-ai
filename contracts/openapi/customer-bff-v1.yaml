@@ -28,7 +28,10 @@ paths:
         '401': { description: Missing or invalid customer token. }
         '403': { description: Customer cannot access the requested conversation. }
         '429': { description: Per-customer consultation rate limit reached. }
-        '502': { description: A downstream service failed. }
+        '502':
+          $ref: '#/components/responses/DownstreamServiceFailed'
+        '504':
+          $ref: '#/components/responses/DownstreamTimeout'
   /api/v1/customer/consultations/answers/stream:
     post:
       operationId: streamCustomerConsultation
@@ -42,7 +45,7 @@ paths:
               $ref: '#/components/schemas/CustomerAnswerRequest'
       responses:
         '200':
-          description: Named session, metadata, delta, heartbeat, citation, completed or error events.
+          description: Named session, metadata, delta, heartbeat, citation, completed or error events. Stream deadlines end with a KNOWLEDGE_STREAM_TIMEOUT error event.
           content:
             text/event-stream:
               schema:
@@ -80,6 +83,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CustomerAnswerResponse'
+        '502':
+          $ref: '#/components/responses/DownstreamServiceFailed'
+        '504':
+          $ref: '#/components/responses/DownstreamTimeout'
   /api/v1/customer/consultations/{conversationId}/attempts/{attemptId}/handoffs:
     post:
       operationId: handoffCustomerConsultation
@@ -102,7 +109,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/TicketHandoffReceipt'
         '409': { description: Handoff state or idempotency conflict. }
+        '502':
+          $ref: '#/components/responses/DownstreamServiceFailed'
+        '504':
+          $ref: '#/components/responses/DownstreamTimeout'
 components:
+  responses:
+    DownstreamServiceFailed:
+      description: A required downstream service failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            code: DOWNSTREAM_SERVICE_FAILED
+            message: A downstream service request failed
+    DownstreamTimeout:
+      description: A required downstream service exceeded its client deadline.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            code: DOWNSTREAM_TIMEOUT
+            message: A downstream service did not respond in time
   securitySchemes:
     bearerAuth:
       type: http
@@ -120,6 +150,13 @@ components:
       required: true
       schema: { type: string, minLength: 1, maxLength: 64 }
   schemas:
+    ApiError:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
     CustomerAnswerRequest:
       type: object
       additionalProperties: false

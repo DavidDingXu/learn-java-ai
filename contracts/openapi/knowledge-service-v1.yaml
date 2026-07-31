@@ -127,9 +127,9 @@ paths:
         '429':
           description: Model concurrency limit reached.
         '502':
-          description: Model output or Provider response is invalid.
+          description: Model output is invalid or the Provider rejects the request.
         '503':
-          description: Model is not configured or the circuit is open.
+          description: Model is not configured, rate limited, unavailable, or the circuit is open.
         '504':
           description: Model call timed out.
   /api/v1/knowledge/answers/stream:

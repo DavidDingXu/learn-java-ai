@@ -31,8 +31,9 @@ java-ai:
     timeout: 5s
   downstream:
     knowledge:
-      timeout: 10s
+      timeout: 35s
       stream-idle-timeout: 30s
+      stream-total-timeout: 2m
     ticket:
       timeout: 5s
 

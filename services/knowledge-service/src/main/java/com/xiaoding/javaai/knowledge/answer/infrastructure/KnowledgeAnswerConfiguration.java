@@ -22,6 +22,7 @@ import org.springframework.core.io.Resource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Duration;
 
 @Configuration
 class KnowledgeAnswerConfiguration {
@@ -70,9 +71,14 @@ class KnowledgeAnswerConfiguration {
     @ConditionalOnProperty(name = "spring.ai.model.chat", havingValue = "openai")
     KnowledgeAnswerModel springAiKnowledgeAnswerModel(
             ChatClient.Builder builder,
-            @Value("${spring.ai.openai.chat.model}") String configuredModel
+            @Value("${spring.ai.openai.chat.model}") String configuredModel,
+            @Value("${java-ai.knowledge.answer.total-timeout:30s}") Duration totalTimeout,
+            @Value("${java-ai.knowledge.answer.retry.max-attempts:2}") int maxAttempts,
+            @Value("${java-ai.knowledge.answer.retry.delay:100ms}") Duration retryDelay
     ) {
-        return new SpringAiKnowledgeAnswerModel(builder, configuredModel);
+        return new SpringAiKnowledgeAnswerModel(
+                builder, configuredModel, totalTimeout, maxAttempts, retryDelay
+        );
     }
 
     @Bean

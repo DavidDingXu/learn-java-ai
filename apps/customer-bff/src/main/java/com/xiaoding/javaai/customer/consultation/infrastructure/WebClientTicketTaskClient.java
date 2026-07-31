@@ -5,14 +5,19 @@ import com.xiaoding.javaai.customer.consultation.domain.AnswerFeedback;
 import com.xiaoding.javaai.customer.consultation.domain.CitationView;
 import com.xiaoding.javaai.customer.consultation.domain.TicketHandoffReceipt;
 import com.xiaoding.javaai.customer.consultation.domain.TicketHandoffSnapshot;
+import com.xiaoding.javaai.customer.downstream.DownstreamServiceException;
+import com.xiaoding.javaai.customer.downstream.DownstreamTimeoutException;
 import com.xiaoding.javaai.customer.identity.DelegatedAccessToken;
+import org.springframework.core.codec.DecodingException;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public final class WebClientTicketTaskClient implements TicketTaskClient {
@@ -51,9 +56,19 @@ public final class WebClientTicketTaskClient implements TicketTaskClient {
                 .onStatus(status -> status.isError(), response -> Mono.error(
                         new DownstreamServiceException("ticket-agent-service", response.statusCode().value())))
                 .bodyToMono(TaskResponse.class)
-                .timeout(timeout)
+                .switchIfEmpty(Mono.error(new DownstreamServiceException(
+                        "ticket-agent-service", new IllegalStateException("empty response body"))))
                 .map(response -> new TicketHandoffReceipt(
-                        response.taskId(), response.status(), response.duplicate()));
+                        response.taskId(), response.status(), response.duplicate()))
+                .timeout(timeout)
+                .onErrorMap(TimeoutException.class,
+                        error -> new DownstreamTimeoutException("ticket-agent-service", error))
+                .onErrorMap(WebClientRequestException.class,
+                        error -> new DownstreamServiceException("ticket-agent-service", error))
+                .onErrorMap(DecodingException.class,
+                        error -> new DownstreamServiceException("ticket-agent-service", error))
+                .onErrorMap(IllegalArgumentException.class,
+                        error -> new DownstreamServiceException("ticket-agent-service", error));
     }
 
     private static TaskRequest toRequest(TicketHandoffSnapshot snapshot) {

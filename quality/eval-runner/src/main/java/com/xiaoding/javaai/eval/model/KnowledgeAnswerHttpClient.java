@@ -14,6 +14,8 @@ import java.util.Map;
 
 public final class KnowledgeAnswerHttpClient implements KnowledgeAnswerClient {
 
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(35);
+
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String bearerToken;
@@ -68,7 +70,7 @@ public final class KnowledgeAnswerHttpClient implements KnowledgeAnswerClient {
             String requestBody = objectMapper.writeValueAsString(Map.of("question", question));
             URI endpoint = URI.create(trimTrailingSlash(baseUrl.toString()) + "/api/v1/knowledge/answers");
             HttpRequest.Builder builder = HttpRequest.newBuilder(endpoint)
-                    .timeout(Duration.ofSeconds(15))
+                    .timeout(REQUEST_TIMEOUT)
                     .header("Content-Type", "application/json");
             if (bearerToken != null) builder.header("Authorization", "Bearer " + bearerToken);
             return builder.POST(HttpRequest.BodyPublishers.ofString(requestBody)).build();

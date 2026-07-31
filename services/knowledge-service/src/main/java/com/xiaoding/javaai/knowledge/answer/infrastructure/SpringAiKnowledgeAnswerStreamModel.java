@@ -52,16 +52,13 @@ final class SpringAiKnowledgeAnswerStreamModel implements KnowledgeAnswerStreamM
     }
 
     static String streamingUserMessage(GroundedPrompt prompt) {
-        return SpringAiKnowledgeAnswerModel.buildUserMessage(
-                prompt,
-                """
+        return SpringAiKnowledgeAnswerModel.buildUserMessage(prompt) + "\n\n" + """
                 输出必须严格以这一段决策头开头，标签前不要添加任何文字：
                 <answer-decision>{"citedSectionIds":["本次上下文中的 sectionId"],"refused":false,"refusalReason":null}</answer-decision><answer-text>
                 citedSectionIds 只能选择 AUTHORIZED_KNOWLEDGE_CONTEXT 中存在的 sectionId。
                 证据不足时将 refused 设为 true、citedSectionIds 设为空数组，并提供具体的 refusalReason。
                 <answer-text> 后只输出给客户看的纯文本答案，不要输出 Markdown、代码块或结束标签。
-                """
-        );
+                """;
     }
 
     private static ModelUsage mapUsage(Usage usage) {

@@ -12,9 +12,11 @@ function read(relativePath) {
   return readFileSync(absolutePath, "utf8");
 }
 
-function implementationCommit(markdown) {
-  const match = markdown.match(/(?:Implementation commit|Commit): `([0-9a-f]{40})`/);
-  assert.notEqual(match, null, "report must bind a 40-character implementation commit");
+function implementationRevision(markdown) {
+  const match = markdown.match(
+    /(?:Implementation commit|Commit): `([0-9a-f]{40}|column-v\d+\.\d+\.\d+)`/,
+  );
+  assert.notEqual(match, null, "report must bind a full commit SHA or a column release tag");
   return match[1];
 }
 
@@ -48,8 +50,8 @@ test("contract and live eval reports use the same dataset without conflating mod
   assert.equal(contract.failed, 0);
   assert.equal(live.passed, 5);
   assert.equal(live.failed, 0);
-  assert.equal(contract.commit, implementationCommit(contractMarkdown));
-  assert.equal(live.commit, implementationCommit(liveMarkdown));
+  assert.equal(contract.commit, implementationRevision(contractMarkdown));
+  assert.equal(live.commit, implementationRevision(liveMarkdown));
   if (contract.commit !== live.commit) {
     assert.match(
       evidenceSummary,
@@ -73,7 +75,7 @@ test("live evidence uses one implementation and milestone 12 explains its bounda
 
   assert.match(smoke, /Status: LIVE_MODEL/);
   assert.match(milestone, /VERIFIED_LIVE_MODEL/);
-  assert.equal(implementationCommit(smoke), implementationCommit(live));
+  assert.equal(implementationRevision(smoke), implementationRevision(live));
   assert.match(milestone, /接口契约模式与真实模型模式分别运行/);
   assert.doesNotMatch(milestone, /Tag Rule|必须指向|must point/i);
   assert.doesNotMatch(reports, /sk-[A-Za-z0-9]{12,}|memberai\.tech/);

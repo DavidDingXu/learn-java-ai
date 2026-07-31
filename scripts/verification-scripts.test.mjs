@@ -202,6 +202,19 @@ test("evaluation scripts pass short-lived tokens through temporary files", () =>
   }
 });
 
+test("live model evaluation creates local HMAC tokens after the build", () => {
+  for (const relativePath of [
+    "scripts/run-live-model-eval.sh",
+    "scripts/run-live-model-eval.ps1",
+  ]) {
+    const content = read(relativePath);
+    const build = content.indexOf("package -DskipTests");
+    const token = content.indexOf("generate-development-jwt.mjs");
+    assert.ok(build >= 0 && build < token, `${relativePath} must create the token after the build`);
+    assert.match(content, /JAVA_AI_EVAL_BEARER_TOKEN is required when JWT verification uses a JWK Set/);
+  }
+});
+
 test("evaluation scripts install credential cleanup before writing tokens", () => {
   for (const relativePath of [
     "scripts/run-live-model-eval.sh",
@@ -221,6 +234,43 @@ test("evaluation scripts install credential cleanup before writing tokens", () =
   ]) {
     const content = read(relativePath);
     assert.ok(content.indexOf("try {") < content.indexOf("[IO.File]::WriteAllText"), relativePath);
+  }
+});
+
+test("evaluation scripts protect temporary credentials and create them after the build", () => {
+  const shellCases = [
+    ["scripts/run-live-model-eval.sh", "package -DskipTests"],
+    ["scripts/run-retrieval-eval.sh", "package -DskipTests"],
+    ["scripts/run-agent-eval.sh", "package -DskipTests"],
+    ["scripts/run-security-regression.sh", "test package"],
+  ];
+  for (const [relativePath, buildMarker] of shellCases) {
+    const content = read(relativePath);
+    const build = content.indexOf(buildMarker);
+    const create = content.indexOf("mktemp -d");
+    const cleanup = content.indexOf("trap cleanup EXIT");
+    const write = content.indexOf("printf '%s'", create);
+    assert.ok(build >= 0 && build < create, `${relativePath} must build before creating credentials`);
+    assert.ok(create >= 0 && cleanup >= 0 && cleanup < write,
+      `${relativePath} must protect cleanup before writing credentials`);
+  }
+
+  const powershellCases = [
+    ["scripts/run-live-model-eval.ps1", "package -DskipTests"],
+    ["scripts/run-retrieval-eval.ps1", "package -DskipTests"],
+    ["scripts/run-agent-eval.ps1", "package -DskipTests"],
+    ["scripts/run-security-regression.ps1", "test package"],
+  ];
+  for (const [relativePath, buildMarker] of powershellCases) {
+    const content = read(relativePath);
+    const build = content.indexOf(buildMarker);
+    const create = content.indexOf("New-Item -ItemType Directory -Path $CredentialDir");
+    const protectedBlock = content.indexOf("try {");
+    const write = content.indexOf("[IO.File]::WriteAllText", create);
+    const cleanup = content.lastIndexOf("} finally {");
+    assert.ok(build >= 0 && build < create, `${relativePath} must build before creating credentials`);
+    assert.ok(protectedBlock >= 0 && protectedBlock < create && create < write && write < cleanup,
+      `${relativePath} must write credentials inside try/finally`);
   }
 });
 

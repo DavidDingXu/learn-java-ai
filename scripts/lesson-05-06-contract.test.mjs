@@ -71,6 +71,27 @@ test("agent and legacy OpenAPI files describe the complete workflow and response
   assert.doesNotMatch(legacyDto, /idempotencyKey/);
 });
 
+test("customer BFF contract exposes stable downstream failures on non-streaming operations", () => {
+  const api = read("contracts/openapi/customer-bff-v1.yaml");
+
+  for (const operationId of [
+    "answerCustomerConsultation",
+    "retryCustomerAnswer",
+    "handoffCustomerConsultation",
+  ]) {
+    const start = api.indexOf(`operationId: ${operationId}`);
+    assert.notEqual(start, -1, `${operationId} must exist`);
+    const nextOperation = api.indexOf("operationId:", start + 12);
+    const block = api.slice(start, nextOperation === -1 ? api.length : nextOperation);
+    assert.match(block, /'502':[\s\S]*DownstreamServiceFailed/);
+    assert.match(block, /'504':[\s\S]*DownstreamTimeout/);
+  }
+
+  assert.match(api, /KNOWLEDGE_STREAM_TIMEOUT/);
+  assert.match(api, /code: DOWNSTREAM_SERVICE_FAILED/);
+  assert.match(api, /code: DOWNSTREAM_TIMEOUT/);
+});
+
 test("lesson 05 and 06 reports bind security and contract evidence", () => {
   for (const reportPath of [
     "docs/reports/lesson-05-delegated-identity.md",

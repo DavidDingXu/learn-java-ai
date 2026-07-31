@@ -1,19 +1,16 @@
-# Lesson 11 Resilience Evidence
+# 第 11 讲配套验证：模型调用的故障保护
 
-Status: VERIFIED_CONFIGURATION_WITH_MAPPING_BOUNDARY
+这组验证检查 `knowledgeAnswer` 策略是否按正文所述生效。
 
-- Implementation commit: `f5532160ae5018da237567e5855bd20bb7ce2123`
-- Policy name: `knowledgeAnswer`
-- Test: `ModelResilienceContractTest`
+## 已验证的行为
 
-## Verified
+- OpenAI Java SDK 的自动重试设为 0，项目只在模型适配器内保留一层显式重试。
+- 整轮模型调用最多等待 30 秒，首次调用、重试间隔和第二次调用共享这一个时间预算。
+- Provider 5xx 和网络 I/O 失败最多重试一次；429、整轮超时和结构化结果校验失败不重试。
+- 本地模拟 Provider 验证了 503 后重试成功、连续 503 只调用两次、429 只调用一次，以及慢响应超时后不会再发起模型请求。
+- Provider 限流、持续不可用和请求被拒绝会转换为稳定错误码，Provider 原始异常消息不会返回给调用方。
+- Resilience4j 的 Bulkhead 将单实例并发上限设为 20，CircuitBreaker 使用计数窗口；两者只包裹知识回答模型端口。
 
-- OpenAI 官方 Java SDK 的自动重试设为 0，Resilience4j 最多执行 2 次无业务副作用的模型调用尝试，避免重试倍增。
-- 配置文件将超时设为 8 秒、并发上限设为 20，断路器使用计数窗口；当前契约测试只断言前两项与重试次数。
-- `KnowledgeAnswerExceptionHandler` 实现了超时、断路器打开和并发满到 `MODEL_TIMEOUT`、`MODEL_CIRCUIT_OPEN`、`MODEL_BUSY` 的映射，但当前没有针对这三条映射的行为测试。
-- 策略只包知识回答模型端口，不是跨 Chat、RAG、Tool 和 Agent 的全局网关。
-- 本地模拟 Provider 验证了第一次返回 503 后由 Resilience4j 重试成功，以及慢响应触发 TimeLimiter 超时。
+## 带入公司项目前还要验证什么
 
-## Evidence Boundary
-
-这些默认值用于示例工程，不是容量结论。当前证据没有覆盖超时后的连接释放、并发耗尽或断路器状态变化。公司项目需要根据 Provider SLO、线程模型、并发预算和上游超时补行为测试与压测；写操作 Tool 不得复用这里的模型生成重试策略。
+30 秒和并发 20 是便于本地演示的起始值，不是生产容量结论。接入目标 Provider 后，还需要根据服务目标、实例数、线程模型和上游超时做压测，重点观测超时后的连接释放、并发耗尽时的拒绝以及断路器的打开与半开恢复。写操作 Tool 有幂等和副作用问题，不能直接复用知识回答的重试策略。

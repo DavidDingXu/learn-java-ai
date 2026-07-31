@@ -67,7 +67,7 @@ public class CustomerConsultationConfiguration {
             WebClient.Builder builder,
             @Value("${java-ai.runtime.external-integrations-enabled:false}") boolean enabled,
             @Value("${java-ai.downstream.knowledge.base-url:http://localhost:8081}") String baseUrl,
-            @Value("${java-ai.downstream.knowledge.timeout:10s}") Duration timeout
+            @Value("${java-ai.downstream.knowledge.timeout:35s}") Duration timeout
     ) {
         if (!enabled) return (token, request) -> Mono.error(
                 new IllegalStateException("knowledge-service integration is disabled"));
@@ -79,11 +79,14 @@ public class CustomerConsultationConfiguration {
             WebClient.Builder builder,
             @Value("${java-ai.runtime.external-integrations-enabled:false}") boolean enabled,
             @Value("${java-ai.downstream.knowledge.base-url:http://localhost:8081}") String baseUrl,
-            @Value("${java-ai.downstream.knowledge.stream-idle-timeout:30s}") Duration idleTimeout
+            @Value("${java-ai.downstream.knowledge.stream-idle-timeout:30s}") Duration idleTimeout,
+            @Value("${java-ai.downstream.knowledge.stream-total-timeout:2m}") Duration totalTimeout
     ) {
         if (!enabled) return (token, request) -> reactor.core.publisher.Flux.error(
                 new IllegalStateException("knowledge-service stream integration is disabled"));
-        return new WebClientKnowledgeAnswerStreamClient(builder, baseUrl, idleTimeout);
+        return new WebClientKnowledgeAnswerStreamClient(
+                builder, baseUrl, idleTimeout, totalTimeout
+        );
     }
 
     @Bean

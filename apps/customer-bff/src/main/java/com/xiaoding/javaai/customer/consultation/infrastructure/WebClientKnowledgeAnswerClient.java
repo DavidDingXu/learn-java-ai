@@ -4,13 +4,18 @@ import com.xiaoding.javaai.customer.consultation.application.port.KnowledgeAnswe
 import com.xiaoding.javaai.customer.consultation.domain.CitationView;
 import com.xiaoding.javaai.customer.consultation.domain.ConversationContextView;
 import com.xiaoding.javaai.customer.consultation.domain.KnowledgeAnswerView;
+import com.xiaoding.javaai.customer.downstream.DownstreamServiceException;
+import com.xiaoding.javaai.customer.downstream.DownstreamTimeoutException;
 import com.xiaoding.javaai.customer.identity.DelegatedAccessToken;
+import org.springframework.core.codec.DecodingException;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 public final class WebClientKnowledgeAnswerClient implements KnowledgeAnswerClient {
 
@@ -41,8 +46,18 @@ public final class WebClientKnowledgeAnswerClient implements KnowledgeAnswerClie
                 .onStatus(status -> status.isError(), response -> Mono.error(
                         new DownstreamServiceException("knowledge-service", response.statusCode().value())))
                 .bodyToMono(ResponseBody.class)
+                .switchIfEmpty(Mono.error(new DownstreamServiceException(
+                        "knowledge-service", new IllegalStateException("empty response body"))))
+                .map(ResponseBody::toDomain)
                 .timeout(timeout)
-                .map(ResponseBody::toDomain);
+                .onErrorMap(TimeoutException.class,
+                        error -> new DownstreamTimeoutException("knowledge-service", error))
+                .onErrorMap(WebClientRequestException.class,
+                        error -> new DownstreamServiceException("knowledge-service", error))
+                .onErrorMap(DecodingException.class,
+                        error -> new DownstreamServiceException("knowledge-service", error))
+                .onErrorMap(IllegalArgumentException.class,
+                        error -> new DownstreamServiceException("knowledge-service", error));
     }
 
     private record RequestBody(String question, ConversationContextBody conversationContext) {

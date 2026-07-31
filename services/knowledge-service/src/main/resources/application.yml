@@ -26,11 +26,6 @@ management:
       show-details: never
 
 resilience4j:
-  retry:
-    instances:
-      knowledgeAnswer:
-        max-attempts: 2
-        wait-duration: 100ms
   circuitbreaker:
     instances:
       knowledgeAnswer:
@@ -39,11 +34,6 @@ resilience4j:
         minimum-number-of-calls: 10
         failure-rate-threshold: 50
         wait-duration-in-open-state: 30s
-  timelimiter:
-    instances:
-      knowledgeAnswer:
-        timeout-duration: 8s
-        cancel-running-future: true
   bulkhead:
     instances:
       knowledgeAnswer:
@@ -55,6 +45,11 @@ java-ai:
     knowledge-answer:
       version: knowledge-answer-v1
   knowledge:
+    answer:
+      total-timeout: 30s
+      retry:
+        max-attempts: 2
+        delay: 100ms
     retrieval:
       top-k: 6
       candidate-k: 20

@@ -53,7 +53,7 @@ class LiveModelSmokeIT {
     }
 
     @Test
-    void callsTheConfiguredModelAndWritesRedactedEvidence() throws IOException {
+    void callsTheConfiguredModelAndWritesReproducibleEvidence() throws IOException {
         String question = System.getProperty(
                 "java-ai.smoke.question",
                 "退款已经审核通过，为什么还没有到账？"
@@ -84,7 +84,7 @@ class LiveModelSmokeIT {
                 .orElse("none");
 
         String report = """
-                # Lesson 04 Live Model Smoke
+                # 第 04 讲真实模型验证
 
                 Status: LIVE_MODEL
 
@@ -99,17 +99,13 @@ class LiveModelSmokeIT {
                 - Trace ID: `%s`
                 - Citations: %s
 
-                ## Question
+                ## 验证问题
 
                 %s
 
-                ## Answer
+                ## 模型回答
 
                 %s
-
-                ## Redaction
-
-                The API key and base URL are never written to this report.
                 """.formatted(
                 Instant.now(),
                 commit,

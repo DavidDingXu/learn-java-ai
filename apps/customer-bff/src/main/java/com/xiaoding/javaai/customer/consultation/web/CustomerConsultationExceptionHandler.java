@@ -2,7 +2,8 @@ package com.xiaoding.javaai.customer.consultation.web;
 
 import com.xiaoding.javaai.customer.consultation.application.ConsultationRateLimitExceededException;
 import com.xiaoding.javaai.customer.consultation.application.ConversationAccessDeniedException;
-import com.xiaoding.javaai.customer.consultation.infrastructure.DownstreamServiceException;
+import com.xiaoding.javaai.customer.downstream.DownstreamServiceException;
+import com.xiaoding.javaai.customer.downstream.DownstreamTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,7 +24,20 @@ public final class CustomerConsultationExceptionHandler {
 
     @ExceptionHandler(DownstreamServiceException.class)
     ResponseEntity<ApiError> downstream(DownstreamServiceException error) {
-        return response(HttpStatus.BAD_GATEWAY, "DOWNSTREAM_SERVICE_FAILED", error.getMessage());
+        return response(
+                HttpStatus.BAD_GATEWAY,
+                "DOWNSTREAM_SERVICE_FAILED",
+                "A downstream service request failed"
+        );
+    }
+
+    @ExceptionHandler(DownstreamTimeoutException.class)
+    ResponseEntity<ApiError> downstreamTimeout(DownstreamTimeoutException error) {
+        return response(
+                HttpStatus.GATEWAY_TIMEOUT,
+                "DOWNSTREAM_TIMEOUT",
+                "A downstream service did not respond in time"
+        );
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

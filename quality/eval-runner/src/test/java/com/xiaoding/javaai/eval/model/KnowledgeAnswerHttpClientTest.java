@@ -7,6 +7,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,6 +23,7 @@ class KnowledgeAnswerHttpClientTest {
         HttpRequest request = client.buildRequest(URI.create("https://knowledge.example"), "退款多久？");
 
         assertEquals("Bearer delegated-token", request.headers().firstValue("Authorization").orElseThrow());
+        assertEquals(Duration.ofSeconds(35), request.timeout().orElseThrow());
     }
 
     @Test

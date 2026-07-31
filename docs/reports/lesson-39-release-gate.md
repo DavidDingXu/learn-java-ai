@@ -1,6 +1,6 @@
 # 第 39 篇：发布门禁验证记录
 
-Status: VERIFIED_LOCAL_RELEASE_GATE
+状态：本地发布门禁已验证（`VERIFIED_LOCAL_RELEASE_GATE`）
 
 ## 已验证的行为
 

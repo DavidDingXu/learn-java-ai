@@ -11,6 +11,7 @@ import com.xiaoding.javaai.customer.consultation.domain.FeedbackRating;
 import com.xiaoding.javaai.customer.consultation.domain.KnowledgeAnswerView;
 import com.xiaoding.javaai.customer.consultation.domain.TicketHandoffReceipt;
 import com.xiaoding.javaai.customer.consultation.infrastructure.InMemoryConsultationSessionStore;
+import com.xiaoding.javaai.customer.downstream.DownstreamTimeoutException;
 import com.xiaoding.javaai.customer.identity.CustomerAccessToken;
 import com.xiaoding.javaai.customer.identity.CustomerIdentity;
 import com.xiaoding.javaai.customer.identity.DelegatedAccessToken;
@@ -26,6 +27,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -113,7 +115,8 @@ class CustomerConsultationServiceTest {
                         new KnowledgeAnswerStreamClient.Delta("退款通常在 1 到 5 个工作日到账。"),
                         new KnowledgeAnswerStreamClient.Citation(
                                 new CitationView("refund-policy", "v1", "arrival-time", "退款到账时间")),
-                        new KnowledgeAnswerStreamClient.Completed(false, null)),
+                        new KnowledgeAnswerStreamClient.Completed(false, null),
+                        new KnowledgeAnswerStreamClient.Delta("不应出现在终止事件之后")),
                 acceptingTicketClient(), tokenClient, tokenClient,
                 (identity, now) -> true,
                 new ConversationWindowPolicy(8, 800, 500), idGenerator,
@@ -197,6 +200,35 @@ class CustomerConsultationServiceTest {
 
         assertThat(store.findById("conversation-1").block()
                 .requireAttempt("attempt-1").status().name()).isEqualTo("FAILED");
+    }
+
+    @Test
+    void converts_a_stream_timeout_to_a_specific_terminal_error_event() {
+        ArrayDeque<String> ids = new ArrayDeque<>(List.of("conversation-1", "attempt-1"));
+        DelegatedTokenClient tokenClient = source -> Mono.just(
+                new DelegatedAccessToken("delegated-token", NOW.plusSeconds(300)));
+        InMemoryConsultationSessionStore store = new InMemoryConsultationSessionStore();
+        CustomerConsultationService service = new CustomerConsultationService(
+                store,
+                (token, request) -> Mono.just(answer()),
+                (token, request) -> Flux.error(new DownstreamTimeoutException(
+                        "knowledge-service", new TimeoutException("stream deadline"))),
+                acceptingTicketClient(), tokenClient, tokenClient,
+                (identity, now) -> true,
+                new ConversationWindowPolicy(8, 800, 500), ids::removeFirst,
+                CLOCK, Duration.ofMinutes(30)
+        );
+
+        StepVerifier.create(service.stream(customer(),
+                        new AnswerCustomerQuestion(null, "退款多久到账？")))
+                .expectNextMatches(event -> event instanceof CustomerStreamEvent.SessionStarted)
+                .expectNext(new CustomerStreamEvent.Error(
+                        "KNOWLEDGE_STREAM_TIMEOUT", "回答生成超时，请稍后重试"))
+                .verifyComplete();
+
+        assertThat(store.findById("conversation-1").block()
+                .requireAttempt("attempt-1").failureCode())
+                .isEqualTo("KNOWLEDGE_STREAM_TIMEOUT");
     }
 
     @Test

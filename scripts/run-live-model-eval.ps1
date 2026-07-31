@@ -7,7 +7,7 @@ $Port = if ($env:JAVA_AI_EVAL_PORT) { $env:JAVA_AI_EVAL_PORT } else { "18081" }
 $ConfigFile = Join-Path $RootDir "config\application.yml"
 $ExampleConfigFile = Join-Path $RootDir "config\application.example.yml"
 
-foreach ($Name in @("JAVA_AI_EVAL_BEARER_TOKEN", "JAVA_AI_JWT_ISSUER")) {
+foreach ($Name in @("JAVA_AI_JWT_ISSUER")) {
   if (-not (Get-Item "Env:$Name" -ErrorAction SilentlyContinue).Value) {
     throw "$Name is required."
   }
@@ -19,6 +19,9 @@ if (-not (Test-Path $ConfigFile)) {
 
 if (-not $env:JAVA_AI_DEV_JWT_HMAC_SECRET -and -not $env:JAVA_AI_JWT_JWK_SET_URI) {
   throw "JAVA_AI_DEV_JWT_HMAC_SECRET or JAVA_AI_JWT_JWK_SET_URI is required."
+}
+if ($env:JAVA_AI_JWT_JWK_SET_URI -and -not $env:JAVA_AI_EVAL_BEARER_TOKEN) {
+  throw "JAVA_AI_EVAL_BEARER_TOKEN is required when JWT verification uses a JWK Set."
 }
 
 $Commit = if ($env:JAVA_AI_EVAL_COMMIT) { $env:JAVA_AI_EVAL_COMMIT } else { git -C $RootDir rev-parse HEAD }
@@ -55,11 +58,25 @@ try {
     -pl services/knowledge-service,quality/eval-runner -am package -DskipTests
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+  $BearerToken = $env:JAVA_AI_EVAL_BEARER_TOKEN
+  if (-not $BearerToken) {
+    $AllowedActors = if ($env:JAVA_AI_JWT_ALLOWED_ACTORS) { $env:JAVA_AI_JWT_ALLOWED_ACTORS } else { "customer-bff" }
+    $EvalActor = ($AllowedActors -split ",")[0].Trim()
+    $BearerToken = & node (Join-Path $RootDir "scripts/generate-development-jwt.mjs") `
+      --scope knowledge:answer `
+      --audience $(if ($env:JAVA_AI_JWT_AUDIENCE) { $env:JAVA_AI_JWT_AUDIENCE } else { "knowledge-service" }) `
+      --subject model-evaluator `
+      --tenant tenant-a `
+      --actor $EvalActor
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    $BearerToken = $BearerToken.Trim()
+  }
+
   $CredentialDir = Join-Path ([IO.Path]::GetTempPath()) ("java-ai-model-eval-" + [Guid]::NewGuid())
   $BearerTokenFile = Join-Path $CredentialDir "bearer-token"
   New-Item -ItemType Directory -Path $CredentialDir | Out-Null
   $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-  [IO.File]::WriteAllText($BearerTokenFile, $env:JAVA_AI_EVAL_BEARER_TOKEN, $Utf8NoBom)
+  [IO.File]::WriteAllText($BearerTokenFile, $BearerToken, $Utf8NoBom)
 
   $Process = Start-Process -FilePath $JavaRuntime.Java -PassThru -NoNewWindow -ArgumentList $ServiceArgs
 

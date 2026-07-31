@@ -52,7 +52,7 @@ class TicketAgentLiveModelSmokeIT {
     }
 
     @Test
-    void callsTheConfiguredModelAndWritesRedactedPlanningEvidence() throws IOException {
+    void callsTheConfiguredModelAndWritesReproduciblePlanningEvidence() throws IOException {
         AgentPlanningResult result = planner.plan(new AgentPlanningContext(
                 "smoke-task",
                 "Resolve a customer question about the current refund arrival policy",
@@ -73,7 +73,7 @@ class TicketAgentLiveModelSmokeIT {
     private static void writeReport(AgentPlanningResult result, Path reportPath) throws IOException {
         AgentDecision.UseTool decision = (AgentDecision.UseTool) result.decision();
         String report = """
-                # Ticket Agent Live Model Smoke
+                # 第 34 讲工单 Agent 真实模型验证
 
                 Status: LIVE_MODEL
 
@@ -87,8 +87,6 @@ class TicketAgentLiveModelSmokeIT {
                 - Total tokens: %d
                 - Decision type: `USE_TOOL`
                 - Selected tool: `%s`
-
-                The report excludes the API key, provider base URL, prompt body and customer context.
                 """.formatted(
                 Instant.now(),
                 System.getProperty("java-ai.agent-smoke.commit", "unknown"),

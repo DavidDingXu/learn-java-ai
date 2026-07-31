@@ -1,10 +1,10 @@
-# Milestone 12 Model Engineering
+# 里程碑 12：模型交互工程
 
-Status: VERIFIED_LIVE_MODEL
+状态：已完成真实模型验证（`VERIFIED_LIVE_MODEL`）
 
 ## 已完成的能力
 
-The milestone contains versioned trust-partitioned prompts, structured output and business validation, SSE contracts, use-case resilience, low-cardinality observations and an independent HTTP Eval Runner.
+这一阶段已形成版本化 Prompt，将系统规则、授权知识与不可信输入分区，并补齐结构化输出、业务校验、SSE 接口、模型调用故障处理、低基数观测和独立 HTTP Eval Runner。
 
 ## 已验证的行为
 

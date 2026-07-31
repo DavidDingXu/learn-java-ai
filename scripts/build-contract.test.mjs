@@ -131,8 +131,17 @@ test("each service has one runtime config with explicit demo and production boun
   assert.match(ticket, /on-profile:\s*production[\s\S]*?downstream-enabled:\s*false/);
 
   const bff = read("apps/customer-bff/src/main/resources/application.yml");
+  const consultationConfiguration = read(
+    "apps/customer-bff/src/main/java/com/xiaoding/javaai/customer/consultation/infrastructure/CustomerConsultationConfiguration.java",
+  );
   assert.match(bff, /on-profile:\s*demo[\s\S]*?external-integrations-enabled:\s*false/);
   assert.match(bff, /on-profile:\s*production[\s\S]*?external-integrations-enabled:\s*true/);
+  assert.match(bff, /knowledge:\s*\n\s+timeout:\s*35s/);
+  assert.match(bff, /stream-idle-timeout:\s*30s/);
+  assert.match(bff, /stream-total-timeout:\s*2m/);
+  assert.match(consultationConfiguration, /java-ai\.downstream\.knowledge\.timeout:35s/);
+  assert.match(consultationConfiguration, /stream-idle-timeout:30s/);
+  assert.match(consultationConfiguration, /stream-total-timeout:2m/);
 
   for (const startupTest of [
     "services/knowledge-service/src/test/java/com/xiaoding/javaai/knowledge/KnowledgeServiceDemoStartupTest.java",

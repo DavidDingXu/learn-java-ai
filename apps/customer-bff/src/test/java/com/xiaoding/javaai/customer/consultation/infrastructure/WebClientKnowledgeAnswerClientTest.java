@@ -4,6 +4,8 @@ import com.xiaoding.javaai.customer.consultation.application.port.KnowledgeAnswe
 import com.xiaoding.javaai.customer.consultation.domain.ConversationContextView;
 import com.xiaoding.javaai.customer.consultation.domain.ConversationRole;
 import com.xiaoding.javaai.customer.consultation.domain.ConversationTurn;
+import com.xiaoding.javaai.customer.downstream.DownstreamServiceException;
+import com.xiaoding.javaai.customer.downstream.DownstreamTimeoutException;
 import com.xiaoding.javaai.customer.identity.DelegatedAccessToken;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -15,8 +17,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WebClientKnowledgeAnswerClientTest {
 
@@ -80,5 +84,70 @@ class WebClientKnowledgeAnswerClientTest {
         assertThat(result.citations()).singleElement()
                 .extracting(citation -> citation.sectionId())
                 .isEqualTo("arrival-time");
+    }
+
+    @Test
+    void mapsTheClientDeadlineToAStableDownstreamTimeout() {
+        server.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody("{}")
+                .setBodyDelay(250, TimeUnit.MILLISECONDS));
+        WebClientKnowledgeAnswerClient client = new WebClientKnowledgeAnswerClient(
+                WebClient.builder(), server.url("/").toString(), Duration.ofMillis(25));
+
+        assertThatThrownBy(() -> client.answer(
+                new DelegatedAccessToken("delegated-token", Instant.now().plusSeconds(60)),
+                new KnowledgeAnswerClient.Request(
+                        "退款多久到账？",
+                        new ConversationContextView("", List.of())
+                )
+        ).block())
+                .isInstanceOf(DownstreamTimeoutException.class)
+                .hasMessage("Downstream service timed out");
+    }
+
+    @Test
+    void mapsInvalidSuccessfulResponseToAStableDownstreamError() {
+        server.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody("""
+                        {
+                          "answer":"",
+                          "citations":[],
+                          "refused":false,
+                          "refusalReason":null,
+                          "traceId":"trace-123"
+                        }
+                        """));
+        WebClientKnowledgeAnswerClient client = new WebClientKnowledgeAnswerClient(
+                WebClient.builder(), server.url("/").toString(), Duration.ofSeconds(2));
+
+        assertThatThrownBy(() -> client.answer(
+                new DelegatedAccessToken("delegated-token", Instant.now().plusSeconds(60)),
+                new KnowledgeAnswerClient.Request(
+                        "退款多久到账？",
+                        new ConversationContextView("", List.of())
+                )
+        ).block())
+                .isInstanceOf(DownstreamServiceException.class)
+                .hasMessage("Downstream service request failed");
+    }
+
+    @Test
+    void mapsEmptySuccessfulResponseToAStableDownstreamError() {
+        server.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json"));
+        WebClientKnowledgeAnswerClient client = new WebClientKnowledgeAnswerClient(
+                WebClient.builder(), server.url("/").toString(), Duration.ofSeconds(2));
+
+        assertThatThrownBy(() -> client.answer(
+                new DelegatedAccessToken("delegated-token", Instant.now().plusSeconds(60)),
+                new KnowledgeAnswerClient.Request(
+                        "退款多久到账？",
+                        new ConversationContextView("", List.of())
+                )
+        ).block())
+                .isInstanceOf(DownstreamServiceException.class)
+                .hasMessage("Downstream service request failed");
     }
 }

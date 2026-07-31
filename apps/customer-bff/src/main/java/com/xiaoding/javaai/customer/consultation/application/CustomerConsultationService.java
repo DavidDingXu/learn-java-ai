@@ -13,6 +13,7 @@ import com.xiaoding.javaai.customer.consultation.domain.ConversationWindowPolicy
 import com.xiaoding.javaai.customer.consultation.domain.KnowledgeAnswerView;
 import com.xiaoding.javaai.customer.consultation.domain.TicketHandoffReceipt;
 import com.xiaoding.javaai.customer.consultation.domain.TicketHandoffSnapshot;
+import com.xiaoding.javaai.customer.downstream.DownstreamTimeoutException;
 import com.xiaoding.javaai.customer.identity.CustomerAccessToken;
 import com.xiaoding.javaai.customer.identity.DelegatedTokenClient;
 import reactor.core.publisher.Mono;
@@ -197,12 +198,23 @@ public final class CustomerConsultationService {
     ) {
         Flux<CustomerStreamEvent> downstream = knowledgeTokenClient.exchange(customer)
                 .flatMapMany(token -> streamClient.stream(token, state.request))
+                .takeUntil(CustomerConsultationService::isTerminal)
                 .concatMap(event -> mapStreamEvent(state, event))
+                .onErrorResume(DownstreamTimeoutException.class,
+                        error -> failStream(state, "KNOWLEDGE_STREAM_TIMEOUT")
+                                .thenReturn(new CustomerStreamEvent.Error(
+                                        "KNOWLEDGE_STREAM_TIMEOUT",
+                                        "回答生成超时，请稍后重试")))
                 .onErrorResume(error -> failStream(state, "KNOWLEDGE_STREAM_FAILED")
                         .thenReturn(new CustomerStreamEvent.Error(
                                 "KNOWLEDGE_STREAM_FAILED", "回答生成中断，请稍后重试")));
         return downstream.startWith(new CustomerStreamEvent.SessionStarted(
                 state.conversationId, state.attemptId, null));
+    }
+
+    private static boolean isTerminal(KnowledgeAnswerStreamClient.Event event) {
+        return event instanceof KnowledgeAnswerStreamClient.Completed
+                || event instanceof KnowledgeAnswerStreamClient.Error;
     }
 
     private Mono<CustomerStreamEvent> mapStreamEvent(

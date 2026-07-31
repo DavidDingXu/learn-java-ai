@@ -2,6 +2,7 @@ package com.xiaoding.javaai.knowledge.answer.web;
 
 import com.xiaoding.javaai.knowledge.answer.application.ModelNotConfiguredException;
 import com.xiaoding.javaai.knowledge.answer.application.InvalidModelAnswerException;
+import com.xiaoding.javaai.knowledge.answer.application.ModelProviderException;
 import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,27 @@ final class KnowledgeAnswerExceptionHandler {
     @ExceptionHandler(TimeoutException.class)
     ProblemDetail modelTimeout(TimeoutException exception) {
         return problem(HttpStatus.GATEWAY_TIMEOUT, "MODEL_TIMEOUT", "Chat model timed out");
+    }
+
+    @ExceptionHandler(ModelProviderException.class)
+    ProblemDetail modelProviderFailure(ModelProviderException exception) {
+        return switch (exception.reason()) {
+            case RATE_LIMITED -> problem(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "MODEL_RATE_LIMITED",
+                    "Chat model rate limit reached"
+            );
+            case UNAVAILABLE -> problem(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "MODEL_PROVIDER_UNAVAILABLE",
+                    "Chat model provider is temporarily unavailable"
+            );
+            case REQUEST_REJECTED -> problem(
+                    HttpStatus.BAD_GATEWAY,
+                    "MODEL_PROVIDER_REQUEST_REJECTED",
+                    "Chat model provider rejected the request"
+            );
+        };
     }
 
     @ExceptionHandler(CallNotPermittedException.class)
