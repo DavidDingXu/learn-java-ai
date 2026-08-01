@@ -1,4 +1,4 @@
-# Index Job Recovery Verification
+# 索引任务恢复验证
 
 Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 
@@ -15,7 +15,7 @@ Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 - PostgreSQL claim SQL: `PostgresIndexTaskClaimQuery`
 - Schema source: Flyway V1-V4
 
-## Verified
+## 已验证
 
 - 任务状态为 `PENDING`、`RUNNING`、`RETRY_WAIT`、`SUCCEEDED` 和 `DEAD`，尝试次数在成功 claim 时递增。
 - Claim 写入 worker、有限租约和更新时间；非租约持有者或租约已过期的 worker 不能完成、失败任务。
@@ -38,7 +38,7 @@ Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 - 向量与关键词查询都按 `document_search_version` 读取分块，同时要求文档存在当前有效的 `PUBLISHED` 业务版本；业务有效期和索引就绪状态没有混成同一个字段。
 - Spring 装配提供全局定时轮询和受 `knowledge:index` scope 保护的租户级手动触发，两者复用同一个 Worker。
 
-## Local Verification
+## 本地验证
 
 ```bash
 ./mvnw -pl services/knowledge-service \
@@ -48,6 +48,6 @@ Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 
 覆盖状态迁移、租约所有权、失败重试、死信状态、Worker 编排、JDBC Queue、发布事务、对象回读、检索指针、pgvector 参数与回滚、Spring 装配和完整写入链。
 
-## Evidence Boundary
+## 证据边界
 
 `external-integration` profile 会在指定 PostgreSQL/pgvector 测试库执行 Flyway、sink 批量写入、上一版继续服务、新索引切换和 ACL 检索。本地测试不依赖容器，但公司对象存储、多 Worker 抢占、宕机恢复、任务积压和容量仍需在目标环境测试。首次发布没有上一版可回退；索引任务长期失败时，只要当前业务版本仍有效，读取会继续返回旧版，因此必须监控业务版本与检索版本不一致的持续时间。

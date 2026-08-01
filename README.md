@@ -84,13 +84,7 @@ Customer Web 的独立运行方式见 [apps/customer-web/README.md](apps/custome
 
 ## 调用真实模型
 
-仓库只提交不含密钥的 `config/application.example.yml`。复制为已被 Git 忽略的本地配置：
-
-```bash
-cp config/application.example.yml config/application.yml
-```
-
-Windows 使用 `Copy-Item config/application.example.yml config/application.yml`。使用 OpenAI 时，只需填写 `spring.ai.openai.api-key`；使用兼容服务时，再修改同一文件中的 `base-url` 和模型名。
+仓库已经提供不含真实密钥的 `config/application.yml`。使用 OpenAI 时，只需把 `spring.ai.openai.api-key` 的占位值换成本地测试 Key；使用兼容服务时，再修改同一文件中的 `base-url` 和模型名。真实值不能提交。
 
 然后直接运行 Java 集成测试：
 
@@ -104,6 +98,31 @@ Windows 使用 `Copy-Item config/application.example.yml config/application.yml`
 ```
 
 本地 YAML 使用明文只为降低测试门槛。生产 API Key、数据库密码、JWT 材料和客户端密钥必须由 Secret Manager、Vault 或部署平台 Secret 覆盖，不能进入 Git、镜像层或测试报告。更多边界见[真实模型冒烟验证](docs/runbooks/live-model-smoke.md)。
+
+## 切换到 production Profile
+
+三个应用分别在自己的 `application.yml` 中提供 `production` 配置段。先把其中的数据库、模型、JWT、Token Exchange 和下游地址占位值替换为目标环境配置，再启动对应模块：
+
+```bash
+./mvnw -pl services/knowledge-service \
+  -Dspring-boot.run.profiles=production spring-boot:run
+
+./mvnw -pl services/ticket-agent-service \
+  -Dspring-boot.run.profiles=production spring-boot:run
+
+./mvnw -pl apps/customer-bff \
+  -Dspring-boot.run.profiles=production spring-boot:run
+```
+
+Windows 使用 `mvnw.cmd`，其余参数不变。各服务的必填项如下：
+
+- Knowledge Service：Chat/Embedding Provider、PostgreSQL/pgvector、JWT issuer/audience/JWKS 和 actor 白名单；
+- Ticket Agent Service：Chat Provider、独立 PostgreSQL 和 JWT 验签参数；
+- Customer BFF：客户 JWT、Token Exchange 客户端凭证，以及 Knowledge/Ticket 服务地址。
+
+仓库根目录的 `config/application.yml` 只供真实模型专项测试使用，不会被上述启动命令自动加载。`production` 占位值未替换时，应用会在创建外部连接前停止启动并指出配置键，不会回显密钥。
+
+该 Profile 只组装仓库已经实现的生产适配器。Knowledge Service 的上传原文仍保存在本地文件系统，Customer BFF 的会话和限流仍是进程内实现，Ticket Agent 的远程 Tool 默认关闭。完整配置和接入边界见[运行配置](docs/runbooks/runtime-configuration.md)。
 
 ## 模块说明
 

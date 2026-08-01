@@ -1,9 +1,9 @@
-# Observability Verification
+# 可观测性验证
 
 Status: VERIFIED_LOW_CARDINALITY_AGENT_METRICS
 
 
-## Verified
+## 已验证
 
 - Ticket Agent records plan count, total-token distribution and Tool duration/outcome through an application telemetry port.
 - Meter tags are limited to decision, finish reason, tool and outcome; task, prompt, question, tenant and model are not metric tags.
@@ -12,13 +12,13 @@ Status: VERIFIED_LOW_CARDINALITY_AGENT_METRICS
 - Runtime configuration exposes health and Prometheus; test configuration exposes health only.
 - Knowledge operations use Micrometer Observation and can return the current trace ID; Agent business IDs remain in the audit model rather than metric tags.
 
-## Verification
+## 验证命令
 
 ```bash
 ./mvnw -pl services/ticket-agent-service \
   -Dtest=MicrometerAgentTelemetryTest,TicketAgentOrchestratorTest,ToolConfirmationServiceTest,TicketAgentServiceApplicationTest test
 ```
 
-## Production Boundary
+## 生产接入边界
 
 No current test proves an end-to-end BFF-to-Knowledge-to-Agent-to-JDK8 Trace or automatic Trace-to-audit correlation. Company deployment must provide an OTel exporter or agent, protected management network, dashboards, SLOs, alert routes and a versioned model-price source. Local metrics do not establish capacity or cost targets.

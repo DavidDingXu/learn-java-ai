@@ -20,4 +20,6 @@
 
 默认 `demo` Profile 仅启动应用并提供 health，不会伪造数据库、检索或模型结果。真实模型连接见 [Live Model Smoke](../../docs/runbooks/live-model-smoke.md)，完整写入链路见 [Knowledge Ingestion](../../docs/runbooks/knowledge-ingestion.md)。
 
-生产部署还需接入 PostgreSQL/pgvector、对象存储、公司 IdP 与真实 Provider，并验证迁移、容量、备份恢复和检索质量。
+使用 `-Dspring-boot.run.profiles=production` 可以切换到 PostgreSQL/pgvector、JWT 和真实 Provider 装配。启动前需要替换本模块 `application.yml` 生产配置段中的占位值，完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
+
+生产部署还需接入对象存储，并验证迁移、容量、备份恢复和检索质量。

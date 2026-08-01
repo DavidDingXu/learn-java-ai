@@ -33,7 +33,6 @@ class LiveModelSmokeIT {
     static void liveModelProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.ai.model.chat", () -> "openai");
         registry.add("spring.ai.openai.max-retries", () -> 0);
-        registry.add("java-ai.runtime.external-integrations-enabled", () -> true);
     }
 
     @Autowired

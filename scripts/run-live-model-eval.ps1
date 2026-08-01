@@ -5,7 +5,6 @@ $RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $ReportPrefix = if ($args.Count -gt 0) { $args[0] } else { Join-Path $RootDir "docs/reports/lesson-12-live-model-eval" }
 $Port = if ($env:JAVA_AI_EVAL_PORT) { $env:JAVA_AI_EVAL_PORT } else { "18081" }
 $ConfigFile = Join-Path $RootDir "config\application.yml"
-$ExampleConfigFile = Join-Path $RootDir "config\application.example.yml"
 
 foreach ($Name in @("JAVA_AI_JWT_ISSUER")) {
   if (-not (Get-Item "Env:$Name" -ErrorAction SilentlyContinue).Value) {
@@ -13,8 +12,7 @@ foreach ($Name in @("JAVA_AI_JWT_ISSUER")) {
   }
 }
 if (-not (Test-Path $ConfigFile)) {
-  Copy-Item -Path $ExampleConfigFile -Destination $ConfigFile
-  throw "Created $ConfigFile. Replace spring.ai.openai.api-key, then run this command again."
+  throw "Missing $ConfigFile. Restore the tracked demo configuration."
 }
 
 if (-not $env:JAVA_AI_DEV_JWT_HMAC_SECRET -and -not $env:JAVA_AI_JWT_JWK_SET_URI) {

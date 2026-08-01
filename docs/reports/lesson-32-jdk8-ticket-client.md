@@ -1,9 +1,9 @@
-# JDK8 Ticket Client Verification
+# JDK8 工单客户端验证
 
 Status: VERIFIED_JAVA8_HTTP_CLIENT_CONTRACT
 
 
-## Verified
+## 已验证
 
 - The JDK8 module compiles with a full Temurin 8 toolchain and does not depend on the Java 21 reactor.
 - The client uses bounded task IDs, a connection pool, connect/response timeouts and disables automatic HTTP retries.
@@ -12,7 +12,7 @@ Status: VERIFIED_JAVA8_HTTP_CLIENT_CONTRACT
 - Structured API errors preserve status, code and retryability without exposing arbitrary untrusted bodies.
 - The Agent Task OpenAPI contains task read, confirmation, audit, states and error responses used by the legacy integration.
 
-## Verification
+## 验证命令
 
 ```bash
 ./mvnw -f integrations/jdk8-client/pom.xml verify
@@ -22,6 +22,6 @@ Status: VERIFIED_JAVA8_HTTP_CLIENT_CONTRACT
 
 Result: 7 Java 8 tests passed in the latest focused verification run.
 
-## Production Boundary
+## 生产接入边界
 
 Company integration must replace base URL discovery, TLS, proxy and token acquisition, and must confirm that any shared HTTP SDK also disables unsafe write retries. Callback delivery is optional and cannot replace task result queries.

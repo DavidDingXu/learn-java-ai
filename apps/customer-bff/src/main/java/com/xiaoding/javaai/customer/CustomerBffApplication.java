@@ -7,6 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class CustomerBffApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(CustomerBffApplication.class, args);
+        SpringApplication application = new SpringApplication(CustomerBffApplication.class);
+        application.addInitializers(context ->
+                ProductionConfigurationValidator.validate(context.getEnvironment()));
+        application.run(args);
     }
 }

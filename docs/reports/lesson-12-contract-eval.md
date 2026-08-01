@@ -1,4 +1,4 @@
-# Model Interaction Evaluation
+# 模型交互评测
 
 - Dataset: `golden-set-v2`
 - Mode: `CONTRACT_FIXTURE`

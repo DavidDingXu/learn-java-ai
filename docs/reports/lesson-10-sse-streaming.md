@@ -1,11 +1,11 @@
-# SSE Streaming Verification
+# SSE 流式响应验证
 
 Status: VERIFIED_PROTOCOL_AND_SERVICE
 
 - Endpoint: `POST /api/v1/knowledge/answers/stream`
 - OpenAPI: `contracts/openapi/knowledge-service-v1.yaml`
 
-## Verified
+## 已验证
 
 - 业务事件稳定为 `metadata`、`delta`、`heartbeat`、`citation`、`completed` 和 `error`。
 - 模型上游取消会随着客户端取消订阅传播。
@@ -15,6 +15,6 @@ Status: VERIFIED_PROTOCOL_AND_SERVICE
 - Controller 测试验证 `text/event-stream` 和事件名，应用测试验证事件顺序、拒答、未知引用、缺少决策与取消。
 - SSE 不应用自动重试，避免已经输出字节后产生重复内容。
 
-## Evidence Boundary
+## 证据边界
 
 当前验证覆盖流式代码、HTTP 协议和取消语义；普通 `LIVE_MODEL` 调用不能代替目标 SSE 链路。公司上线前仍需使用目标 Provider、网关和前端测试断连、代理缓冲、空闲超时和慢客户端。

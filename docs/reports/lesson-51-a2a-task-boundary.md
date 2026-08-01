@@ -1,8 +1,8 @@
-# A2A Task Boundary Verification
+# A2A 任务边界验证
 
 Status: VERIFIED_CLIENT_INTEROPERABILITY_AND_LOCAL_TASK_CONTRACT
 
-## Verified
+## 已验证
 
 - The server computes a normalized, length-prefixed SHA-256 request fingerprint from tenant and business request fields; callers do not supply a trusted hash.
 - A focused test keeps adjacent field boundaries unambiguous instead of relying on delimiter-based concatenation.
@@ -15,12 +15,12 @@ Status: VERIFIED_CLIENT_INTEROPERABILITY_AND_LOCAL_TASK_CONTRACT
 - The official client maps the response to a completed A2A Task with an artifact.
 - AgentScope `A2aTaskCoordinator` remains the business state boundary; SDK enums are not persisted as the domain contract.
 
-## Verification
+## 验证命令
 
 ```bash
 ./mvnw -f labs/pom.xml -pl protocol-interop-lab,agentscope-lab test
 ```
 
-## External Boundary
+## 外部验证边界
 
 The protocol test uses the official A2A client against a local standards-based Agent Card and JSON-RPC service. It covers discovery, message sending and completed-task mapping, not remote status queries. It does not prove production authentication, streaming, push notifications, long-running remote execution, cancellation, callbacks or Inbox/Outbox persistence; those require the target agent and network environment.

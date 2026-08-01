@@ -61,7 +61,6 @@ class ProviderProtocolFixtureTest {
         registry.add("spring.ai.openai.max-retries", () -> 0);
         registry.add("java-ai.knowledge.answer.total-timeout", () -> "1s");
         registry.add("java-ai.knowledge.answer.retry.delay", () -> "10ms");
-        registry.add("java-ai.runtime.external-integrations-enabled", () -> true);
     }
 
     @Autowired

@@ -27,9 +27,6 @@ class KnowledgeServiceApplicationTest {
         assertThat(environment.matchesProfiles("test")).isTrue();
         assertThat(environment.getProperty("spring.application.name"))
                 .isEqualTo("knowledge-service");
-        assertThat(environment.getProperty(
-                "java-ai.runtime.external-integrations-enabled", Boolean.class))
-                .isFalse();
 
         webTestClient.get()
                 .uri("/actuator/health")

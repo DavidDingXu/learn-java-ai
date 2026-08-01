@@ -1,9 +1,9 @@
-# Thin Customer BFF Verification
+# Customer BFF 边界验证
 
 Status: VERIFIED_LOCAL_CHANNEL_BOUNDARY
 
 
-## Verified
+## 已验证
 
 - Customer BFF 只接收 `conversationId` 和 `question`，客户、租户、角色与部门只从已验证 JWT 映射。
 - BFF 使用 RFC 8693 Token Exchange 为 Knowledge Service 与 Ticket Agent Service 分别申请 audience 和 scope 不同的短期令牌。
@@ -16,7 +16,7 @@ Status: VERIFIED_LOCAL_CHANNEL_BOUNDARY
 - 单机限流键由 JWT 中的租户与客户主体组成，请求体无法伪造限流身份。
 - Customer JWT 同时配置 JWKS 与开发 HMAC 时启动失败，避免不同环境静默选择错误的校验源。
 
-## Local Verification
+## 本地验证
 
 ```bash
 ./mvnw -pl apps/customer-bff \
@@ -26,6 +26,6 @@ Status: VERIFIED_LOCAL_CHANNEL_BOUNDARY
 
 Result: 22 tests passed in the full Customer BFF suite on 2026-07-18.
 
-## Production Boundary
+## 生产接入边界
 
 进程内限流只适合单实例学习和规则验证，多实例环境必须替换为共享限流实现。公司 IdP、网关缓冲、浏览器断连、跨服务超时预算和最大并发仍需在测试环境完成联调与压测。

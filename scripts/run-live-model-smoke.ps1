@@ -9,7 +9,6 @@ $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
 . (Join-Path $PSScriptRoot "main-java-runtime.ps1")
 $MavenWrapper = Join-Path $ProjectRoot "mvnw.cmd"
 $ConfigFile = Join-Path $ProjectRoot "config\application.yml"
-$ExampleConfigFile = Join-Path $ProjectRoot "config\application.example.yml"
 $ReportPath = if ([string]::IsNullOrWhiteSpace($env:JAVA_AI_LIVE_REPORT_PATH)) {
     Join-Path $ProjectRoot "docs\reports\lesson-04-live-model-smoke.md"
 } else {
@@ -23,8 +22,7 @@ function Stop-WithError {
 }
 
 if (-not (Test-Path $ConfigFile)) {
-    Copy-Item -Path $ExampleConfigFile -Destination $ConfigFile
-    Stop-WithError "Created $ConfigFile. Replace spring.ai.openai.api-key, then run this command again."
+    Stop-WithError "Missing $ConfigFile. Restore the tracked demo configuration."
 }
 
 $Commit = (& git -C $ProjectRoot rev-parse HEAD 2>$null | Out-String).Trim()

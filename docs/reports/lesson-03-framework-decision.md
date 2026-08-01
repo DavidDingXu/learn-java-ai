@@ -1,10 +1,10 @@
 # 框架选型决策复核
 
-## Review Scope
+## 复核范围
 
 本次复核回答两个问题：为什么 Java 21 主线选择 Spring AI，以及 Spring AI Alibaba、LangChain4j、AgentScope、Provider SDK 和公司既有 AI 平台应放在哪个边界。它不把文档能力列表当成项目运行结果。
 
-## Reviewed Files
+## 复核依据
 
 - `pom.xml`
 - `services/knowledge-service/pom.xml`
@@ -19,7 +19,7 @@
 - `docs/decisions/framework-selection-matrix.md`
 - Spring AI、Spring AI Alibaba、LangChain4j 和 AgentScope 官方文档
 
-## Accepted Boundaries
+## 采用的边界
 
 - Spring AI 作为 Java 21 主线，原因是与现有 Spring Boot 工程体系的综合迁移成本最低。
 - Spring AI 类型限制在基础设施适配器，业务层通过 `KnowledgeAnswerModel` 一类端口隔离。
@@ -28,20 +28,20 @@
 - Provider SDK 只在主线缺失关键能力时进入窄适配器。
 - 公司已有强制 AI 平台时，优先遵守平台接入规范，不能为了运行仓库示例而绕过公司治理。
 
-## Rejected Alternatives
+## 未采用的方案
 
 - 拒绝在主 reactor 同时引入四套框架：依赖和运行时语义会污染生产主线。
 - 拒绝按框架各做一套业务 Demo：无法比较迁移成本，也无法形成连续项目。
 - 拒绝 Controller 直接调用 Spring AI 或 Provider SDK：业务代码会绑定供应商协议。
 - 拒绝只按功能勾选数量选框架：安全、观测、版本治理和退出成本同样决定公司落地难度。
 
-## Replacement Conditions
+## 重新选型的条件
 
 - Spring AI 无法承载必需的 Provider 能力，且窄适配器也无法补齐。
 - 公司 AI 平台已提供更稳定的身份、配额、路由、审计和 SLA。
 - 其他框架在相同业务接口、规则和数据集上取得可重复的质量或维护成本优势。
 - 当前版本组合不再满足安全、兼容或长期维护要求。
 
-## Evidence Limit
+## 结论边界
 
-本报告确认的是依赖边界和决策依据，不代表四个框架的业务实验已经完成。框架迁移结论必须等待对应 labs 的代码、Trace、评测数据和失败案例。
+本报告只复核主线选型和依赖边界，不评价后续实验模块的实现结果。各候选框架的适配代码、运行证据和差异结论见对应实验课与验证报告。

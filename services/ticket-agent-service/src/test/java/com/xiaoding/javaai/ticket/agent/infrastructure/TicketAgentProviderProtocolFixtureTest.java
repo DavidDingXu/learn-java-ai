@@ -47,7 +47,6 @@ class TicketAgentProviderProtocolFixtureTest {
         registry.add("spring.ai.openai.api-key", () -> "fixture-key");
         registry.add("spring.ai.openai.base-url", () -> PROVIDER.url("/").toString());
         registry.add("spring.ai.openai.chat.model", () -> "fixture-model");
-        registry.add("java-ai.runtime.external-integrations-enabled", () -> true);
     }
 
     @Autowired

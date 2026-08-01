@@ -20,4 +20,6 @@
 
 默认 `demo` Profile 关闭客户 JWT、Token Exchange 和下游调用，咨询 API 按安全默认值拒绝。前端运行方式见 [`apps/customer-web/README.md`](../customer-web/README.md)。
 
+使用 `-Dspring-boot.run.profiles=production` 可以启用客户 JWT、Token Exchange 和两个下游 HTTP 客户端。启动前需要替换本模块 `application.yml` 生产配置段中的占位值，完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
+
 多实例部署前，需要将进程内会话与限流替换为共享实现，并验证 TTL、原子版本更新、故障恢复和网关超时。

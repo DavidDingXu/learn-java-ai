@@ -1,8 +1,8 @@
-# MCP Boundary Verification
+# MCP 工具调用边界验证
 
 Status: VERIFIED_PROTOCOL_INTEROPERABILITY
 
-## Verified
+## 已验证
 
 - MCP Java SDK `2.0.0` runs against the `2025-11-25` protocol baseline.
 - The official synchronous client and server complete initialize, `tools/list` and `tools/call` over Streamable HTTP.
@@ -13,13 +13,13 @@ Status: VERIFIED_PROTOCOL_INTEROPERABILITY
 - The AgentScope adapter uses one `Toolkit` for external-tool registration and `PermissionEngine` decisions; a registered tool without a local permission rule is denied.
 - AgentScope tool registration remains a separate business-runtime adapter so the protocol SDK dependency does not leak into the AgentScope lab.
 
-## Verification
+## 验证命令
 
 ```bash
 ./mvnw -f labs/pom.xml -pl agentscope-lab -Dtest=McpEnterpriseRegistryTest test
 ./mvnw -f labs/pom.xml -pl protocol-interop-lab -Dtest=McpInteroperabilityTest test
 ```
 
-## External Boundary
+## 外部验证边界
 
 The local tests prove Java SDK protocol behavior, managed endpoint selection and the separation between catalog registration and invocation permission, not production trust. OAuth, mTLS, DNS and network policy, redirect enforcement, object-level authorization, schema approval, remote write tools and failure recovery still require the target MCP server and company environment.

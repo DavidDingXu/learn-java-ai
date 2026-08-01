@@ -1,4 +1,4 @@
-# Customer Web 验证记录
+# Customer Web 交互验证
 
 Status: VERIFIED_LOCAL_BROWSER_AND_BUILD
 

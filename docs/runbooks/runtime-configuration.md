@@ -2,12 +2,12 @@
 
 ## 配置边界
 
-Knowledge Service、Ticket Agent Service 和 Customer BFF 各自只保留一份主 `application.yml`。每份文件都包含通用参数、默认 `demo` 文档和显式 `production` 文档。项目根目录还有可提交的 `config/application.example.yml`；真实模型测试读取由它复制出来的本地 `config/application.yml`。
+Knowledge Service、Ticket Agent Service 和 Customer BFF 各自只保留一份主 `application.yml`。每份文件都包含通用参数、默认 `demo` 文档和显式 `production` 文档。项目根目录的 `config/application.yml` 只保存公开模型参数和不可用的占位 Key，真实模型测试直接读取它。
 
 配置遵循以下规则：
 
 1. 普通启动使用默认 `demo`，不需要数据库、身份平台、模型或下游服务。
-2. 真实模型测试显式读取 Git 忽略的 `config/application.yml`，使用 OpenAI 时只填写 API Key。
+2. 真实模型测试显式读取根目录 `config/application.yml`，使用 OpenAI 时只填写 API Key，运行后不得提交真实值。
 3. 数据库、身份、Token Exchange 和下游地址的配置结构直接保留在各服务 `application.yml` 的 `production` 文档中。
 4. 普通测试使用 `src/test/resources/application-test.yml`，不访问外部网络。
 5. 仓库中只保留不可用的密钥占位值；生产密钥必须由密钥系统或部署平台覆盖。
@@ -28,13 +28,7 @@ Windows 使用相同的 Maven 参数，把入口换成 `mvnw.cmd`。默认端口
 
 ## 运行真实模型测试
 
-先复制演示配置，再填写 `spring.ai.openai.api-key`：
-
-```bash
-cp config/application.example.yml config/application.yml
-```
-
-Windows PowerShell 使用 `Copy-Item config/application.example.yml config/application.yml`。OpenAI 地址、Chat 模型和 Embedding 模型已有演示默认值；使用其他 OpenAI 兼容服务时，再修改同一文件中的地址和模型名。
+在 `config/application.yml` 中填写 `spring.ai.openai.api-key`。OpenAI 地址、Chat 模型和 Embedding 模型已有演示默认值；使用其他 OpenAI 兼容服务时，再修改同一文件中的地址和模型名。
 
 直接运行指定的 Java 集成测试：
 
@@ -60,19 +54,38 @@ Windows PowerShell：
 
 该测试只检查模型协议、响应映射和业务校验，并把脱敏结果写入 `target/live-model-smoke.md`。它不验证数据库、身份链路、RAG 质量或端到端业务。
 
-`config/application.yml` 只为减少本地演示步骤而存在，并已被 Git 忽略。
+`config/application.yml` 只为减少本地演示步骤而存在。仓库版本只包含占位 Key；填入真实值后必须保持在本机并在提交前恢复。
 
 ## 生产配置
 
-各服务 `application.yml` 的 `production` 文档列出真实适配器需要的完整 Spring 配置路径：
+`production` 只选择生产配置段，不会把占位值变成可用连接。启动前需要准备以下配置：
 
-- Knowledge Service：PostgreSQL/pgvector、Flyway、Chat/Embedding 模型、JWT 验签和索引任务。
-- Ticket Agent Service：PostgreSQL/Flyway、Chat 模型、JWT 验签、Knowledge 和 Legacy Tool 地址。
-- Customer BFF：客户 JWT、Token Exchange、Knowledge 和 Ticket 地址。
+- Knowledge Service：`spring.ai.openai.*`、`java-ai.knowledge.postgres.*` 和 `java-ai.security.jwt.*`。其中 PostgreSQL 必须安装 pgvector 与 `pg_trgm`；Embedding 模型输出维度必须与当前 `vector(1536)` Schema 一致。
+- Ticket Agent Service：`spring.datasource.*`、`spring.ai.openai.*` 和 `java-ai.security.jwt.*`。任务、确认、执行状态与审计使用独立 PostgreSQL。
+- Customer BFF：`java-ai.security.customer-jwt.*`、`java-ai.identity.*` 和 `java-ai.downstream.*`。Token Exchange 客户端必须能申请面向 Knowledge 和 Ticket 的最小权限令牌。
 
-文件中的 `replace-with-secret-manager` 和 `*.example.com` 都是不可用占位值。部署时，平台在不改变配置键的前提下覆盖真实值。生产 API Key、数据库密码、JWT 材料和客户端密钥不能保存在 Git、镜像层或测试报告中。
+文件中的 `replace-with-secret-manager` 和 `*.example.com` 都是不可用占位值。个人隔离环境可以临时修改各服务 `application.yml` 的 `production` 配置段；正式部署应由平台在不改变配置键的前提下覆盖真实值。生产 API Key、数据库密码、JWT 材料和客户端密钥不能保存在 Git、镜像层或测试报告中。
 
-Ticket Agent 的远程 Tool 在生产示例中仍然默认关闭。接入公司的短时服务令牌适配器之前，不应为了跑通演示而把开发 HMAC 签发器带进生产。
+分别启动三个应用：
+
+```bash
+./mvnw -pl services/knowledge-service \
+  -Dspring-boot.run.profiles=production spring-boot:run
+
+./mvnw -pl services/ticket-agent-service \
+  -Dspring-boot.run.profiles=production spring-boot:run
+
+./mvnw -pl apps/customer-bff \
+  -Dspring-boot.run.profiles=production spring-boot:run
+```
+
+Windows 使用 `mvnw.cmd`，其余参数不变。通常先启动数据库和身份平台，再依次启动 Knowledge Service、Ticket Agent Service 和 Customer BFF。
+
+根目录 `config/application.yml` 只在命令显式传入 `spring.config.additional-location` 时用于真实模型专项测试，不会自动覆盖上述三个服务。完整联调不能只填写这一份文件。
+
+三个应用会在创建业务 Bean 前校验生产必填项。空值、`replace-with-secret-manager`、`*.example.com`、非法 URL、错误数据库协议或冲突的 JWT 验签来源都会阻止启动。错误只包含配置键和要求，不包含密钥值。
+
+Ticket Agent 的远程 Tool 在生产配置中仍然关闭，开启前需要实现公司的短时服务令牌适配器。Knowledge Service 的上传原文仍使用本地文件存储，Customer BFF 的会话和限流仍使用进程内实现；多实例部署需要分别替换为公司对象存储、共享会话和共享限流设施。
 
 ## 测试隔离
 

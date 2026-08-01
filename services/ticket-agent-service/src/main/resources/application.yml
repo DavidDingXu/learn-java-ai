@@ -51,8 +51,6 @@ java-ai:
   persistence:
     mode: memory
     confirmation-lease: 30s
-  runtime:
-    external-integrations-enabled: false
   agent:
     downstream-enabled: false
     downstream-token-mode: disabled
@@ -93,8 +91,6 @@ java-ai:
   persistence:
     mode: jdbc
     confirmation-lease: 30s
-  runtime:
-    external-integrations-enabled: true
   agent:
     # Keep remote tools disabled until a company token adapter replaces the development HMAC signer.
     downstream-enabled: false

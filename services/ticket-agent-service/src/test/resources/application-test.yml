@@ -24,8 +24,6 @@ management:
 java-ai:
   persistence:
     mode: memory
-  runtime:
-    external-integrations-enabled: false
   agent:
     downstream-enabled: false
     downstream-token-mode: disabled

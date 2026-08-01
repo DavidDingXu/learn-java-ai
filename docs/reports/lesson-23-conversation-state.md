@@ -1,9 +1,9 @@
-# Conversation State Verification
+# 多轮会话状态验证
 
 Status: VERIFIED_LOCAL_CONVERSATION_CONTRACT
 
 
-## Verified
+## 已验证
 
 - `ConsultationSession` 同时绑定 conversation、tenant、customer 和版本号，其他客户不能读取或续写该会话。
 - 每次回答创建独立 `AnswerAttempt`，状态为 `PENDING`、`COMPLETED` 或 `FAILED`；重试不能覆盖原尝试。
@@ -13,7 +13,7 @@ Status: VERIFIED_LOCAL_CONVERSATION_CONTRACT
 - Knowledge Service 将摘要、历史消息和当前问题都放在不可信分区，检索仍只使用当前问题，知识上下文只能来自当前授权检索结果。
 - 测试配置使用带版本检查的内存存储端口，冲突不会静默覆盖。
 
-## Local Verification
+## 本地验证
 
 ```bash
 ./mvnw -pl apps/customer-bff,services/knowledge-service \
@@ -21,6 +21,6 @@ Status: VERIFIED_LOCAL_CONVERSATION_CONTRACT
   -Dsurefire.failIfNoSpecifiedTests=false test
 ```
 
-## Production Boundary
+## 生产接入边界
 
 内存存储不能用于多实例生产。公司项目应使用支持 TTL、原子创建和乐观版本控制的 Redis 或数据库适配器，并为热 Key、过期清理、容量上限和数据合规设置独立策略。会话摘要是交互上下文，不是订单、工单或政策事实来源。

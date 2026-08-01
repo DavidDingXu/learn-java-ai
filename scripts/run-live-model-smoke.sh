@@ -6,7 +6,6 @@ PROJECT_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 . "$SCRIPT_DIR/main-java-runtime.sh"
 enter_java_ai_main_jdk
 CONFIG_FILE="$PROJECT_ROOT/config/application.yml"
-EXAMPLE_CONFIG_FILE="$PROJECT_ROOT/config/application.example.yml"
 REPORT_PATH="${JAVA_AI_LIVE_REPORT_PATH:-$PROJECT_ROOT/docs/reports/lesson-04-live-model-smoke.md}"
 
 die() {
@@ -15,8 +14,7 @@ die() {
 }
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
-  cp "$EXAMPLE_CONFIG_FILE" "$CONFIG_FILE"
-  die "Created $CONFIG_FILE. Replace spring.ai.openai.api-key, then run this command again."
+  die "Missing $CONFIG_FILE. Restore the tracked demo configuration."
 fi
 
 commit="$(git -C "$PROJECT_ROOT" rev-parse HEAD 2>/dev/null || printf 'unknown')"

@@ -1,4 +1,4 @@
-# Grounded RAG Answer Verification
+# 带依据的 RAG 回答验证
 
 Status: VERIFIED_LOCAL_GROUNDED_ANSWER_COMPOSITION
 
@@ -9,7 +9,7 @@ Status: VERIFIED_LOCAL_GROUNDED_ANSWER_COMPOSITION
 - Prompt policy: `prompts/knowledge-answer/v1/system.txt`
 - Runtime wiring: `KnowledgeRetrievalConfiguration`
 
-## Verified
+## 已验证
 
 - Controller 构造的可信身份范围和服务端当前时间会随问题进入检索，不由模型或用户输入生成。
 - 检索结果保留文档 ID、版本、chunk ID、标题路径、条款和正文，并映射为可引用的 `PolicyContext`。
@@ -17,9 +17,9 @@ Status: VERIFIED_LOCAL_GROUNDED_ANSWER_COMPOSITION
 - 非拒答结果至少需要一个引用，引用 ID 必须存在于本次检索上下文；拒答结果必须给出拒答原因。
 - 对外 `Citation` 由服务端从已检索上下文重新构造，模型不能自行补造文档标题、版本和引用元数据。
 - 输出校验同时拒绝虚构“已退款”“已创建工单”等未发生业务动作。
-- `application-rag-postgres.yml` 只有显式选择 `context-source: retrieval` 时才启用检索链路；默认 classpath 上下文不会被误报成向量 RAG。
+- Knowledge Service 的主 `application.yml` 在 `production` 配置段选择 `context-source: retrieval`；默认 `demo` 使用 classpath 上下文，不会被误报成向量 RAG。
 
-## Local Verification
+## 本地验证
 
 ```bash
 ./mvnw -pl services/knowledge-service \
@@ -29,6 +29,6 @@ Status: VERIFIED_LOCAL_GROUNDED_ANSWER_COMPOSITION
 
 这些测试覆盖可信检索参数传递、chunk 到引用上下文的映射、引用回填和未知引用拒绝。
 
-## Evidence Boundary
+## 证据边界
 
 这些测试使用内存 Retriever 和模型替身，没有把 Provider Embedding、pgvector 和 Chat API 串成一次端到端调用。模型接口 Smoke 与 pgvector 外部测试各自检查一段链路，不能据此推断整条 RAG 链路满足目标环境要求。跨文档冲突裁决、引用原文片段校验、恶意知识内容扫描和检索型 Prompt Injection 防护也不在当前范围内。

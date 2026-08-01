@@ -4,7 +4,6 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
 . (Join-Path $PSScriptRoot "main-java-runtime.ps1")
 $ConfigFile = Join-Path $ProjectRoot "config\application.yml"
-$ExampleConfigFile = Join-Path $ProjectRoot "config\application.example.yml"
 $ReportPath = if ($env:JAVA_AI_AGENT_LIVE_REPORT_PATH) {
     $env:JAVA_AI_AGENT_LIVE_REPORT_PATH
 } else {
@@ -12,8 +11,7 @@ $ReportPath = if ($env:JAVA_AI_AGENT_LIVE_REPORT_PATH) {
 }
 
 if (-not (Test-Path $ConfigFile)) {
-    Copy-Item -Path $ExampleConfigFile -Destination $ConfigFile
-    throw "Created $ConfigFile. Replace spring.ai.openai.api-key, then run this command again."
+    throw "Missing $ConfigFile. Restore the tracked demo configuration."
 }
 
 $Commit = try { (git -C $ProjectRoot rev-parse HEAD).Trim() } catch { "unknown" }

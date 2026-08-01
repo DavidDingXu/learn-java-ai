@@ -43,7 +43,7 @@ test("lesson 04 ships deterministic policy without exposing verification modes",
   const policy = read("services/knowledge-service/src/main/resources/knowledge/refund-policy-v1.md");
   const metadata = read("services/knowledge-service/src/main/resources/knowledge/refund-policy-v1.properties");
   const runtime = read("services/knowledge-service/src/main/resources/application.yml");
-  const demoConfig = read("config/application.example.yml");
+  const demoConfig = read("config/application.yml");
   const openApi = read("contracts/openapi/knowledge-service-v1.yaml");
   const response = read("services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/answer/web/KnowledgeAnswerResponse.java");
 
@@ -64,11 +64,11 @@ test("live model smoke is cross-platform, YAML-configured and report-producing",
   const workflow = read(".github/workflows/live-model-smoke.yml");
   const runbook = read("docs/runbooks/live-model-smoke.md");
   const report = read("docs/reports/lesson-04-live-model-smoke.md");
-  const demoConfig = read("config/application.example.yml");
+  const demoConfig = read("config/application.yml");
 
   for (const content of [shell, powershell]) {
     assert.match(content, /config[\\/]application\.yml/);
-    assert.match(content, /config[\\/]application\.example\.yml/);
+    assert.doesNotMatch(content, /application\.example\.yml|Copy-Item|\bcp\b/);
     assert.match(content, /spring\.config\.additional-location/);
     assert.doesNotMatch(content, /JAVA_AI_CHAT_(?:API_KEY|BASE_URL|MODEL)/);
   }
@@ -95,17 +95,18 @@ test("live model smoke is cross-platform, YAML-configured and report-producing",
   assert.doesNotMatch(report, /PROVIDER_PROTOCOL_FIXTURE.*LIVE_MODEL|LIVE_MODEL.*PROVIDER_PROTOCOL_FIXTURE/s);
 });
 
-test("local model credentials stay in an ignored YAML copied from the tracked example", () => {
+test("local model tests use one tracked placeholder YAML", () => {
   const ignore = read(".gitignore");
-  const example = read("config/application.example.yml");
+  const config = read("config/application.yml");
   const shell = read("scripts/run-live-model-smoke.sh");
   const powershell = read("scripts/run-live-model-smoke.ps1");
 
-  assert.match(ignore, /^config\/application\.yml$/m);
-  assert.doesNotMatch(ignore, /^config\/application\.example\.yml$/m);
-  assert.match(example, /api-key:\s*replace-with-your-api-key/);
-  assert.match(shell, /cp\s+"\$EXAMPLE_CONFIG_FILE"\s+"\$CONFIG_FILE"/);
-  assert.match(powershell, /Copy-Item\s+-Path\s+\$ExampleConfigFile\s+-Destination\s+\$ConfigFile/);
+  assert.doesNotMatch(ignore, /^config\/application\.yml$/m);
+  assert.equal(existsSync(path.join(projectRoot, "config/application.example.yml")), false);
+  assert.match(config, /api-key:\s*replace-with-your-api-key/);
+  assert.doesNotMatch(config, /sk-[A-Za-z0-9]{20,}/);
+  assert.doesNotMatch(shell, /EXAMPLE_CONFIG_FILE|\bcp\b/);
+  assert.doesNotMatch(powershell, /ExampleConfigFile|Copy-Item/);
 });
 
 test("reader Maven smoke commands resolve the root YAML from the service module", () => {

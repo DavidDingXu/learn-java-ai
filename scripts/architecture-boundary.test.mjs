@@ -145,10 +145,10 @@ test("architecture and framework reviews keep decision evidence explicit", () =>
   ];
 
   for (const report of reports) {
-    assert.match(report, /Reviewed files|复核文件/i);
-    assert.match(report, /Accepted boundaries|接受的边界/i);
-    assert.match(report, /Rejected alternatives|拒绝的方案/i);
-    assert.match(report, /Replacement conditions|替换条件/i);
+    assert.match(report, /Reviewed files|复核文件|复核依据/i);
+    assert.match(report, /Accepted boundaries|接受的边界|采用的边界/i);
+    assert.match(report, /Rejected alternatives|拒绝的方案|未采用的方案/i);
+    assert.match(report, /Replacement conditions|替换条件|重新评估条件|重新选型的条件/i);
     assert.doesNotMatch(report, /runtime experiment passed|运行实验通过|生产可用/);
     assert.doesNotMatch(report, /Implementation commit|Input baseline commit|提交基线/);
   }

@@ -17,8 +17,6 @@ class TicketAgentDemoStartupTest {
     @Test
     void defaultConfigurationStartsWithLocalDemoBoundaries() {
         assertThat(environment.acceptsProfiles(Profiles.of("demo"))).isTrue();
-        assertThat(environment.getProperty(
-                "java-ai.runtime.external-integrations-enabled", Boolean.class)).isFalse();
         assertThat(environment.getProperty("java-ai.persistence.mode")).isEqualTo("memory");
         assertThat(environment.getProperty(
                 "java-ai.agent.downstream-enabled", Boolean.class)).isFalse();

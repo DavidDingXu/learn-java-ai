@@ -116,7 +116,7 @@ test("each service has one runtime config with explicit demo and production boun
   }
 
   const knowledge = read("services/knowledge-service/src/main/resources/application.yml");
-  const demoModelConfig = read("config/application.example.yml");
+  const demoModelConfig = read("config/application.yml");
   assert.match(knowledge, /on-profile:\s*demo[\s\S]*?chat:\s*none/);
   assert.match(knowledge, /on-profile:\s*production[\s\S]*?chat:\s*openai/);
   assert.match(knowledge, /on-profile:\s*production[\s\S]*?embedding:\s*openai/);
@@ -124,11 +124,13 @@ test("each service has one runtime config with explicit demo and production boun
   assert.match(demoModelConfig, /api-key:\s*replace-with-your-api-key/);
   assert.match(demoModelConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);
   assert.doesNotMatch(knowledge, /execution-mode|LOCAL_DISABLED|PROVIDER_PROTOCOL_FIXTURE/);
+  assert.doesNotMatch(knowledge, /external-integrations-enabled/);
 
   const ticket = read("services/ticket-agent-service/src/main/resources/application.yml");
   assert.match(ticket, /on-profile:\s*demo[\s\S]*?mode:\s*memory/);
   assert.match(ticket, /on-profile:\s*production[\s\S]*?mode:\s*jdbc/);
   assert.match(ticket, /on-profile:\s*production[\s\S]*?downstream-enabled:\s*false/);
+  assert.doesNotMatch(ticket, /external-integrations-enabled/);
 
   const bff = read("apps/customer-bff/src/main/resources/application.yml");
   const consultationConfiguration = read(
@@ -149,6 +151,26 @@ test("each service has one runtime config with explicit demo and production boun
     "apps/customer-bff/src/test/java/com/xiaoding/javaai/customer/CustomerBffDemoStartupTest.java",
   ]) {
     assert.equal(existsSync(path.join(projectRoot, startupTest)), true, startupTest);
+  }
+
+  for (const service of services) {
+    const mainPackage = service === "apps/customer-bff"
+      ? "apps/customer-bff/src/main/java/com/xiaoding/javaai/customer"
+      : `${service}/src/main/java/com/xiaoding/javaai/${
+        service.includes("knowledge") ? "knowledge" : "ticket"
+      }`;
+    const applicationName = service.includes("knowledge")
+      ? "KnowledgeServiceApplication.java"
+      : service.includes("ticket")
+        ? "TicketAgentServiceApplication.java"
+        : "CustomerBffApplication.java";
+    const application = read(`${mainPackage}/${applicationName}`);
+    const validator = read(`${mainPackage}/ProductionConfigurationValidator.java`);
+
+    assert.match(application, /ProductionConfigurationValidator\.validate/);
+    assert.match(validator, /Profiles\.of\("production"\)/);
+    assert.match(validator, /Invalid production configuration/);
+    assert.doesNotMatch(validator, /getProperty\([^\n]+\)[^\n]+(?:println|logger|log\.)/);
   }
 });
 

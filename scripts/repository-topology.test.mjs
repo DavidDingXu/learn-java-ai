@@ -441,6 +441,32 @@ test("public guides do not expose course authoring or internal revision language
   }
 });
 
+test("public runtime documentation matches the single-YAML configuration model", () => {
+  const runtimeDocuments = [
+    "README.md",
+    "docs/architecture/system-context.md",
+    "docs/runbooks/live-model-smoke.md",
+    "docs/runbooks/local-toolchain.md",
+    "docs/runbooks/runtime-configuration.md",
+    "docs/reports/lesson-19-grounded-rag-answer.md",
+    "docs/reports/lesson-38-runtime-configuration.md",
+    "services/knowledge-service/README.md",
+    "services/ticket-agent-service/README.md",
+    "apps/customer-bff/README.md",
+  ];
+
+  for (const document of runtimeDocuments) {
+    const content = read(document);
+    assert.doesNotMatch(content, /application\.example\.yml|application-rag-postgres\.yml/, document);
+  }
+
+  const readme = read("README.md");
+  assert.match(readme, /spring-boot\.run\.profiles=production/);
+  assert.match(readme, /config\/application\.yml/);
+  assert.match(readme, /不会被上述启动命令自动加载/);
+  assert.match(read("docs/runbooks/runtime-configuration.md"), /java-ai\.knowledge\.postgres\.\*/);
+});
+
 test("verification archive excludes course headings and private workspace revisions", () => {
   const reportsDirectory = path.join(projectRoot, "docs", "reports");
   const reportNames = readdirSync(reportsDirectory).filter((name) => name.endsWith(".md"));

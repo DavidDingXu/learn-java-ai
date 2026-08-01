@@ -22,8 +22,6 @@ management:
         include: health
 
 java-ai:
-  runtime:
-    external-integrations-enabled: false
   prompt:
     knowledge-answer:
       version: knowledge-answer-v1

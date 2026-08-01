@@ -1,9 +1,9 @@
-# Trust, Feedback And Retry Verification
+# 回答引用、反馈与重试验证
 
 Status: VERIFIED_LOCAL_ATTEMPT_SCOPED_INTERACTION
 
 
-## Verified
+## 已验证
 
 - C 端回答 DTO 保留引用、拒答原因、conversation、attempt 和 trace，不暴露 Provider 模型对象或 Token 元数据。
 - 引用继续由 Knowledge Service 根据本次授权上下文校验，BFF 只转换为渠道 DTO。
@@ -15,7 +15,7 @@ Status: VERIFIED_LOCAL_ATTEMPT_SCOPED_INTERACTION
 - 会话归属校验在反馈、重试和工单升级前重复执行，不能只在首次提问时检查。
 - 下游失败、限流、权限错误和状态冲突映射为不同 HTTP 语义，不统一包装成通用 500。
 
-## Local Verification
+## 本地验证
 
 ```bash
 ./mvnw -pl apps/customer-bff \
@@ -25,6 +25,6 @@ Status: VERIFIED_LOCAL_ATTEMPT_SCOPED_INTERACTION
 
 Customer Web 的反馈、重试和移动端展示验证记录在 `docs/reports/lesson-22-customer-web.md`。
 
-## Production Boundary
+## 生产接入边界
 
 当前反馈覆盖领域规则与 HTTP 接口，尚未接入分析仓库、人工标注队列或在线质量看板。公司项目需要按隐私和保留策略决定是否保存问题、回答和评论原文，并将反馈原因码纳入 Golden Set 与坏案例流程。

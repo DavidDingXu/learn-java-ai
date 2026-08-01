@@ -7,7 +7,6 @@ enter_java_ai_main_jdk
 REPORT_PREFIX=${1:-"$ROOT_DIR/docs/reports/lesson-12-live-model-eval"}
 PORT=${JAVA_AI_EVAL_PORT:-18081}
 CONFIG_FILE="$ROOT_DIR/config/application.yml"
-EXAMPLE_CONFIG_FILE="$ROOT_DIR/config/application.example.yml"
 
 require_env() {
   local name=$1
@@ -16,8 +15,7 @@ require_env() {
 
 require_env JAVA_AI_JWT_ISSUER
 if [[ ! -f "$CONFIG_FILE" ]]; then
-  cp "$EXAMPLE_CONFIG_FILE" "$CONFIG_FILE"
-  printf 'ERROR: Created %s. Replace spring.ai.openai.api-key, then run this command again.\n' "$CONFIG_FILE" >&2
+  printf 'ERROR: Missing %s. Restore the tracked demo configuration.\n' "$CONFIG_FILE" >&2
   exit 2
 fi
 [[ -n "${JAVA_AI_DEV_JWT_HMAC_SECRET:-}" || -n "${JAVA_AI_JWT_JWK_SET_URI:-}" ]] || {

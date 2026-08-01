@@ -90,8 +90,6 @@ spring:
       moderation: none
 
 java-ai:
-  runtime:
-    external-integrations-enabled: false
   security:
     jwt:
       enabled: false
@@ -128,8 +126,6 @@ spring:
         model: text-embedding-3-small
 
 java-ai:
-  runtime:
-    external-integrations-enabled: true
   security:
     jwt:
       enabled: true

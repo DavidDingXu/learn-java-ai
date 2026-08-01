@@ -53,7 +53,7 @@ Customer BFF 是渠道边界，不复制知识或工单领域。JDK8 系统仍�
 - Knowledge Service 与 Ticket Agent Service 允许在各自基础设施层引入 Spring AI Provider starter；BFF、Eval Runner、JDK8 客户端和公开接口不得依赖 Spring AI 类型。
 - Customer BFF 和 Knowledge Service 使用 WebFlux；Ticket Agent Service 暂时保留 Spring MVC，等到业务出现流式或高并发需求时再决定是否迁移。
 - 每个服务只维护一份主 `application.yml`。默认 demo 不需要外部配置；生产部署按同一组配置路径覆盖模型、数据库、身份和下游参数，密钥交给部署平台或密钥系统管理。
-- 确定性模型结果、进程内任务状态和关闭外部连接只由 `src/test` 配置显式装配，不构成第二套运行环境。正式运行缺少模型配置时会返回明确错误，不会自动回退到固定答案。
+- 默认 `demo` 使用禁用模型和进程内任务状态，被关闭的能力会明确返回不可用。测试中的确定性模型结果只在 `src/test` 装配，不会进入应用产物。`production` 配置仍有占位值时，应用会停止启动，不会自动回退到固定答案。
 - Provider 协议回归属于测试代码；模型接口 Smoke 与回答 Golden Set 使用受控 API，两者检查的内容不同，不能相互替代。
 - Knowledge Service 通过 Flyway V1-V4 管理文档、ACL、任务、分块、发布审计和 `document_search_version`。发布只切换业务版本；新索引写完前继续读取上一版，sink 在写事务开始时校验 `leaseAttempt` 和租约有效期。
 - `external-integration` Maven profile 提供 PostgreSQL/pgvector 集成测试入口。小数据集只能检查迁移、SQL 行为和检索版本切换，不能给出生产容量结论。

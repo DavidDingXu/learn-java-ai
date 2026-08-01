@@ -1,4 +1,4 @@
-# RAG Evaluation Verification
+# RAG 评测验证
 
 Status: VERIFIED_LOCAL_EVALUATION_CONTRACT
 
@@ -10,7 +10,7 @@ Status: VERIFIED_LOCAL_EVALUATION_CONTRACT
 - Service endpoint: `KnowledgeRetrievalEvaluationController`
 - Runner command: `retrieval-eval`
 
-## Verified
+## 已验证
 
 - 每个样例必须包含稳定 case ID、至少一个期望 chunk ID 和有序检索结果。
 - 先按原始排名截取 TopK，再对命中集合去重；重复结果会占用排序名额，并通过 `duplicateRateAtK` 单独暴露。
@@ -24,7 +24,7 @@ Status: VERIFIED_LOCAL_EVALUATION_CONTRACT
 - Eval Runner 通过 HTTP 调用实际知识服务，记录逐案例召回、Embedding 模型和延迟，输出 JSON、Markdown，并检查 Recall、HitRate、MRR、重复率和 p95 延迟是否达到阈值。
 - 同一轮返回多个 Embedding 模型时即使聚合指标达标也判定失败。
 
-## Local Verification
+## 本地验证
 
 ```bash
 ./mvnw -pl services/knowledge-service,quality/eval-runner \
@@ -34,7 +34,7 @@ Status: VERIFIED_LOCAL_EVALUATION_CONTRACT
 
 覆盖指标公式、重复位置口径、数据集版本与 Chunk ID 一致性、JWT 访问范围映射、HTTP 请求格式、阈值检查和报告输出。
 
-## Evidence Boundary
+## 证据边界
 
 本地测试覆盖评测规则、公式和运行编排，不提供共享环境的 Recall@K 结论。计算目标指标前，必须先准备文档、ACL 和向量索引，再按 `docs/runbooks/model-interaction-eval.md` 使用 `java -jar` 与 `--bearer-token-file` 连接目标知识服务。仓库中的 Shell 与 PowerShell 入口用于共享 CI 聚合这些步骤，日常本地回归不依赖它们。
 

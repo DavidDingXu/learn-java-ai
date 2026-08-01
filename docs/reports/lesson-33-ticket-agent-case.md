@@ -1,9 +1,9 @@
-# Ticket Agent Case Verification
+# 工单 Agent 业务链验证
 
 Status: VERIFIED_COMPONENT_CHAIN_SHARED_ENVIRONMENT_REQUIRED
 
 
-## Verified
+## 已验证
 
 - A handoff task can run through bounded planning, read-tool observation and a write-tool confirmation boundary.
 - Real Spring AI 2.0 model planning selected `QUERY_KNOWLEDGE` with structured metadata in the live smoke.
@@ -12,7 +12,7 @@ Status: VERIFIED_COMPONENT_CHAIN_SHARED_ENVIRONMENT_REQUIRED
 - The public Agent Task OpenAPI supports create, read, run, confirm and audit operations.
 - Model, read-tool, confirmation and remote execution failures have distinct task and HTTP behavior.
 
-## Verification
+## 验证命令
 
 ```bash
 ./mvnw -pl services/ticket-agent-service,services/knowledge-service \
@@ -26,6 +26,6 @@ Status: VERIFIED_COMPONENT_CHAIN_SHARED_ENVIRONMENT_REQUIRED
   test
 ```
 
-## External Boundary
+## 外部验证边界
 
 The live smoke proves real model planning, not a deployed production chain. Real IdP, persistent task store, prepared Knowledge index and JDK8 business sandbox still require shared-environment verification with signed short-lived tokens.

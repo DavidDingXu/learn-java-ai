@@ -26,9 +26,6 @@ class TicketAgentServiceApplicationTest {
         assertThat(environment.matchesProfiles("test")).isTrue();
         assertThat(environment.getProperty("spring.application.name"))
                 .isEqualTo("ticket-agent-service");
-        assertThat(environment.getProperty(
-                "java-ai.runtime.external-integrations-enabled", Boolean.class))
-                .isFalse();
 
         client.get()
                 .uri("/actuator/health")

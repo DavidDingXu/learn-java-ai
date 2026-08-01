@@ -7,6 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class KnowledgeServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(KnowledgeServiceApplication.class, args);
+        SpringApplication application = new SpringApplication(KnowledgeServiceApplication.class);
+        application.addInitializers(context ->
+                ProductionConfigurationValidator.validate(context.getEnvironment()));
+        application.run(args);
     }
 }
