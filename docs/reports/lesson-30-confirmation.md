@@ -1,8 +1,7 @@
-# Lesson 30 Confirmation Evidence
+# Confirmation Verification
 
 Status: VERIFIED_VERSION_BOUND_IDEMPOTENT_CONFIRMATION
 
-Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
 
 ## Verified
 

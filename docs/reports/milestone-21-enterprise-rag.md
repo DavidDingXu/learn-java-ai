@@ -1,4 +1,4 @@
-# Milestone 21 Enterprise RAG
+# 企业 RAG 能力摘要
 
 Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 

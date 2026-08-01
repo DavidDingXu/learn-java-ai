@@ -1,4 +1,4 @@
-# Lesson 17 ACL Before TopK Evidence
+# ACL Before TopK Verification
 
 Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 

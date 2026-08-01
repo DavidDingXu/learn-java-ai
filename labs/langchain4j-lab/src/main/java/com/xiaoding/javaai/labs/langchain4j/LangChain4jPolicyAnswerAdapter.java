@@ -20,7 +20,18 @@ public final class LangChain4jPolicyAnswerAdapter implements PolicyAnswerPort {
 
     @Override
     public PolicyAnswer answer(PolicyQuestion question) {
-        return new PolicyAnswer(assistant.answer(question.tenantId(), question.question()));
+        String modelAnswer;
+        try {
+            modelAnswer = assistant.answer(question.tenantId(), question.question());
+        } catch (RuntimeException exception) {
+            throw new IllegalStateException("MODEL_INVOCATION_FAILED", exception);
+        }
+
+        try {
+            return new PolicyAnswer(modelAnswer);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalStateException("MODEL_OUTPUT_INVALID", exception);
+        }
     }
 
     interface PolicyAssistant {

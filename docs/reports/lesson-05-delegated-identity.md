@@ -1,4 +1,4 @@
-# Lesson 05 Delegated Identity Evidence
+# Delegated Identity Verification
 
 ## Status
 
@@ -6,7 +6,6 @@
 
 ## Evidence boundary
 
-- Input baseline commit: `f1a0989`.
 - Knowledge Service validates JWT signature, issuer, audience, expiry, tenant and delegated actor before the request reaches business code.
 - `knowledge:answer` is an authorization rule: a trusted token without that scope receives HTTP 403.
 - Customer BFF exposes a `DelegatedTokenClient` port. The local HMAC signer is for development and automated tests only; the HTTP adapter uses RFC 8693 Token Exchange fields.

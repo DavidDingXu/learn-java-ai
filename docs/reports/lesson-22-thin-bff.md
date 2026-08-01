@@ -1,8 +1,7 @@
-# Lesson 22 Thin Customer BFF Evidence
+# Thin Customer BFF Verification
 
 Status: VERIFIED_LOCAL_CHANNEL_BOUNDARY
 
-Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 
 ## Verified
 

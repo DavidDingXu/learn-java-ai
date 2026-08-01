@@ -1,4 +1,4 @@
-# Lesson 13 Document Lifecycle Evidence
+# Document Lifecycle Verification
 
 Status: IMPLEMENTED_WITH_LOCAL_TESTS
 

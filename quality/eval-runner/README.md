@@ -1,0 +1,21 @@
+# Eval Runner
+
+独立的 AI 应用评测命令行工具。它只通过版本化文件和公开 HTTP API 访问被测系统，不依赖服务实现类，不读取业务数据库。
+
+## 支持的任务
+
+- `contract-validate`：检查 OpenAPI、JSON Schema 和正反例 Fixture。
+- `contract-eval`：使用进程内确定性 HTTP Fixture 验证模型交互评测流程。
+- `model-eval`：通过 Knowledge Service 公开接口运行真实模型 Golden Set。
+- `retrieval-eval`：计算 Recall@K、HitRate@K、MRR、重复率和 p95。
+- `agent-eval` 与 `security-eval`：使用分离的创建、运行和读取令牌验证 Agent 路径。
+
+## 构建
+
+```bash
+./mvnw -pl quality/eval-runner -am package -DskipTests
+```
+
+可执行 JAR 位于 `quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar`。完整参数、令牌文件和报告边界见[模型、检索与 Agent 评测](../../docs/runbooks/model-interaction-eval.md)。
+
+真实环境评测必须使用专用测试租户和最小权限短时令牌。报告可以记录数据集、模型、Prompt、代码版本、延迟和 Trace ID，不得记录 API Key、Bearer Token、内网地址或未脱敏数据。

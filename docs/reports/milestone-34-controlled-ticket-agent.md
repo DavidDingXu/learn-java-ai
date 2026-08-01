@@ -1,4 +1,4 @@
-# 里程碑 34：受控工单 Agent
+# 受控工单 Agent
 
 状态：已完成本地受控 Agent 与真实模型规划验证，仍需共享环境联调（`VERIFIED_LOCAL_CONTROLLED_AGENT_LIVE_MODEL_SHARED_ENVIRONMENT_REQUIRED`）
 

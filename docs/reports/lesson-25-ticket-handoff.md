@@ -1,8 +1,7 @@
-# Lesson 25 Ticket Handoff Evidence
+# Ticket Handoff Verification
 
 Status: VERIFIED_LOCAL_IDEMPOTENT_HANDOFF
 
-Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 
 ## Verified
 

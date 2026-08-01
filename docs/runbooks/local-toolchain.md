@@ -1,6 +1,6 @@
 # 本地构建与运行
 
-## 读文章和跑演示只需要 JDK 21
+## 运行主项目只需要 JDK 21
 
 主项目使用 Java 21。安装包含 `java` 和 `javac` 的完整 JDK 21 后，可以直接运行 Maven Wrapper：
 
@@ -26,9 +26,9 @@ Spring Boot 服务默认使用 `demo` Profile。它们会关闭真实模型、�
 
 ## 真实模型演示只修改项目级 YAML
 
-需要调用真实模型时，先把 `config/application.example.yml` 复制为 `config/application.yml`，再填写演示用 API Key。如果使用 OpenAI 兼容 Provider，再按实际协议修改 `base-url`、Chat 模型和 Embedding 模型。文章中的真实模型命令会显式读取这个本地文件。
+需要调用真实模型时，先把 `config/application.example.yml` 复制为 `config/application.yml`，再填写测试用 API Key。如果使用 OpenAI 兼容 Provider，再按实际协议修改 `base-url`、Chat 模型和 Embedding 模型。真实模型命令会显式读取这个本地文件。
 
-本地文件已被 Git 忽略，读者不需要额外配置模型环境变量。生产部署必须由公司密钥系统覆盖同一 Spring 配置键。
+本地文件已被 Git 忽略，无需额外配置模型环境变量。生产部署必须由公司密钥系统覆盖同一 Spring 配置键。
 
 ## 全仓检查才需要 JDK 8 和 Node.js
 
@@ -98,4 +98,4 @@ curl --fail https://test.example.com/actuator/health
 
 ### 默认启动后为什么不会调用真实模型
 
-`demo` Profile 有意关闭外部依赖，用来检查应用组装和本地代码。需要真实模型结果时，运行文章指定的 Live Model 测试，并显式加载根目录 `config/application.yml`。
+`demo` Profile 有意关闭外部依赖，用来检查应用组装和本地代码。需要真实模型结果时，运行 `LiveModelSmokeIT`，并显式加载根目录 `config/application.yml`。

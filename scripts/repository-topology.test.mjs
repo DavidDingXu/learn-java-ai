@@ -185,12 +185,17 @@ test("Java 8 client is an independent Maven build", () => {
   assert.equal(clientPom.includes("<maven.surefire.version>3.5.6</maven.surefire.version>"), true);
 });
 
-test("non-Java products and contracts stay outside Maven reactors", () => {
+test("top-level products and contract directories provide local documentation", () => {
   for (const readme of [
     "apps/customer-web/README.md",
+    "apps/customer-bff/README.md",
     "contracts/README.md",
     "datasets/README.md",
     "deploy/README.md",
+    "services/knowledge-service/README.md",
+    "services/ticket-agent-service/README.md",
+    "quality/eval-runner/README.md",
+    "integrations/jdk8-client/README.md",
   ]) {
     read(readme);
   }
@@ -307,7 +312,7 @@ test("Maven Wrapper is pinned to Maven 3.9.14", () => {
   assert.match(wrapperProperties, /apache-maven-3\.9\.14-bin\.zip/);
 });
 
-test("reader guidance matches the current service and build boundaries", () => {
+test("public README matches the current service and build boundaries", () => {
   const readme = read("README.md");
 
   for (const requiredPath of [
@@ -316,21 +321,19 @@ test("reader guidance matches the current service and build boundaries", () => {
     "apps/customer-bff",
     "quality/eval-runner",
     "integrations/jdk8-client",
-    "labs/spring-ai-alibaba-lab",
-    "labs/langchain4j-lab",
-    "labs/agentscope-lab",
-    "labs/protocol-interop-lab",
+    "labs",
   ]) {
     assert.match(readme, new RegExp(requiredPath.replaceAll("/", "\\/")));
   }
 
-  assert.match(readme, /可运行、可测试的工程基线/);
+  assert.match(readme, /企业场景的 Java AI 应用工程参考实现/);
   assert.match(readme, /受控 Agent/);
   assert.match(readme, /安全回归/);
   assert.match(readme, /Micrometer/);
   assert.match(readme, /跨平台发布门禁/);
-  assert.match(readme, /独立 labs/);
-  assert.match(readme, /MCP\/A2A 官方 SDK/);
+  assert.match(readme, /labs.*独立构建/s);
+  assert.match(readme, /MCP Java SDK 2\.0\.0/);
+  assert.match(readme, /A2A Java SDK 1\.1\.0\.Final/);
   assert.match(readme, /MCP Java SDK 2\.0\.0/);
   assert.match(readme, /A2A Java SDK 1\.1\.0\.Final/);
   assert.match(readme, /Java 8.*客户端/);
@@ -339,6 +342,16 @@ test("reader guidance matches the current service and build boundaries", () => {
   assert.match(readme, /HTTP\/OpenAPI/);
   assert.match(readme, /不共享领域 JAR/);
   assert.doesNotMatch(readme, /AiCallGateway|ai-[a-z-]+-demo|project-enterprise-rag|project-helpdesk-agent/);
+
+  const labsReadme = read("labs/README.md");
+  for (const lab of [
+    "spring-ai-alibaba-lab",
+    "langchain4j-lab",
+    "agentscope-lab",
+    "protocol-interop-lab",
+  ]) {
+    assert.match(labsReadme, new RegExp(lab));
+  }
 });
 
 test("public project surface excludes authoring and internal delivery artifacts", () => {
@@ -362,10 +375,79 @@ test("public project surface excludes authoring and internal delivery artifacts"
     "docs/runbooks/local-toolchain.md",
     "docs/version-baseline.md",
     "apps/customer-web/README.md",
+    "apps/customer-bff/README.md",
+    "services/knowledge-service/README.md",
+    "services/ticket-agent-service/README.md",
+    "quality/eval-runner/README.md",
+    "integrations/jdk8-client/README.md",
   ];
 
   for (const document of docs) {
     const content = read(document);
     assert.doesNotMatch(content, /付费专栏|公众号|文章排期|备稿|小红书|作者工作流|author workstation|Phase [A-Z]|Reset Delivery/);
+  }
+});
+
+test("open-source community files and contribution entry points are present", () => {
+  for (const publicFile of [
+    "LICENSE",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "SUPPORT.md",
+    "CODE_OF_CONDUCT.md",
+    "docs/README.md",
+    "docs/reports/README.md",
+    "labs/protocol-interop-lab/README.md",
+    ".github/ISSUE_TEMPLATE/bug_report.yml",
+    ".github/ISSUE_TEMPLATE/feature_request.yml",
+    ".github/ISSUE_TEMPLATE/config.yml",
+    ".github/pull_request_template.md",
+    ".github/dependabot.yml",
+  ]) {
+    read(publicFile);
+  }
+
+  assert.match(read("CONTRIBUTING.md"), /\.\/mvnw verify/);
+  assert.match(read("SECURITY.md"), /Report a vulnerability|Private Vulnerability Report/);
+  assert.match(read(".github/dependabot.yml"), /package-ecosystem: maven/);
+  assert.match(read(".github/dependabot.yml"), /package-ecosystem: npm/);
+  assert.match(read(".github/dependabot.yml"), /package-ecosystem: github-actions/);
+});
+
+test("public guides do not expose course authoring or internal revision language", () => {
+  const publicDocuments = [
+    "README.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "SUPPORT.md",
+    "CODE_OF_CONDUCT.md",
+    "contracts/README.md",
+    "datasets/README.md",
+    "deploy/README.md",
+    "labs/README.md",
+    "labs/langchain4j-lab/README.md",
+    "labs/spring-ai-alibaba-lab/README.md",
+    "labs/agentscope-lab/README.md",
+    "labs/protocol-interop-lab/README.md",
+    "apps/customer-web/README.md",
+    ...readdirSync(path.join(projectRoot, "docs", "runbooks"))
+      .filter((name) => name.endsWith(".md"))
+      .map((name) => `docs/runbooks/${name}`),
+  ];
+
+  const authoringLanguage = /默认读者|文章演示|读文章|读者(?:需要|无需|只需)|付费专栏|专栏课程/;
+  for (const document of publicDocuments) {
+    assert.doesNotMatch(read(document), authoringLanguage, document);
+  }
+});
+
+test("verification archive excludes course headings and private workspace revisions", () => {
+  const reportsDirectory = path.join(projectRoot, "docs", "reports");
+  const reportNames = readdirSync(reportsDirectory).filter((name) => name.endsWith(".md"));
+
+  for (const reportName of reportNames) {
+    const report = read(`docs/reports/${reportName}`);
+    assert.doesNotMatch(report, /^#\s+(?:Lesson\s+\d+|第\s*\d+\s*(?:讲|篇|课)|里程碑\s*\d+)/m, reportName);
+    assert.doesNotMatch(report, /Implementation commit|Input baseline commit|提交基线/, reportName);
   }
 });

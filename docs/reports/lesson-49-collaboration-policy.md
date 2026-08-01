@@ -1,8 +1,7 @@
-# Lesson 49 Collaboration Policy Evidence
+# Collaboration Policy Verification
 
 Status: VERIFIED_DETERMINISTIC_POLICY
 
-Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## Verified
 

@@ -47,7 +47,7 @@ Windows PowerShell：
   test
 ```
 
-仓库同时保留 `run-live-model-smoke.sh` 和 PowerShell 等价脚本，供 CI 或一次性生成标准报告时聚合 JDK 选择、测试和报告路径。读者日常验证直接运行上面的 Maven 命令即可。
+仓库同时保留 `run-live-model-smoke.sh` 和 PowerShell 等价脚本，供 CI 或一次性生成标准报告时聚合 JDK 选择、测试和报告路径。日常验证直接运行上面的 Maven 命令即可。
 
 ## 成功条件
 

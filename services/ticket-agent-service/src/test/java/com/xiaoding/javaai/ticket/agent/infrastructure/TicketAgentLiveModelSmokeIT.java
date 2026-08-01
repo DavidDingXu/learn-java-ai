@@ -73,7 +73,7 @@ class TicketAgentLiveModelSmokeIT {
     private static void writeReport(AgentPlanningResult result, Path reportPath) throws IOException {
         AgentDecision.UseTool decision = (AgentDecision.UseTool) result.decision();
         String report = """
-                # 第 34 讲工单 Agent 真实模型验证
+                # 工单 Agent 真实模型验证
 
                 Status: LIVE_MODEL
 

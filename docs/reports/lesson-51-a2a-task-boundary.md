@@ -1,4 +1,4 @@
-# Lesson 51 A2A Task Boundary Evidence
+# A2A Task Boundary Verification
 
 Status: VERIFIED_CLIENT_INTEROPERABILITY_AND_LOCAL_TASK_CONTRACT
 

@@ -1,8 +1,7 @@
-# Lesson 10 SSE Streaming Evidence
+# SSE Streaming Verification
 
 Status: VERIFIED_PROTOCOL_AND_SERVICE
 
-- Implementation commit: `f5532160ae5018da237567e5855bd20bb7ce2123`
 - Endpoint: `POST /api/v1/knowledge/answers/stream`
 - OpenAPI: `contracts/openapi/knowledge-service-v1.yaml`
 
@@ -18,4 +17,4 @@ Status: VERIFIED_PROTOCOL_AND_SERVICE
 
 ## Evidence Boundary
 
-本提交检查流式代码、HTTP 协议和取消语义；普通 `LIVE_MODEL` 调用不能代替目标 SSE 链路。公司上线前仍需使用目标 Provider、网关和前端测试断连、代理缓冲、空闲超时和慢客户端。
+当前验证覆盖流式代码、HTTP 协议和取消语义；普通 `LIVE_MODEL` 调用不能代替目标 SSE 链路。公司上线前仍需使用目标 Provider、网关和前端测试断连、代理缓冲、空闲超时和慢客户端。

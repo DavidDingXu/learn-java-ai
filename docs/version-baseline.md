@@ -1,10 +1,10 @@
-# Version Baseline
+# 版本基线
 
-Date locked: 2026-07-17
+锁定日期：2026-07-17
 
-These versions are the repository's compatibility baseline. They are not a claim that every company project should use the newest available release.
+以下版本是仓库的兼容性基线，不表示所有公司项目都应使用同样的版本。
 
-| Area | Version | Source of truth |
+| 范围 | 版本 | 依据 |
 |---|---:|---|
 | Main Java bytecode | 21 | root `pom.xml` |
 | Spring Boot | 4.1.0 | root `pom.xml` |
@@ -24,13 +24,13 @@ These versions are the repository's compatibility baseline. They are not a claim
 | Legacy Java target | 8 | `integrations/jdk8-client/pom.xml` |
 | Legacy JUnit | 5.11.4 | `integrations/jdk8-client/pom.xml` |
 
-## Rules
+## 维护规则
 
-- Main services inherit versions from the root dependency and plugin management. Do not repeat versions in child POMs without a compatibility reason.
-- Each labs child imports only its own framework BOM. A labs dependency cannot enter the main reactor.
-- The Java 8 client keeps its own plugin and test versions and never inherits Java 21 build settings.
-- Provider, database, vector-store and object-storage dependencies are added only when the corresponding vertical slice exists and has a verification plan.
-- Patch upgrades require unit, contract and applicable live evidence. Major upgrades require an ADR with dependency changes, behavior differences and rollback conditions.
-- CI runs the main reactor on a real JDK 21. Local compilation on JDK 26 with `--release 21` remains useful but is not equivalent runtime evidence.
-- Stable GA versions are preferred over milestone and release-candidate builds. `Spring AI Alibaba 2.0.0-M1.1` is therefore not used even though Maven metadata lists it as the latest artifact.
-- `Spring AI Alibaba 1.1.2.3`, `LangChain4j 1.18.0`, `AgentScope 2.0.0`, MCP Java SDK `2.0.0` and A2A Java SDK `1.1.0.Final` were resolved from Maven Central and verified by the labs reactor on the lock date.
+- 主服务从根 POM 的依赖与插件管理继承版本；没有兼容性理由时，子 POM 不重复声明。
+- 每个 labs 子模块只导入自己的框架 BOM，labs 依赖不能进入主 reactor。
+- Java 8 客户端维护独立插件与测试版本，不继承 Java 21 构建配置。
+- 只有已存在对应垂直用例和验证计划时，才增加 Provider、数据库、向量库和对象存储依赖。
+- 补丁版本升级需要单元、契约和适用的真实环境验证；主版本升级还需要记录依赖、行为差异和回滚条件的 ADR。
+- CI 在真实 JDK 21 JVM 上运行主 reactor。在 JDK 26 上使用 `--release 21` 只能验证字节码兼容，不等价于 JDK 21 运行时结果。
+- 优先使用稳定 GA 版本，不因 Maven metadata 中的版本号更大就选择 milestone 或 release candidate。
+- 表中框架与 SDK 版本在锁定日期可从 Maven Central 解析，并已通过 labs reactor 构建。

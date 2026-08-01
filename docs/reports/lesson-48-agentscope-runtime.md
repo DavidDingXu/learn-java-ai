@@ -1,8 +1,7 @@
-# Lesson 48 AgentScope Runtime Evidence
+# AgentScope Runtime Verification
 
 Status: VERIFIED_PERMISSION_MAPPING
 
-Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## Verified
 

@@ -1,4 +1,4 @@
-# 里程碑 25：客户咨询与工单升级
+# 客户咨询与工单升级
 
 状态：已完成本地接口与业务规则验证，仍需共享环境联调（`VERIFIED_LOCAL_CONTRACTS_SHARED_ENVIRONMENT_REQUIRED`）
 

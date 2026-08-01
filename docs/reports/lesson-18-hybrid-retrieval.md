@@ -1,4 +1,4 @@
-# Lesson 18 Hybrid Retrieval Evidence
+# Hybrid Retrieval Verification
 
 Status: VERIFIED_LOCAL_RETRIEVAL_COMPOSITION
 

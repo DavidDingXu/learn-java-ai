@@ -1,48 +1,49 @@
-# ADR 0003: Keep Framework Migration Experiments Isolated
+# ADR 0003：隔离框架迁移实验
 
-Status: Accepted
+状态：已接受
 
-Date: 2026-07-14
+日期：2026-07-14
 
-## Context
+## 背景
 
-The main services use Spring Boot 4.1 and Spring AI 2.0. The Spring AI Alibaba 1.1.2.x stable line is based on the Spring AI 1.1 and Spring Boot 3.5 generation. LangChain4j and AgentScope own separate model, tool, memory and protocol abstractions. Importing these dependencies into the main reactor would turn a business migration experiment into an application-wide dependency migration.
+主服务使用 Spring Boot 4.1 和 Spring AI 2.0。Spring AI Alibaba 1.1.2.x 稳定线基于 Spring AI 1.1 与 Spring Boot 3.5 这一代；LangChain4j 和 AgentScope 分别拥有模型、Tool、Memory 和协议抽象。如果把这些依赖导入主 reactor，一次业务迁移实验就会变成全应用依赖迁移。
 
-A migration decision needs executable comparisons, not API screenshots. Each experiment must therefore keep a business interface stable while replacing only the framework-facing adapter.
+迁移决策需要可执行比较，不能只比较 API 截图或示例长度。每个实验必须保持业务接口稳定，只替换框架适配器。
 
-## Decision
+## 决策
 
-Keep three independent labs under the separate labs reactor.
+在独立 labs reactor 下保持四组实验：
 
-- Spring AI Alibaba lab owns DashScope options, domestic retrieval replacement metrics and one confirmation graph.
-- LangChain4j lab owns AI Services, a tenant-scoped RAG adapter, a read-only tool loop, structured output and capability routing.
-- AgentScope lab owns Tool permission mapping, human intervention policy, MCP external tool registration and the A2A task boundary.
+- Spring AI Alibaba lab 负责 DashScope Options、检索替换指标和确认 Graph。
+- LangChain4j lab 负责 AI Services、租户范围 RAG、只读 Tool、结构化输出和能力路由。
+- AgentScope lab 负责 Tool 权限映射、人工介入策略、MCP 外部工具注册和 A2A 任务边界。
+- Protocol interop lab 使用 MCP 与 A2A 官方 SDK 验证协议互操作。
 
-The labs do not depend on production service implementation modules. They reproduce only the narrow business ports needed to demonstrate migration. Framework objects do not cross those ports.
+labs 不依赖主服务实现模块，只重现表达迁移所需的窄业务端口。框架对象不能跨越这些端口。
 
-Provider credentials and remote endpoints remain external configuration. Unit tests use deterministic models or local state and do not claim remote Provider, MCP or A2A interoperability.
+Provider 密钥与远程端点保持为外部配置。单元测试使用确定性模型或本地状态，不声称已验证远程 Provider、MCP 或 A2A 服务。
 
-## Consequences
+## 影响
 
-Positive:
+收益：
 
-- Each framework dependency tree can be upgraded and rolled back independently.
-- A migration can be evaluated by behavior, test effort and operational cost before touching production code.
-- Mainline services keep one framework and one observability model.
+- 每套框架依赖树可以独立升级和回滚。
+- 迁移可以在触碰主服务前，先根据行为、测试成本和运维成本评估。
+- 主服务保持一套框架和一套可观测模型。
 
-Costs:
+成本：
 
-- Small business interfaces are repeated in labs.
-- A successful experiment still needs a production ADR, integration tests and rollout plan.
-- Cross-framework examples cannot share framework DTOs or helper libraries.
+- labs 中会重复少量业务接口。
+- 实验成功后仍需要生产 ADR、集成测试和发布方案。
+- 跨框架实验不能共享框架 DTO 或辅助库。
 
-## Promotion Conditions
+## 进入主服务的条件
 
-A lab implementation can enter a production service only when all conditions are met:
+只有同时满足以下条件，lab 实现才可以进入主服务：
 
-- It materially improves a measured business outcome on the same dataset or workflow.
-- Its dependency graph is compatible with the target service or it is deployed as an isolated service.
-- Authentication, authorization, observability, timeout, retry, idempotency and rollback behavior have production evidence.
-- The owning team accepts the framework's upgrade and incident-response cost.
+- 在同一数据集或工作流上，产生了可测量的业务改善。
+- 依赖图与目标服务兼容，或者该能力作为隔离服务部署。
+- 身份、权限、可观测、超时、重试、幂等和回滚已经在生产类环境验证。
+- 负责团队接受该框架的升级和故障响应成本。
 
-Passing lab unit tests is necessary evidence, but it is not a promotion decision.
+lab 单元测试通过是必要证据，但不是进入生产的决策。

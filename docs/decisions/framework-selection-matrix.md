@@ -1,10 +1,10 @@
-# Framework Selection Matrix
+# Java AI 框架选型矩阵
 
-## Decision Context
+## 决策背景
 
 主线面向已有 Spring Boot 研发、测试、安全和可观测体系的 Java 后端团队。框架比较使用相同的业务接口、规则、数据集和验收指标；API 写法更短或示例更多，不足以改变主线。
 
-| Candidate | Spring team fit | Chat/Output/RAG/Tool/MCP | Agent runtime | Security/Observation integration | Provider reach | Dependency risk | Exit cost | Decision |
+| 候选方案 | Spring 团队适配度 | Chat/Output/RAG/Tool/MCP | Agent 运行时 | 安全与可观测集成 | Provider 覆盖 | 依赖风险 | 退出成本 | 决策 |
 |---|---|---|---|---|---|---|---|---|
 | Spring AI | 高：沿用 Spring Boot 配置、DI、测试和 Actuator | 主线能力覆盖完整 | 提供模型、Advisor、Tool 和 MCP 基础，不把它当完整 Agent runtime | 高：可直接接 Spring Security、Micrometer 和 OpenTelemetry | 多 Provider 抽象，特有能力可能滞后 | 中：需锁定 Boot/AI/Provider 兼容组合 | 中：通过业务端口隔离后可控 | Java 21 主线 |
 | Spring AI Alibaba | 高：建立在 Spring AI 之上 | 继承 Spring AI，并强化通义/DashScope 生态 | 强：官方提供 ReactAgent、Graph 和多 Agent 编排 | 中高：仍处于 Spring 体系，但扩展运行时需单独验证 | 国内阿里云生态更直接 | 中高：同时受 Spring AI 与 Alibaba 版本矩阵影响 | 中高 | 放入独立 lab，使用相同接口、规则和数据集验证 |
@@ -13,13 +13,13 @@
 | Provider SDK | 低：只解决供应商 API 调用 | Chat 通常最及时；RAG、Tool 治理、MCP 和观测要自行拼装 | 无统一运行时 | 低：认证、重试、指标和审计需自行接入 | 单一 Provider 最深 | 高：业务代码容易绑定供应商协议 | 高 | 仅在 Spring AI 缺失关键能力时放入窄适配器 |
 | Existing company AI platform | 取决于公司平台 API 和接入规范 | 取决于平台已治理能力 | 取决于平台 | 若已统一身份、配额、审计和观测则很高 | 由公司平台决定 | 取决于平台 SLA 和版本治理 | 取决于接口稳定性 | 公司已有强制平台时，优先遵守平台接入规范，而不是绕过平台直连 Provider |
 
-## Why Spring AI Is Mainline
+## 为什么选择 Spring AI 作为主线
 
 选择 Spring AI 不是因为它在每个维度都最强，而是它对目标团队的综合迁移成本最低：模型调用可以留在基础设施适配器，业务层继续使用 Spring 团队熟悉的依赖注入、安全、配置、测试和可观测方式。主线仍要通过业务端口控制退出成本，不能让 Controller、领域对象或跨服务接口暴露 Spring AI 类型。
 
 Spring AI Alibaba、LangChain4j 和 AgentScope 都有明确价值，但价值点不同。把它们同时装进主 reactor，只会制造依赖冲突和多套运行时语义，无法形成可靠比较。独立 labs 使用相同业务接口、规则和数据集，差异才能落到代码量、行为、Trace、评测结果和维护成本。
 
-## Replacement Conditions
+## 重新评审条件
 
 满足以下任一条件时重新评审主线：
 
@@ -30,7 +30,7 @@ Spring AI Alibaba、LangChain4j 和 AgentScope 都有明确价值，但价值点
 
 更换主线必须新增 ADR，并提供依赖树、回归结果、迁移影响和回滚路径。
 
-## Official References
+## 官方资料
 
 - [Spring AI Reference](https://docs.spring.io/spring-ai/reference/)
 - [Spring AI Alibaba Overview](https://java2ai.com/docs/overview/)

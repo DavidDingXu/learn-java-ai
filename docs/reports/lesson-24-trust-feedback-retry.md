@@ -1,8 +1,7 @@
-# Lesson 24 Trust, Feedback And Retry Evidence
+# Trust, Feedback And Retry Verification
 
 Status: VERIFIED_LOCAL_ATTEMPT_SCOPED_INTERACTION
 
-Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 
 ## Verified
 

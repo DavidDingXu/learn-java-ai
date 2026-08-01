@@ -1,4 +1,4 @@
-# 第 34 篇：Agent 评测验证记录
+# Agent 评测验证记录
 
 Status: VERIFIED_AGENT_EVALUATION_PIPELINE
 

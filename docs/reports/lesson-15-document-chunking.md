@@ -1,4 +1,4 @@
-# Lesson 15 Document Chunking Evidence
+# Document Chunking Verification
 
 Status: IMPLEMENTED_WITH_DETERMINISTIC_TESTS
 

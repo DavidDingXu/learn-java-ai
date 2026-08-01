@@ -1,12 +1,12 @@
-# System Context
+# 系统上下文
 
-## Status
+## 实现状态
 
 Knowledge Service 已实现受 JWT 保护的文档上传与发布、JDBC/Flyway 持久化、pgvector 索引写入和检索；Customer BFF 已实现客户身份、委托令牌、完整回答、SSE、短时会话、反馈、重试和升级工单；Customer Web 已实现流式咨询、引用展示、反馈、重试和转人工页面；Ticket Agent Service 已实现可信任务身份、受限步数规划、服务端 Tool 目录、人工确认、幂等、JDBC/Flyway 持久化、审计和 HTTP 下游适配器；JDK8 客户端已能查询任务并提交确认。目标 PostgreSQL 容量、公司 IdP、生产网关与下游联调、持久 UNKNOWN 对账和端到端容量测试仍需在目标环境完成。
 
 下图同时包含当前可运行连线和后续目标。BFF 到 Knowledge 的回答/SSE、BFF 到 Ticket 的幂等升级，以及 JDK8 客户端到 Ticket 的查询和确认已经有代码；生产 CRM 的业务写入实现、回调部署和外部环境验收仍不能从图中推断已经交付。
 
-## Business Context
+## 业务上下文
 
 项目围绕一条连续业务链展开：客户先在 C 端咨询政策或订单问题，知识服务给出带依据的回答；无法解决的问题升级为工单；客服人员在 JDK8 业务终端确认高风险动作；评测与可观测能力贯穿整条链路。
 
@@ -28,16 +28,16 @@ flowchart LR
 
 Customer BFF 是渠道边界，不复制知识或工单领域。JDK8 系统仍是工单状态和业务写入的系统记录；AI 服务不能绕过它直接修改核心业务数据。
 
-## Executable Boundaries
+## 可执行边界
 
-| Build boundary | Current implementation | Target responsibility |
+| 构建边界 | 当前实现 | 目标职责 |
 |---|---|---|
 | Main reactor | Knowledge、Ticket、BFF、Eval Runner 可构建；RAG、C 端会话和幂等工单升级已形成连续 HTTP 链路 | Java 21 业务主线 |
 | Framework labs | 三个隔离模块可独立构建 | 使用同一业务接口、规则和数据集的框架迁移实验 |
 | JDK8 client | 使用 JDK 8 独立编译和测试 | 老系统通过版本化 HTTP/OpenAPI 接口接入 |
 | Customer Web | React 应用可独立构建，已接入 BFF 的命名 SSE、引用、反馈、重试和工单升级接口 | C 端咨询交互；生产登录由公司身份系统适配 |
 
-## Integration Rules
+## 集成规则
 
 - 服务间第一版使用 HTTP/OpenAPI，不为尚不存在的消费方预建消息中间件和事件协议。
 - 下游服务重新校验 delegated identity，不把请求体或 `X-User-Id`、`X-Tenant-Id` 一类头字段当成授权事实。
@@ -47,7 +47,7 @@ Customer BFF 是渠道边界，不复制知识或工单领域。JDK8 系统仍�
 - Spring AI 类型只存在于 Knowledge Service、Ticket Agent Service 的基础设施适配器；业务端口分别使用知识问答和工单规划语义。
 - Eval Runner 通过版本化 HTTP 接口执行评测，不能依赖服务实现类或直接读取生产数据库；内部评测端点使用独立 `knowledge:eval` 权限。
 
-## Current Implementation And Limits
+## 当前实现与限制
 
 - 根 Maven reactor 只包含 Knowledge Service、Ticket Agent Service、Customer BFF 和 Eval Runner。
 - Knowledge Service 与 Ticket Agent Service 允许在各自基础设施层引入 Spring AI Provider starter；BFF、Eval Runner、JDK8 客户端和公开接口不得依赖 Spring AI 类型。
@@ -62,4 +62,4 @@ Customer BFF 是渠道边界，不复制知识或工单领域。JDK8 系统仍�
 - Customer BFF 当前使用进程内会话和限流适配器；多实例部署必须替换为支持 TTL 与原子版本控制的共享存储和共享限流器。
 - Ticket Agent 的运行配置使用 PostgreSQL/Flyway 保存任务、版本、确认执行状态、请求指纹和审计；生产环境仍需验证目标数据库的事务隔离、连接池、并发、备份恢复和容量。
 
-更细的业务时序见 [Customer Consultation Flow](customer-consultation-flow.md)，数据与职责归属见 [Service Ownership](service-ownership.md)。
+更细的业务时序见[客户咨询与工单协同流程](customer-consultation-flow.md)，数据与职责归属见[服务职责与数据所有权](service-ownership.md)。

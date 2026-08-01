@@ -1,8 +1,7 @@
-# Lesson 45 LangChain4j RAG Contract Evidence
+# LangChain4j RAG Contract Verification
 
 Status: VERIFIED_CONTRACT_REUSE
 
-Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## Verified
 

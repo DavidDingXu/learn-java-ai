@@ -1,4 +1,4 @@
-# Lesson 21 RAG Evaluation Evidence
+# RAG Evaluation Verification
 
 Status: VERIFIED_LOCAL_EVALUATION_CONTRACT
 
@@ -36,6 +36,6 @@ Status: VERIFIED_LOCAL_EVALUATION_CONTRACT
 
 ## Evidence Boundary
 
-本地测试覆盖评测规则、公式和运行编排，不提供共享环境的 Recall@K 结论。计算目标指标前，必须先准备文档、ACL 和向量索引，再按 `docs/runbooks/model-interaction-eval.md` 使用 `java -jar` 与 `--bearer-token-file` 连接目标知识服务。仓库中的 Shell 与 PowerShell 入口只为共享 CI 聚合这些步骤，不是读者本地验证的前置条件。
+本地测试覆盖评测规则、公式和运行编排，不提供共享环境的 Recall@K 结论。计算目标指标前，必须先准备文档、ACL 和向量索引，再按 `docs/runbooks/model-interaction-eval.md` 使用 `java -jar` 与 `--bearer-token-file` 连接目标知识服务。仓库中的 Shell 与 PowerShell 入口用于共享 CI 聚合这些步骤，日常本地回归不依赖它们。
 
 当前指标还没有覆盖 Precision@K、nDCG、禁止召回、ACL 泄漏率、时效命中率、分组基线和回答忠实度，不能用现有聚合结果代替这些判断。

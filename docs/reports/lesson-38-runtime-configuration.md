@@ -1,4 +1,4 @@
-# Lesson 38 Runtime Configuration Evidence
+# Runtime Configuration Verification
 
 Status: VERIFIED_SINGLE_RUNTIME_CONFIGURATION
 

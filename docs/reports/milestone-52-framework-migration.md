@@ -1,4 +1,4 @@
-# 里程碑 52：框架迁移与协议互操作
+# 框架迁移与协议互操作
 
 状态：已完成本地框架与协议边界验证（`VERIFIED_LOCAL_FRAMEWORK_BOUNDARIES`）
 

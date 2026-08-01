@@ -1,8 +1,7 @@
-# Lesson 47 Framework Coexistence Evidence
+# Framework Coexistence Verification
 
 Status: VERIFIED_CAPABILITY_ROUTING
 
-Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## Verified
 

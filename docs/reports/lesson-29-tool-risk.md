@@ -1,8 +1,7 @@
-# Lesson 29 Tool Risk Evidence
+# Tool Risk Verification
 
 Status: VERIFIED_SERVER_SIDE_RISK_CLASSIFICATION
 
-Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
 
 ## Verified
 

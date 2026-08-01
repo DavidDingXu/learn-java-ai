@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/DavidDingXu/java-ai-engineering-practice/security/advisories/new
+    about: 越权、密钥泄露、隐私或其他漏洞请私密报告。

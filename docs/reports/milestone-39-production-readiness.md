@@ -1,4 +1,4 @@
-# 里程碑 39：生产工程基线
+# 生产工程基线
 
 状态：已完成本地发布门禁验证（`VERIFIED_LOCAL_GATE_IMPLEMENTATION`）
 

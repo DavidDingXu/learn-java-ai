@@ -1,4 +1,4 @@
-# Lesson 16 pgvector Search Evidence
+# pgvector Search Verification
 
 Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 

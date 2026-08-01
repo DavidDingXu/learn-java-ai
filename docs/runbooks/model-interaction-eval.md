@@ -24,7 +24,7 @@ Windows PowerShell 使用相同的 Maven 和 `java -jar` 参数，将换行符�
 
 ## 真实模型评测走公开 HTTP 边界
 
-真实模型评测应指向已启用 JWT 和模型 Provider 的 Knowledge Service。模型、数据库和身份参数由目标环境 `application.yml` 与部署密钥系统提供，读者无需为本地契约评测配置这些值。
+真实模型评测应指向已启用 JWT 和模型 Provider 的 Knowledge Service。模型、数据库和身份参数由目标环境 `application.yml` 与部署密钥系统提供；本地契约评测不使用这些值。
 
 准备一枚包含正确 issuer、audience、actor、tenant、subject 和 `knowledge:answer` scope 的短时令牌，把它写入权限受限且不会提交的 `target/eval-secrets/model-token` 文件，然后运行：
 

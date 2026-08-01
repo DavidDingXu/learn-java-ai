@@ -1,8 +1,7 @@
-# Lesson 43 Spring AI Alibaba Compatibility Evidence
+# Spring AI Alibaba Compatibility Verification
 
 Status: VERIFIED_DEPENDENCY_ISOLATION
 
-Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## Verified
 

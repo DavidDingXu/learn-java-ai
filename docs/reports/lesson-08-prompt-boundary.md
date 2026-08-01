@@ -1,8 +1,7 @@
-# Lesson 08 Prompt Boundary Evidence
+# Prompt Boundary Verification
 
 Status: VERIFIED
 
-- Implementation commit: `f5532160ae5018da237567e5855bd20bb7ce2123`
 - Prompt version: `knowledge-answer-v1`
 - Prompt resource: `prompts/knowledge-answer/v1/system.txt`
 - Live case: `prompt-injection` in `golden-set-v2.jsonl`

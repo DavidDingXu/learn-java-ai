@@ -1,0 +1,49 @@
+name: Feature request
+description: 提出可验收的能力改进
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先说明要解决的业务问题和约束，再说明候选方案。只增加一个框架或中间件不是完整的需求。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的问题
+      description: 当前哪个使用场景无法完成，或存在什么明确风险？
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: 现有约束
+      description: 说明兼容性、安全、部署、数据或运维约束。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 候选方案
+      description: 说明建议改动的模块、接口和失败处理边界。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收方式
+      description: 列出可通过测试、指标或可见业务结果检查的条件。
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 已考虑的替代方案
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: 边界确认
+      options:
+        - label: 我已检查这个能力不会破坏现有构建和服务边界，或已明确说明必要性。
+          required: true

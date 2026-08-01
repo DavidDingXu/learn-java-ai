@@ -1,8 +1,7 @@
-# Lesson 46 LangChain4j Tool And Structured Output Evidence
+# LangChain4j Tool And Structured Output Verification
 
 Status: VERIFIED_READ_ONLY_TOOL_LOOP
 
-Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## Verified
 

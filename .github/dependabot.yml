@@ -1,0 +1,46 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      mainline-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: maven
+    directory: /labs
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      labs-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: maven
+    directory: /integrations/jdk8-client
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: npm
+    directory: /apps/customer-web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      customer-web-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

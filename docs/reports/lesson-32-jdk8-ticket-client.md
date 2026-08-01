@@ -1,8 +1,7 @@
-# Lesson 32 JDK8 Ticket Client Evidence
+# JDK8 Ticket Client Verification
 
 Status: VERIFIED_JAVA8_HTTP_CLIENT_CONTRACT
 
-Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
 
 ## Verified
 

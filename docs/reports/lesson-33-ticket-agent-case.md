@@ -1,8 +1,7 @@
-# Lesson 33 Ticket Agent Case Evidence
+# Ticket Agent Case Verification
 
 Status: VERIFIED_COMPONENT_CHAIN_SHARED_ENVIRONMENT_REQUIRED
 
-Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
 
 ## Verified
 

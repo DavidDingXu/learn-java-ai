@@ -1,8 +1,7 @@
-# Lesson 36 Observability Evidence
+# Observability Verification
 
 Status: VERIFIED_LOW_CARDINALITY_AGENT_METRICS
 
-Implementation commit: `b8fd7c46e2329e48cdbdbedfcc58e8097afe306d`
 
 ## Verified
 

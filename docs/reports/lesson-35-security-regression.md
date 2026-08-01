@@ -1,8 +1,7 @@
-# Lesson 35 AI Security Regression Evidence
+# AI Security Regression Verification
 
 Status: VERIFIED_LOCAL_SECURITY_PIPELINE_SHARED_ENVIRONMENT_REQUIRED
 
-Implementation commit: `b8fd7c46e2329e48cdbdbedfcc58e8097afe306d`
 
 ## Verified
 

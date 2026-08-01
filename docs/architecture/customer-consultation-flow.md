@@ -1,10 +1,10 @@
-# Customer Consultation Flow
+# 客户咨询与工单协同流程
 
-## Purpose
+## 流程目标
 
 这条流程依次处理 C 端咨询、知识回答、工单升级和 JDK8 人工确认。第一版选择同步 HTTP/OpenAPI，是因为每次调用都有明确发起方、结果接收方和超时边界；异步消息只在出现明确的削峰、重放或跨事务需求时引入。
 
-## Target Sequence
+## 完整时序
 
 ```mermaid
 sequenceDiagram
@@ -34,7 +34,7 @@ sequenceDiagram
 
 当前已经实现 Customer Web 的流式咨询、引用、反馈、重试和转人工页面，Customer BFF 的客户 JWT 边界、RFC 8693 Token Exchange、Knowledge HTTP/SSE 调用、短时会话和幂等工单升级；Ticket Agent Service 已实现受限规划、Tool 目录、知识查询、风险分级、版本绑定确认、确认幂等、审计、PostgreSQL/Flyway 持久化和 HTTP 下游适配器；独立 Java 8 客户端已能查询任务并提交确认。目标数据库迁移与容量测试、公司 IdP、生产网关、外部 JDK8 Tool 服务和完整端到端联调仍需在公司环境完成。
 
-## Integration Boundaries
+## 集成边界
 
 1. Customer Web 只把客户令牌交给 BFF，不直接调用 Knowledge Service。
 2. BFF 负责委托身份，不把 `tenantId`、`userId`、角色或部门塞进业务请求体。
@@ -43,9 +43,9 @@ sequenceDiagram
 5. Ticket Agent Service 生成的是受控建议和待确认任务，不拥有最终业务写权限。
 6. JDK8 系统仍是工单状态和业务写入的权威数据源，人工确认由该系统的业务终端执行。
 
-## Failure Branches
+## 失败分支
 
-| Failure | Owner | Required behavior |
+| 失败场景 | 处理方 | 必须的行为 |
 |---|---|---|
 | 客户令牌无效 | Customer BFF | 在渠道边界拒绝，不调用下游 |
 | 委托令牌无效或受众不匹配 | Knowledge / Ticket | 下游再次拒绝，不能信任 BFF 自报身份 |
@@ -55,6 +55,6 @@ sequenceDiagram
 | 重复确认请求 | Ticket / JDK8 client | 使用幂等键返回已有结果，不重复写业务状态 |
 | 下游超时 | 调用方 | 按用例配置超时、重试和熔断；非幂等写操作不得自动盲重试 |
 
-## Data Sharing Rule
+## 数据共享规则
 
 服务协作以版本化 HTTP/OpenAPI 接口为准，不共享领域 JAR，也不跨服务访问另一个服务的数据库。确需共享的只有 OpenAPI、JSON Schema、错误码和测试夹具；这些接口定义不包含服务内部实体或持久化模型。

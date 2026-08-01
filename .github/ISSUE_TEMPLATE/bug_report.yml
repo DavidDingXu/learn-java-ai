@@ -1,0 +1,82 @@
+name: Bug report
+description: 报告可以稳定复现的缺陷
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先搜索已有 Issue，并在可能的情况下使用最新默认分支复现。安全漏洞不要在这里提交，请阅读 SECURITY.md。
+  - type: textarea
+    id: summary
+    attributes:
+      label: 问题概述
+      description: 用一段话说明实际行为和影响。
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      description: Commit SHA、tag 或分支。
+      placeholder: column-v1.0.6
+    validations:
+      required: true
+  - type: dropdown
+    id: module
+    attributes:
+      label: 模块
+      options:
+        - knowledge-service
+        - ticket-agent-service
+        - customer-bff
+        - customer-web
+        - eval-runner
+        - jdk8-client
+        - labs
+        - contracts or datasets
+        - scripts or documentation
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境
+      description: 操作系统、JDK、Node.js、Profile 和相关外部依赖。不要粘贴密钥、Token 或内网地址。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 提供最小命令、请求或测试。
+      placeholder: |
+        1. 执行 ...
+        2. 调用 ...
+        3. 观察到 ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 脱敏日志或失败测试
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前检查
+      options:
+        - label: 我已搜索已有 Issue。
+          required: true
+        - label: 我已删除密钥、Token、用户数据和内网信息。
+          required: true
+        - label: 这不是需要私密报告的安全漏洞。
+          required: true

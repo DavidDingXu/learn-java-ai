@@ -1,4 +1,4 @@
-# Lesson 02 Architecture Review
+# 架构边界复核
 
 ## Review Scope
 
@@ -16,10 +16,6 @@
 - `docs/architecture/customer-consultation-flow.md`
 - `docs/architecture/service-ownership.md`
 - `docs/adr/0002-build-boundaries.md`
-
-## Commit
-
-提交基线：`3be7f19`。该提交已通过主 reactor、独立 labs、JDK8 独立客户端构建和项目接口检查。
 
 ## Accepted Boundaries
 
@@ -47,4 +43,4 @@
 
 ## Evidence Limit
 
-这是代码结构和架构边界复核，不是运行实验。业务接口、委托身份、模型回答、工单升级和 JDK8 动作仍需在后续提交中逐项实现和验证。
+这是代码结构和架构边界复核，不是运行实验。业务接口、委托身份、模型回答、工单升级和 JDK8 动作的实际行为，需要由对应的契约、集成或真实环境测试支持。

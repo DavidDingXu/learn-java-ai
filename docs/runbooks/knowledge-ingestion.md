@@ -1,4 +1,4 @@
-# Knowledge Ingestion
+# 知识文档导入
 
 Knowledge Service 的 RAG 写入链路包含上传原文、保存文档与版本、发布 ACL 和索引任务，以及 Worker 切分原文、生成 Embedding 并写入 pgvector。业务版本和检索版本分别管理；新版本索引完成前，已有文档继续使用上一版索引。
 
@@ -77,7 +77,7 @@ java-ai:
 
 确认 `/actuator/health` 返回 `UP` 后再上传文档。Health 不会替你验证 Embedding 质量或数据库容量。
 
-## Upload A Draft Version
+## 上传草稿版本
 
 `metadata` 是 JSON Part，`file` 是 Markdown 或纯文本文件，单文件上限 5 MiB：
 
@@ -101,7 +101,7 @@ curl.exe --fail-with-body `
 
 首次上传返回 `201`、版本号 `1` 和 revision `1`。同一文档再次上传时，`expectedRevision` 必须使用上一次写操作返回的 revision；内容哈希重复或 revision 过期返回 `409`。
 
-## Publish And Create The Index Task
+## 发布并创建索引任务
 
 把 `effectiveFrom` 设置为当前时间或过去时间。当前状态模型不提前激活未来版本；如果业务需要定时发布，由调度系统在生效时间调用此接口。
 
@@ -145,7 +145,7 @@ Invoke-RestMethod -Method Post `
 
 发布成功表示业务版本已经切换，不表示新版本索引已经可查询。如果这是一份已有索引的文档，读取请求会继续命中上一版索引；如果是首次发布，因为没有旧索引可用，新分块写入并激活前不会返回这份文档的内容。
 
-## Run The Index Worker
+## 运行索引 Worker
 
 手动接口从已验证 JWT 中读取 `tenantId`，每次至多领取该租户的一个到期任务：
 
@@ -168,7 +168,7 @@ Invoke-RestMethod -Method Post `
 
 Worker 先在数据库事务外读取原文、切分并调用 Embedding 服务，期间每隔约一个租期的三分之一续租。续租、完成和失败写入都会校验任务 ID、Worker、`leaseAttempt` 和当前租约。进入短写事务后，sink 还会校验租户、文档、版本和任务类型；只有租约仍有效才会写入目标版本。新分块和 `document_search_version` 指针在同一个事务中提交。租约已丢失、分块写入失败、目标版本已被替代或已过期时，事务回滚，原检索版本不变。
 
-## Verify The Result
+## 验证写入结果
 
 ```sql
 select task_id, status, attempts, error_code
@@ -187,7 +187,7 @@ where tenant_id = 'tenant-a' and document_id = 'refund-policy';
 
 读取链路先确认文档存在当前有效的 `PUBLISHED` 业务版本，再从 `document_search_version` 指向的已完成索引中取分块，并在 TopK 前应用 JWT 租户、用户和部门 ACL。ACL 属于整份文档，本次发布写入的新 ACL 会立即约束上一版索引。替换索引期间，返回结果里的 `documentVersion` 可能暂时仍是上一版。
 
-## Production Replacements
+## 生产环境替换项
 
 默认 `LocalFileDocumentObjectStore` 便于单机运行。多实例部署必须换成 S3 兼容对象存储，并保留相同的租户隔离 key、不可变原文和读取接口。上线前还要验证 PostgreSQL/pgvector 扩展版本、Embedding 维度、索引构建时间、任务积压告警、对象与元数据孤儿清理、备份恢复及容量上限。
 

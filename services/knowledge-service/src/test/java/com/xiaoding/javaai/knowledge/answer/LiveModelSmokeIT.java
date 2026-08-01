@@ -84,7 +84,7 @@ class LiveModelSmokeIT {
                 .orElse("none");
 
         String report = """
-                # 第 04 讲真实模型验证
+                # 真实模型调用验证
 
                 Status: LIVE_MODEL
 

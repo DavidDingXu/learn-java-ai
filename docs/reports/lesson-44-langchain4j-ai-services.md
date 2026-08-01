@@ -1,8 +1,7 @@
-# Lesson 44 LangChain4j AI Services Evidence
+# LangChain4j AI Services Verification
 
 Status: VERIFIED_ISOLATED_LAB
 
-Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## Verified
 

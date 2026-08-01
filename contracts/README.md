@@ -1,15 +1,13 @@
-# Contracts
+# 接口契约
 
-The public boundary is HTTP/OpenAPI first. Java service modules do not share a domain JAR with callers.
+服务间以 HTTP/OpenAPI 作为公开边界，不通过共享领域 JAR 传递 Java 对象。
 
-- `openapi/`: service-facing OpenAPI 3.1 documents.
-- `json-schema/`: reusable business request schemas.
-- `fixtures/`: positive and negative examples executed by Eval Runner.
+- `openapi/`：Customer BFF、Knowledge Service、Ticket Agent Service 与 JDK8 Legacy Tool 的 OpenAPI 3.1 文档。
+- `json-schema/`：可独立校验的业务请求和模型输出结构。
+- `fixtures/`：由 Eval Runner 和仓库契约测试执行的正反例。
 
-Authentication and authorization facts come from verified tokens. Business request bodies never accept caller-supplied user, tenant, role or department values.
+身份与授权信息只来自已验证的 Token。业务请求体不接收调用方传入的用户、租户、角色或部门字段。C 端契约只表达问题、会话、反馈和升级原因；信任身份由 BFF 委托。
 
-服务间 HTTP/OpenAPI 与 JSON Schema 的协议源文件放在这里。该目录不发布共享领域 Jar，服务也不能通过 Java 依赖共享领域对象。
+当前交互采用版本化 HTTP/OpenAPI。项目没有为未实现的消费方预建 Kafka、Outbox 或共享事件模型。
 
-第一版只采用版本化 HTTP/OpenAPI 接口，不预建消息协议、Kafka 或 Outbox。
-
-当前公开接口定义覆盖 Customer BFF、Knowledge Service、Ticket Agent Service 与 JDK8 Legacy Tool。C 端请求只包含问题、会话标识、反馈和升级原因；租户、客户、角色与部门仍由令牌提供。
+仓库契约测试会检查身份字段、幂等键、错误响应和 Java 8 兼容性，可通过项目根目录的 `scripts/verify-unit.sh` 或 `scripts/verify-unit.ps1` 统一执行。

@@ -1,8 +1,7 @@
-# Lesson 37 Production Resilience Evidence
+# Production Resilience Verification
 
 Status: VERIFIED_OPERATION_SPECIFIC_RESILIENCE
 
-Implementation commit: `b8fd7c46e2329e48cdbdbedfcc58e8097afe306d`
 
 ## Verified
 

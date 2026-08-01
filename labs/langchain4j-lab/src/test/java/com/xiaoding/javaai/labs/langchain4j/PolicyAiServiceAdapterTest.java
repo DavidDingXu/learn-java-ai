@@ -28,8 +28,27 @@ class PolicyAiServiceAdapterTest {
     void rejectsBlankModelAnswersAtTheBusinessBoundary() {
         PolicyAnswerPort port = new LangChain4jPolicyAnswerAdapter(new CapturingModel("  "));
 
-        assertThrows(IllegalArgumentException.class,
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
                 () -> port.answer(new PolicyQuestion("tenant-a", "退款多久到账？")));
+
+        assertEquals("MODEL_OUTPUT_INVALID", exception.getMessage());
+        assertTrue(exception.getCause() instanceof IllegalArgumentException);
+    }
+
+    @Test
+    void mapsModelFailuresToAStableApplicationError() {
+        PolicyAnswerPort port = new LangChain4jPolicyAnswerAdapter(new ChatModel() {
+            @Override
+            public ChatResponse doChat(ChatRequest request) {
+                throw new RuntimeException("provider-specific failure");
+            }
+        });
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> port.answer(new PolicyQuestion("tenant-a", "退款多久到账？")));
+
+        assertEquals("MODEL_INVOCATION_FAILED", exception.getMessage());
+        assertEquals("provider-specific failure", exception.getCause().getMessage());
     }
 
     private static final class CapturingModel implements ChatModel {

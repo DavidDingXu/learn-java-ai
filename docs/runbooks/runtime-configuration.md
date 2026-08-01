@@ -1,6 +1,6 @@
-# Runtime Configuration
+# 运行配置
 
-## Configuration Boundaries
+## 配置边界
 
 Knowledge Service、Ticket Agent Service 和 Customer BFF 各自只保留一份主 `application.yml`。每份文件都包含通用参数、默认 `demo` 文档和显式 `production` 文档。项目根目录还有可提交的 `config/application.example.yml`；真实模型测试读取由它复制出来的本地 `config/application.yml`。
 
@@ -12,7 +12,7 @@ Knowledge Service、Ticket Agent Service 和 Customer BFF 各自只保留一份�
 4. 普通测试使用 `src/test/resources/application-test.yml`，不访问外部网络。
 5. 仓库中只保留不可用的密钥占位值；生产密钥必须由密钥系统或部署平台覆盖。
 
-## Start The Demo Applications
+## 启动本地应用
 
 从项目根目录分别启动：
 
@@ -26,7 +26,7 @@ Windows 使用相同的 Maven 参数，把入口换成 `mvnw.cmd`。默认端口
 
 `demo` 路径只用于启动应用、检查 health 和阅读代码结构。被关闭的外部能力会明确返回不可用，不会返回固定答案或伪造下游成功。
 
-## Run A Real Model Test
+## 运行真实模型测试
 
 先复制演示配置，再填写 `spring.ai.openai.api-key`：
 
@@ -62,7 +62,7 @@ Windows PowerShell：
 
 `config/application.yml` 只为减少本地演示步骤而存在，并已被 Git 忽略。
 
-## Production Configuration
+## 生产配置
 
 各服务 `application.yml` 的 `production` 文档列出真实适配器需要的完整 Spring 配置路径：
 
@@ -74,7 +74,7 @@ Windows PowerShell：
 
 Ticket Agent 的远程 Tool 在生产示例中仍然默认关闭。接入公司的短时服务令牌适配器之前，不应为了跑通演示而把开发 HMAC 签发器带进生产。
 
-## Test Isolation
+## 测试隔离
 
 `src/test/resources/application-test.yml` 关闭模型和外部连接，并为需要状态的测试选择内存适配器。Spring Boot 上下文测试显式使用 `@ActiveProfiles("test")`；模型协议测试使用本地 HTTP Fixture。
 
@@ -86,13 +86,13 @@ Ticket Agent 的远程 Tool 在生产示例中仍然默认关闭。接入公司�
 
 仓库中的 Shell 与 PowerShell 脚本只用于聚合多个构建边界、自动选择本机 JDK 或生成专项报告。它们不是启动 Java 服务的必要入口。
 
-## Verification Scope
+## 验证范围
 
-| Check | Entry point | Covered scope |
+| 检查 | 入口 | 覆盖范围 |
 |---|---|---|
-| Code regression | `./mvnw verify` | Java 构建、接口契约和业务规则 |
+| 代码回归 | `./mvnw verify` | Java 构建、接口契约和业务规则 |
 | Provider API | `LiveModelSmokeIT` | Provider 协议、模型响应和业务映射 |
-| Integration | 目标测试环境 | 数据库、身份、跨服务和下游回执 |
-| Production acceptance | 容量、可用性、迁移和回滚报告 | 目标环境是否满足上线条件 |
+| 外部集成 | 目标测试环境 | 数据库、身份、跨服务和下游回执 |
+| 生产验收 | 容量、可用性、迁移和回滚报告 | 目标环境是否满足上线条件 |
 
 这些检查使用同一组配置路径，但覆盖范围不同，不能用其中一项代替另一项。

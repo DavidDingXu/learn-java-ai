@@ -1,8 +1,7 @@
-# Lesson 26 Agent Control Loop Evidence
+# Agent Control Loop Verification
 
 Status: VERIFIED_CONTROLLED_AGENT_STATE_MACHINE
 
-Implementation commit: `44713c1a26c1e9a4d47354032db8c3e32d5e0b49`
 
 ## Verified
 

@@ -1,8 +1,7 @@
-# Lesson 42 Confirmation Graph Evidence
+# Confirmation Graph Verification
 
 Status: VERIFIED_ISOLATED_GRAPH
 
-Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## Verified
 

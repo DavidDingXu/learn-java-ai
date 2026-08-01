@@ -1,8 +1,7 @@
-# 第 22 课 Customer Web 验证记录
+# Customer Web 验证记录
 
 Status: VERIFIED_LOCAL_BROWSER_AND_BUILD
 
-Implementation commit: `b39c693e74ac488df3a03603f37f548a3a1fe288`
 
 ## 覆盖范围
 

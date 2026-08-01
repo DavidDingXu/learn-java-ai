@@ -1,8 +1,7 @@
-# Lesson 41 Domestic Retrieval Replacement Evidence
+# Domestic Retrieval Replacement Verification
 
 Status: VERIFIED_DETERMINISTIC_METRICS
 
-Implementation commit: `5ee567645050a76bf54719a460b5c7069678572d`
 
 ## Verified
 

@@ -1,4 +1,4 @@
-# 第 12 篇：模型交互评测与观测验证记录
+# 模型交互评测与观测验证记录
 
 Status: VERIFIED_LIVE_MODEL
 

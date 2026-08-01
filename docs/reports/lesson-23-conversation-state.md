@@ -1,8 +1,7 @@
-# Lesson 23 Conversation State Evidence
+# Conversation State Verification
 
 Status: VERIFIED_LOCAL_CONVERSATION_CONTRACT
 
-Implementation commit: `2cbe5398e6cfec9090bed091947f6b0d261077ee`
 
 ## Verified
 

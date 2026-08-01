@@ -1,4 +1,4 @@
-# Lesson 03 Framework Decision
+# 框架选型决策复核
 
 ## Review Scope
 
@@ -18,10 +18,6 @@
 - `docs/adr/0002-build-boundaries.md`
 - `docs/decisions/framework-selection-matrix.md`
 - Spring AI、Spring AI Alibaba、LangChain4j 和 AgentScope 官方文档
-
-## Commit
-
-提交基线：`3be7f19`。依赖树显示 Spring AI Provider starter 只进入 Knowledge Service，三个对照框架仍在独立 labs reactor。
 
 ## Accepted Boundaries
 

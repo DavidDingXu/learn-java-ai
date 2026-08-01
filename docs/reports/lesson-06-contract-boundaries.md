@@ -1,4 +1,4 @@
-# Lesson 06 HTTP and Legacy Contract Evidence
+# HTTP and Legacy Contract Verification
 
 ## Status
 
@@ -6,7 +6,6 @@
 
 ## Evidence boundary
 
-- Input baseline commit: `f1a0989`.
 - Three HTTP/OpenAPI 3.1 documents define the Knowledge, Agent Task and JDK8 legacy-tool boundaries.
 - Two JSON Schema 2020-12 documents reject additional properties, including caller-supplied identity fields.
 - Agent task creation and legacy tool actions require an `Idempotency-Key` header.

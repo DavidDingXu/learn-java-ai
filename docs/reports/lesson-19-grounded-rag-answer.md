@@ -1,4 +1,4 @@
-# Lesson 19 Grounded RAG Answer Evidence
+# Grounded RAG Answer Verification
 
 Status: VERIFIED_LOCAL_GROUNDED_ANSWER_COMPOSITION
 

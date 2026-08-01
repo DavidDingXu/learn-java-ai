@@ -1,8 +1,7 @@
-# Lesson 07 Model Metadata Evidence
+# Model Metadata Verification
 
 Status: VERIFIED
 
-- Implementation commit: `f5532160ae5018da237567e5855bd20bb7ce2123`
 - Application contract: `ModelUsage`, `ModelAnswerDraft`, `KnowledgeAnswer`
 - Provider fixture: `ProviderProtocolFixtureTest`
 - Live evidence: `lesson-04-live-model-smoke.md`

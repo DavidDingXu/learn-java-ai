@@ -1,4 +1,4 @@
-# Lesson 20 Index Job Recovery Evidence
+# Index Job Recovery Verification
 
 Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 

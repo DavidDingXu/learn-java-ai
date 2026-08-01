@@ -61,7 +61,7 @@ test("architecture documents match the executable module boundaries", () => {
   }
 
   assert.match(ownership, /owns|拥有/i);
-  assert.match(ownership, /must not own|不得拥有|不能拥有/i);
+  assert.match(ownership, /must not own|不得拥有|不能拥有|不应拥有/i);
 });
 
 test("service collaboration is contract-first and forbids shared domain state", () => {
@@ -89,9 +89,9 @@ test("Spring AI stays inside business-specific service adapters, not a universal
   assert.match(ticketPom, /spring-ai-starter-model-openai/);
   assert.doesNotMatch(bffPom, /org\.springframework\.ai|spring-ai-/);
   assert.match(decision, /infrastructure adapters|基础设施适配器/i);
-  assert.match(decision, /business language|业务语言/i);
-  assert.match(decision, /does not create a universal model gateway|不建设万能模型网关/i);
-  assert.match(decision, /Replacement Conditions|替换条件/i);
+  assert.match(decision, /business language|业务语言|业务语义/i);
+  assert.match(decision, /does not create a universal model gateway|不建设(?:万能|通用)模型网关/i);
+  assert.match(decision, /Replacement Conditions|替换条件|重新评审条件/i);
 });
 
 test("service security never makes configuration or metrics endpoints anonymous", () => {
@@ -122,14 +122,14 @@ test("framework matrix compares production candidates on the same decision axes"
   }
 
   for (const axis of [
-    "Spring team fit",
+    "Spring 团队适配度",
     "Chat/Output/RAG/Tool/MCP",
-    "Agent runtime",
-    "Security/Observation integration",
-    "Provider reach",
-    "Dependency risk",
-    "Exit cost",
-    "Decision",
+    "Agent 运行时",
+    "安全与可观测集成",
+    "Provider 覆盖",
+    "依赖风险",
+    "退出成本",
+    "决策",
   ]) {
     assert.match(matrix, new RegExp(axis.replaceAll("/", "\\/"), "i"));
   }
@@ -138,7 +138,7 @@ test("framework matrix compares production candidates on the same decision axes"
   assert.match(matrix, /same dataset|相同[^。；\n]{0,24}数据集/i);
 });
 
-test("lesson 02 and 03 reports bind decisions to reviewed evidence", () => {
+test("architecture and framework reviews keep decision evidence explicit", () => {
   const reports = [
     read("docs/reports/lesson-02-architecture-review.md"),
     read("docs/reports/lesson-03-framework-decision.md"),
@@ -146,11 +146,10 @@ test("lesson 02 and 03 reports bind decisions to reviewed evidence", () => {
 
   for (const report of reports) {
     assert.match(report, /Reviewed files|复核文件/i);
-    assert.match(report, /Commit|提交基线/i);
-    assert.match(report, /3be7f19/);
     assert.match(report, /Accepted boundaries|接受的边界/i);
     assert.match(report, /Rejected alternatives|拒绝的方案/i);
     assert.match(report, /Replacement conditions|替换条件/i);
     assert.doesNotMatch(report, /runtime experiment passed|运行实验通过|生产可用/);
+    assert.doesNotMatch(report, /Implementation commit|Input baseline commit|提交基线/);
   }
 });
