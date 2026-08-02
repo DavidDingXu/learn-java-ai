@@ -12,9 +12,7 @@ npm ci
 npm run dev
 ```
 
-打开 `http://127.0.0.1:5173`。开发模式保留了短时令牌输入框，用于连接已部署的 Customer BFF 测试环境。本仓库不内置可冒充真实登录的固定令牌。
-
-默认 `demo` Profile 可以直接启动 Customer BFF，但会关闭客户 JWT 和下游集成，所有咨询 API 都按安全默认值拒绝。它只用于验证 Spring 组装与健康检查，不是一条伪造身份和模型响应的前后端 Demo。
+打开 `http://127.0.0.1:5173`。本地 Customer BFF 默认使用固定身份，令牌输入框可以留空；连接启用了公司鉴权的测试环境时，再输入身份平台签发的短时令牌。
 
 Windows PowerShell 使用相同的 `npm` 命令。
 
@@ -30,9 +28,9 @@ npm run build
 
 ## 完整联调所需条件
 
-完整咨询链路需要已部署的 Customer BFF、Knowledge Service、Ticket Agent 和公司身份平台。对应地址与身份参数写入 Customer BFF `application.yml` 的 `production` 配置段；真实密钥由部署密钥系统覆盖，不提交到仓库。
+本地完整咨询链路需要同时启动 Customer BFF、Knowledge Service 和 Ticket Agent，不要求身份平台。三个服务默认使用 localhost 地址和固定身份，可以直接联调。
 
-联调时由身份平台签发短时客户令牌，然后在“本地联调”中输入。Vite 默认将 `/api` 代理到 `http://localhost:8080`；如果目标 BFF 不在本机，再通过 Vite 的启动配置指向对应环境。
+接入公司测试环境时，再把 BFF 切换到 JWT 与 OAuth2 委托，由身份平台签发短时客户令牌。Vite 默认将 `/api` 代理到 `http://localhost:8080`；如果目标 BFF 不在本机，再通过 Vite 的启动配置指向对应环境。
 
 ## 生产接入边界
 

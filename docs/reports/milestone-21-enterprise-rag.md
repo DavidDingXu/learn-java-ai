@@ -4,7 +4,7 @@ Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 
 ## 已包含的能力
 
-- 受 `knowledge:write` 保护的文档上传与发布接口，租户和操作人来自 JWT。
+- 文档上传与发布接口的租户和操作人来自服务端身份适配器，不接受请求参数覆盖；本地使用固定身份，生产示例使用 JWT。
 - `JdbcKnowledgeDocumentRepository` 保存文档、不可变版本和 revision；Flyway V1-V4 管理文档、ACL、索引任务、分块、发布审计与检索版本指针。
 - 原文通过 `DocumentObjectStore` 隔离存储实现，默认适配器写入本地文件目录。
 - 发布事务同时更新业务版本、文档级 READ ACL 和 `PENDING` 索引任务。
@@ -22,7 +22,7 @@ Status: IMPLEMENTED_WITH_LOCAL_TESTS_AND_EXTERNAL_PROFILE
 ./mvnw -pl services/knowledge-service,quality/eval-runner test
 ```
 
-外部 PostgreSQL/pgvector 验证由目标测试流水线执行，流水线提供一次性数据库连接信息后运行 `./mvnw -pl services/knowledge-service verify -Pexternal-integration`。该 profile 会执行 `Flyway.clean()`，只能连接一次性或专用测试库，不能连接共享库或生产库。这项验证不是本地 demo 的前置条件。
+外部 PostgreSQL/pgvector 验证由目标测试流水线执行，流水线提供一次性数据库连接信息后运行 `./mvnw -pl services/knowledge-service verify -Pexternal-integration`。这个 Maven Profile 会执行 `Flyway.clean()`，只能连接一次性或专用测试库，不能连接共享库或生产库。日常代码回归不依赖这项外部验证。
 
 ## 目标环境仍需完成的工作
 

@@ -5,9 +5,9 @@ Status: VERIFIED_DETERMINISTIC_POLICY
 
 ## 已验证
 
-- Work-unit independence and side-effect facts select single-agent, multi-agent or human-required execution.
-- Side effects produce a real AgentScope `RequireUserConfirmEvent`.
-- Tests cover the single-agent, multi-agent and human-required branches and verify the AgentScope confirmation event type.
+- 工作单元是否独立、是否包含副作用，决定采用单 Agent、多 Agent 或人工介入执行。
+- 存在副作用时生成真实 AgentScope `RequireUserConfirmEvent`。
+- 测试覆盖单 Agent、多 Agent 和人工介入三条分支，并校验 AgentScope 确认事件类型。
 
 ## 验证命令
 
@@ -17,4 +17,4 @@ Status: VERIFIED_DETERMINISTIC_POLICY
 
 ## 外部验证边界
 
-The policy does not claim remote multi-agent execution. Production needs durable tasks, confirmation-to-task binding, delegated identity, budgets, timeout and result contracts.
+该策略不包含远程多 Agent 执行。生产接入还需要持久任务、确认与任务绑定、委托身份、预算、超时和结果接口契约。

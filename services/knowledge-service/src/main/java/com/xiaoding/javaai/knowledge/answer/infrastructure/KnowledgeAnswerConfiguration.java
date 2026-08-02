@@ -34,7 +34,7 @@ class KnowledgeAnswerConfiguration {
 
     @Bean
     @ConditionalOnProperty(
-            name = "java-ai.knowledge.context-source",
+            name = "java-ai.knowledge.mode",
             havingValue = "classpath",
             matchIfMissing = true
     )

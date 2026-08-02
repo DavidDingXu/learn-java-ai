@@ -26,14 +26,12 @@ java-ai:
     knowledge-answer:
       version: knowledge-answer-v1
   security:
+    mode: fixed
     jwt:
-      enabled: false
       issuer: https://identity.example.test
       audience: knowledge-service
       jwk-set-uri: ""
       hmac-secret: ""
       allowed-actors: customer-bff,ticket-agent-service
   knowledge:
-    context-source: classpath
-    ingestion:
-      enabled: false
+    mode: classpath

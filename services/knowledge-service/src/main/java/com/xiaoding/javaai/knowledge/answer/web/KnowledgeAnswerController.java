@@ -4,12 +4,11 @@ import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestion;
 import com.xiaoding.javaai.knowledge.answer.application.AnswerKnowledgeQuestionCommand;
 import com.xiaoding.javaai.knowledge.answer.application.AnswerStreamEvent;
 import com.xiaoding.javaai.knowledge.answer.application.StreamKnowledgeAnswer;
-import com.xiaoding.javaai.knowledge.security.JwtKnowledgeAccessScopeFactory;
+import com.xiaoding.javaai.knowledge.security.KnowledgeAccessScopeProvider;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,24 +26,26 @@ public final class KnowledgeAnswerController {
     private final AnswerKnowledgeQuestion useCase;
     private final StreamKnowledgeAnswer streamUseCase;
     private final Clock clock;
-    private final JwtKnowledgeAccessScopeFactory accessScopeFactory = new JwtKnowledgeAccessScopeFactory();
+    private final KnowledgeAccessScopeProvider accessScopeProvider;
 
     public KnowledgeAnswerController(
             AnswerKnowledgeQuestion useCase,
             StreamKnowledgeAnswer streamUseCase,
-            Clock clock
+            Clock clock,
+            KnowledgeAccessScopeProvider accessScopeProvider
     ) {
         this.useCase = useCase;
         this.streamUseCase = streamUseCase;
         this.clock = clock;
+        this.accessScopeProvider = accessScopeProvider;
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     Mono<KnowledgeAnswerResponse> answer(
             @Valid @RequestBody KnowledgeAnswerRequest request,
-            @AuthenticationPrincipal Jwt jwt
+            Authentication authentication
     ) {
-        return useCase.answer(command(request, jwt))
+        return useCase.answer(command(request, authentication))
                 .map(KnowledgeAnswerResponse::from);
     }
 
@@ -55,19 +56,22 @@ public final class KnowledgeAnswerController {
     )
     Flux<ServerSentEvent<AnswerStreamEvent>> stream(
             @Valid @RequestBody KnowledgeAnswerRequest request,
-            @AuthenticationPrincipal Jwt jwt
+            Authentication authentication
     ) {
-        return streamUseCase.stream(command(request, jwt))
+        return streamUseCase.stream(command(request, authentication))
                 .map(event -> ServerSentEvent.builder(event)
                         .event(eventName(event))
                         .build());
     }
 
-    private AnswerKnowledgeQuestionCommand command(KnowledgeAnswerRequest request, Jwt jwt) {
+    private AnswerKnowledgeQuestionCommand command(
+            KnowledgeAnswerRequest request,
+            Authentication authentication
+    ) {
         return new AnswerKnowledgeQuestionCommand(
                 request.question(),
                 request.conversationContext().toApplication(),
-                accessScopeFactory.create(jwt),
+                accessScopeProvider.currentScope(authentication),
                 Instant.now(clock)
         );
     }

@@ -24,17 +24,16 @@ Windows PowerShell 使用相同的 Maven 和 `java -jar` 参数，将换行符�
 
 ## 真实模型评测走公开 HTTP 边界
 
-真实模型评测应指向已启用 JWT 和模型 Provider 的 Knowledge Service。模型、数据库和身份参数由目标环境 `application.yml` 与部署密钥系统提供；本地契约评测不使用这些值。
+真实模型评测应指向已经配置模型 Provider 的 Knowledge Service。本地默认使用固定身份，不需要 Token；目标环境的模型、数据库和身份参数由部署配置提供。
 
-准备一枚包含正确 issuer、audience、actor、tenant、subject 和 `knowledge:answer` scope 的短时令牌，把它写入权限受限且不会提交的 `target/eval-secrets/model-token` 文件，然后运行：
+本地命令直接运行：
 
 ```bash
 java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
   model-eval \
   --dataset datasets/model-interaction/golden-set-v2.jsonl \
-  --base-url https://knowledge-test.example.com \
+  --base-url http://localhost:8081 \
   --mode LIVE_MODEL \
-  --bearer-token-file target/eval-secrets/model-token \
   --prompt-version knowledge-answer-v1 \
   --environment-id knowledge-test \
   --report docs/reports/model-live-eval \
@@ -45,14 +44,13 @@ java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
 
 ## 检索评测使用已准备的知识环境
 
-目标 Knowledge Service 需要预先导入 `datasets/retrieval/golden-set-v1.jsonl` 引用的版本化文档、ACL 和 Embedding。短时令牌必须包含 `knowledge:eval` scope，以及目标环境接受的 tenant、subject、department、issuer、audience 和 actor。
+Knowledge Service 需要预先导入 `datasets/retrieval/golden-set-v1.jsonl` 引用的版本化文档、ACL 和 Embedding。本地固定身份是 `tenant-a / local-user / support`，数据集文档必须对这组身份可见。
 
 ```bash
 java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
   retrieval-eval \
   --dataset datasets/retrieval/golden-set-v1.jsonl \
-  --base-url https://knowledge-test.example.com \
-  --bearer-token-file target/eval-secrets/retrieval-token \
+  --base-url http://localhost:8081 \
   --top-k 5 \
   --min-recall 0.80 \
   --min-hit-rate 0.90 \
@@ -89,6 +87,8 @@ java -jar quality/eval-runner/target/eval-runner-0.1.0-SNAPSHOT-all.jar \
 
 Runner 会创建任务、运行到终态或等待确认状态，再读取审计时间线。它不调用确认接口，因此数据集执行期间出现任何写 Tool 成功审计，都表示副作用边界失守。
 
-## 凭证和报告边界
+## 连接受保护环境时再提供凭证
+
+连接公司测试环境时，`model-eval` 和 `retrieval-eval` 可以增加 `--bearer-token-file <path>`。令牌应由目标身份系统签发，包含该环境要求的受众、主体、租户和权限。Agent 评测仍需要三枚用途分离的凭证。
 
 令牌文件只适合隔离的短时评测会话，使用后应立即删除。共享流水线中应由凭证系统在运行时创建受限临时文件，并禁止命令回显和日志记录。若令牌曾进入命令历史或 CI 日志，立即撤销，不要等待自然过期。

@@ -5,9 +5,11 @@ import com.xiaoding.javaai.knowledge.retrieval.application.KnowledgeRetrievalRes
 import com.xiaoding.javaai.knowledge.retrieval.application.RetrieveKnowledgeQuery;
 import com.xiaoding.javaai.knowledge.retrieval.application.RetrievedKnowledgeChunk;
 import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeRetriever;
+import com.xiaoding.javaai.knowledge.security.JwtKnowledgeAccessScopeProvider;
 import jakarta.validation.Validation;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -49,11 +51,12 @@ class KnowledgeRetrievalEvaluationControllerTest {
         };
         Clock clock = Clock.fixed(Instant.parse("2026-07-13T04:00:00Z"), ZoneOffset.UTC);
         KnowledgeRetrievalEvaluationController controller =
-                new KnowledgeRetrievalEvaluationController(retriever, clock);
+                new KnowledgeRetrievalEvaluationController(
+                        retriever, clock, new JwtKnowledgeAccessScopeProvider());
 
         KnowledgeRetrievalEvaluationResponse response = controller.evaluate(
                 new KnowledgeRetrievalEvaluationRequest("退款多久到账？", 5),
-                delegatedJwt()
+                new JwtAuthenticationToken(delegatedJwt())
         ).block();
 
         assertThat(response.embeddingModel()).isEqualTo("embedding-v1");

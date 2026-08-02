@@ -18,8 +18,8 @@
 ./mvnw -pl services/ticket-agent-service spring-boot:run
 ```
 
-默认 `demo` Profile 使用内存任务库并关闭模型与远程 Tool，用于检查组装和 health，不会伪造成功执行。评测与安全数据集的运行方式见[模型、检索与 Agent 评测](../../docs/runbooks/model-interaction-eval.md)和 [AI 安全回归](../../docs/runbooks/security-regression.md)。
+默认调用真实 Chat Provider 和 Knowledge Service，任务、确认与审计保存在内存中，写 Tool 使用带幂等检查的本地实现。这样可以直接验证 Agent 主链路，但不能证明重启恢复或真实 Legacy Tool 已经完成联调。评测与安全数据集的运行方式见[模型、检索与 Agent 评测](../../docs/runbooks/model-interaction-eval.md)和 [AI 安全回归](../../docs/runbooks/security-regression.md)。
 
-使用 `-Dspring-boot.run.profiles=production` 可以切换到 PostgreSQL、JWT 和真实模型装配。启动前需要替换本模块 `application.yml` 生产配置段中的占位值；远程 Tool 仍保持关闭。完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
+需要持久化时，将 `java-ai.persistence.mode` 改为 `jdbc`；接入公司身份时，将 `java-ai.security.mode` 改为 `jwt`；有真实 Legacy Tool 后，再把写 Tool 改为 HTTP。完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
 
 生产环境必须使用持久化任务、幂等和审计数据，并补齐下游查询、未知结果对账、积压告警与故障恢复。

@@ -25,15 +25,18 @@ java-ai:
   persistence:
     mode: memory
   agent:
-    downstream-enabled: false
-    downstream-token-mode: disabled
+    knowledge-tool:
+      mode: disabled
+    write-tool:
+      mode: memory
+    downstream-token-mode: local
     max-steps: 4
     max-concurrent-runs: 4
     confirmation-ttl: 15m
     allowed-queues: refund-review,tier-2
   security:
+    mode: fixed
     jwt:
-      enabled: false
       issuer: https://identity.example.test
       audience: ticket-agent-service
       jwk-set-uri: ""

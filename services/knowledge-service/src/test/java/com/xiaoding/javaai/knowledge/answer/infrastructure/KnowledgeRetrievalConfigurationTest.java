@@ -24,7 +24,7 @@ class KnowledgeRetrievalConfigurationTest {
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withUserConfiguration(KnowledgeRetrievalConfiguration.class)
             .withPropertyValues(
-                    "java-ai.knowledge.context-source=retrieval",
+                    "java-ai.knowledge.mode=postgres-rag",
                     "java-ai.knowledge.retrieval.mode=hybrid",
                     "java-ai.knowledge.retrieval.lexical-search=true",
                     "java-ai.knowledge.retrieval.candidate-k=20",

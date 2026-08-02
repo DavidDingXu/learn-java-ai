@@ -5,10 +5,10 @@ Status: VERIFIED_LOCAL_SECURITY_PIPELINE_SHARED_ENVIRONMENT_REQUIRED
 
 ## 已验证
 
-- The 30-case versioned dataset covers confirmation bypass, request-body identity pollution and synthetic sensitive fragments in Agent audit details.
-- Agent Eval checks forbidden execution events and forbidden audit fragments without copying the fragment into the report.
-- Local tests cover the Knowledge JWT boundary, Ticket caller boundary, Tool Catalog, prompt partition and evaluator rules.
-- External evaluation uses separate create, run and read tokens and has no confirmation capability.
+- 版本化数据集包含 30 条用例，覆盖绕过确认、请求体污染身份和 Agent 审计详情中的模拟敏感片段。
+- Agent Eval 检查禁止出现的执行事件和审计片段，且不会把敏感片段复制到报告中。
+- 本地测试覆盖 Knowledge JWT、Ticket 调用方、Tool 目录、Prompt 分区和评测规则边界。
+- 外部评测分别使用创建、运行和读取令牌，评测进程不具备确认权限。
 
 ## 本地验证
 
@@ -20,4 +20,4 @@ Status: VERIFIED_LOCAL_SECURITY_PIPELINE_SHARED_ENVIRONMENT_REQUIRED
 
 ## 外部验证边界
 
-The local suite does not scan application logs or Trace data and does not run a two-tenant data-isolation scenario. The deployed `security-eval` command requires a dedicated test tenant and signed tokens. These checks verify the gate design, not complete production security coverage.
+本地测试不扫描应用日志和 Trace，也没有运行双租户数据隔离场景。部署后的 `security-eval` 需要专用测试租户和已签名的短期令牌。这些结果验证安全门禁的结构，不代表已覆盖全部生产安全风险。

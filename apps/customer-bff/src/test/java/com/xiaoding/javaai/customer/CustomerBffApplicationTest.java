@@ -26,9 +26,9 @@ class CustomerBffApplicationTest {
         assertThat(environment.matchesProfiles("test")).isTrue();
         assertThat(environment.getProperty("spring.application.name"))
                 .isEqualTo("customer-bff");
-        assertThat(environment.getProperty(
-                "java-ai.runtime.external-integrations-enabled", Boolean.class))
-                .isFalse();
+        assertThat(environment.getProperty("java-ai.security.mode")).isEqualTo("fixed");
+        assertThat(environment.getProperty("java-ai.identity.delegation-mode"))
+                .isEqualTo("local");
 
         webTestClient.get()
                 .uri("/actuator/health")

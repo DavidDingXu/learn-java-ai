@@ -5,9 +5,9 @@ Status: VERIFIED_READ_ONLY_TOOL_LOOP
 
 ## 已验证
 
-- A real LangChain4j `@Tool` executes one read-only ticket query in a two-model-call loop.
-- The final JSON maps to `TicketDecision` and is validated against the current ticket id.
-- Tests assert one tool execution and two model calls, then reject a structured result that names another ticket.
+- 真实 LangChain4j `@Tool` 在两轮模型调用中执行一次只读工单查询。
+- 最终 JSON 映射为 `TicketDecision`，并与当前工单 ID 交叉校验。
+- 测试确认只执行一次 Tool、调用两次模型，并拒绝指向其他工单的结构化结果。
 
 ## 验证命令
 

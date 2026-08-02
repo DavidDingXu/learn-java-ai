@@ -19,24 +19,28 @@ class AgentDownstreamConfigurationTest {
             .withBean(Clock.class, Clock::systemUTC);
 
     @Test
-    void keeps_explicit_disabled_adapters_for_docker_free_local_startup() {
-        contextRunner.run(context -> {
+    void uses_http_for_knowledge_and_an_in_memory_write_tool_by_default() {
+        contextRunner
+                .withPropertyValues("java-ai.agent.knowledge-base-url=http://knowledge.test")
+                .run(context -> {
             assertThat(context).hasSingleBean(AgentReadToolExecutor.class);
             assertThat(context).hasSingleBean(LegacyWriteToolExecutor.class);
             assertThat(context.getBean(AgentReadToolExecutor.class))
-                    .isNotInstanceOf(HttpKnowledgeReadToolExecutor.class);
+                    .isInstanceOf(HttpKnowledgeReadToolExecutor.class);
             assertThat(context.getBean(LegacyWriteToolExecutor.class))
-                    .isNotInstanceOf(HttpLegacyWriteToolExecutor.class);
+                    .isInstanceOf(InMemoryLegacyWriteToolExecutor.class);
+            assertThat(context).hasSingleBean(DownstreamAccessTokenProvider.class);
         });
     }
 
     @Test
-    void wires_real_http_adapters_only_when_downstream_calls_are_enabled() {
+    void can_replace_the_local_write_tool_with_the_http_adapter() {
         contextRunner
                 .withBean(DownstreamAccessTokenProvider.class,
                         () -> (task, audience, scope) -> "delegated-token")
                 .withPropertyValues(
-                        "java-ai.agent.downstream-enabled=true",
+                        "java-ai.agent.write-tool.mode=http",
+                        "java-ai.agent.downstream-token-mode=external",
                         "java-ai.agent.knowledge-base-url=http://knowledge.test",
                         "java-ai.agent.legacy-tool-base-url=http://legacy.test",
                         "java-ai.agent.downstream-timeout=2s")

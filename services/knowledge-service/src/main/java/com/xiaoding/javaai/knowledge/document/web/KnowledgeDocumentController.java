@@ -5,6 +5,8 @@ import com.xiaoding.javaai.knowledge.document.application.DocumentUploadService;
 import com.xiaoding.javaai.knowledge.document.application.PublishDocumentCommand;
 import com.xiaoding.javaai.knowledge.document.application.UploadDocumentCommand;
 import com.xiaoding.javaai.knowledge.document.domain.DocumentId;
+import com.xiaoding.javaai.knowledge.document.domain.ActorId;
+import com.xiaoding.javaai.knowledge.security.KnowledgeAccessScopeProvider;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -14,8 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,25 +32,25 @@ import java.time.Clock;
 @Validated
 @RestController
 @RequestMapping("/api/v1/knowledge/documents")
-@ConditionalOnProperty(name = "java-ai.knowledge.ingestion.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "java-ai.knowledge.mode", havingValue = "postgres-rag")
 public final class KnowledgeDocumentController {
 
     private static final int MAX_BUFFERED_UPLOAD_BYTES = 5 * 1024 * 1024 + 1;
 
     private final DocumentUploadService uploadService;
     private final DocumentPublicationService publicationService;
-    private final JwtDocumentWriteIdentityFactory identityFactory;
+    private final KnowledgeAccessScopeProvider accessScopeProvider;
     private final Clock clock;
 
     public KnowledgeDocumentController(
             DocumentUploadService uploadService,
             DocumentPublicationService publicationService,
-            JwtDocumentWriteIdentityFactory identityFactory,
+            KnowledgeAccessScopeProvider accessScopeProvider,
             Clock clock
     ) {
         this.uploadService = uploadService;
         this.publicationService = publicationService;
-        this.identityFactory = identityFactory;
+        this.accessScopeProvider = accessScopeProvider;
         this.clock = clock;
     }
 
@@ -59,14 +60,14 @@ public final class KnowledgeDocumentController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     Mono<ResponseEntity<UploadedDocumentResponse>> upload(
-            @AuthenticationPrincipal Jwt jwt,
+            Authentication authentication,
             @PathVariable
             @Size(max = 160)
             @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._-]*") String documentId,
             @Valid @RequestPart("metadata") UploadDocumentMetadata metadata,
             @RequestPart("file") FilePart file
     ) {
-        DocumentWriteIdentity identity = identityFactory.create(jwt);
+        var scope = accessScopeProvider.currentScope(authentication);
         return DataBufferUtils.join(file.content(), MAX_BUFFERED_UPLOAD_BYTES)
                 .map(buffer -> {
                     byte[] content = new byte[buffer.readableByteCount()];
@@ -80,7 +81,7 @@ public final class KnowledgeDocumentController {
                             ? MediaType.APPLICATION_OCTET_STREAM_VALUE
                             : contentType.getType() + "/" + contentType.getSubtype();
                     return new UploadDocumentCommand(
-                            new DocumentId(documentId), identity.tenantId(), metadata.title(), identity.actorId(),
+                            new DocumentId(documentId), scope.tenantId(), metadata.title(), new ActorId(scope.subjectId()),
                             file.filename(), mediaType, content, metadata.expectedRevision(), clock.instant()
                     );
                 })
@@ -96,16 +97,16 @@ public final class KnowledgeDocumentController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     Mono<ResponseEntity<PublishedDocumentResponse>> publish(
-            @AuthenticationPrincipal Jwt jwt,
+            Authentication authentication,
             @PathVariable
             @Size(max = 160)
             @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._-]*") String documentId,
             @PathVariable int versionNumber,
             @Valid @RequestBody PublishDocumentRequest request
     ) {
-        DocumentWriteIdentity identity = identityFactory.create(jwt);
+        var scope = accessScopeProvider.currentScope(authentication);
         return Mono.fromCallable(() -> publicationService.publish(new PublishDocumentCommand(
-                        identity.tenantId(), new DocumentId(documentId), identity.actorId(), versionNumber,
+                        scope.tenantId(), new DocumentId(documentId), new ActorId(scope.subjectId()), versionNumber,
                         request.expectedRevision(), request.effectiveFrom(), request.effectiveUntil(),
                         request.acl().stream().map(DocumentAclGrantRequest::toApplication).toList()
                 )))

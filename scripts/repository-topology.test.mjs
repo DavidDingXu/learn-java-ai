@@ -461,10 +461,11 @@ test("public runtime documentation matches the single-YAML configuration model",
   }
 
   const readme = read("README.md");
-  assert.match(readme, /spring-boot\.run\.profiles=production/);
+  assert.doesNotMatch(readme, /spring-boot\.run\.profiles=(?:demo|production|local-auth)/);
   assert.match(readme, /config\/application\.yml/);
-  assert.match(readme, /不会被上述启动命令自动加载/);
-  assert.match(read("docs/runbooks/runtime-configuration.md"), /java-ai\.knowledge\.postgres\.\*/);
+  assert.match(readme, /自动加载/);
+  assert.match(readme, /java-ai\.knowledge\.mode[^\n]*postgres-rag/);
+  assert.match(read("docs/runbooks/runtime-configuration.md"), /java-ai\.knowledge\.mode[^\n]*postgres-rag/);
 });
 
 test("verification archive excludes course headings and private workspace revisions", () => {

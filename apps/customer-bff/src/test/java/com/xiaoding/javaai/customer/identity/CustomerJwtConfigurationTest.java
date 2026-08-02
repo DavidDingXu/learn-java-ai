@@ -10,11 +10,11 @@ class CustomerJwtConfigurationTest {
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withUserConfiguration(CustomerJwtConfiguration.class)
             .withPropertyValues(
-                    "java-ai.security.customer-jwt.enabled=true",
-                    "java-ai.security.customer-jwt.issuer=https://identity.example.test",
-                    "java-ai.security.customer-jwt.audience=customer-bff",
-                    "java-ai.security.customer-jwt.hmac-secret=local-development-secret-must-have-at-least-32-bytes",
-                    "java-ai.security.customer-jwt.jwk-set-uri=https://identity.example.test/.well-known/jwks.json"
+                    "java-ai.security.mode=jwt",
+                    "java-ai.security.jwt.issuer=https://identity.example.test",
+                    "java-ai.security.jwt.audience=customer-bff",
+                    "java-ai.security.jwt.hmac-secret=local-development-secret-must-have-at-least-32-bytes",
+                    "java-ai.security.jwt.jwk-set-uri=https://identity.example.test/.well-known/jwks.json"
             );
 
     @Test

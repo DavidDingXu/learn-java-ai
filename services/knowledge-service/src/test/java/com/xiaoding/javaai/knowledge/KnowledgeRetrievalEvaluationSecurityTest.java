@@ -49,8 +49,7 @@ class KnowledgeRetrievalEvaluationSecurityTest {
         SecurityWebFilterChain security = new SecurityConfiguration().securityWebFilterChain(
                 ServerHttpSecurity.http(),
                 beans.getBeanProvider(ReactiveJwtDecoder.class),
-                true,
-                false
+                "jwt"
         );
         return WebTestClient.bindToController(new TestEvaluationController())
                 .webFilter(new WebFilterChainProxy(security))

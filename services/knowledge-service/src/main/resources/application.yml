@@ -1,13 +1,21 @@
-# The default demo profile starts without a database or identity provider.
-# Never commit real production secrets. Override production placeholders through the deployment secret manager.
+# Run from the project root so this service can load the shared model configuration.
+# Start with classpath knowledge; switch one mode when the RAG chapters introduce PostgreSQL.
 server:
   port: 8081
 
 spring:
-  profiles:
-    default: demo
+  config:
+    import:
+      - optional:file:./config/application.yml
+      - optional:file:../../config/application.yml
   application:
     name: knowledge-service
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+  flyway:
+    enabled: false
   reactor:
     context-propagation: auto
   codec:
@@ -44,18 +52,37 @@ java-ai:
   prompt:
     knowledge-answer:
       version: knowledge-answer-v1
+  security:
+    # fixed provides a local identity. Change to jwt when integrating company authentication.
+    mode: fixed
+    jwt:
+      issuer: https://identity.example.com
+      audience: knowledge-service
+      jwk-set-uri: https://identity.example.com/.well-known/jwks.json
+      hmac-secret: ""
+      allowed-actors: customer-bff,ticket-agent-service,knowledge-admin-service
   knowledge:
+    # classpath runs the first model-call chapters. postgres-rag enables upload, indexing and retrieval.
+    mode: classpath
     answer:
       total-timeout: 30s
       retry:
         max-attempts: 2
         delay: 100ms
     retrieval:
+      mode: vector
       top-k: 6
       candidate-k: 20
       lexical-search: true
       rewrite-query: false
       rerank: false
+    object-store:
+      local-root: ./var/knowledge-objects
+    postgres:
+      jdbc-url: jdbc:postgresql://localhost:5432/java_ai_knowledge
+      username: java_ai_knowledge
+      password: replace-with-your-database-password
+      maximum-pool-size: 10
     indexing:
       worker-id: knowledge-indexer-local
       scheduler-enabled: true
@@ -67,81 +94,3 @@ java-ai:
       max-chunk-characters: 1000
       chunk-policy-version: policy-chunk-v1
       embedding-batch-size: 16
-
----
-spring:
-  config:
-    activate:
-      on-profile: demo
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
-      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
-  flyway:
-    enabled: false
-  ai:
-    model:
-      audio:
-        speech: none
-        transcription: none
-      chat: none
-      embedding: none
-      image: none
-      moderation: none
-
-java-ai:
-  security:
-    jwt:
-      enabled: false
-  knowledge:
-    context-source: classpath
-    ingestion:
-      enabled: false
-    object-store:
-      local-root: ./var/knowledge-objects
-
----
-spring:
-  config:
-    activate:
-      on-profile: production
-  flyway:
-    enabled: true
-  ai:
-    model:
-      audio:
-        speech: none
-        transcription: none
-      chat: openai
-      embedding: openai
-      image: none
-      moderation: none
-    openai:
-      api-key: replace-with-secret-manager
-      base-url: https://api.openai.com/v1
-      max-retries: 0
-      chat:
-        model: gpt-4.1-mini
-      embedding:
-        model: text-embedding-3-small
-
-java-ai:
-  security:
-    jwt:
-      enabled: true
-      issuer: https://identity.example.com
-      audience: knowledge-service
-      jwk-set-uri: https://identity.example.com/.well-known/jwks.json
-      hmac-secret: ""
-      allowed-actors: customer-bff,ticket-agent-service,knowledge-admin-service
-  knowledge:
-    context-source: retrieval
-    ingestion:
-      enabled: true
-    object-store:
-      local-root: ./var/knowledge-objects
-    postgres:
-      jdbc-url: jdbc:postgresql://database.example.com:5432/java_ai_knowledge
-      username: java_ai_knowledge
-      password: replace-with-secret-manager
-      maximum-pool-size: 10

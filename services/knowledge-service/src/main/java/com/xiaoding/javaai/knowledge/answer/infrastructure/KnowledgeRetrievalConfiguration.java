@@ -19,17 +19,20 @@ import com.xiaoding.javaai.knowledge.retrieval.application.port.RetrievalPlanPro
 import com.xiaoding.javaai.knowledge.retrieval.infrastructure.PgVectorKnowledgeChunkSearchRepository;
 import com.xiaoding.javaai.knowledge.retrieval.infrastructure.SpringAiKnowledgeEmbeddingModel;
 import com.xiaoding.javaai.knowledge.retrieval.infrastructure.PostgresTrigramKnowledgeChunkSearchRepository;
+import org.flywaydb.core.Flyway;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 
 @Configuration
-@ConditionalOnProperty(name = "java-ai.knowledge.context-source", havingValue = "retrieval")
+@ConditionalOnProperty(name = "java-ai.knowledge.mode", havingValue = "postgres-rag")
 class KnowledgeRetrievalConfiguration {
 
     private static final int DOCUMENT_CHUNK_EMBEDDING_DIMENSIONS = 1536;
@@ -49,7 +52,15 @@ class KnowledgeRetrievalConfiguration {
         config.setPassword(password);
         config.setMaximumPoolSize(maximumPoolSize);
         config.setConnectionTimeout(3000);
-        return new HikariDataSource(config);
+        HikariDataSource dataSource = new HikariDataSource(config);
+        Flyway.configure().dataSource(dataSource).load().migrate();
+        return dataSource;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(PlatformTransactionManager.class)
+    PlatformTransactionManager knowledgeTransactionManager(DataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
     }
 
     @Bean

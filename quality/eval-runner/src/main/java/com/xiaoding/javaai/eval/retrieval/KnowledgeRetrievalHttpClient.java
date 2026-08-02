@@ -51,19 +51,18 @@ public final class KnowledgeRetrievalHttpClient implements RetrievalEvaluationCl
     }
 
     HttpRequest buildRequest(URI baseUrl, String bearerToken, String question, int topK) {
-        if (bearerToken == null || bearerToken.isBlank()) {
-            throw new IllegalArgumentException("bearerToken must not be blank");
-        }
         try {
             String body = objectMapper.writeValueAsString(Map.of("question", question, "topK", topK));
             URI endpoint = URI.create(trimTrailingSlash(baseUrl.toString())
                     + "/internal/v1/knowledge/retrieval/evaluations");
-            return HttpRequest.newBuilder(endpoint)
+            HttpRequest.Builder builder = HttpRequest.newBuilder(endpoint)
                     .timeout(Duration.ofSeconds(15))
                     .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + bearerToken.strip())
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
-                    .build();
+                    .POST(HttpRequest.BodyPublishers.ofString(body));
+            if (bearerToken != null && !bearerToken.isBlank()) {
+                builder.header("Authorization", "Bearer " + bearerToken.strip());
+            }
+            return builder.build();
         } catch (Exception exception) {
             throw new RetrievalEvaluationClientException("knowledge retrieval request could not be created", exception);
         }

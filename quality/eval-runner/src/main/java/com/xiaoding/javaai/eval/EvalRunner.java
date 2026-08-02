@@ -84,8 +84,8 @@ public final class EvalRunner {
         System.out.println("eval-runner " + version());
         System.out.println("usage: contract-validate <contracts-directory>");
         System.out.println("       contract-eval --dataset <jsonl> --prompt-version <id> --environment-id <id> --report <path-prefix> --commit <sha>");
-        System.out.println("       model-eval --dataset <jsonl> --base-url <url> --mode <LIVE_MODEL|CONTRACT_FIXTURE> --bearer-token-file <path> --prompt-version <id> --environment-id <id> --report <path-prefix> --commit <sha>");
-        System.out.println("       retrieval-eval --dataset <jsonl> --base-url <url> --bearer-token-file <path> --top-k <n> --min-recall <ratio> --min-hit-rate <ratio> --min-mrr <ratio> --max-duplicate-rate <ratio> --max-p95-ms <ms> --report <path-prefix> --commit <sha>");
+        System.out.println("       model-eval --dataset <jsonl> --base-url <url> --mode <LIVE_MODEL|CONTRACT_FIXTURE> [--bearer-token-file <path>] --prompt-version <id> --environment-id <id> --report <path-prefix> --commit <sha>");
+        System.out.println("       retrieval-eval --dataset <jsonl> --base-url <url> [--bearer-token-file <path>] --top-k <n> --min-recall <ratio> --min-hit-rate <ratio> --min-mrr <ratio> --max-duplicate-rate <ratio> --max-p95-ms <ms> --report <path-prefix> --commit <sha>");
         System.out.println("       agent-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix> --commit <sha>");
         System.out.println("       security-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix> --commit <sha>");
     }
@@ -131,7 +131,7 @@ public final class EvalRunner {
         ).evaluate(
                 dataset,
                 URI.create(required(options, "base-url")),
-                requiredCredential(options, "bearer-token"),
+                optionalCredential(options, "bearer-token"),
                 requiredInt(options, "top-k"),
                 required(options, "commit"),
                 thresholds
@@ -155,9 +155,7 @@ public final class EvalRunner {
 
     private static void runEval(Map<String, String> options, URI baseUrl, EvalMode mode) {
         EvalDataset dataset = new EvalDatasetLoader().load(Path.of(required(options, "dataset")));
-        String bearerToken = mode == EvalMode.LIVE_MODEL
-                ? requiredCredential(options, "bearer-token")
-                : optionalCredential(options, "bearer-token");
+        String bearerToken = optionalCredential(options, "bearer-token");
         EvalReport report = new ModelInteractionEvaluator(new KnowledgeAnswerHttpClient(bearerToken))
                 .evaluate(
                         dataset,

@@ -134,13 +134,14 @@ test("unit and release gates preserve fast-regression and external-evidence boun
   }
 });
 
-test("retrieval evaluation scripts target an authenticated external environment", () => {
+test("retrieval evaluation scripts default to local service and allow optional authentication", () => {
   const shell = read("scripts/run-retrieval-eval.sh");
   const powershell = read("scripts/run-retrieval-eval.ps1");
 
   for (const content of [shell, powershell]) {
     assert.match(content, /JAVA_AI_RETRIEVAL_BASE_URL/);
     assert.match(content, /JAVA_AI_RETRIEVAL_EVAL_BEARER_TOKEN/);
+    assert.match(content, /127\.0\.0\.1:8081/);
     assert.match(content, /datasets[\\/]retrieval[\\/]golden-set-v1\.jsonl/);
     assert.match(content, /retrieval-eval/);
     assert.match(content, /min-recall/);
@@ -179,10 +180,8 @@ test("agent evaluation scripts use the argument-aware golden set", () => {
   }
 });
 
-test("evaluation scripts pass short-lived tokens through temporary files", () => {
+test("protected-environment evaluation scripts pass short-lived tokens through temporary files", () => {
   const cases = [
-    ["scripts/run-live-model-eval.sh", ["bearer-token-file"]],
-    ["scripts/run-live-model-eval.ps1", ["bearer-token-file"]],
     ["scripts/run-retrieval-eval.sh", ["bearer-token-file"]],
     ["scripts/run-retrieval-eval.ps1", ["bearer-token-file"]],
     ["scripts/run-agent-eval.sh", ["create-token-file", "run-token-file", "read-token-file"]],
@@ -202,22 +201,21 @@ test("evaluation scripts pass short-lived tokens through temporary files", () =>
   }
 });
 
-test("live model evaluation creates local HMAC tokens after the build", () => {
+test("live model evaluation uses the fixed local identity", () => {
   for (const relativePath of [
     "scripts/run-live-model-eval.sh",
     "scripts/run-live-model-eval.ps1",
   ]) {
     const content = read(relativePath);
-    const build = content.indexOf("package -DskipTests");
-    const token = content.indexOf("generate-development-jwt.mjs");
-    assert.ok(build >= 0 && build < token, `${relativePath} must create the token after the build`);
-    assert.match(content, /JAVA_AI_EVAL_BEARER_TOKEN is required when JWT verification uses a JWK Set/);
+    assert.match(content, /java-ai\.security\.mode=fixed/);
+    assert.doesNotMatch(content, /java-ai\.security\.(?:mock|jwt)\.enabled/);
+    assert.doesNotMatch(content, /generate-development-jwt\.mjs/);
+    assert.doesNotMatch(content, /bearer-token-file/);
   }
 });
 
 test("evaluation scripts install credential cleanup before writing tokens", () => {
   for (const relativePath of [
-    "scripts/run-live-model-eval.sh",
     "scripts/run-retrieval-eval.sh",
     "scripts/run-agent-eval.sh",
     "scripts/run-security-regression.sh",
@@ -227,7 +225,6 @@ test("evaluation scripts install credential cleanup before writing tokens", () =
   }
 
   for (const relativePath of [
-    "scripts/run-live-model-eval.ps1",
     "scripts/run-retrieval-eval.ps1",
     "scripts/run-agent-eval.ps1",
     "scripts/run-security-regression.ps1",
@@ -239,7 +236,6 @@ test("evaluation scripts install credential cleanup before writing tokens", () =
 
 test("evaluation scripts protect temporary credentials and create them after the build", () => {
   const shellCases = [
-    ["scripts/run-live-model-eval.sh", "package -DskipTests"],
     ["scripts/run-retrieval-eval.sh", "package -DskipTests"],
     ["scripts/run-agent-eval.sh", "package -DskipTests"],
     ["scripts/run-security-regression.sh", "test package"],
@@ -256,7 +252,6 @@ test("evaluation scripts protect temporary credentials and create them after the
   }
 
   const powershellCases = [
-    ["scripts/run-live-model-eval.ps1", "package -DskipTests"],
     ["scripts/run-retrieval-eval.ps1", "package -DskipTests"],
     ["scripts/run-agent-eval.ps1", "package -DskipTests"],
     ["scripts/run-security-regression.ps1", "test package"],

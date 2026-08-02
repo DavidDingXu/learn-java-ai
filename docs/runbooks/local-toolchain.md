@@ -14,7 +14,7 @@ Windows PowerShell：
 .\mvnw.cmd verify
 ```
 
-Spring Boot 服务默认使用 `demo` Profile。它们会关闭真实模型、数据库、身份平台和远程 Tool，因此启动检查不需要先配密钥或外部地址：
+先在根目录 `config/application.yml` 中填写模型 API Key。三个 Spring Boot 服务默认使用固定身份、真实模型和真实跨服务 HTTP；会话、Agent 状态与写 Tool 使用进程内实现，因此不需要先部署数据库、身份平台或 Legacy Tool：
 
 ```bash
 ./mvnw -pl services/knowledge-service spring-boot:run
@@ -22,9 +22,9 @@ Spring Boot 服务默认使用 `demo` Profile。它们会关闭真实模型、�
 ./mvnw -pl apps/customer-bff spring-boot:run
 ```
 
-三条命令分别在独立终端执行。Windows 将 `./mvnw` 换成 `.\mvnw.cmd`。默认启动只验证应用组装和本地端口，不代表真实模型或跨服务业务链路已经通过。
+三条命令分别在独立终端执行。Windows 将 `./mvnw` 换成 `.\mvnw.cmd`。完整咨询链路需要三个服务同时运行；只启动其中一个服务，不能证明跨服务调用已经通过。
 
-## 真实模型演示只修改项目级 YAML
+## 真实模型只修改项目级 YAML
 
 需要调用真实模型时，直接在 `config/application.yml` 中填写测试用 API Key。如果使用 OpenAI 兼容 Provider，再按实际协议修改 `base-url`、Chat 模型和 Embedding 模型。真实模型命令会显式读取这个文件；运行后不能提交真实值。
 
@@ -96,6 +96,6 @@ curl --fail https://test.example.com/actuator/health
 
 执行 `java -version` 和 `javac -version`，确认两者都来自完整 JDK 21 或更新版本。如果 IDE 已选择 JDK 21，也可以直接在 IDE 中运行对应的 JUnit 测试或 Spring Boot 启动类。
 
-### 默认启动后为什么不会调用真实模型
+### 启动后模型调用提示 API Key 无效
 
-`demo` Profile 有意关闭外部依赖，用来检查应用组装和本地代码。需要真实模型结果时，运行 `LiveModelSmokeIT`，并显式加载根目录 `config/application.yml`。
+确认已经把根目录 `config/application.yml` 中的占位 Key 换成当前 Provider 的测试 Key，并从项目根目录启动服务。只验证 Provider 接口时，可以运行 `LiveModelSmokeIT`；完整 RAG 还要准备 PostgreSQL、Embedding 和已索引文档。

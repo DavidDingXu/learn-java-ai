@@ -43,7 +43,7 @@ test("lesson 04 ships deterministic policy without exposing verification modes",
   const policy = read("services/knowledge-service/src/main/resources/knowledge/refund-policy-v1.md");
   const metadata = read("services/knowledge-service/src/main/resources/knowledge/refund-policy-v1.properties");
   const runtime = read("services/knowledge-service/src/main/resources/application.yml");
-  const demoConfig = read("config/application.yml");
+  const sharedModelConfig = read("config/application.yml");
   const openApi = read("contracts/openapi/knowledge-service-v1.yaml");
   const response = read("services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/answer/web/KnowledgeAnswerResponse.java");
 
@@ -51,7 +51,7 @@ test("lesson 04 ships deterministic policy without exposing verification modes",
   assert.match(metadata, /documentId=refund-policy/);
   assert.match(metadata, /version=v1/);
   assert.match(metadata, /sectionId=arrival-time/);
-  assert.match(demoConfig, /api-key:\s*replace-with-your-api-key/);
+  assert.match(sharedModelConfig, /api-key:\s*replace-with-your-api-key/);
   assert.doesNotMatch(runtime, /JAVA_AI_CHAT_(?:API_KEY|BASE_URL|MODEL)/);
   assert.doesNotMatch(runtime, /execution-mode/);
   assert.doesNotMatch(openApi, /executionMode|LOCAL_DISABLED|PROVIDER_PROTOCOL_FIXTURE/);
@@ -64,7 +64,7 @@ test("live model smoke is cross-platform, YAML-configured and report-producing",
   const workflow = read(".github/workflows/live-model-smoke.yml");
   const runbook = read("docs/runbooks/live-model-smoke.md");
   const report = read("docs/reports/lesson-04-live-model-smoke.md");
-  const demoConfig = read("config/application.yml");
+  const sharedModelConfig = read("config/application.yml");
 
   for (const content of [shell, powershell]) {
     assert.match(content, /config[\\/]application\.yml/);
@@ -72,9 +72,9 @@ test("live model smoke is cross-platform, YAML-configured and report-producing",
     assert.match(content, /spring\.config\.additional-location/);
     assert.doesNotMatch(content, /JAVA_AI_CHAT_(?:API_KEY|BASE_URL|MODEL)/);
   }
-  assert.match(demoConfig, /api-key:\s*replace-with-your-api-key/);
-  assert.match(demoConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);
-  assert.match(demoConfig, /model:\s*gpt-4\.1-mini/);
+  assert.match(sharedModelConfig, /api-key:\s*replace-with-your-api-key/);
+  assert.match(sharedModelConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);
+  assert.match(sharedModelConfig, /model:\s*gpt-4\.1-mini/);
   assert.match(runbook, /config[\\/]application\.yml/);
   assert.match(runbook, /生产环境/);
   assert.match(workflow, /JAVA_AI_CHAT_API_KEY/);

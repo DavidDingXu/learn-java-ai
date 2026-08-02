@@ -18,9 +18,8 @@ class AgentDownstreamConfiguration {
 
     @Bean
     @ConditionalOnProperty(
-            name = "java-ai.agent.downstream-enabled",
-            havingValue = "false",
-            matchIfMissing = true
+            name = "java-ai.agent.knowledge-tool.mode",
+            havingValue = "disabled"
     )
     AgentReadToolExecutor disabledAgentReadToolExecutor() {
         return (call, task) -> {
@@ -30,9 +29,8 @@ class AgentDownstreamConfiguration {
 
     @Bean
     @ConditionalOnProperty(
-            name = "java-ai.agent.downstream-enabled",
-            havingValue = "false",
-            matchIfMissing = true
+            name = "java-ai.agent.write-tool.mode",
+            havingValue = "disabled"
     )
     LegacyWriteToolExecutor disabledLegacyWriteToolExecutor() {
         return (task, confirmation, idempotencyKey) -> {
@@ -41,7 +39,11 @@ class AgentDownstreamConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "java-ai.agent.downstream-enabled", havingValue = "true")
+    @ConditionalOnProperty(
+            name = "java-ai.agent.knowledge-tool.mode",
+            havingValue = "http",
+            matchIfMissing = true
+    )
     AgentReadToolExecutor httpKnowledgeReadToolExecutor(
             RestClient.Builder builder,
             DownstreamAccessTokenProvider tokenProvider,
@@ -54,7 +56,7 @@ class AgentDownstreamConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "java-ai.agent.downstream-enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "java-ai.agent.write-tool.mode", havingValue = "http")
     LegacyWriteToolExecutor httpLegacyWriteToolExecutor(
             RestClient.Builder builder,
             DownstreamAccessTokenProvider tokenProvider,
@@ -63,6 +65,26 @@ class AgentDownstreamConfiguration {
         return new HttpLegacyWriteToolExecutor(
                 builder, properties.getLegacyToolBaseUrl(), tokenProvider,
                 properties.getDownstreamTimeout());
+    }
+
+    @Bean
+    @ConditionalOnProperty(
+            name = "java-ai.agent.write-tool.mode",
+            havingValue = "memory",
+            matchIfMissing = true
+    )
+    LegacyWriteToolExecutor inMemoryLegacyWriteToolExecutor() {
+        return new InMemoryLegacyWriteToolExecutor();
+    }
+
+    @Bean
+    @ConditionalOnProperty(
+            name = "java-ai.agent.downstream-token-mode",
+            havingValue = "local",
+            matchIfMissing = true
+    )
+    DownstreamAccessTokenProvider localDownstreamAccessTokenProvider() {
+        return new LocalDownstreamAccessTokenProvider();
     }
 
     @Bean

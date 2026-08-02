@@ -8,13 +8,12 @@ import com.xiaoding.javaai.customer.consultation.application.RecordAnswerFeedbac
 import com.xiaoding.javaai.customer.consultation.application.RetryCustomerAnswer;
 import com.xiaoding.javaai.customer.consultation.domain.FeedbackRating;
 import com.xiaoding.javaai.customer.consultation.domain.TicketHandoffReceipt;
-import com.xiaoding.javaai.customer.identity.CustomerJwtIdentityFactory;
+import com.xiaoding.javaai.customer.identity.CustomerAccessTokenProvider;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -30,14 +29,14 @@ import reactor.core.publisher.Flux;
 public final class CustomerConsultationController {
 
     private final CustomerConsultationService service;
-    private final CustomerJwtIdentityFactory identityFactory;
+    private final CustomerAccessTokenProvider accessTokenProvider;
 
     public CustomerConsultationController(
             CustomerConsultationService service,
-            CustomerJwtIdentityFactory identityFactory
+            CustomerAccessTokenProvider accessTokenProvider
     ) {
         this.service = service;
-        this.identityFactory = identityFactory;
+        this.accessTokenProvider = accessTokenProvider;
     }
 
     @PostMapping(
@@ -47,9 +46,9 @@ public final class CustomerConsultationController {
     )
     Mono<CustomerAnswerResponse> answer(
             @Valid @RequestBody CustomerAnswerRequest request,
-            @AuthenticationPrincipal Jwt jwt
+            Authentication authentication
     ) {
-        return service.answer(identityFactory.create(jwt),
+        return service.answer(accessTokenProvider.current(authentication),
                         new AnswerCustomerQuestion(request.conversationId(), request.question()))
                 .map(CustomerAnswerResponse::from);
     }
@@ -61,9 +60,9 @@ public final class CustomerConsultationController {
     )
     Flux<ServerSentEvent<CustomerStreamEvent>> stream(
             @Valid @RequestBody CustomerAnswerRequest request,
-            @AuthenticationPrincipal Jwt jwt
+            Authentication authentication
     ) {
-        return service.stream(identityFactory.create(jwt),
+        return service.stream(accessTokenProvider.current(authentication),
                         new AnswerCustomerQuestion(request.conversationId(), request.question()))
                 .map(event -> ServerSentEvent.builder(event)
                         .event(eventName(event))
@@ -79,9 +78,9 @@ public final class CustomerConsultationController {
             @PathVariable String conversationId,
             @PathVariable String attemptId,
             @Valid @RequestBody AnswerFeedbackRequest request,
-            @AuthenticationPrincipal Jwt jwt
+            Authentication authentication
     ) {
-        return service.recordFeedback(identityFactory.create(jwt), new RecordAnswerFeedback(
+        return service.recordFeedback(accessTokenProvider.current(authentication), new RecordAnswerFeedback(
                 conversationId, attemptId, FeedbackRating.valueOf(request.rating()),
                 request.reasonCode(), request.comment()
         ));
@@ -94,9 +93,9 @@ public final class CustomerConsultationController {
     Mono<CustomerAnswerResponse> retry(
             @PathVariable String conversationId,
             @PathVariable String attemptId,
-            @AuthenticationPrincipal Jwt jwt
+            Authentication authentication
     ) {
-        return service.retry(identityFactory.create(jwt),
+        return service.retry(accessTokenProvider.current(authentication),
                         new RetryCustomerAnswer(conversationId, attemptId))
                 .map(CustomerAnswerResponse::from);
     }
@@ -111,9 +110,9 @@ public final class CustomerConsultationController {
             @PathVariable String conversationId,
             @PathVariable String attemptId,
             @Valid @RequestBody ConsultationHandoffRequest request,
-            @AuthenticationPrincipal Jwt jwt
+            Authentication authentication
     ) {
-        return service.handoff(identityFactory.create(jwt),
+        return service.handoff(accessTokenProvider.current(authentication),
                 new HandoffConsultation(conversationId, attemptId, request.reasonCode()));
     }
 

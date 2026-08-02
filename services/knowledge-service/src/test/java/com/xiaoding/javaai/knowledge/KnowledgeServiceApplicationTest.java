@@ -23,7 +23,7 @@ class KnowledgeServiceApplicationTest {
     private WebTestClient webTestClient;
 
     @Test
-    void testConfigurationStartsWithoutExternalInfrastructureAndExposesOnlyHealth() {
+    void testConfigurationStartsWithoutExternalInfrastructureAndUsesTheLocalIdentity() {
         assertThat(environment.matchesProfiles("test")).isTrue();
         assertThat(environment.getProperty("spring.application.name"))
                 .isEqualTo("knowledge-service");
@@ -45,7 +45,9 @@ class KnowledgeServiceApplicationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue("{\"question\":\"退款什么时候到账？\"}")
                 .exchange()
-                .expectStatus().isUnauthorized()
-                .expectHeader().doesNotExist("WWW-Authenticate");
+                .expectStatus().isEqualTo(503)
+                .expectHeader().doesNotExist("WWW-Authenticate")
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("MODEL_NOT_CONFIGURED");
     }
 }

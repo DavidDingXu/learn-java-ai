@@ -9,12 +9,38 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RetrievalEvaluatorTest {
+
+    @Test
+    void allowsTheLocalEnvironmentToRunWithoutABearerToken() {
+        AtomicReference<String> capturedToken = new AtomicReference<>("not-called");
+        RetrievalEvaluationClient client = (baseUrl, token, question, topK) -> {
+            capturedToken.set(token);
+            return new RetrievalClientResult("embedding-v1", List.of("chunk-1"), 10);
+        };
+        RetrievalEvalDataset dataset = new RetrievalEvalDataset("retrieval-v1", List.of(
+                new RetrievalEvalCase("case-1", "问题", Set.of("chunk-1"))
+        ));
+
+        RetrievalEvaluationReport report = new RetrievalEvaluator(client, Clock.systemUTC()).evaluate(
+                dataset,
+                URI.create("http://localhost:8081"),
+                null,
+                1,
+                "commit-123",
+                new RetrievalThresholds(1, 1, 1, 0, 100)
+        );
+
+        assertNull(capturedToken.get());
+        assertTrue(report.passed());
+    }
 
     @Test
     void evaluatesRealRankingsAgainstThresholdsAndKeepsBadCases() {

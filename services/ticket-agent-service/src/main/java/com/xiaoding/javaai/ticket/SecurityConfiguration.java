@@ -18,7 +18,7 @@ public class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             ObjectProvider<JwtDecoder> decoderProvider,
-            @Value("${java-ai.security.jwt.enabled:false}") boolean jwtEnabled
+            @Value("${java-ai.security.mode:fixed}") String securityMode
     ) throws Exception {
         AuthenticationEntryPoint unauthorized = (request, response, error) ->
                 response.sendError(HttpStatus.UNAUTHORIZED.value());
@@ -27,7 +27,7 @@ public class SecurityConfiguration {
                 .formLogin(form -> form.disable())
                 .logout(logout -> logout.disable())
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(unauthorized));
-        if (jwtEnabled) {
+        if ("jwt".equals(securityMode)) {
             JwtDecoder decoder = decoderProvider.getIfAvailable();
             if (decoder == null) throw new IllegalStateException("Ticket JWT security is enabled but no decoder is configured");
             http.oauth2ResourceServer(oauth2 -> oauth2
@@ -45,11 +45,16 @@ public class SecurityConfiguration {
                             .requestMatchers(HttpMethod.GET, "/api/v1/agent/tasks/**")
                             .hasAuthority("SCOPE_ticket:task:read")
                             .anyRequest().denyAll());
-        } else {
+        } else if ("fixed".equals(securityMode)) {
             http.authorizeHttpRequests(authorize -> authorize
                     .requestMatchers("/actuator/health", "/error")
                     .permitAll()
+                    .requestMatchers("/api/v1/agent/tasks/**")
+                    .permitAll()
                     .anyRequest().denyAll());
+        } else {
+            throw new IllegalStateException(
+                    "java-ai.security.mode must be either fixed or jwt");
         }
         return http.build();
     }

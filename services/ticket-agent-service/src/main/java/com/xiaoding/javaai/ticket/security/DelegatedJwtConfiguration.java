@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Configuration
-@ConditionalOnProperty(name = "java-ai.security.jwt.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "java-ai.security.mode", havingValue = "jwt")
 public class DelegatedJwtConfiguration {
 
     @Bean

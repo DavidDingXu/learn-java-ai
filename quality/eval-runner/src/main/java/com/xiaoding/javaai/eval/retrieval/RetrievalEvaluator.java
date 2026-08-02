@@ -34,7 +34,7 @@ public final class RetrievalEvaluator {
         if (!baseUrl.isAbsolute() || !("http".equals(baseUrl.getScheme()) || "https".equals(baseUrl.getScheme()))) {
             throw new IllegalArgumentException("baseUrl must be an absolute HTTP(S) URI");
         }
-        String normalizedBearerToken = requireText(bearerToken, "bearerToken");
+        String normalizedBearerToken = normalizeOptional(bearerToken);
         String normalizedCommit = requireText(commit, "commit");
         if (topK < 1 || topK > 100) {
             throw new IllegalArgumentException("topK must be between 1 and 100");
@@ -114,5 +114,9 @@ public final class RetrievalEvaluator {
     private static String requireText(String value, String field) {
         if (value == null || value.isBlank()) throw new IllegalArgumentException(field + " must not be blank");
         return value.strip();
+    }
+
+    private static String normalizeOptional(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
     }
 }

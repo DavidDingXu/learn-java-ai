@@ -4,16 +4,16 @@ Status: VERIFIED_CLIENT_INTEROPERABILITY_AND_LOCAL_TASK_CONTRACT
 
 ## 已验证
 
-- The server computes a normalized, length-prefixed SHA-256 request fingerprint from tenant and business request fields; callers do not supply a trusted hash.
-- A focused test keeps adjacent field boundaries unambiguous instead of relying on delimiter-based concatenation.
-- Duplicate submissions with the same tenant, idempotency key and request reuse one task; a changed request under the same key is rejected.
-- Identical idempotency keys in different tenant namespaces create isolated tasks.
-- Status transitions are monotonic; terminal states cannot regress and uncertain delivery can enter UNKNOWN before a confirmed terminal result arrives.
-- A repeated terminal callback is idempotent only when status and receipt match; conflicting terminal results are rejected as protocol conflicts.
-- Unknown task IDs are rejected without creating local state.
+- 服务端根据租户和业务请求字段计算规范化、带长度前缀的 SHA-256 请求指纹，不接受调用方提供可信哈希。
+- 聚焦测试明确校验相邻字段边界，不依赖分隔符拼接。
+- 同一租户、幂等键和请求的重复提交复用一个任务；相同键对应不同请求时会被拒绝。
+- 不同租户命名空间使用相同幂等键时，仍创建相互隔离的任务。
+- 状态只能单向推进；终态不能回退，交付结果不确定时可先进入 UNKNOWN，再等待可信终态。
+- 只有状态和回执完全一致时，重复终态回调才按幂等处理；冲突终态会作为协议冲突被拒绝。
+- 未知任务 ID 会被拒绝，且不会创建本地状态。
 - A2A Java SDK `1.1.0.Final` discovers a standard Agent Card, validates an allowlisted skill and sends a message over JSON-RPC.
-- The official client maps the response to a completed A2A Task with an artifact.
-- AgentScope `A2aTaskCoordinator` remains the business state boundary; SDK enums are not persisted as the domain contract.
+- 官方客户端把响应映射为带 Artifact 的已完成 A2A Task。
+- AgentScope `A2aTaskCoordinator` 继续承担业务状态边界，SDK 枚举不会作为领域契约持久化。
 
 ## 验证命令
 
@@ -23,4 +23,4 @@ Status: VERIFIED_CLIENT_INTEROPERABILITY_AND_LOCAL_TASK_CONTRACT
 
 ## 外部验证边界
 
-The protocol test uses the official A2A client against a local standards-based Agent Card and JSON-RPC service. It covers discovery, message sending and completed-task mapping, not remote status queries. It does not prove production authentication, streaming, push notifications, long-running remote execution, cancellation, callbacks or Inbox/Outbox persistence; those require the target agent and network environment.
+协议测试使用官方 A2A 客户端调用本地标准 Agent Card 和 JSON-RPC 服务，覆盖发现、消息发送和完成任务映射，不包含远程状态查询。生产认证、流式交互、推送通知、长时间远程执行、取消、回调和 Inbox/Outbox 持久化，仍需要在目标 Agent 和网络环境验证。

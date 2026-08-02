@@ -5,11 +5,11 @@ Status: VERIFIED_LOW_CARDINALITY_AGENT_METRICS
 
 ## 已验证
 
-- Ticket Agent records plan count, total-token distribution and Tool duration/outcome through an application telemetry port.
-- Meter tags are limited to decision, finish reason, tool and outcome; task, prompt, question, tenant and model are not metric tags.
-- Read and write Tool success, rejection, uncertain result and local failure are recorded at the owning application boundary.
-- Telemetry failures do not change an Agent plan or an already persisted Tool result.
-- Runtime configuration exposes health and Prometheus; test configuration exposes health only.
+- Ticket Agent 通过应用层遥测接口记录规划次数、总 Token 分布以及 Tool 耗时与结果。
+- 指标标签只包含决策、结束原因、Tool 和结果；任务、Prompt、问题、租户和模型不会成为指标标签。
+- 只读与写 Tool 的成功、拒绝、结果不确定和本地失败都在所属应用边界记录。
+- 遥测失败不会改变 Agent 规划结果，也不会覆盖已经持久化的 Tool 结果。
+- 运行配置开放健康检查和 Prometheus，测试配置只开放健康检查。
 - Knowledge operations use Micrometer Observation and can return the current trace ID; Agent business IDs remain in the audit model rather than metric tags.
 
 ## 验证命令

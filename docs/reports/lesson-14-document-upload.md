@@ -16,7 +16,7 @@ Status: IMPLEMENTED_WITH_LOCAL_TESTS
 - 对象键包含 tenant 和 document 前缀；本地文件适配器拒绝逃逸根目录的路径。
 - 解析失败时不保存对象，也不创建文档版本。
 - 本地文件写入使用同目录临时文件，并在支持时原子替换目标文件。
-- 上传接口只从 JWT 读取 tenant 和编辑人，数据库通过 revision 条件更新阻止并发覆盖。
+- 上传接口只从 `KnowledgeAccessScopeProvider` 读取 tenant 和编辑人，不接受请求体或 Header 覆盖；数据库通过 revision 条件更新阻止并发覆盖。
 - JDBC 仓储可以从 `knowledge_document` 和 `document_version` 恢复完整聚合，供后续发布和索引读取复用。
 
 ## 证据边界

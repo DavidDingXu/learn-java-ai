@@ -42,7 +42,7 @@ class KnowledgeJwtSecurityTest {
 
     @DynamicPropertySource
     static void securityProperties(DynamicPropertyRegistry registry) {
-        registry.add("java-ai.security.jwt.enabled", () -> true);
+        registry.add("java-ai.security.mode", () -> "jwt");
         registry.add("java-ai.security.jwt.issuer", () -> ISSUER);
         registry.add("java-ai.security.jwt.audience", () -> "knowledge-service");
         registry.add("java-ai.security.jwt.hmac-secret", () -> SECRET);

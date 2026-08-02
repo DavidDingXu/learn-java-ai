@@ -28,7 +28,7 @@ class KnowledgeIngestionConfigurationTest {
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
             .withUserConfiguration(TestDependencies.class, KnowledgeIngestionConfiguration.class)
             .withPropertyValues(
-                    "java-ai.knowledge.ingestion.enabled=true",
+                    "java-ai.knowledge.mode=postgres-rag",
                     "java-ai.knowledge.object-store.local-root=target/test-objects",
                     "java-ai.knowledge.indexing.worker-id=test-worker"
             );

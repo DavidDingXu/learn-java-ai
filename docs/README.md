@@ -20,9 +20,9 @@
 | 文档 | 适用场景 |
 |---|---|
 | [本地构建与运行](runbooks/local-toolchain.md) | 选择 JDK、运行 Maven 和处理常见环境问题 |
-| [运行配置](runbooks/runtime-configuration.md) | 区分 demo、真实模型测试和 production Profile |
+| [运行配置](runbooks/runtime-configuration.md) | 默认运行、完整 RAG 与公司基础设施怎样配置 |
 | [真实模型冒烟验证](runbooks/live-model-smoke.md) | 验证 Provider 连接、响应映射和业务校验 |
-| [知识导入](runbooks/knowledge-ingestion.md) | 上传、发布、切分、索引和任务恢复 |
+| [知识导入与完整 RAG 联调](runbooks/knowledge-ingestion.md) | 准备 PostgreSQL/Provider，上传、发布、索引并验证最终回答 |
 | [模型、检索与 Agent 评测](runbooks/model-interaction-eval.md) | 运行契约、真实模型、检索和 Agent 数据集 |
 | [AI 安全回归](runbooks/security-regression.md) | 验证 JWT、ACL、Tool、Prompt 和确认边界 |
 | [发布检查](runbooks/release-checklist.md) | 构建、外部环境与运维检查项 |

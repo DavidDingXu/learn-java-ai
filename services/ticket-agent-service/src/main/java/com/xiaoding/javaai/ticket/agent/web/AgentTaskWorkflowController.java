@@ -5,7 +5,8 @@ import com.xiaoding.javaai.ticket.agent.application.AgentRunAdmission;
 import com.xiaoding.javaai.ticket.agent.application.ConfirmAgentAction;
 import com.xiaoding.javaai.ticket.agent.application.ConfirmationActor;
 import com.xiaoding.javaai.ticket.agent.application.RunAgentTask;
-import com.xiaoding.javaai.ticket.security.ConfirmationActorFactory;
+import com.xiaoding.javaai.ticket.security.DelegatedTicketIdentity;
+import com.xiaoding.javaai.ticket.security.TicketIdentityProvider;
 import com.xiaoding.javaai.ticket.task.AgentTask;
 import com.xiaoding.javaai.ticket.task.AgentTaskAccessDeniedException;
 import com.xiaoding.javaai.ticket.task.AgentTaskNotFoundException;
@@ -14,8 +15,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +35,7 @@ public final class AgentTaskWorkflowController {
     private final RunAgentTask runAgentTask;
     private final ConfirmAgentAction confirmAgentAction;
     private final AgentAuditTrail auditTrail;
-    private final ConfirmationActorFactory actorFactory;
+    private final TicketIdentityProvider identityProvider;
     private final AgentRunAdmission runAdmission;
 
     public AgentTaskWorkflowController(
@@ -43,33 +43,33 @@ public final class AgentTaskWorkflowController {
             RunAgentTask runAgentTask,
             ConfirmAgentAction confirmAgentAction,
             AgentAuditTrail auditTrail,
-            ConfirmationActorFactory actorFactory,
+            TicketIdentityProvider identityProvider,
             AgentRunAdmission runAdmission
     ) {
         this.repository = repository;
         this.runAgentTask = runAgentTask;
         this.confirmAgentAction = confirmAgentAction;
         this.auditTrail = auditTrail;
-        this.actorFactory = actorFactory;
+        this.identityProvider = identityProvider;
         this.runAdmission = runAdmission;
     }
 
     @GetMapping(path = "/{taskId}", produces = MediaType.APPLICATION_JSON_VALUE)
     AgentTaskView get(
-            @AuthenticationPrincipal Jwt jwt,
+            Authentication authentication,
             @PathVariable("taskId") String taskId
     ) {
-        ConfirmationActor actor = actorFactory.create(jwt, "jdk8-crm");
+        ConfirmationActor actor = actor(authentication, "jdk8-crm");
         return AgentTaskView.from(ownedTask(taskId, actor));
     }
 
     @PostMapping(path = "/{taskId}/runs", produces = MediaType.APPLICATION_JSON_VALUE)
     AgentTaskView run(
-            @AuthenticationPrincipal Jwt jwt,
+            Authentication authentication,
             @PathVariable("taskId") String taskId
     ) {
         return runAdmission.execute(() -> {
-            ConfirmationActor actor = actorFactory.create(jwt, "ticket-agent-worker");
+            ConfirmationActor actor = actor(authentication, "ticket-agent-worker");
             ownedTask(taskId, actor);
             return AgentTaskView.from(runAgentTask.run(taskId));
         });
@@ -81,23 +81,23 @@ public final class AgentTaskWorkflowController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     ConfirmationDecisionReceiptResponse confirm(
-            @AuthenticationPrincipal Jwt jwt,
+            Authentication authentication,
             @PathVariable("taskId") String taskId,
             @RequestHeader("Idempotency-Key")
             @NotBlank @Size(min = 8, max = 128) String idempotencyKey,
             @Valid @RequestBody ConfirmToolActionWebRequest request
     ) {
-        ConfirmationActor actor = actorFactory.create(jwt, "jdk8-crm");
+        ConfirmationActor actor = actor(authentication, "jdk8-crm");
         return ConfirmationDecisionReceiptResponse.from(confirmAgentAction.decide(
                 taskId, actor, idempotencyKey, request.toApplication()));
     }
 
     @GetMapping(path = "/{taskId}/audit", produces = MediaType.APPLICATION_JSON_VALUE)
     List<AgentAuditEventResponse> audit(
-            @AuthenticationPrincipal Jwt jwt,
+            Authentication authentication,
             @PathVariable("taskId") String taskId
     ) {
-        ConfirmationActor actor = actorFactory.create(jwt, "jdk8-crm");
+        ConfirmationActor actor = actor(authentication, "jdk8-crm");
         ownedTask(taskId, actor);
         return auditTrail.findByTaskId(taskId).stream()
                 .map(AgentAuditEventResponse::from)
@@ -111,5 +111,11 @@ public final class AgentTaskWorkflowController {
             throw new AgentTaskAccessDeniedException("agent task belongs to a different tenant");
         }
         return task;
+    }
+
+    private ConfirmationActor actor(Authentication authentication, String requiredActor) {
+        DelegatedTicketIdentity identity = identityProvider.current(authentication, requiredActor);
+        return new ConfirmationActor(
+                identity.tenantId(), identity.subjectId(), identity.actorId(), identity.roles());
     }
 }

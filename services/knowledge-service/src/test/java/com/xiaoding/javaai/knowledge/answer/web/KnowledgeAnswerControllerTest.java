@@ -6,9 +6,12 @@ import com.xiaoding.javaai.knowledge.answer.application.AnswerStreamEvent;
 import com.xiaoding.javaai.knowledge.answer.application.Citation;
 import com.xiaoding.javaai.knowledge.answer.application.KnowledgeAnswer;
 import com.xiaoding.javaai.knowledge.answer.application.ModelUsage;
+import com.xiaoding.javaai.knowledge.security.JwtKnowledgeAccessScopeProvider;
+import com.xiaoding.javaai.knowledge.security.FixedKnowledgeAccessScopeProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
@@ -44,7 +47,9 @@ class KnowledgeAnswerControllerTest {
         validator.afterPropertiesSet();
 
         WebTestClient client = WebTestClient.bindToController(
-                        new KnowledgeAnswerController(useCase, command -> Flux.empty(), CLOCK))
+                        new KnowledgeAnswerController(
+                                useCase, command -> Flux.empty(), CLOCK,
+                                new FixedKnowledgeAccessScopeProvider()))
                 .validator(validator)
                 .build();
 
@@ -60,11 +65,12 @@ class KnowledgeAnswerControllerTest {
     void mapsTheApplicationResultToThePublicResponse() {
         AnswerKnowledgeQuestion useCase = command -> Mono.just(answer());
         KnowledgeAnswerController controller = new KnowledgeAnswerController(
-                useCase, command -> Flux.empty(), CLOCK
+                useCase, command -> Flux.empty(), CLOCK,
+                new JwtKnowledgeAccessScopeProvider()
         );
 
         var response = controller.answer(
-                new KnowledgeAnswerRequest("退款什么时候到账？"), delegatedJwt()
+                new KnowledgeAnswerRequest("退款什么时候到账？"), authentication()
         ).block();
 
         assertThat(response.answer()).isEqualTo("answer");
@@ -84,7 +90,8 @@ class KnowledgeAnswerControllerTest {
                     return Mono.just(answer());
                 },
                 command -> Flux.empty(),
-                CLOCK
+                CLOCK,
+                new JwtKnowledgeAccessScopeProvider()
         );
 
         controller.answer(new KnowledgeAnswerRequest(
@@ -95,7 +102,7 @@ class KnowledgeAnswerControllerTest {
                                 new ConversationTurnRequest("USER", "退款多久到账？"),
                                 new ConversationTurnRequest("ASSISTANT", "请以当前政策为准")
                         )
-                )), delegatedJwt()).block();
+                )), authentication()).block();
 
         assertThat(captured.get().accessScope().tenantId().value()).isEqualTo("tenant-a");
         assertThat(captured.get().accessScope().subjectId()).isEqualTo("customer-42");
@@ -121,11 +128,12 @@ class KnowledgeAnswerControllerTest {
                                 "fixture-model", new ModelUsage(1, 1, 2), "stop", 42,
                                 false, null)
                 ),
-                CLOCK
+                CLOCK,
+                new JwtKnowledgeAccessScopeProvider()
         );
 
         var events = controller.stream(
-                new KnowledgeAnswerRequest("退款什么时候到账？"), delegatedJwt()
+                new KnowledgeAnswerRequest("退款什么时候到账？"), authentication()
         ).collectList().block();
 
         assertThat(events).extracting(event -> event.event())
@@ -158,5 +166,9 @@ class KnowledgeAnswerControllerTest {
                 .issuedAt(Instant.parse("2026-07-13T02:55:00Z"))
                 .expiresAt(Instant.parse("2026-07-13T03:05:00Z"))
                 .build();
+    }
+
+    private static JwtAuthenticationToken authentication() {
+        return new JwtAuthenticationToken(delegatedJwt());
     }
 }

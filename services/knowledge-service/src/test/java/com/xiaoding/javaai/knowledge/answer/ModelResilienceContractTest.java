@@ -6,8 +6,10 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,7 +36,9 @@ class ModelResilienceContractTest {
     @Test
     void usesOneUseCaseSpecificPolicyWithoutStackingOpenAiSdkRetries() {
         YamlPropertiesFactoryBean yaml = new YamlPropertiesFactoryBean();
-        yaml.setResources(new ClassPathResource("application.yml"));
+        yaml.setResources(
+                new ClassPathResource("application.yml"),
+                new FileSystemResource(Path.of("..", "..", "config", "application.yml")));
         Properties properties = yaml.getObject();
 
         assertThat(properties).isNotNull();

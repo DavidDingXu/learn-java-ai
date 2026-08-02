@@ -9,7 +9,7 @@
 - `/internal/v1/knowledge/index-tasks`：受 `knowledge:index` 权限保护的索引任务入口。
 - `/internal/v1/knowledge/retrieval/evaluations`：受 `knowledge:eval` 权限保护的检索评测入口。
 
-公开契约以 [`contracts/openapi/knowledge-service-v1.yaml`](../../contracts/openapi/knowledge-service-v1.yaml) 为准。租户、主体和部门范围来自已验证 JWT，不从业务请求体读取。
+公开契约以 [`contracts/openapi/knowledge-service-v1.yaml`](../../contracts/openapi/knowledge-service-v1.yaml) 为准。租户、主体和部门范围来自服务端身份适配器，不从业务请求体读取。默认使用固定本地身份；接入公司项目时，可以切换到 JWT 或替换为现有鉴权系统。
 
 ## 运行与测试
 
@@ -18,8 +18,8 @@
 ./mvnw -pl services/knowledge-service spring-boot:run
 ```
 
-默认 `demo` Profile 仅启动应用并提供 health，不会伪造数据库、检索或模型结果。真实模型连接见 [Live Model Smoke](../../docs/runbooks/live-model-smoke.md)，完整写入链路见 [Knowledge Ingestion](../../docs/runbooks/knowledge-ingestion.md)。
+默认使用固定的 `tenant-a / local-user / support` 身份和 classpath 上下文，并调用根目录共享配置中的真实 Chat Provider，不要求生成 Token。真实模型连接见 [Live Model Smoke](../../docs/runbooks/live-model-smoke.md)，完整写入链路见 [Knowledge Ingestion](../../docs/runbooks/knowledge-ingestion.md)。
 
-使用 `-Dspring-boot.run.profiles=production` 可以切换到 PostgreSQL/pgvector、JWT 和真实 Provider 装配。启动前需要替换本模块 `application.yml` 生产配置段中的占位值，完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
+本地完整 RAG 将 `java-ai.knowledge.mode` 改为 `postgres-rag`，再填写 PostgreSQL 连接；HTTP 请求仍使用固定身份。正式部署按需将 `java-ai.security.mode` 改为 `jwt`，或接入公司鉴权实现。完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
 
 生产部署还需接入对象存储，并验证迁移、容量、备份恢复和检索质量。

@@ -19,8 +19,7 @@ public class SecurityConfiguration {
     SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity http,
             ObjectProvider<ReactiveJwtDecoder> jwtDecoderProvider,
-            @Value("${java-ai.security.jwt.enabled:false}") boolean jwtEnabled,
-            @Value("${java-ai.security.allow-insecure-local-http:false}") boolean allowInsecureLocalHttp
+            @Value("${java-ai.security.mode:fixed}") String securityMode
     ) {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -30,7 +29,7 @@ public class SecurityConfiguration {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)));
 
-        if (jwtEnabled) {
+        if ("jwt".equals(securityMode)) {
             ReactiveJwtDecoder jwtDecoder = jwtDecoderProvider.getIfAvailable();
             if (jwtDecoder == null) {
                 throw new IllegalStateException("JWT security is enabled but no ReactiveJwtDecoder is configured");
@@ -49,14 +48,14 @@ public class SecurityConfiguration {
                             .pathMatchers("/internal/v1/knowledge/retrieval/evaluations")
                             .hasAuthority("SCOPE_knowledge:eval")
                             .anyExchange().denyAll());
+        } else if ("fixed".equals(securityMode)) {
+            http.authorizeExchange(exchanges -> exchanges
+                    .pathMatchers("/actuator/health", "/error").permitAll()
+                    .pathMatchers("/api/v1/knowledge/**", "/internal/v1/knowledge/**").permitAll()
+                    .anyExchange().denyAll());
         } else {
-            http.authorizeExchange(exchanges -> {
-                exchanges.pathMatchers("/actuator/health", "/error").permitAll();
-                if (allowInsecureLocalHttp) {
-                    exchanges.pathMatchers("/api/v1/knowledge/answers/**").permitAll();
-                }
-                exchanges.anyExchange().denyAll();
-            });
+            throw new IllegalStateException(
+                    "java-ai.security.mode must be either fixed or jwt");
         }
         return http.build();
     }

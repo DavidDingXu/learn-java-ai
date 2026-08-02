@@ -6,75 +6,29 @@ $ReportPrefix = if ($args.Count -gt 0) { $args[0] } else { Join-Path $RootDir "d
 $Port = if ($env:JAVA_AI_EVAL_PORT) { $env:JAVA_AI_EVAL_PORT } else { "18081" }
 $ConfigFile = Join-Path $RootDir "config\application.yml"
 
-foreach ($Name in @("JAVA_AI_JWT_ISSUER")) {
-  if (-not (Get-Item "Env:$Name" -ErrorAction SilentlyContinue).Value) {
-    throw "$Name is required."
-  }
-}
 if (-not (Test-Path $ConfigFile)) {
-  throw "Missing $ConfigFile. Restore the tracked demo configuration."
-}
-
-if (-not $env:JAVA_AI_DEV_JWT_HMAC_SECRET -and -not $env:JAVA_AI_JWT_JWK_SET_URI) {
-  throw "JAVA_AI_DEV_JWT_HMAC_SECRET or JAVA_AI_JWT_JWK_SET_URI is required."
-}
-if ($env:JAVA_AI_JWT_JWK_SET_URI -and -not $env:JAVA_AI_EVAL_BEARER_TOKEN) {
-  throw "JAVA_AI_EVAL_BEARER_TOKEN is required when JWT verification uses a JWK Set."
+  throw "Missing $ConfigFile. Restore the tracked shared model configuration."
 }
 
 $Commit = if ($env:JAVA_AI_EVAL_COMMIT) { $env:JAVA_AI_EVAL_COMMIT } else { git -C $RootDir rev-parse HEAD }
-$SecurityArgs = @(
-  "--java-ai.security.jwt.enabled=true",
-  "--java-ai.security.jwt.issuer=$($env:JAVA_AI_JWT_ISSUER)",
-  "--java-ai.security.jwt.audience=$(if ($env:JAVA_AI_JWT_AUDIENCE) { $env:JAVA_AI_JWT_AUDIENCE } else { 'knowledge-service' })",
-  "--java-ai.security.jwt.allowed-actors=$(if ($env:JAVA_AI_JWT_ALLOWED_ACTORS) { $env:JAVA_AI_JWT_ALLOWED_ACTORS } else { 'customer-bff' })"
-)
-if ($env:JAVA_AI_DEV_JWT_HMAC_SECRET) {
-  $SecurityArgs += "--java-ai.security.jwt.hmac-secret=$($env:JAVA_AI_DEV_JWT_HMAC_SECRET)"
-} else {
-  $SecurityArgs += "--java-ai.security.jwt.jwk-set-uri=$($env:JAVA_AI_JWT_JWK_SET_URI)"
-}
 $ServiceJar = Join-Path $RootDir "services/knowledge-service/target/knowledge-service-0.1.0-SNAPSHOT.jar"
 $ServiceArgs = @(
   "-Dspring.config.additional-location=file:$ConfigFile",
   "-jar", $ServiceJar,
-  "--java-ai.knowledge.context-source=classpath",
-  "--java-ai.knowledge.ingestion.enabled=false",
+  "--java-ai.knowledge.mode=classpath",
   "--spring.ai.model.embedding=none",
   "--spring.flyway.enabled=false",
   "--spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration",
+  "--java-ai.security.mode=fixed",
   "--server.address=127.0.0.1",
   "--server.port=$Port"
 )
-$ServiceArgs += $SecurityArgs
-$CredentialDir = $null
-$BearerTokenFile = $null
 $JavaRuntime = $null
 try {
   $JavaRuntime = Enter-JavaAiMainJdk
   & (Join-Path $RootDir "mvnw.cmd") -f (Join-Path $RootDir "pom.xml") `
     -pl services/knowledge-service,quality/eval-runner -am package -DskipTests
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-  $BearerToken = $env:JAVA_AI_EVAL_BEARER_TOKEN
-  if (-not $BearerToken) {
-    $AllowedActors = if ($env:JAVA_AI_JWT_ALLOWED_ACTORS) { $env:JAVA_AI_JWT_ALLOWED_ACTORS } else { "customer-bff" }
-    $EvalActor = ($AllowedActors -split ",")[0].Trim()
-    $BearerToken = & node (Join-Path $RootDir "scripts/generate-development-jwt.mjs") `
-      --scope knowledge:answer `
-      --audience $(if ($env:JAVA_AI_JWT_AUDIENCE) { $env:JAVA_AI_JWT_AUDIENCE } else { "knowledge-service" }) `
-      --subject model-evaluator `
-      --tenant tenant-a `
-      --actor $EvalActor
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    $BearerToken = $BearerToken.Trim()
-  }
-
-  $CredentialDir = Join-Path ([IO.Path]::GetTempPath()) ("java-ai-model-eval-" + [Guid]::NewGuid())
-  $BearerTokenFile = Join-Path $CredentialDir "bearer-token"
-  New-Item -ItemType Directory -Path $CredentialDir | Out-Null
-  $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-  [IO.File]::WriteAllText($BearerTokenFile, $BearerToken, $Utf8NoBom)
 
   $Process = Start-Process -FilePath $JavaRuntime.Java -PassThru -NoNewWindow -ArgumentList $ServiceArgs
 
@@ -96,7 +50,6 @@ try {
       --dataset (Join-Path $RootDir "datasets/model-interaction/golden-set-v2.jsonl") `
       --base-url "http://127.0.0.1:$Port" `
       --mode LIVE_MODEL `
-      --bearer-token-file $BearerTokenFile `
       --prompt-version knowledge-answer-v1 `
       --environment-id local-live-model `
       --report $ReportPrefix `
@@ -107,5 +60,4 @@ try {
   }
 } finally {
   if ($JavaRuntime) { Restore-JavaAiEnvironment $JavaRuntime }
-  if ($CredentialDir) { Remove-Item -LiteralPath $CredentialDir -Recurse -Force -ErrorAction SilentlyContinue }
 }

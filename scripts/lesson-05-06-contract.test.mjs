@@ -105,16 +105,15 @@ test("lesson 05 and 06 reports bind security and contract evidence", () => {
   }
 });
 
-test("live evaluation scripts configure the current delegated actor allowlist", () => {
+test("live evaluation scripts use the local identity without enabling database adapters", () => {
   const shell = read("scripts/run-live-model-eval.sh");
   const powershell = read("scripts/run-live-model-eval.ps1");
 
   for (const script of [shell, powershell]) {
-    assert.match(script, /java-ai\.security\.jwt\.allowed-actors/);
-    assert.doesNotMatch(script, /java-ai\.security\.jwt\.required-actor/);
+    assert.doesNotMatch(script, /java-ai\.security\.jwt\./);
     assert.doesNotMatch(script, /spring\.profiles\.active/);
-    assert.match(script, /java-ai\.knowledge\.context-source=classpath/);
-    assert.match(script, /java-ai\.knowledge\.ingestion\.enabled=false/);
+    assert.match(script, /java-ai\.knowledge\.mode=classpath/);
+    assert.match(script, /java-ai\.security\.mode=fixed/);
     assert.match(script, /spring\.ai\.model\.embedding=none/);
     assert.match(script, /spring\.flyway\.enabled=false/);
     assert.match(script, /DataSourceAutoConfiguration/);

@@ -14,7 +14,7 @@ die() {
 }
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
-  die "Missing $CONFIG_FILE. Restore the tracked demo configuration."
+  die "Missing $CONFIG_FILE. Restore the tracked shared model configuration."
 fi
 
 commit="$(git -C "$PROJECT_ROOT" rev-parse HEAD 2>/dev/null || printf 'unknown')"

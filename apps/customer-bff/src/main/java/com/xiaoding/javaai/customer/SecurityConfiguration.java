@@ -17,7 +17,7 @@ class SecurityConfiguration {
     SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity http,
             ObjectProvider<ReactiveJwtDecoder> jwtDecoderProvider,
-            @Value("${java-ai.security.customer-jwt.enabled:false}") boolean jwtEnabled
+            @Value("${java-ai.security.mode:fixed}") String securityMode
     ) {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -26,7 +26,7 @@ class SecurityConfiguration {
                 .logout(ServerHttpSecurity.LogoutSpec::disable)
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)));
-        if (jwtEnabled) {
+        if ("jwt".equals(securityMode)) {
             ReactiveJwtDecoder decoder = jwtDecoderProvider.getIfAvailable();
             if (decoder == null) {
                 throw new IllegalStateException("Customer JWT security is enabled but no decoder is configured");
@@ -37,10 +37,14 @@ class SecurityConfiguration {
                             .pathMatchers("/api/v1/customer/consultations/**")
                             .hasAuthority("SCOPE_consultation:use")
                             .anyExchange().denyAll());
-        } else {
+        } else if ("fixed".equals(securityMode)) {
             http.authorizeExchange(exchanges -> exchanges
                     .pathMatchers("/actuator/health", "/error").permitAll()
+                    .pathMatchers("/api/v1/customer/consultations/**").permitAll()
                     .anyExchange().denyAll());
+        } else {
+            throw new IllegalStateException(
+                    "java-ai.security.mode must be either fixed or jwt");
         }
         return http.build();
     }

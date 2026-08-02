@@ -4,11 +4,11 @@
 
 该任务只检查一件事：Knowledge Service 能否通过当前 Spring AI 适配器调用配置的 OpenAI 兼容 Chat endpoint，并把回答、模型元数据、Token 用量和政策引用写入脱敏报告。它不检查 RAG、委托身份、工单、数据库或生产容量。
 
-Java 集成测试直接调用应用用例，不经过 HTTP，因此不验证 JWT 或入站 Trace。HTTP Golden Set 和 Trace 证据由 `model-interaction-eval.md` 中的真实评测提供。Knowledge Service 的公开接口默认仍受拒绝或 JWT 策略保护。
+Java 集成测试直接调用应用用例，不经过 HTTP，因此不验证入站身份或 Trace。HTTP Golden Set 和 Trace 证据由 `model-interaction-eval.md` 中的真实评测提供。Knowledge Service 本地使用固定身份，正式环境由鉴权适配器保护。
 
 确定性协议回归进入默认测试，真实模型端点只由下面的专项集成测试调用。前者检查请求与响应映射，后者检查当前端点能否调用；两项结果不能互相替代。
 
-这不是应用启动入口。需要手工访问 HTTP 接口时，应启动 Knowledge Service；那条路径还需要数据库、JWT 和检索等完整系统配置。
+这不是应用启动入口。需要手工访问完整 RAG 接口时，应将 `java-ai.knowledge.mode` 改为 `postgres-rag`，再准备 PostgreSQL、Embedding、检索数据和 Chat Provider；本地不需要 JWT。
 
 ## 本地演示配置
 

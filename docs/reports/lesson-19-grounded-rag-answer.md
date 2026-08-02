@@ -17,7 +17,7 @@ Status: VERIFIED_LOCAL_GROUNDED_ANSWER_COMPOSITION
 - 非拒答结果至少需要一个引用，引用 ID 必须存在于本次检索上下文；拒答结果必须给出拒答原因。
 - 对外 `Citation` 由服务端从已检索上下文重新构造，模型不能自行补造文档标题、版本和引用元数据。
 - 输出校验同时拒绝虚构“已退款”“已创建工单”等未发生业务动作。
-- Knowledge Service 的主 `application.yml` 在 `production` 配置段选择 `context-source: retrieval`；默认 `demo` 使用 classpath 上下文，不会被误报成向量 RAG。
+- Knowledge Service 默认使用 classpath 上下文；只有 `java-ai.knowledge.mode=postgres-rag` 才创建数据库检索适配器，不会把静态上下文误报成向量 RAG。
 
 ## 本地验证
 

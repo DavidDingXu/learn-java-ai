@@ -15,7 +15,6 @@ import com.xiaoding.javaai.ticket.agent.application.TicketAgentOrchestrator;
 import com.xiaoding.javaai.ticket.agent.application.TicketAgentPlanner;
 import com.xiaoding.javaai.ticket.agent.application.ToolConfirmationService;
 import com.xiaoding.javaai.ticket.agent.application.SemaphoreAgentRunAdmission;
-import com.xiaoding.javaai.ticket.security.ConfirmationActorFactory;
 import com.xiaoding.javaai.ticket.task.AgentTaskRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -47,11 +46,6 @@ class AgentWorkflowConfiguration {
             @Value("${java-ai.agent.max-concurrent-runs:8}") int maxConcurrentRuns
     ) {
         return new SemaphoreAgentRunAdmission(maxConcurrentRuns);
-    }
-
-    @Bean
-    ConfirmationActorFactory confirmationActorFactory() {
-        return new ConfirmationActorFactory();
     }
 
     @Bean

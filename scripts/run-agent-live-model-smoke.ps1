@@ -11,7 +11,7 @@ $ReportPath = if ($env:JAVA_AI_AGENT_LIVE_REPORT_PATH) {
 }
 
 if (-not (Test-Path $ConfigFile)) {
-    throw "Missing $ConfigFile. Restore the tracked demo configuration."
+    throw "Missing $ConfigFile. Restore the tracked shared model configuration."
 }
 
 $Commit = try { (git -C $ProjectRoot rev-parse HEAD).Trim() } catch { "unknown" }

@@ -22,7 +22,7 @@ function Stop-WithError {
 }
 
 if (-not (Test-Path $ConfigFile)) {
-    Stop-WithError "Missing $ConfigFile. Restore the tracked demo configuration."
+    Stop-WithError "Missing $ConfigFile. Restore the tracked shared model configuration."
 }
 
 $Commit = (& git -C $ProjectRoot rev-parse HEAD 2>$null | Out-String).Trim()

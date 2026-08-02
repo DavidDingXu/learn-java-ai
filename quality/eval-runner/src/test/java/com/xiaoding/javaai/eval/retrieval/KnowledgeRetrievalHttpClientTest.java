@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class KnowledgeRetrievalHttpClientTest {
 
@@ -24,5 +25,17 @@ class KnowledgeRetrievalHttpClientTest {
         );
         assertEquals("Bearer evaluation-token",
                 request.headers().firstValue("Authorization").orElseThrow());
+    }
+
+    @Test
+    void omitsAuthorizationForTheLocalMockIdentity() {
+        HttpRequest request = new KnowledgeRetrievalHttpClient().buildRequest(
+                URI.create("http://localhost:8081"),
+                null,
+                "退款多久到账？",
+                5
+        );
+
+        assertTrue(request.headers().firstValue("Authorization").isEmpty());
     }
 }

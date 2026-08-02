@@ -10,7 +10,7 @@ class DelegatedJwtConfigurationTest {
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withUserConfiguration(DelegatedJwtConfiguration.class)
             .withPropertyValues(
-                    "java-ai.security.jwt.enabled=true",
+                    "java-ai.security.mode=jwt",
                     "java-ai.security.jwt.issuer=https://identity.example.test",
                     "java-ai.security.jwt.audience=ticket-agent-service",
                     "java-ai.security.jwt.hmac-secret=local-development-secret-must-have-at-least-32-bytes",

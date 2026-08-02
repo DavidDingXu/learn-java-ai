@@ -5,12 +5,12 @@ Status: VERIFIED_JAVA8_HTTP_CLIENT_CONTRACT
 
 ## 已验证
 
-- The JDK8 module compiles with a full Temurin 8 toolchain and does not depend on the Java 21 reactor.
-- The client uses bounded task IDs, a connection pool, connect/response timeouts and disables automatic HTTP retries.
-- Bearer tokens come from an `AccessTokenProvider`; idempotency stays in the HTTP header.
-- Read transport errors and write outcome-unknown errors have different exception types.
-- Structured API errors preserve status, code and retryability without exposing arbitrary untrusted bodies.
-- The Agent Task OpenAPI contains task read, confirmation, audit, states and error responses used by the legacy integration.
+- JDK8 模块使用完整的 Temurin 8 工具链编译，不依赖 Java 21 主工程。
+- 客户端限制任务 ID 长度，使用连接池与连接/响应超时，并关闭 HTTP 自动重试。
+- Bearer Token 由 `AccessTokenProvider` 提供，幂等键只放在 HTTP 请求头中。
+- 读取链路的传输错误与写入结果未知使用不同异常类型。
+- 结构化 API 异常保留 HTTP 状态、错误码和是否可重试，不暴露任意不可信响应正文。
+- Agent Task OpenAPI 包含旧系统接入所需的任务读取、确认、审计、状态与错误响应。
 
 ## 验证命令
 

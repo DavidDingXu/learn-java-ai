@@ -8,15 +8,15 @@ import com.xiaoding.javaai.customer.consultation.application.port.KnowledgeAnswe
 import com.xiaoding.javaai.customer.consultation.application.port.KnowledgeAnswerStreamClient;
 import com.xiaoding.javaai.customer.consultation.application.port.TicketTaskClient;
 import com.xiaoding.javaai.customer.consultation.domain.ConversationWindowPolicy;
-import com.xiaoding.javaai.customer.identity.CustomerJwtIdentityFactory;
 import com.xiaoding.javaai.customer.identity.DelegatedTokenClient;
+import com.xiaoding.javaai.customer.identity.LocalDelegatedTokenClient;
 import com.xiaoding.javaai.customer.identity.OAuth2TokenExchangeDelegatedTokenClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -28,11 +28,6 @@ public class CustomerConsultationConfiguration {
     @Bean
     Clock customerConsultationClock() {
         return Clock.systemUTC();
-    }
-
-    @Bean
-    CustomerJwtIdentityFactory customerJwtIdentityFactory() {
-        return new CustomerJwtIdentityFactory();
     }
 
     @Bean
@@ -65,25 +60,19 @@ public class CustomerConsultationConfiguration {
     @Bean
     KnowledgeAnswerClient knowledgeAnswerClient(
             WebClient.Builder builder,
-            @Value("${java-ai.runtime.external-integrations-enabled:false}") boolean enabled,
             @Value("${java-ai.downstream.knowledge.base-url:http://localhost:8081}") String baseUrl,
             @Value("${java-ai.downstream.knowledge.timeout:35s}") Duration timeout
     ) {
-        if (!enabled) return (token, request) -> Mono.error(
-                new IllegalStateException("knowledge-service integration is disabled"));
         return new WebClientKnowledgeAnswerClient(builder, baseUrl, timeout);
     }
 
     @Bean
     KnowledgeAnswerStreamClient knowledgeAnswerStreamClient(
             WebClient.Builder builder,
-            @Value("${java-ai.runtime.external-integrations-enabled:false}") boolean enabled,
             @Value("${java-ai.downstream.knowledge.base-url:http://localhost:8081}") String baseUrl,
             @Value("${java-ai.downstream.knowledge.stream-idle-timeout:30s}") Duration idleTimeout,
             @Value("${java-ai.downstream.knowledge.stream-total-timeout:2m}") Duration totalTimeout
     ) {
-        if (!enabled) return (token, request) -> reactor.core.publisher.Flux.error(
-                new IllegalStateException("knowledge-service stream integration is disabled"));
         return new WebClientKnowledgeAnswerStreamClient(
                 builder, baseUrl, idleTimeout, totalTimeout
         );
@@ -92,26 +81,44 @@ public class CustomerConsultationConfiguration {
     @Bean
     TicketTaskClient ticketTaskClient(
             WebClient.Builder builder,
-            @Value("${java-ai.runtime.external-integrations-enabled:false}") boolean enabled,
             @Value("${java-ai.downstream.ticket.base-url:http://localhost:8082}") String baseUrl,
             @Value("${java-ai.downstream.ticket.timeout:5s}") Duration timeout
     ) {
-        if (!enabled) return (token, key, snapshot) -> Mono.error(
-                new IllegalStateException("ticket-agent-service integration is disabled"));
         return new WebClientTicketTaskClient(builder, baseUrl, timeout);
     }
 
     @Bean
     @Qualifier("knowledgeDelegatedTokenClient")
+    @ConditionalOnProperty(
+            name = "java-ai.identity.delegation-mode", havingValue = "local", matchIfMissing = true)
+    DelegatedTokenClient localKnowledgeDelegatedTokenClient(
+            Clock clock,
+            @Value("${java-ai.identity.local-token-ttl:5m}") Duration lifetime
+    ) {
+        return new LocalDelegatedTokenClient(clock, lifetime);
+    }
+
+    @Bean
+    @Qualifier("ticketDelegatedTokenClient")
+    @ConditionalOnProperty(
+            name = "java-ai.identity.delegation-mode", havingValue = "local", matchIfMissing = true)
+    DelegatedTokenClient localTicketDelegatedTokenClient(
+            Clock clock,
+            @Value("${java-ai.identity.local-token-ttl:5m}") Duration lifetime
+    ) {
+        return new LocalDelegatedTokenClient(clock, lifetime);
+    }
+
+    @Bean
+    @Qualifier("knowledgeDelegatedTokenClient")
+    @ConditionalOnProperty(name = "java-ai.identity.delegation-mode", havingValue = "oauth2")
     DelegatedTokenClient knowledgeDelegatedTokenClient(
             WebClient.Builder builder,
-            @Value("${java-ai.runtime.external-integrations-enabled:false}") boolean enabled,
             @Value("${java-ai.identity.token-endpoint:http://localhost/disabled}") String endpoint,
             @Value("${java-ai.identity.client-id:}") String clientId,
             @Value("${java-ai.identity.client-secret:}") String clientSecret,
             @Value("${java-ai.identity.timeout:5s}") Duration timeout
     ) {
-        if (!enabled) return disabledTokenClient();
         return new OAuth2TokenExchangeDelegatedTokenClient(
                 builder, endpoint, "knowledge-service", "knowledge:answer",
                 clientId, clientSecret, timeout);
@@ -119,15 +126,14 @@ public class CustomerConsultationConfiguration {
 
     @Bean
     @Qualifier("ticketDelegatedTokenClient")
+    @ConditionalOnProperty(name = "java-ai.identity.delegation-mode", havingValue = "oauth2")
     DelegatedTokenClient ticketDelegatedTokenClient(
             WebClient.Builder builder,
-            @Value("${java-ai.runtime.external-integrations-enabled:false}") boolean enabled,
             @Value("${java-ai.identity.token-endpoint:http://localhost/disabled}") String endpoint,
             @Value("${java-ai.identity.client-id:}") String clientId,
             @Value("${java-ai.identity.client-secret:}") String clientSecret,
             @Value("${java-ai.identity.timeout:5s}") Duration timeout
     ) {
-        if (!enabled) return disabledTokenClient();
         return new OAuth2TokenExchangeDelegatedTokenClient(
                 builder, endpoint, "ticket-agent-service", "ticket:task:create",
                 clientId, clientSecret, timeout);
@@ -150,9 +156,5 @@ public class CustomerConsultationConfiguration {
         return new CustomerConsultationService(
                 store, knowledgeClient, streamClient, ticketClient, knowledgeTokens, ticketTokens,
                 rateLimiter, windowPolicy, idGenerator, customerConsultationClock, sessionTtl);
-    }
-
-    private static DelegatedTokenClient disabledTokenClient() {
-        return source -> Mono.error(new IllegalStateException("delegated identity integration is disabled"));
     }
 }

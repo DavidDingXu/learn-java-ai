@@ -89,7 +89,7 @@ test("eval runner owns contract tooling and remains independent of services", ()
   assert.doesNotMatch(pom, /knowledge-service|ticket-agent-service|customer-bff|spring-ai-/);
 });
 
-test("each service has one runtime config with explicit demo and production boundaries", () => {
+test("each service has one reader-facing runtime config with replaceable adapters", () => {
   const services = [
     "services/knowledge-service",
     "services/ticket-agent-service",
@@ -104,9 +104,7 @@ test("each service has one runtime config with explicit demo and production boun
     assert.deepEqual(runtimeConfigs, ["application.yml"], `${service} runtime configs`);
 
     const runtime = read(`${service}/src/main/resources/application.yml`);
-    assert.match(runtime, /profiles:\s*\n\s+default:\s*demo/);
-    assert.match(runtime, /on-profile:\s*demo/);
-    assert.match(runtime, /on-profile:\s*production/);
+    assert.doesNotMatch(runtime, /profiles:\s*\n\s+default:|on-profile:/);
     assert.doesNotMatch(runtime, /\.env|\$\{JAVA_AI_[A-Z0-9_]+/);
     assert.equal(
       existsSync(path.join(projectRoot, service, "src/test/resources/application-test.yml")),
@@ -116,29 +114,34 @@ test("each service has one runtime config with explicit demo and production boun
   }
 
   const knowledge = read("services/knowledge-service/src/main/resources/application.yml");
-  const demoModelConfig = read("config/application.yml");
-  assert.match(knowledge, /on-profile:\s*demo[\s\S]*?chat:\s*none/);
-  assert.match(knowledge, /on-profile:\s*production[\s\S]*?chat:\s*openai/);
-  assert.match(knowledge, /on-profile:\s*production[\s\S]*?embedding:\s*openai/);
-  assert.match(knowledge, /password:\s*replace-with-secret-manager/);
-  assert.match(demoModelConfig, /api-key:\s*replace-with-your-api-key/);
-  assert.match(demoModelConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);
+  const sharedModelConfig = read("config/application.yml");
+  assert.match(knowledge, /import:[\s\S]*?config\/application\.yml/);
+  assert.match(knowledge, /mode:\s*classpath/);
+  assert.match(knowledge, /mode:\s*fixed/);
+  assert.match(knowledge, /password:\s*replace-with-your-database-password/);
+  assert.match(sharedModelConfig, /chat:\s*openai/);
+  assert.match(sharedModelConfig, /embedding:\s*openai/);
+  assert.match(sharedModelConfig, /api-key:\s*replace-with-your-api-key/);
+  assert.match(sharedModelConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);
   assert.doesNotMatch(knowledge, /execution-mode|LOCAL_DISABLED|PROVIDER_PROTOCOL_FIXTURE/);
   assert.doesNotMatch(knowledge, /external-integrations-enabled/);
 
   const ticket = read("services/ticket-agent-service/src/main/resources/application.yml");
-  assert.match(ticket, /on-profile:\s*demo[\s\S]*?mode:\s*memory/);
-  assert.match(ticket, /on-profile:\s*production[\s\S]*?mode:\s*jdbc/);
-  assert.match(ticket, /on-profile:\s*production[\s\S]*?downstream-enabled:\s*false/);
+  assert.match(ticket, /persistence:[\s\S]*?mode:\s*memory/);
+  assert.match(ticket, /knowledge-tool:[\s\S]*?mode:\s*http/);
+  assert.match(ticket, /write-tool:[\s\S]*?mode:\s*memory/);
+  assert.match(ticket, /security:[\s\S]*?mode:\s*fixed/);
   assert.doesNotMatch(ticket, /external-integrations-enabled/);
 
   const bff = read("apps/customer-bff/src/main/resources/application.yml");
   const consultationConfiguration = read(
     "apps/customer-bff/src/main/java/com/xiaoding/javaai/customer/consultation/infrastructure/CustomerConsultationConfiguration.java",
   );
-  assert.match(bff, /on-profile:\s*demo[\s\S]*?external-integrations-enabled:\s*false/);
-  assert.match(bff, /on-profile:\s*production[\s\S]*?external-integrations-enabled:\s*true/);
-  assert.match(bff, /knowledge:\s*\n\s+timeout:\s*35s/);
+  assert.match(bff, /security:[\s\S]*?mode:\s*fixed/);
+  assert.match(bff, /delegation-mode:\s*local/);
+  assert.match(bff, /base-url:\s*http:\/\/localhost:8081/);
+  assert.match(bff, /base-url:\s*http:\/\/localhost:8082/);
+  assert.match(bff, /knowledge:[\s\S]*?base-url:\s*http:\/\/localhost:8081[\s\S]*?timeout:\s*35s/);
   assert.match(bff, /stream-idle-timeout:\s*30s/);
   assert.match(bff, /stream-total-timeout:\s*2m/);
   assert.match(consultationConfiguration, /java-ai\.downstream\.knowledge\.timeout:35s/);
@@ -146,9 +149,9 @@ test("each service has one runtime config with explicit demo and production boun
   assert.match(consultationConfiguration, /stream-total-timeout:2m/);
 
   for (const startupTest of [
-    "services/knowledge-service/src/test/java/com/xiaoding/javaai/knowledge/KnowledgeServiceDemoStartupTest.java",
-    "services/ticket-agent-service/src/test/java/com/xiaoding/javaai/ticket/TicketAgentDemoStartupTest.java",
-    "apps/customer-bff/src/test/java/com/xiaoding/javaai/customer/CustomerBffDemoStartupTest.java",
+    "services/knowledge-service/src/test/java/com/xiaoding/javaai/knowledge/KnowledgeServiceDefaultStartupTest.java",
+    "services/ticket-agent-service/src/test/java/com/xiaoding/javaai/ticket/TicketAgentDefaultStartupTest.java",
+    "apps/customer-bff/src/test/java/com/xiaoding/javaai/customer/CustomerBffDefaultStartupTest.java",
   ]) {
     assert.equal(existsSync(path.join(projectRoot, startupTest)), true, startupTest);
   }
@@ -159,18 +162,11 @@ test("each service has one runtime config with explicit demo and production boun
       : `${service}/src/main/java/com/xiaoding/javaai/${
         service.includes("knowledge") ? "knowledge" : "ticket"
       }`;
-    const applicationName = service.includes("knowledge")
-      ? "KnowledgeServiceApplication.java"
-      : service.includes("ticket")
-        ? "TicketAgentServiceApplication.java"
-        : "CustomerBffApplication.java";
-    const application = read(`${mainPackage}/${applicationName}`);
-    const validator = read(`${mainPackage}/ProductionConfigurationValidator.java`);
-
-    assert.match(application, /ProductionConfigurationValidator\.validate/);
-    assert.match(validator, /Profiles\.of\("production"\)/);
-    assert.match(validator, /Invalid production configuration/);
-    assert.doesNotMatch(validator, /getProperty\([^\n]+\)[^\n]+(?:println|logger|log\.)/);
+    assert.equal(
+      existsSync(path.join(projectRoot, mainPackage, "ProductionConfigurationValidator.java")),
+      false,
+      `${service} must validate the selected adapter instead of a production profile`,
+    );
   }
 });
 

@@ -32,13 +32,13 @@ sequenceDiagram
     end
 ```
 
-当前已经实现 Customer Web 的流式咨询、引用、反馈、重试和转人工页面，Customer BFF 的客户 JWT 边界、RFC 8693 Token Exchange、Knowledge HTTP/SSE 调用、短时会话和幂等工单升级；Ticket Agent Service 已实现受限规划、Tool 目录、知识查询、风险分级、版本绑定确认、确认幂等、审计、PostgreSQL/Flyway 持久化和 HTTP 下游适配器；独立 Java 8 客户端已能查询任务并提交确认。目标数据库迁移与容量测试、公司 IdP、生产网关、外部 JDK8 Tool 服务和完整端到端联调仍需在公司环境完成。
+当前已经实现 Customer Web 的流式咨询、引用、反馈、重试和转人工页面；Customer BFF 已实现固定身份、JWT、RFC 8693 Token Exchange、Knowledge HTTP/SSE 调用、短时会话和幂等工单升级；Ticket Agent Service 已实现受限规划、Tool 目录、知识查询、风险分级、版本绑定确认、确认幂等、审计、内存与 PostgreSQL/Flyway 持久化，以及内存与 HTTP Tool 适配器。默认配置使用固定身份、本地委托和进程内状态，方便直接联调；公司 IdP、目标数据库容量、生产网关与外部 JDK8 Tool 仍需在目标环境验证。
 
 ## 集成边界
 
 1. Customer Web 只把客户令牌交给 BFF，不直接调用 Knowledge Service。
 2. BFF 负责委托身份，不把 `tenantId`、`userId`、角色或部门塞进业务请求体。
-3. Knowledge Service 依据签名令牌中的身份和文档权限生成回答；引用必须指向实际参与回答的上下文。
+3. Knowledge Service 依据受信身份和文档权限生成回答；引用必须指向实际参与回答的上下文。
 4. 拒答、用户主动要求人工处理或需要修改业务状态的问题可以进入工单流程；BFF 传递的是回答尝试快照，不自行判断业务权限。
 5. Ticket Agent Service 生成的是受控建议和待确认任务，不拥有最终业务写权限。
 6. JDK8 系统仍是工单状态和业务写入的权威数据源，人工确认由该系统的业务终端执行。

@@ -11,7 +11,7 @@ import com.xiaoding.javaai.ticket.agent.domain.ConfirmationDecision;
 import com.xiaoding.javaai.ticket.agent.domain.ConfirmationRequest;
 import com.xiaoding.javaai.ticket.agent.domain.ToolExecutionReceipt;
 import com.xiaoding.javaai.ticket.agent.domain.ToolRisk;
-import com.xiaoding.javaai.ticket.security.ConfirmationActorFactory;
+import com.xiaoding.javaai.ticket.security.FixedTicketIdentityProvider;
 import com.xiaoding.javaai.ticket.security.DelegatedTicketIdentity;
 import com.xiaoding.javaai.ticket.task.AgentTask;
 import com.xiaoding.javaai.ticket.task.AgentTaskAccessDeniedException;
@@ -19,7 +19,6 @@ import com.xiaoding.javaai.ticket.task.AgentTaskNotFoundException;
 import com.xiaoding.javaai.ticket.task.AgentTaskRequest;
 import com.xiaoding.javaai.ticket.task.InMemoryAgentTaskRepository;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -51,13 +50,13 @@ class AgentTaskWorkflowControllerTest {
                 taskId -> repository.findById(taskId).orElseThrow(),
                 confirmationService::decide,
                 audit,
-                new ConfirmationActorFactory(),
+                fixedIdentity(),
                 AgentRunAdmission.UNLIMITED);
 
-        AgentTaskView before = controller.get(jwt("jdk8-crm"), "task-100");
-        AgentTaskView workerView = controller.run(jwt("ticket-agent-worker"), "task-100");
+        AgentTaskView before = controller.get(null, "task-100");
+        AgentTaskView workerView = controller.run(null, "task-100");
         ConfirmationDecisionReceiptResponse receipt = controller.confirm(
-                jwt("jdk8-crm"),
+                null,
                 "task-100",
                 "confirm:task-100:decision-1",
                 new ConfirmToolActionWebRequest(
@@ -69,7 +68,7 @@ class AgentTaskWorkflowControllerTest {
         assertThat(before.confirmation().requiredRole()).isEqualTo("TICKET_OPERATOR");
         assertThat(workerView.taskId()).isEqualTo("task-100");
         assertThat(receipt.state()).isEqualTo(AgentTaskState.COMPLETED.name());
-        assertThat(controller.audit(jwt("jdk8-crm"), "task-100"))
+        assertThat(controller.audit(null, "task-100"))
                 .extracting(AgentAuditEventResponse::eventType)
                 .containsExactly("CONFIRMATION_APPROVED", "TOOL_EXECUTION_SUCCEEDED");
     }
@@ -84,12 +83,13 @@ class AgentTaskWorkflowControllerTest {
                     throw new AssertionError("confirmation must not run");
                 },
                 new InMemoryAgentAuditTrail(),
-                new ConfirmationActorFactory(),
+                new FixedTicketIdentityProvider(
+                        "tenant-b", "local-user", List.of("TICKET_OPERATOR"), List.of("support")),
                 AgentRunAdmission.UNLIMITED);
 
-        assertThatThrownBy(() -> controller.get(jwt("jdk8-crm", "tenant-a"), "missing-task"))
+        assertThatThrownBy(() -> controller.get(null, "missing-task"))
                 .isInstanceOf(AgentTaskNotFoundException.class);
-        assertThatThrownBy(() -> controller.get(jwt("jdk8-crm", "tenant-b"), "task-100"))
+        assertThatThrownBy(() -> controller.get(null, "task-100"))
                 .isInstanceOf(AgentTaskAccessDeniedException.class);
     }
 
@@ -114,21 +114,8 @@ class AgentTaskWorkflowControllerTest {
         return repository;
     }
 
-    private static Jwt jwt(String actor) {
-        return jwt(actor, "tenant-a");
-    }
-
-    private static Jwt jwt(String actor, String tenantId) {
-        return new Jwt(
-                "token-value",
-                Instant.parse("2026-07-13T08:00:00Z"),
-                Instant.parse("2026-07-13T08:30:00Z"),
-                Map.of("alg", "none"),
-                Map.of(
-                        "sub", "employee-7",
-                        "tenantId", tenantId,
-                        "act", Map.of("sub", actor),
-                        "roles", List.of("TICKET_OPERATOR")
-                ));
+    private static FixedTicketIdentityProvider fixedIdentity() {
+        return new FixedTicketIdentityProvider(
+                "tenant-a", "local-user", List.of("TICKET_OPERATOR"), List.of("support"));
     }
 }

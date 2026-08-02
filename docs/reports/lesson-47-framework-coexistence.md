@@ -6,8 +6,8 @@ Status: VERIFIED_CAPABILITY_ROUTING
 ## 已验证
 
 - `FrameworkCoexistencePolicy` routes fixed business capabilities to Spring AI or LangChain4j.
-- Unknown capabilities fail closed.
-- The main reactor Enforcer rejects LangChain4j and AgentScope dependencies; the isolated labs reactor keeps its own BOMs and does not load both auto-configuration stacks into one Boot process.
+- 未注册能力默认拒绝执行。
+- 主工程 Enforcer 拒绝 LangChain4j 和 AgentScope 依赖；隔离实验工程维护自己的 BOM，也不会在同一个 Boot 进程中加载两套自动配置。
 
 ## 验证命令
 
@@ -17,4 +17,4 @@ Status: VERIFIED_CAPABILITY_ROUTING
 
 ## 外部验证边界
 
-The labs POM does not currently ban database or messaging dependencies. The project intentionally does not load both auto-configuration stacks into one Boot process; that option requires a separate compatibility test.
+`labs` POM 尚未禁止数据库或消息依赖。当前也没有在同一个 Boot 进程中加载两套自动配置；若采用这种方案，需要增加独立的兼容性测试。

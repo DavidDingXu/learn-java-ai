@@ -1,13 +1,21 @@
-# The default demo profile keeps task state in memory and disables remote tools.
-# Never commit real production secrets. Override production placeholders through the deployment secret manager.
+# Run from the project root so this service can load the shared model configuration.
+# Local defaults keep state in memory, call Knowledge Service over HTTP and execute writes locally.
 server:
   port: 8082
 
 spring:
-  profiles:
-    default: demo
+  config:
+    import:
+      - optional:file:./config/application.yml
+      - optional:file:../../config/application.yml
   application:
     name: ticket-agent-service
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+  flyway:
+    enabled: false
 
 management:
   endpoints:
@@ -19,87 +27,42 @@ management:
       show-details: never
 
 java-ai:
+  persistence:
+    # memory supports local integration. Change to jdbc when validating recovery and concurrency.
+    mode: memory
+    confirmation-lease: 30s
+    jdbc:
+      url: jdbc:postgresql://localhost:5432/java_ai_ticket
+      username: java_ai_ticket
+      password: replace-with-your-database-password
+      maximum-pool-size: 10
   agent:
     max-steps: 4
     max-concurrent-runs: 16
     confirmation-ttl: 15m
     allowed-queues: refund-review,tier-2
     downstream-timeout: 3s
-
----
-spring:
-  config:
-    activate:
-      on-profile: demo
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
-      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
-  flyway:
-    enabled: false
-  ai:
-    model:
-      audio:
-        speech: none
-        transcription: none
-      chat: none
-      embedding: none
-      image: none
-      moderation: none
-
-java-ai:
-  persistence:
-    mode: memory
-    confirmation-lease: 30s
-  agent:
-    downstream-enabled: false
-    downstream-token-mode: disabled
+    # Knowledge remains a real HTTP boundary. The write Tool is local until a legacy endpoint is available.
+    knowledge-tool:
+      mode: http
+    write-tool:
+      mode: memory
+    knowledge-base-url: http://localhost:8081
+    legacy-tool-base-url: http://localhost:8090
+    downstream-token-mode: local
+    delegated-token:
+      issuer: http://local.java-ai
+      hmac-secret: replace-with-at-least-32-bytes
+      actor-id: ticket-agent-service
+      ttl: 2m
   security:
+    mode: fixed
+    fixed:
+      tenant-id: tenant-a
+      subject: local-user
+      roles: TICKET_OPERATOR
+      departments: support
     jwt:
-      enabled: false
-
----
-spring:
-  config:
-    activate:
-      on-profile: production
-  datasource:
-    url: jdbc:postgresql://database.example.com:5432/java_ai_ticket
-    username: java_ai_ticket
-    password: replace-with-secret-manager
-    hikari:
-      maximum-pool-size: 10
-  flyway:
-    enabled: true
-  ai:
-    model:
-      audio:
-        speech: none
-        transcription: none
-      chat: openai
-      embedding: none
-      image: none
-      moderation: none
-    openai:
-      max-retries: 0
-      api-key: replace-with-secret-manager
-      base-url: https://api.openai.com/v1
-      chat:
-        model: gpt-4.1-mini
-
-java-ai:
-  persistence:
-    mode: jdbc
-    confirmation-lease: 30s
-  agent:
-    # Keep remote tools disabled until a company token adapter replaces the development HMAC signer.
-    downstream-enabled: false
-    knowledge-base-url: http://knowledge-service:8081
-    legacy-tool-base-url: http://legacy-tool:8090
-    downstream-token-mode: disabled
-  security:
-    jwt:
-      enabled: true
       issuer: https://identity.example.com
       audience: ticket-agent-service
       jwk-set-uri: https://identity.example.com/.well-known/jwks.json

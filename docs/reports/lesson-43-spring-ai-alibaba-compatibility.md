@@ -5,9 +5,9 @@ Status: VERIFIED_DEPENDENCY_ISOLATION
 
 ## 已验证
 
-- Spring AI Alibaba runs in a separate reactor from the Spring Boot 4.1 and Spring AI 2.0 mainline.
-- The lab dependency allowlist prevents experimental framework dependencies from entering production modules.
-- ADR 0003 records migration, promotion and rollback conditions.
+- Spring AI Alibaba 位于独立 Maven Reactor，不与 Spring Boot 4.1、Spring AI 2.0 主工程混合构建。
+- 实验模块依赖白名单会阻止框架实验依赖进入正式服务模块。
+- ADR 0003 记录迁移、转正和回滚条件。
 
 ## 验证命令
 

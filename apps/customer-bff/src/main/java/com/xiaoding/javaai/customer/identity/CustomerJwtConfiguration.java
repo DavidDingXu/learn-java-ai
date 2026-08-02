@@ -19,13 +19,13 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
 @Configuration
-@ConditionalOnProperty(name = "java-ai.security.customer-jwt.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "java-ai.security.mode", havingValue = "jwt")
 public class CustomerJwtConfiguration {
 
     @Bean
     ReactiveJwtDecoder customerJwtDecoder(Environment environment) {
-        String issuer = required(environment, "java-ai.security.customer-jwt.issuer");
-        String audience = required(environment, "java-ai.security.customer-jwt.audience");
+        String issuer = required(environment, "java-ai.security.jwt.issuer");
+        String audience = required(environment, "java-ai.security.jwt.audience");
         NimbusReactiveJwtDecoder decoder = createDecoder(environment);
         OAuth2TokenValidator<Jwt> standard = JwtValidators.createDefaultWithIssuer(issuer);
         OAuth2TokenValidator<Jwt> audienceValidator = validator(
@@ -43,8 +43,8 @@ public class CustomerJwtConfiguration {
     }
 
     private static NimbusReactiveJwtDecoder createDecoder(Environment environment) {
-        String secret = environment.getProperty("java-ai.security.customer-jwt.hmac-secret", "");
-        String jwkSetUri = environment.getProperty("java-ai.security.customer-jwt.jwk-set-uri", "");
+        String secret = environment.getProperty("java-ai.security.jwt.hmac-secret", "");
+        String jwkSetUri = environment.getProperty("java-ai.security.jwt.jwk-set-uri", "");
         if (StringUtils.hasText(secret) && StringUtils.hasText(jwkSetUri)) {
             throw new IllegalStateException(
                     "Configure exactly one customer JWT verification source: jwk-set-uri or hmac-secret");

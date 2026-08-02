@@ -3,8 +3,10 @@ package com.xiaoding.javaai.knowledge.indexing.web;
 import com.xiaoding.javaai.knowledge.document.domain.TenantId;
 import com.xiaoding.javaai.knowledge.indexing.application.IndexTaskRunResult;
 import com.xiaoding.javaai.knowledge.indexing.application.IndexTaskRunner;
+import com.xiaoding.javaai.knowledge.security.JwtKnowledgeAccessScopeProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import reactor.test.StepVerifier;
 
 import java.time.Instant;
@@ -16,7 +18,7 @@ class IndexTaskControllerTest {
         RecordingRunner worker = new RecordingRunner();
         TenantId tenantId = new TenantId("tenant-a");
 
-        StepVerifier.create(new IndexTaskController(worker).runOnce(jwt(tenantId)))
+        StepVerifier.create(controller(worker).runOnce(authentication(tenantId)))
                 .expectNext(new IndexTaskRunResponse("IDLE"))
                 .verifyComplete();
 
@@ -28,7 +30,7 @@ class IndexTaskControllerTest {
         RecordingRunner worker = new RecordingRunner();
         worker.result = IndexTaskRunResult.LOST_LEASE;
 
-        StepVerifier.create(new IndexTaskController(worker).runOnce(jwt(new TenantId("tenant-a"))))
+        StepVerifier.create(controller(worker).runOnce(authentication(new TenantId("tenant-a"))))
                 .expectNext(new IndexTaskRunResponse("LOST_LEASE"))
                 .verifyComplete();
     }
@@ -41,6 +43,14 @@ class IndexTaskControllerTest {
                 .expiresAt(Instant.parse("2026-07-13T05:00:00Z"))
                 .claim("tenantId", tenantId.value())
                 .build();
+    }
+
+    private static JwtAuthenticationToken authentication(TenantId tenantId) {
+        return new JwtAuthenticationToken(jwt(tenantId));
+    }
+
+    private static IndexTaskController controller(IndexTaskRunner worker) {
+        return new IndexTaskController(worker, new JwtKnowledgeAccessScopeProvider());
     }
 
     private static final class RecordingRunner implements IndexTaskRunner {

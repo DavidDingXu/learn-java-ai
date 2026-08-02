@@ -6,7 +6,6 @@ import com.xiaoding.javaai.knowledge.document.application.DocumentUploadService;
 import com.xiaoding.javaai.knowledge.document.application.PolicyDocumentChunker;
 import com.xiaoding.javaai.knowledge.document.application.port.DocumentContentParser;
 import com.xiaoding.javaai.knowledge.document.application.port.DocumentObjectStore;
-import com.xiaoding.javaai.knowledge.document.web.JwtDocumentWriteIdentityFactory;
 import com.xiaoding.javaai.knowledge.indexing.application.DocumentVersionIndexingService;
 import com.xiaoding.javaai.knowledge.indexing.application.IndexTaskWorker;
 import com.xiaoding.javaai.knowledge.indexing.application.port.DocumentVersionIndexer;
@@ -36,7 +35,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 @Configuration
 @EnableScheduling
-@ConditionalOnProperty(name = "java-ai.knowledge.ingestion.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "java-ai.knowledge.mode", havingValue = "postgres-rag")
 public class KnowledgeIngestionConfiguration {
 
     @Bean
@@ -78,11 +77,6 @@ public class KnowledgeIngestionConfiguration {
         return new DocumentPublicationService(
                 repository, repository, UUID::randomUUID, clock
         );
-    }
-
-    @Bean
-    JwtDocumentWriteIdentityFactory jwtDocumentWriteIdentityFactory() {
-        return new JwtDocumentWriteIdentityFactory();
     }
 
     @Bean

@@ -5,9 +5,9 @@ Status: VERIFIED_ISOLATED_GRAPH
 
 ## 已验证
 
-- A real Spring AI Alibaba `StateGraph` models prepare, wait-for-confirmation and execute nodes.
-- Business confirmation state remains explicit and is not hidden in model messages.
-- Tests cover the confirmation route and state output.
+- 真实 Spring AI Alibaba `StateGraph` 定义准备、等待确认和执行节点。
+- 业务确认状态保持显式，不隐藏在模型消息中。
+- 测试覆盖确认路由和状态输出。
 
 ## 验证命令
 
@@ -17,4 +17,4 @@ Status: VERIFIED_ISOLATED_GRAPH
 
 ## 外部验证边界
 
-The graph is an isolated flow comparison. Durable checkpoint storage, concurrent decisions and production recovery require target-environment integration tests.
+这个图实验只对比隔离的流程实现。持久化 checkpoint、并发确认和生产恢复仍需要目标环境集成测试。

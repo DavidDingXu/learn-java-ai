@@ -2,39 +2,36 @@
 
 Knowledge Service 的 RAG 写入链路包含上传原文、保存文档与版本、发布 ACL 和索引任务，以及 Worker 切分原文、生成 Embedding 并写入 pgvector。业务版本和检索版本分别管理；新版本索引完成前，已有文档继续使用上一版索引。
 
-## 这条链路不属于默认演示
+## 完整 RAG 需要准备什么
 
-默认 `demo` Profile 会关闭数据库、文档写入、真实模型和 JWT，用于直接启动应用与运行确定性测试。本 Runbook 说明的是目标环境写入链路，需要真实 PostgreSQL/pgvector、对象存储、Embedding Provider 和身份平台。
+Knowledge Service 默认使用 classpath 上下文，适合先学习模型调用和回答协议。本 Runbook 把上下文切换为真实检索，需要 PostgreSQL、Embedding Provider 和 Chat Provider；固定本地身份与文件对象存储由项目提供。
 
-准备一个已安装 `vector` 与 `pg_trgm` 扩展的 PostgreSQL 数据库，以及支持 Embedding 的 OpenAI 兼容接口。若同时验证知识问答，该接口还需支持 Chat。应用启动时由 Flyway 按顺序执行 V1-V4：V1 创建文档、版本、ACL、任务和向量分块，V2 创建 trigram 索引，V3 增加发布审计字段，V4 创建检索版本指针。
+准备一个允许创建 `vector` 与 `pg_trgm` 扩展的专用 PostgreSQL 数据库，以及支持 Embedding 和 Chat 的 OpenAI 兼容接口。应用启动时由 Flyway 按顺序执行 V1-V4：V1 创建文档、版本、ACL、任务和向量分块，V2 创建 trigram 索引，V3 增加发布审计字段，V4 创建检索版本指针。
+
+Redis、Kafka、MinIO、Query Rewrite 和 Rerank 都不是首次联调的前置条件。原文默认写入本地文件目录；多实例部署时再替换为公司对象存储。
 
 ## 所有运行参数都在 `application.yml`
 
-Knowledge Service 的 `application.yml` 已经给出 `production` 配置结构。在隔离的测试环境中，把占位值替换为实际地址与账号：
+模型参数位于项目根目录 `config/application.yml`，数据库与 RAG 模式位于 Knowledge Service 的 `application.yml`。在隔离的测试环境中替换相应占位值：
 
 ```yaml
 spring:
   ai:
     openai:
-      api-key: replace-with-secret-manager
+      api-key: replace-with-your-api-key
       base-url: https://api.openai.com/v1
       embedding:
         model: text-embedding-3-small
 
 java-ai:
-  security:
-    jwt:
-      issuer: https://identity.example.com
-      audience: knowledge-service
-      jwk-set-uri: https://identity.example.com/.well-known/jwks.json
-      allowed-actors: customer-bff,ticket-agent-service,knowledge-admin-service
   knowledge:
+    mode: postgres-rag
     object-store:
       local-root: ./var/knowledge-objects
     postgres:
-      jdbc-url: jdbc:postgresql://database.example.com:5432/java_ai_knowledge
+      jdbc-url: jdbc:postgresql://localhost:5432/java_ai_knowledge
       username: java_ai_knowledge
-      password: replace-with-secret-manager
+      password: replace-with-your-database-password
 ```
 
 为了演示配置位置，YAML 中保留了占位密码和 API Key。真实密钥不能提交到 Git；生产环境必须由公司密钥系统覆盖这些值。多实例部署也不应继续使用本地文件对象存储，需要替换为 S3 兼容实现。
@@ -43,22 +40,15 @@ java-ai:
 
 数据库账号需要对 Knowledge Schema 具备 Flyway 迁移和业务读写权限。正式环境通常把迁移账号与运行账号拆开，示例为了便于首次运行使用同一个连接。
 
-## 写入令牌的最小 Claim
+## 本地联调使用固定身份
 
-上传和发布使用 `knowledge:write` scope，手动执行一次 Worker 使用 `knowledge:index` scope。JWT 还必须包含：
+默认身份适配器固定返回 `tenant-a / local-user / support`，下面所有 HTTP 请求都不需要 Token。请求头或请求体即使夹带其他租户和用户，也不会覆盖这组身份。
 
-- `aud`：包含 `knowledge-service`；
-- `tenantId`：文档所属租户；
-- `sub`：执行上传或发布的编辑人；
-- `act.sub`：必须命中服务端 `allowed-actors` 白名单。
-
-接口不会接收请求头或请求体中的租户、编辑人字段。
-
-从 IdP 或 Token Exchange 获取两枚短时令牌：一枚只带 `knowledge:write`，另一枚只带 `knowledge:index`。后续命令中的 `<WRITE_TOKEN>` 和 `<INDEX_TOKEN>` 分别替换为这两枚令牌。不要把令牌写进脚本、命令历史或仓库文件。
+发布 ACL 时必须包含 `support` 部门或 `local-user` 用户，否则后续检索会按权限规则返回空结果。这正好可以验证 ACL 是否真的在 TopK 之前生效。
 
 ## 启动 Knowledge Service
 
-下面的步骤使用手动接口执行一条索引任务，因此先在 `production` 配置段关闭自动调度：
+下面的步骤使用手动接口执行一条索引任务，因此先在 Knowledge Service 的 `application.yml` 中关闭自动调度：
 
 ```yaml
 java-ai:
@@ -70,9 +60,7 @@ java-ai:
 如果保留自动调度，请跳过后面的手动 `run-once`，否则任务可能已经被调度器处理。
 
 ```bash
-./mvnw -pl services/knowledge-service \
-  -Dspring-boot.run.profiles=production \
-  spring-boot:run
+./mvnw -pl services/knowledge-service spring-boot:run
 ```
 
 确认 `/actuator/health` 返回 `UP` 后再上传文档。Health 不会替你验证 Embedding 质量或数据库容量。
@@ -83,7 +71,6 @@ java-ai:
 
 ```bash
 curl --fail-with-body \
-  -H "Authorization: Bearer <WRITE_TOKEN>" \
   -F 'metadata={"title":"退款政策","expectedRevision":0};type=application/json' \
   -F 'file=@datasets/knowledge/refund-policy-chunking-v1.md;type=text/markdown' \
   http://localhost:8081/api/v1/knowledge/documents/refund-policy/versions
@@ -93,7 +80,6 @@ Windows PowerShell 使用 `curl.exe`，避免把 `curl` 解析成旧版 PowerShe
 
 ```powershell
 curl.exe --fail-with-body `
-  -H "Authorization: Bearer <WRITE_TOKEN>" `
   -F 'metadata={"title":"退款政策","expectedRevision":0};type=application/json' `
   -F 'file=@datasets/knowledge/refund-policy-chunking-v1.md;type=text/markdown' `
   http://localhost:8081/api/v1/knowledge/documents/refund-policy/versions
@@ -107,7 +93,6 @@ curl.exe --fail-with-body `
 
 ```bash
 curl --fail-with-body \
-  -H "Authorization: Bearer <WRITE_TOKEN>" \
   -H 'Content-Type: application/json' \
   -d '{
     "expectedRevision": 1,
@@ -136,7 +121,6 @@ $publishBody = @{
 
 Invoke-RestMethod -Method Post `
   -Uri "http://localhost:8081/api/v1/knowledge/documents/refund-policy/versions/1/publish" `
-  -Headers @{ Authorization = "Bearer <WRITE_TOKEN>" } `
   -ContentType "application/json" `
   -Body $publishBody
 ```
@@ -147,12 +131,11 @@ Invoke-RestMethod -Method Post `
 
 ## 运行索引 Worker
 
-手动接口从已验证 JWT 中读取 `tenantId`，每次至多领取该租户的一个到期任务：
+手动接口从本地身份组件读取 `tenant-a`，每次至多领取该租户的一个到期任务：
 
 ```bash
 curl --fail-with-body \
   -X POST \
-  -H "Authorization: Bearer <INDEX_TOKEN>" \
   http://localhost:8081/internal/v1/knowledge/index-tasks/run-once
 ```
 
@@ -160,8 +143,7 @@ Windows PowerShell：
 
 ```powershell
 Invoke-RestMethod -Method Post `
-  -Uri "http://localhost:8081/internal/v1/knowledge/index-tasks/run-once" `
-  -Headers @{ Authorization = "Bearer <INDEX_TOKEN>" }
+  -Uri "http://localhost:8081/internal/v1/knowledge/index-tasks/run-once"
 ```
 
 返回值为 `SUCCEEDED`、`FAILED`、`IDLE` 或 `LOST_LEASE`。`LOST_LEASE` 表示当前 Worker 已不再拥有该任务，它不会再使用旧租约写入失败状态。普通失败任务按 `java-ai.knowledge.indexing.retry-delay` 重试，达到 `maximum-attempts` 后进入 `DEAD`。
@@ -185,10 +167,34 @@ from document_search_version
 where tenant_id = 'tenant-a' and document_id = 'refund-policy';
 ```
 
-读取链路先确认文档存在当前有效的 `PUBLISHED` 业务版本，再从 `document_search_version` 指向的已完成索引中取分块，并在 TopK 前应用 JWT 租户、用户和部门 ACL。ACL 属于整份文档，本次发布写入的新 ACL 会立即约束上一版索引。替换索引期间，返回结果里的 `documentVersion` 可能暂时仍是上一版。
+读取链路先确认文档存在当前有效的 `PUBLISHED` 业务版本，再从 `document_search_version` 指向的已完成索引中取分块，并在 TopK 前应用租户、用户和部门 ACL。ACL 属于整份文档，本次发布写入的新 ACL 会立即约束上一版索引。替换索引期间，返回结果里的 `documentVersion` 可能暂时仍是上一版。
+
+## 用真实检索结果生成回答
+
+索引任务成功后，再调用完整回答接口：
+
+```bash
+curl --fail-with-body \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"退款通常多久到账？"}' \
+  http://localhost:8081/api/v1/knowledge/answers
+```
+
+Windows PowerShell：
+
+```powershell
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:8081/api/v1/knowledge/answers" `
+  -ContentType "application/json" `
+  -Body '{"question":"退款通常多久到账？"}'
+```
+
+响应必须同时检查回答和 `citations`。只有回答有内容，却没有引用到刚才发布的文档版本，不能算完整 RAG 跑通。接着把发布 ACL 改成不包含 `support` 和 `local-user` 的主体，再用同一问题验证空召回或拒答，才能确认权限过滤没有被最终回答掩盖。
 
 ## 生产环境替换项
 
 默认 `LocalFileDocumentObjectStore` 便于单机运行。多实例部署必须换成 S3 兼容对象存储，并保留相同的租户隔离 key、不可变原文和读取接口。上线前还要验证 PostgreSQL/pgvector 扩展版本、Embedding 维度、索引构建时间、任务积压告警、对象与元数据孤儿清理、备份恢复及容量上限。
+
+正式部署还要把固定身份改为公司现有鉴权适配器。JWT 只是仓库提供的一种实现，不是 RAG 的固定技术前提。
 
 监控中应同时展示当前业务版本和 `document_search_version`。两者长时间不一致通常意味着索引重试、Embedding 服务异常或任务已经进入 `DEAD`。只要当前业务版本仍在有效期内且已有上一版索引，读取仍可用，但内容还是上一版；首次发布和业务版本过期不具备这个回退条件。

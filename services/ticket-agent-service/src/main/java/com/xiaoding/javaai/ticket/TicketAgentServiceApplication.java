@@ -7,9 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class TicketAgentServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication application = new SpringApplication(TicketAgentServiceApplication.class);
-        application.addInitializers(context ->
-                ProductionConfigurationValidator.validate(context.getEnvironment()));
-        application.run(args);
+        SpringApplication.run(TicketAgentServiceApplication.class, args);
     }
 }

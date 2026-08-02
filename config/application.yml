@@ -1,6 +1,6 @@
-# Local model tests read this file directly. Replace only the API key when using OpenAI.
-# For another compatible provider, also update the URL and model names.
-# Never commit a real key. Production deployments must override secrets through a secret manager.
+# Knowledge Service and Ticket Agent Service import this shared model configuration.
+# For local learning, replace only the API key. Compatible providers may also need another URL and model name.
+# Never commit a real key. Company deployments must override secrets through their secret manager.
 spring:
   ai:
     model:

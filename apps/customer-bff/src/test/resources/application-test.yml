@@ -5,12 +5,10 @@ management:
         include: health
 
 java-ai:
-  runtime:
-    external-integrations-enabled: false
   security:
-    customer-jwt:
-      enabled: false
+    mode: fixed
   identity:
+    delegation-mode: local
     token-endpoint: http://localhost/disabled
     client-id: test-client
     client-secret: test-secret

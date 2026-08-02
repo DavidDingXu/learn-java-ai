@@ -2,7 +2,7 @@
 
 ## 实现状态
 
-Knowledge Service 已实现受 JWT 保护的文档上传与发布、JDBC/Flyway 持久化、pgvector 索引写入和检索；Customer BFF 已实现客户身份、委托令牌、完整回答、SSE、短时会话、反馈、重试和升级工单；Customer Web 已实现流式咨询、引用展示、反馈、重试和转人工页面；Ticket Agent Service 已实现可信任务身份、受限步数规划、服务端 Tool 目录、人工确认、幂等、JDBC/Flyway 持久化、审计和 HTTP 下游适配器；JDK8 客户端已能查询任务并提交确认。目标 PostgreSQL 容量、公司 IdP、生产网关与下游联调、持久 UNKNOWN 对账和端到端容量测试仍需在目标环境完成。
+Knowledge Service 已实现可替换的身份边界、文档上传与发布、JDBC/Flyway 持久化、pgvector 索引写入和检索；Customer BFF 已实现客户身份、委托令牌、完整回答、SSE、短时会话、反馈、重试和升级工单；Customer Web 已实现流式咨询、引用展示、反馈、重试和转人工页面；Ticket Agent Service 已实现可信任务身份、受限步数规划、服务端 Tool 目录、人工确认、幂等、JDBC/Flyway 持久化、审计和 HTTP 下游适配器；JDK8 客户端已能查询任务并提交确认。目标 PostgreSQL 容量、公司 IdP、生产网关与下游联调、持久 UNKNOWN 对账和端到端容量测试仍需在目标环境完成。
 
 下图同时包含当前可运行连线和后续目标。BFF 到 Knowledge 的回答/SSE、BFF 到 Ticket 的幂等升级，以及 JDK8 客户端到 Ticket 的查询和确认已经有代码；生产 CRM 的业务写入实现、回调部署和外部环境验收仍不能从图中推断已经交付。
 
@@ -52,14 +52,14 @@ Customer BFF 是渠道边界，不复制知识或工单领域。JDK8 系统仍�
 - 根 Maven reactor 只包含 Knowledge Service、Ticket Agent Service、Customer BFF 和 Eval Runner。
 - Knowledge Service 与 Ticket Agent Service 允许在各自基础设施层引入 Spring AI Provider starter；BFF、Eval Runner、JDK8 客户端和公开接口不得依赖 Spring AI 类型。
 - Customer BFF 和 Knowledge Service 使用 WebFlux；Ticket Agent Service 暂时保留 Spring MVC，等到业务出现流式或高并发需求时再决定是否迁移。
-- 每个服务只维护一份主 `application.yml`。默认 demo 不需要外部配置；生产部署按同一组配置路径覆盖模型、数据库、身份和下游参数，密钥交给部署平台或密钥系统管理。
-- 默认 `demo` 使用禁用模型和进程内任务状态，被关闭的能力会明确返回不可用。测试中的确定性模型结果只在 `src/test` 装配，不会进入应用产物。`production` 配置仍有占位值时，应用会停止启动，不会自动回退到固定答案。
+- 每个服务只维护一份主 `application.yml`。默认链路使用真实模型和跨服务 HTTP，本地身份与进程内状态减少了身份平台、数据库和 Legacy Tool 的前置依赖。生产部署沿用同一组配置键，按能力替换适配器，并由部署平台或密钥系统管理密钥。
+- 测试中的确定性模型结果只在 `src/test` 装配，不会进入应用产物。默认运行不会在模型未配置时自动回退到固定答案；占位 Key 会在真实调用前被拒绝。
 - Provider 协议回归属于测试代码；模型接口 Smoke 与回答 Golden Set 使用受控 API，两者检查的内容不同，不能相互替代。
 - Knowledge Service 通过 Flyway V1-V4 管理文档、ACL、任务、分块、发布审计和 `document_search_version`。发布只切换业务版本；新索引写完前继续读取上一版，sink 在写事务开始时校验 `leaseAttempt` 和租约有效期。
 - `external-integration` Maven profile 提供 PostgreSQL/pgvector 集成测试入口。小数据集只能检查迁移、SQL 行为和检索版本切换，不能给出生产容量结论。
 - 上传原文默认保存在本地文件目录。多实例部署需要替换为 S3 兼容对象存储，并补充对象生命周期、加密、故障补偿和孤儿清理。
 - 检索 Golden Set 通过 `knowledge:eval` 接口运行，输出实际排名、Embedding 模型、质量指标和 p95 延迟；本地公式测试不能推导目标环境的检索指标。
 - Customer BFF 当前使用进程内会话和限流适配器；多实例部署必须替换为支持 TTL 与原子版本控制的共享存储和共享限流器。
-- Ticket Agent 的运行配置使用 PostgreSQL/Flyway 保存任务、版本、确认执行状态、请求指纹和审计；生产环境仍需验证目标数据库的事务隔离、连接池、并发、备份恢复和容量。
+- Ticket Agent 默认用内存保存任务、版本、确认执行状态、请求指纹和审计；将 `java-ai.persistence.mode` 改为 `jdbc` 后使用 PostgreSQL/Flyway。目标数据库的事务隔离、连接池、并发、备份恢复和容量仍需单独验证。
 
 更细的业务时序见[客户咨询与工单协同流程](customer-consultation-flow.md)，数据与职责归属见[服务职责与数据所有权](service-ownership.md)。

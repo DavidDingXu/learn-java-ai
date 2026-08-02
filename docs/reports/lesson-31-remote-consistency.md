@@ -5,12 +5,12 @@ Status: VERIFIED_REMOTE_OUTCOME_CLASSIFICATION
 
 ## 已验证
 
-- Approved tasks enter `EXECUTING` before the remote write begins.
-- The legacy request uses a versioned SHA-256 key over length-prefixed tenant and action fields, while the original action ID remains in the request and audit records.
-- Valid 2xx receipts complete the task; explicit 4xx rejection fails it without automatic retry.
-- Timeout, 5xx, empty response, malformed response and action ID mismatch enter `EXECUTION_UNCERTAIN`.
-- Unexpected local runtime errors move the task out of `EXECUTING` to `FAILED` and remain visible to error handling.
-- Audit events link Agent action ID to the downstream business audit ID without storing raw response bodies.
+- 确认通过的任务会在远程写入前进入 `EXECUTING` 状态。
+- 旧系统请求使用带版本的 SHA-256 幂等键，输入按长度编码租户和动作字段；原始动作 ID 仍保留在请求和审计记录中。
+- 有效的 2xx 回执完成任务；明确的 4xx 拒绝会让任务失败，且不会自动重试。
+- 超时、5xx、空响应、格式错误和动作 ID 不一致都会进入 `EXECUTION_UNCERTAIN`。
+- 未预期的本地运行时错误会让任务从 `EXECUTING` 转为 `FAILED`，并继续交给统一异常处理。
+- 审计事件关联 Agent 动作 ID 与下游业务审计 ID，但不保存原始响应正文。
 
 ## 验证命令
 
@@ -21,4 +21,4 @@ Status: VERIFIED_REMOTE_OUTCOME_CLASSIFICATION
 
 ## 生产接入边界
 
-The final business system must durably store action ID, request fingerprint and result in the same local transaction as its write. Company deployment also needs result query, stuck-execution scanning, uncertain-outcome reconciliation and alerting.
+最终业务系统必须在写操作的同一本地事务中持久化 action ID、请求指纹和执行结果。公司部署还要补充结果查询、卡住任务扫描、未知结果对账和告警。
