@@ -8,7 +8,7 @@
 - Spring AI Alibaba、LangChain4j、AgentScope 和协议互操保留在独立 labs Maven 构建中，不把实验依赖带入正式服务。
 - labs 内的端口保留主线业务语义，不引用服务内部类；共用评测规则比较 Provider、检索、Graph、AI Services、Tool、Runtime、MCP 和 A2A 边界。
 - MCP Java SDK `2.0.0` 与 A2A Java SDK `1.1.0.Final` 执行了本地协议互操，不是只构造本地 Schema 对象。
-- Ticket Agent 通过 PostgreSQL/Flyway 持久化任务、审计事件和确认决定；内存适配器只用于测试。
+- Ticket Agent 默认用进程内实现保存任务、审计事件和确认决定，便于本地联调；切换到 PostgreSQL/Flyway 后才能验证重启恢复和多实例并发。
 - 数据门禁包含 50 条检索案例、30 条 Agent 案例和 30 条合成安全案例。
 - ADR 0003 记录框架实验进入正式服务的条件和回滚方式。
 

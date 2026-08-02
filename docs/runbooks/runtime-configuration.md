@@ -145,7 +145,7 @@ Knowledge Service 的上传原文默认保存在本地文件系统，Customer BF
 
 ## 测试配置
 
-`src/test/resources/application-test.yml` 和 `test` Profile 只供自动化测试使用。测试会装配确定性模型、本地 HTTP Fixture 或内存 Repository，这些实现不会进入本地联调和正式部署路径。
+`src/test/resources/application-test.yml` 和 `test` Profile 只供自动化测试使用。测试会装配专用的确定性模型、本地 HTTP Fixture 或内存 Repository，这些测试实例不会替换默认运行时的真实模型和跨服务 HTTP 调用。
 
 日常回归直接运行：
 
