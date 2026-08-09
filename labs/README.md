@@ -9,8 +9,16 @@
 - [AgentScope](agentscope-lab/README.md)：Tool 权限、人工介入、协作决策、MCP 工具和 A2A 任务状态。
 - [MCP/A2A 互操作](protocol-interop-lab/README.md)：使用官方 SDK 验证协议交互与应用层信任边界。
 
-## 怎样阅读这些实验
+## 直接运行
 
-这些模块不是可独立启动的完整应用，不需要把它们逐个运行一遍。阅读时只跟随各模块 README 标出的入口类，对照相同业务接口下的适配、裁决和协议边界。主应用仍从 `KnowledgeServiceApplication`、`TicketAgentServiceApplication` 和 `CustomerBffApplication` 启动。
+用 IDEA 把 `labs/pom.xml` 作为独立项目打开，再按文章运行对应主类：
 
-真实 Provider 或远程协议是否适合公司项目，要用自己的凭证、数据和目标环境另行判断；这里的代码只证明已写明的局部边界。
+- `SpringAiAlibabaLabApplication`：DashScope Provider、检索替换、Graph 或兼容性决策。
+- `LangChain4jLabApplication`：真实 OpenAI 兼容 Provider 下的回答、RAG 或 Tool。
+- `AgentScopeLabApplication`：真实模型驱动的 ReAct Agent 与只读 Tool。
+- `McpLabApplication`：本地启动真实 MCP Server，并由官方客户端完成发现和调用。
+- `A2aLabApplication`：本地启动 A2A 服务，并由官方客户端发现 Agent Card、发送任务和读取结果。
+
+需要模型的实验先填写各模块的 `src/main/resources/application.yml` 或 `application.properties`。读者不需要执行单元测试，也不需要配置环境变量。主业务应用仍从 `KnowledgeServiceApplication`、`TicketAgentServiceApplication` 和 `CustomerBffApplication` 启动。
+
+一次真实调用只能证明当前凭证、模型和样例链路跑通。迁移到公司项目时仍要用自己的语料、权限、配额和目标环境重新评估质量与稳定性。

@@ -112,8 +112,11 @@ npm --prefix "$CUSTOMER_WEB_DIR" test
 npm --prefix "$CUSTOMER_WEB_DIR" run build
 
 run_maven "$MAIN_JAVA_HOME" -f "$PROJECT_ROOT/pom.xml" verify
-run_maven "$MAIN_JAVA_HOME" -f "$PROJECT_ROOT/learning-stages/pom.xml" verify
+for stage_pom in "$PROJECT_ROOT"/learning-stages/stage-*/pom.xml; do
+  [[ -f "$stage_pom" ]] || die 2 "No learning stage POMs were found."
+  run_maven "$MAIN_JAVA_HOME" -f "$stage_pom" verify
+done
 run_maven "$MAIN_JAVA_HOME" -f "$PROJECT_ROOT/labs/pom.xml" verify
 run_maven "$JDK8_HOME" -f "$PROJECT_ROOT/integrations/jdk8-client/pom.xml" verify
 
-printf 'Project verification passed for Customer Web, root, learning stages, labs, Java 8 client, and project contracts.\n'
+printf 'Project verification passed for Customer Web, root, seven learning stages, labs, Java 8 client, and project contracts.\n'

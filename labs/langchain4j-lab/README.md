@@ -7,4 +7,12 @@
 - `LangChain4jTicketDecisionAdapter` 执行只读 Tool，并将结果解析为业务记录。
 - `FrameworkCoexistencePolicy` 按能力路由，不在模块之间传递框架对象。
 
-建议按 `LangChain4jPolicyAnswerAdapter`、`TenantScopedRagAdapter`、`LangChain4jTicketDecisionAdapter`、`FrameworkCoexistencePolicy` 的顺序阅读。这个模块验证的是端口迁移和错误边界，不是可独立启动的业务应用，也不代表已完成真实 Provider、性能和生产运维验收。
+## 运行入口
+
+1. 在 `src/main/resources/application.properties` 填写 OpenAI 兼容 API 的 Key、Base URL 和模型名。
+2. 将 `lab.mode` 设为 `answer`、`rag` 或 `tool`。
+3. 在 IDEA 运行 `LangChain4jLabApplication`。
+
+`answer` 会打印真实模型回答，`rag` 会打印带来源的租户范围回答，`tool` 会打印结构化决策和 Tool 调用次数。三个模式都走真实 `OpenAiChatModel`，不是固定回答模型。
+
+建议再按 `LangChain4jPolicyAnswerAdapter`、`TenantScopedRagAdapter`、`LangChain4jTicketDecisionAdapter`、`FrameworkCoexistencePolicy` 的顺序阅读。这个实验验证端口迁移和错误边界，不代表已经完成性能、成本和生产运维验收。

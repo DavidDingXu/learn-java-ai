@@ -185,23 +185,57 @@ test("Java 8 client is an independent Maven build", () => {
   assert.equal(clientPom.includes("<maven.surefire.version>3.5.6</maven.surefire.version>"), true);
 });
 
-test("learning stages use an independent reactor with seven reader modules", () => {
-  const stagePom = read("learning-stages/pom.xml");
-
-  assert.equal(tagBlock(stagePom, "parent"), "");
-  assert.deepEqual(moduleNames(stagePom), [
-    "stage-support",
-    "stage-01-system-boundaries",
-    "stage-02-model-engineering",
-    "stage-03-enterprise-rag",
-    "stage-04-customer-consultation",
-    "stage-05-controlled-agent",
-    "stage-06-production-readiness",
-    "stage-07-framework-boundaries",
+test("learning stages are seven current-code capability slices", () => {
+  const stages = new Map([
+    ["stage-01-system-boundaries", [
+      "services/knowledge-service",
+      "services/ticket-agent-service",
+      "apps/customer-bff",
+    ]],
+    ["stage-02-model-engineering", [
+      "services/knowledge-service",
+      "quality/eval-runner",
+    ]],
+    ["stage-03-enterprise-rag", [
+      "services/knowledge-service",
+      "quality/eval-runner",
+    ]],
+    ["stage-04-customer-consultation", [
+      "../stage-03-enterprise-rag/services/knowledge-service",
+      "services/ticket-agent-service",
+      "apps/customer-bff",
+    ]],
+    ["stage-05-controlled-agent", [
+      "../stage-03-enterprise-rag/services/knowledge-service",
+      "services/ticket-agent-service",
+      "../stage-04-customer-consultation/apps/customer-bff",
+      "quality/eval-runner",
+    ]],
+    ["stage-06-production-readiness", [
+      "../stage-03-enterprise-rag/services/knowledge-service",
+      "../stage-05-controlled-agent/services/ticket-agent-service",
+      "../stage-04-customer-consultation/apps/customer-bff",
+      "quality/eval-runner",
+    ]],
+    ["stage-07-framework-boundaries", [
+      "labs",
+    ]],
   ]);
-  for (const moduleName of moduleNames(stagePom).slice(1)) {
-    assertParent(`learning-stages/${moduleName}/pom.xml`, "java-ai-learning-stages", "../pom.xml");
+
+  assert.equal(existsSync(path.join(projectRoot, "learning-stages", "pom.xml")), false);
+  for (const [stage, expectedModules] of stages) {
+    const stagePom = read(`learning-stages/${stage}/pom.xml`);
+    assert.equal(tagBlock(stagePom, "parent"), "", stage);
+    assert.deepEqual(moduleNames(stagePom), expectedModules, stage);
+    if (stage !== "stage-07-framework-boundaries") {
+      assert.equal(stagePom.includes("<spring-ai.version>2.0.0</spring-ai.version>"), true, stage);
+    }
   }
+
+  assert.equal(
+    existsSync(path.join(projectRoot, "learning-stages/stage-07-framework-boundaries/services")),
+    false,
+  );
 });
 
 test("top-level products and contract directories provide local documentation", () => {
@@ -248,10 +282,12 @@ test("mainline POMs keep infrastructure and model provider ownership explicit", 
     ])],
     ["labs/langchain4j-lab/pom.xml", new Set([
       "dev.langchain4j:langchain4j",
+      "dev.langchain4j:langchain4j-open-ai",
     ])],
     ["labs/agentscope-lab/pom.xml", new Set([
       "io.agentscope:agentscope-core",
       "io.agentscope:agentscope-extensions-a2a-client",
+      "io.agentscope:agentscope-extensions-model-openai",
     ])],
     ["labs/protocol-interop-lab/pom.xml", new Set([
       "io.modelcontextprotocol.sdk:mcp",
@@ -273,12 +309,12 @@ test("mainline POMs keep infrastructure and model provider ownership explicit", 
   ];
   for (const pomPath of pomPaths) {
     for (const coordinate of dependencyCoordinates(read(pomPath))) {
-      const allowedMainlineAiProvider = [
-        "services/knowledge-service/pom.xml",
-        "services/ticket-agent-service/pom.xml",
-      ].includes(pomPath)
-        && coordinate.groupId === "org.springframework.ai"
-        && coordinate.artifactId === "spring-ai-starter-model-openai";
+      const allowedMainlineAiProvider = coordinate.groupId === "org.springframework.ai"
+        && ((pomPath === "services/knowledge-service/pom.xml"
+          && ["spring-ai-starter-model-openai", "spring-ai-starter-model-ollama"]
+            .includes(coordinate.artifactId))
+          || (pomPath === "services/ticket-agent-service/pom.xml"
+            && coordinate.artifactId === "spring-ai-starter-model-openai"));
       const allowedKnowledgeStorage = pomPath === "services/knowledge-service/pom.xml"
         && ((coordinate.groupId === "org.postgresql" && coordinate.artifactId === "postgresql")
           || (coordinate.groupId === "com.pgvector" && coordinate.artifactId === "pgvector"));
@@ -307,6 +343,7 @@ test("mainline POMs keep infrastructure and model provider ownership explicit", 
 test("provider starter artifact IDs require an explicit module exception", () => {
   for (const coordinate of [
     { groupId: "org.springframework.ai", artifactId: "spring-ai-starter-model-openai" },
+    { groupId: "org.springframework.ai", artifactId: "spring-ai-starter-model-ollama" },
     { groupId: "org.springframework.ai", artifactId: "spring-ai-starter-model-anthropic" },
     { groupId: "com.alibaba.cloud.ai", artifactId: "spring-ai-alibaba-starter-dashscope" },
     { groupId: "dev.langchain4j", artifactId: "langchain4j-open-ai" },

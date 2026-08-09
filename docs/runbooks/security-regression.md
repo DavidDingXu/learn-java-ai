@@ -7,7 +7,7 @@
 Program arguments 填写：
 
 ```text
-security-eval --dataset datasets/security/agent-security-v1.jsonl --base-url https://ticket-agent-test.example.com --create-token-file target/eval-secrets/create-token --run-token-file target/eval-secrets/run-token --read-token-file target/eval-secrets/read-token --report var/learning-stage-reports/security-eval --commit working-tree
+security-eval --dataset datasets/security/agent-security-v1.jsonl --base-url https://ticket-agent-test.example.com --create-token-file target/eval-secrets/create-token --run-token-file target/eval-secrets/run-token --read-token-file target/eval-secrets/read-token --report var/learning-stage-reports/security-eval
 ```
 
 Runner 不调用确认接口，评测身份也不能拥有正式写权限。三枚令牌分别只允许创建任务、运行任务和读取结果；服务端状态机与禁止事件断言继续阻止确认前执行。macOS 和 Windows 使用同一个 Java 入口与参数。

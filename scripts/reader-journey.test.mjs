@@ -64,8 +64,8 @@ test("reader journey keeps local model settings in YAML instead of shell variabl
   assert.deepEqual(violations, []);
   const sharedConfig = read("config/application.yml");
   assert.match(sharedConfig, /api-key:\s*replace-with-your-api-key/);
-  assert.match(sharedConfig, /embedding:\s*none/);
-  assert.match(sharedConfig, /mode:\s*ollama/);
+  assert.match(sharedConfig, /embedding:\s*openai/);
+  assert.match(sharedConfig, /ollama:[\s\S]*?base-url:\s*http:\/\/localhost:11434/);
   assert.match(sharedConfig, /model:\s*qwen3-embedding:4b/);
 });
 
@@ -81,33 +81,95 @@ test("all runnable backend modules name their direct IDE entrypoint", () => {
   }
 });
 
-test("seven learning stages are independent runnable modules", () => {
-  const stages = [
-    ["stage-01-system-boundaries", "SystemBoundariesStageApplication"],
-    ["stage-02-model-engineering", "ModelEngineeringStageApplication"],
-    ["stage-03-enterprise-rag", "EnterpriseRagStageApplication"],
-    ["stage-04-customer-consultation", "CustomerConsultationStageApplication"],
-    ["stage-05-controlled-agent", "ControlledAgentStageApplication"],
-    ["stage-06-production-readiness", "ProductionReadinessStageApplication"],
-    ["stage-07-framework-boundaries", "FrameworkBoundariesStageApplication"],
-  ];
-  const stagePom = read("learning-stages/pom.xml");
-  const stageReadme = read("learning-stages/README.md");
+test("seven learning stages contain real capability slices", () => {
+  const stages = new Map([
+    ["stage-01-system-boundaries", [
+      "services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/KnowledgeServiceApplication.java",
+      "services/ticket-agent-service/src/main/java/com/xiaoding/javaai/ticket/TicketAgentServiceApplication.java",
+      "apps/customer-bff/src/main/java/com/xiaoding/javaai/customer/CustomerBffApplication.java",
+    ]],
+    ["stage-02-model-engineering", [
+      "services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/answer/infrastructure/SpringAiKnowledgeAnswerModel.java",
+      "services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/answer/application/StreamingKnowledgeAnswerService.java",
+      "quality/eval-runner/src/main/java/com/xiaoding/javaai/eval/model/ModelInteractionEvaluator.java",
+    ]],
+    ["stage-03-enterprise-rag", [
+      "services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/document/application/DocumentUploadService.java",
+      "services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/application/HybridKnowledgeRetrievalService.java",
+      "services/knowledge-service/src/main/resources/db/migration/V1__knowledge_platform.sql",
+    ]],
+    ["stage-04-customer-consultation", [
+      "apps/customer-bff/src/main/java/com/xiaoding/javaai/customer/consultation/application/CustomerConsultationService.java",
+      "apps/customer-bff/src/main/java/com/xiaoding/javaai/customer/consultation/domain/ConsultationSession.java",
+    ]],
+    ["stage-05-controlled-agent", [
+      "services/ticket-agent-service/src/main/java/com/xiaoding/javaai/ticket/agent/application/TicketAgentOrchestrator.java",
+      "services/ticket-agent-service/src/main/java/com/xiaoding/javaai/ticket/agent/application/ToolConfirmationService.java",
+      "integrations/jdk8-client/src/main/java/com/xiaoding/javaai/legacy/ticket/TicketAgentClient.java",
+    ]],
+    ["stage-06-production-readiness", [
+      "quality/eval-runner/src/main/java/com/xiaoding/javaai/eval/EvalRunner.java",
+      "datasets/security/agent-security-v1.jsonl",
+    ]],
+    ["stage-07-framework-boundaries", [
+      "labs/spring-ai-alibaba-lab/src/main/java/com/xiaoding/javaai/labs/alibaba/SpringAiAlibabaLabApplication.java",
+      "labs/spring-ai-alibaba-lab/src/main/java/com/xiaoding/javaai/labs/alibaba/DashScopeProviderAdapter.java",
+      "labs/langchain4j-lab/src/main/java/com/xiaoding/javaai/labs/langchain4j/LangChain4jLabApplication.java",
+      "labs/langchain4j-lab/src/main/java/com/xiaoding/javaai/labs/langchain4j/LangChain4jPolicyAnswerAdapter.java",
+      "labs/agentscope-lab/src/main/java/com/xiaoding/javaai/labs/agentscope/AgentScopeLabApplication.java",
+      "labs/agentscope-lab/src/main/java/com/xiaoding/javaai/labs/agentscope/AgentScopeTicketRuntime.java",
+      "labs/protocol-interop-lab/src/main/java/com/xiaoding/javaai/labs/protocol/McpLabApplication.java",
+      "labs/protocol-interop-lab/src/main/java/com/xiaoding/javaai/labs/protocol/A2aLabApplication.java",
+    ]],
+  ]);
 
-  for (const [moduleName, application] of stages) {
-    assert.match(stagePom, new RegExp(`<module>${moduleName}</module>`));
-    assert.match(stageReadme, new RegExp(application));
-    const javaFiles = readFileSync(
-      path.join(projectRoot, "learning-stages", moduleName, "pom.xml"),
-      "utf8",
-    );
-    assert.match(javaFiles, /stage-support/);
-    const applicationFile = findFile(
-      path.join(projectRoot, "learning-stages", moduleName, "src", "main", "java"),
-      `${application}.java`,
-    );
-    assert.equal(existsSync(applicationFile ?? ""), true, `${application}.java must exist`);
-    assert.match(readFileSync(applicationFile, "utf8"), /public static void main\(String\[\] args\)/);
+  assert.equal(existsSync(path.join(projectRoot, "learning-stages", "stage-support")), false);
+  for (const [stage, requiredFiles] of stages) {
+    assert.equal(existsSync(path.join(projectRoot, "learning-stages", stage, "pom.xml")), true);
+    assert.equal(existsSync(path.join(projectRoot, "learning-stages", stage, "README.md")), true);
+    for (const requiredFile of requiredFiles) {
+      assert.equal(
+        existsSync(path.join(projectRoot, "learning-stages", stage, requiredFile)),
+        true,
+        `${stage} must contain real source: ${requiredFile}`,
+      );
+    }
   }
-  assert.match(read("learning-stages/config/application.yml"), /knowledge-base-url:/);
+
+  assert.equal(
+    existsSync(path.join(projectRoot, "learning-stages/stage-04-customer-consultation/services/knowledge-service")),
+    false,
+  );
+  assert.equal(
+    existsSync(path.join(projectRoot, "learning-stages/stage-05-controlled-agent/apps/customer-bff")),
+    false,
+  );
+  assert.equal(
+    existsSync(path.join(projectRoot, "learning-stages/stage-07-framework-boundaries/services")),
+    false,
+  );
+});
+
+test("learning snapshots do not reintroduce teaching-only runtime glue", () => {
+  const forbiddenNames = ["StageHttp.java", "StageConfig.java", "StageOutput.java"];
+  for (const forbiddenName of forbiddenNames) {
+    assert.equal(findFile(path.join(projectRoot, "learning-stages"), forbiddenName), null);
+  }
+
+  for (const entry of readdirSync(path.join(projectRoot, "learning-stages"))) {
+    if (!entry.startsWith("stage-")) continue;
+    const yamlRoot = path.join(projectRoot, "learning-stages", entry);
+    const stack = [yamlRoot];
+    while (stack.length > 0) {
+      const current = stack.pop();
+      for (const child of readdirSync(current, { withFileTypes: true })) {
+        if (child.name === "target") continue;
+        const absolutePath = path.join(current, child.name);
+        if (child.isDirectory()) stack.push(absolutePath);
+        if (child.isFile() && /^application.*\.ya?ml$/.test(child.name)) {
+          assert.doesNotMatch(readFileSync(absolutePath, "utf8"), /\$\{[A-Z][A-Z0-9_]*/);
+        }
+      }
+    }
+  }
 });

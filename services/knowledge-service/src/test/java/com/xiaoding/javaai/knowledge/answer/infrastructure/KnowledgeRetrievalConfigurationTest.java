@@ -6,7 +6,6 @@ import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeEmbeddi
 import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeRetriever;
 import com.xiaoding.javaai.knowledge.retrieval.application.HybridKnowledgeRetrievalService;
 import com.xiaoding.javaai.knowledge.retrieval.infrastructure.DeterministicHashEmbeddingModel;
-import com.xiaoding.javaai.knowledge.retrieval.infrastructure.OllamaKnowledgeEmbeddingModel;
 import com.xiaoding.javaai.knowledge.retrieval.infrastructure.SpringAiKnowledgeEmbeddingModel;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
@@ -62,21 +61,6 @@ class KnowledgeRetrievalConfigurationTest {
                             .isInstanceOf(DeterministicHashEmbeddingModel.class);
                     assertThat(context.getBean(KnowledgeEmbeddingModel.class).embed("退款多久到账").vector())
                             .hasSize(1536);
-                });
-    }
-
-    @Test
-    void wires_a_local_ollama_embedding_model_without_an_openai_embedding_bean() {
-        contextRunner
-                .withPropertyValues(
-                        "java-ai.knowledge.embedding.mode=ollama",
-                        "java-ai.knowledge.embedding.ollama.base-url=http://localhost:11434",
-                        "java-ai.knowledge.embedding.ollama.model=qwen3-embedding:4b"
-                )
-                .run(context -> {
-                    assertThat(context).hasSingleBean(KnowledgeEmbeddingModel.class);
-                    assertThat(context.getBean(KnowledgeEmbeddingModel.class))
-                            .isInstanceOf(OllamaKnowledgeEmbeddingModel.class);
                 });
     }
 

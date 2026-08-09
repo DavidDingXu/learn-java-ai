@@ -1,0 +1,39 @@
+# Knowledge Service and Ticket Agent Service import this shared model configuration.
+# Replace the API key and choose an Embedding Provider supported by your endpoint.
+# The Ollama block is a local option; switch spring.ai.model.embedding to ollama to use it.
+# Never commit a real key.
+spring:
+  ai:
+    model:
+      chat: openai
+      embedding: openai
+    openai:
+      api-key: replace-with-your-api-key
+      base-url: https://api.openai.com/v1
+      max-retries: 0
+      chat:
+        model: gpt-4.1-mini
+      embedding:
+        model: text-embedding-3-small
+    ollama:
+      base-url: http://localhost:11434
+      embedding:
+        model: qwen3-embedding:4b
+        truncate: true
+
+java-ai:
+  knowledge:
+    mode: postgres-rag
+    embedding:
+      mode: provider
+    retrieval:
+      mode: hybrid
+      lexical-search: true
+      rewrite-query: false
+      rerank: false
+    postgres:
+      jdbc-url: jdbc:postgresql://localhost:5432/java_ai_knowledge
+      username: java_ai_knowledge
+      password: replace-with-your-database-password
+    indexing:
+      scheduler-enabled: false

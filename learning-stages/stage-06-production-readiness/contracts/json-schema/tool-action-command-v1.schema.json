@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.xiaoding.example/tool-action-command-v1.schema.json",
+  "title": "ToolActionCommandV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["actionId", "ticketId", "actionType", "arguments"],
+  "properties": {
+    "actionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "ticketId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "actionType": {
+      "type": "string",
+      "enum": ["ADD_INTERNAL_NOTE", "ASSIGN_QUEUE", "REQUEST_MANUAL_REVIEW", "ISSUE_REFUND"]
+    },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 2000
+      },
+      "maxProperties": 16
+    }
+  }
+}

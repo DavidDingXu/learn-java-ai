@@ -26,7 +26,7 @@ spring:
 在 IDE 中把 Working directory 设为项目根目录，先运行 `KnowledgeServiceApplication`。服务健康后，运行 `EvalRunner.main()`，Program arguments 填写：
 
 ```text
-model-eval --dataset datasets/model-interaction/golden-set-v2.jsonl --base-url http://localhost:8081 --mode LIVE_MODEL --prompt-version knowledge-answer-v1 --environment-id local-live-model --report var/learning-stage-reports/live-model-smoke --commit working-tree
+model-eval --dataset datasets/model-interaction/golden-set-v2.jsonl --base-url http://localhost:8081 --mode LIVE_MODEL --prompt-version knowledge-answer-v1 --environment-id local-live-model --report var/learning-stage-reports/live-model-smoke
 ```
 
 macOS 和 Windows 使用相同的 Java 入口与参数。Runner 会调用已经启动的真实服务，并在 `var/learning-stage-reports` 下生成 JSON 与 Markdown 报告。

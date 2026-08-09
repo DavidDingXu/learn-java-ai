@@ -17,7 +17,7 @@ spring:
   ai:
     model:
       chat: openai
-      embedding: none
+      embedding: openai
     openai:
       api-key: replace-with-your-api-key
       base-url: https://api.openai.com/v1
@@ -61,33 +61,29 @@ Invoke-RestMethod -Method Post `
 
 `java-ai.knowledge.mode=postgres-rag` 开启完整 RAG。它需要 PostgreSQL、`pgvector`、`pg_trgm` 和 Chat Provider。
 
-Embedding 有三种模式。`ollama` 使用免费的本地语义模型，适合第一次完整运行；`provider` 调用远程 Embedding 服务；`local-hash` 只用来排查上传、索引、ACL、pgvector、引用和回答流程，不提供语义质量证据。
+业务层有两种模式。`provider` 使用 Spring AI 当前选择的 Embedding Provider；`local-hash` 只用来排查上传、索引、ACL、pgvector、引用和回答流程，不提供语义质量证据。`provider` 下面既可以选择免费的本地 Ollama API，也可以选择远程 OpenAI 兼容 API。
 
 使用 `ollama` 前，在 macOS 或 Windows 安装 Ollama 应用，并在应用中下载 `qwen3-embedding:4b`。模型约 2.5 GB，支持中文，应用会把本地接口提供在 `http://localhost:11434`。需要运行 RAG 时再打开 Ollama 即可，不必设置登录自启动。
 
-修改 Knowledge Service 的 `application.yml`：
+修改根目录 `config/application.yml`：
 
 ```yaml
-java-ai:
-  knowledge:
-    mode: postgres-rag
-    embedding:
-      mode: ollama
-      ollama:
-        base-url: http://localhost:11434
+spring:
+  ai:
+    model:
+      embedding: ollama
+    ollama:
+      base-url: http://localhost:11434
+      embedding:
         model: qwen3-embedding:4b
-        timeout-seconds: 120
-    postgres:
-      jdbc-url: jdbc:postgresql://localhost:5432/java_ai_knowledge
-      username: java_ai_knowledge
-      password: replace-with-your-database-password
+        truncate: true
 ```
 
-根目录 `config/application.yml` 中保持 `spring.ai.model.embedding: none`，Chat 仍使用原来的 OpenAI 兼容配置。修改后直接重新运行 `KnowledgeServiceApplication`。应用会要求 Ollama 返回 1536 维向量；模型、数量或维度不匹配时，索引任务会明确失败。
+Knowledge Service 的 `application.yml` 中保持 `java-ai.knowledge.embedding.mode: provider`，再把 `java-ai.knowledge.mode` 改成 `postgres-rag` 并填写 PostgreSQL。Chat 仍使用原来的 OpenAI 兼容配置。修改后直接重新运行 `KnowledgeServiceApplication`。通用适配器会要求当前 Provider 返回 1536 维向量；模型、数量或维度不匹配时，索引任务会明确失败。
 
 Flyway 会创建项目表结构，并尝试启用 `vector` 与 `pg_trgm` 扩展，因此首次运行的数据库账号需要相应权限。上传、发布、索引和问答步骤见[知识文档导入](knowledge-ingestion.md)。
 
-切换到远程 Embedding 时，把根目录 `config/application.yml` 中的 `spring.ai.model.embedding` 改回 `openai`，再将 `java-ai.knowledge.embedding.mode` 改为 `provider`。两处要一起修改。
+切换到远程 Embedding 时，只需把根目录 `config/application.yml` 中的 `spring.ai.model.embedding` 改回 `openai` 并填写远程模型配置。业务层仍保持 `provider`，不需要修改 Java 代码。
 
 ## 按需替换基础设施
 

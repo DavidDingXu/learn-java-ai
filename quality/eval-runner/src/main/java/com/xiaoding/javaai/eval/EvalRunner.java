@@ -83,11 +83,11 @@ public final class EvalRunner {
         }
         System.out.println("eval-runner " + version());
         System.out.println("usage: contract-validate <contracts-directory>");
-        System.out.println("       contract-eval --dataset <jsonl> --prompt-version <id> --environment-id <id> --report <path-prefix> --commit <sha>");
-        System.out.println("       model-eval --dataset <jsonl> --base-url <url> --mode <LIVE_MODEL|CONTRACT_FIXTURE> [--bearer-token-file <path>] --prompt-version <id> --environment-id <id> --report <path-prefix> --commit <sha>");
-        System.out.println("       retrieval-eval --dataset <jsonl> --base-url <url> [--bearer-token-file <path>] --top-k <n> --min-recall <ratio> --min-hit-rate <ratio> --min-mrr <ratio> --max-duplicate-rate <ratio> --max-p95-ms <ms> --report <path-prefix> --commit <sha>");
-        System.out.println("       agent-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix> --commit <sha>");
-        System.out.println("       security-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix> --commit <sha>");
+        System.out.println("       contract-eval --dataset <jsonl> --prompt-version <id> --environment-id <id> --report <path-prefix>");
+        System.out.println("       model-eval --dataset <jsonl> --base-url <url> --mode <LIVE_MODEL|CONTRACT_FIXTURE> [--bearer-token-file <path>] --prompt-version <id> --environment-id <id> --report <path-prefix>");
+        System.out.println("       retrieval-eval --dataset <jsonl> --base-url <url> [--bearer-token-file <path>] --top-k <n> --min-recall <ratio> --min-hit-rate <ratio> --min-mrr <ratio> --max-duplicate-rate <ratio> --max-p95-ms <ms> --report <path-prefix>");
+        System.out.println("       agent-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix>");
+        System.out.println("       security-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix>");
     }
 
     private static void runAgentEval(Map<String, String> options) {
@@ -102,7 +102,7 @@ public final class EvalRunner {
                                 requiredCredential(options, "create-token"),
                                 requiredCredential(options, "run-token"),
                                 requiredCredential(options, "read-token")),
-                        required(options, "commit"));
+                        codeRevision(options));
         Path reportPrefix = Path.of(required(options, "report"));
         new AgentEvaluationReportWriter().write(
                 report,
@@ -133,7 +133,7 @@ public final class EvalRunner {
                 URI.create(required(options, "base-url")),
                 optionalCredential(options, "bearer-token"),
                 requiredInt(options, "top-k"),
-                required(options, "commit"),
+                codeRevision(options),
                 thresholds
         );
         Path reportPrefix = Path.of(required(options, "report"));
@@ -161,7 +161,7 @@ public final class EvalRunner {
                         dataset,
                         baseUrl,
                         mode,
-                        required(options, "commit"),
+                        codeRevision(options),
                         required(options, "prompt-version"),
                         required(options, "environment-id")
                 );
@@ -200,6 +200,10 @@ public final class EvalRunner {
             throw new IllegalArgumentException("missing required option --" + name);
         }
         return value;
+    }
+
+    private static String codeRevision(Map<String, String> options) {
+        return options.getOrDefault("commit", "local-reader-run");
     }
 
     static String requiredCredential(Map<String, String> options, String name) {

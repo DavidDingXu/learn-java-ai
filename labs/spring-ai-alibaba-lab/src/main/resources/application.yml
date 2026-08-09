@@ -1,0 +1,17 @@
+lab:
+  # provider, retrieval, graph or compatibility
+  mode: provider
+  dashscope:
+    api-key: replace-with-your-dashscope-api-key
+    base-url: https://dashscope.aliyuncs.com
+    chat-model: qwen-plus
+    embedding-model: text-embedding-v4
+    embedding-dimensions: 1024
+    rerank-model: gte-rerank-v2
+    rerank-top-n: 6
+  graph:
+    risk: HIGH
+    approval: APPROVED
+  compatibility:
+    candidate-version: 1.1.2
+    candidate-boot-line: 3.5.0

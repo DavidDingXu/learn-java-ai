@@ -202,7 +202,18 @@ Invoke-CheckedNative -Command "npm.cmd" -Arguments @("--prefix", $CustomerWeb, "
 Invoke-CheckedNative -Command "npm.cmd" -Arguments @("--prefix", $CustomerWeb, "test") -Description "Customer Web tests"
 Invoke-CheckedNative -Command "npm.cmd" -Arguments @("--prefix", $CustomerWeb, "run", "build") -Description "Customer Web production build"
 Invoke-MavenWithJdk -JavaHome $MainJavaHome -Arguments @("-f", (Join-Path $ProjectRoot "pom.xml"), "verify") -Description "root reactor"
+$LearningStages = @(Get-ChildItem -Path (Join-Path $ProjectRoot "learning-stages") -Directory -Filter "stage-*" | Sort-Object Name)
+if ($LearningStages.Count -ne 7) {
+    Stop-WithError "Expected seven learning stage directories; found $($LearningStages.Count)."
+}
+foreach ($Stage in $LearningStages) {
+    $StagePom = Join-Path $Stage.FullName "pom.xml"
+    if (-not (Test-Path $StagePom)) {
+        Stop-WithError "Learning stage POM is missing: $StagePom"
+    }
+    Invoke-MavenWithJdk -JavaHome $MainJavaHome -Arguments @("-f", $StagePom, "verify") -Description $Stage.Name
+}
 Invoke-MavenWithJdk -JavaHome $MainJavaHome -Arguments @("-f", (Join-Path $ProjectRoot "labs\pom.xml"), "verify") -Description "labs reactor"
 Invoke-MavenWithJdk -JavaHome $Jdk8Home -Arguments @("-f", (Join-Path $ProjectRoot "integrations\jdk8-client\pom.xml"), "verify") -Description "Java 8 client"
 
-Write-Host "Project verification passed for Customer Web, root, labs, Java 8 client, and project contracts."
+Write-Host "Project verification passed for Customer Web, root, seven learning stages, labs, Java 8 client, and project contracts."

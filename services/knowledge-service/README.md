@@ -17,7 +17,7 @@
 
 默认使用固定的 `tenant-a / local-user / support` 身份和 classpath 上下文，并调用根目录共享配置中的真实 Chat Provider，不要求生成 Token。完整写入链路见 [Knowledge Ingestion](../../docs/runbooks/knowledge-ingestion.md)。
 
-本地完整 RAG 将 `java-ai.knowledge.mode` 改为 `postgres-rag`，填写 PostgreSQL 连接，再把 Embedding 模式设为 `ollama`。安装 Ollama 应用并下载免费的 `qwen3-embedding:4b` 后，即可在本机运行语义检索；Chat 继续使用根目录 YAML 中的 OpenAI 兼容配置。HTTP 请求仍使用固定身份。完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
+本地完整 RAG 将 `java-ai.knowledge.mode` 改为 `postgres-rag`，填写 PostgreSQL 连接，并保持业务层 Embedding 模式为 `provider`。在根目录 YAML 中把 `spring.ai.model.embedding` 设为 `ollama`，即可使用本机免费的 `qwen3-embedding:4b`；改为 `openai` 则调用远程兼容 API。两种方式复用同一套业务代码。HTTP 请求仍使用固定身份。完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
 
 `local-hash` 只用于排查上传、索引、ACL、pgvector、引用和回答流程，不提供语义质量证据。远程 Embedding 则使用 `provider` 模式。
 

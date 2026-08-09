@@ -1,0 +1,27 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+java-ai:
+  security:
+    mode: fixed
+  identity:
+    delegation-mode: local
+    token-endpoint: http://localhost/disabled
+    client-id: test-client
+    client-secret: test-secret
+  downstream:
+    knowledge:
+      base-url: http://localhost:8081
+    ticket:
+      base-url: http://localhost:8082
+  consultation:
+    session-ttl: 30m
+    max-turns: 8
+    max-estimated-tokens: 1200
+    max-summary-chars: 800
+    rate-limit:
+      requests: 20
+      window: 1m

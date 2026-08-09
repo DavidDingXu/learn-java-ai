@@ -7,7 +7,7 @@
 契约模式会在进程内启动确定性 HTTP Fixture，不访问真实模型、数据库或身份平台。Program arguments 填写：
 
 ```text
-contract-eval --dataset datasets/model-interaction/golden-set-v2.jsonl --prompt-version knowledge-answer-v1 --environment-id local-contract-fixture --report var/learning-stage-reports/local-contract-eval --commit working-tree
+contract-eval --dataset datasets/model-interaction/golden-set-v2.jsonl --prompt-version knowledge-answer-v1 --environment-id local-contract-fixture --report var/learning-stage-reports/local-contract-eval
 ```
 
 macOS 和 Windows 使用同一个 Java 入口。这条路径只检查数据集、HTTP 客户端、字段映射、阈值和报告逻辑。
@@ -19,7 +19,7 @@ macOS 和 Windows 使用同一个 Java 入口。这条路径只检查数据集�
 启动 `KnowledgeServiceApplication` 后，将 Program arguments 改为：
 
 ```text
-model-eval --dataset datasets/model-interaction/golden-set-v2.jsonl --base-url http://localhost:8081 --mode LIVE_MODEL --prompt-version knowledge-answer-v1 --environment-id knowledge-test --report var/learning-stage-reports/model-live-eval --commit working-tree
+model-eval --dataset datasets/model-interaction/golden-set-v2.jsonl --base-url http://localhost:8081 --mode LIVE_MODEL --prompt-version knowledge-answer-v1 --environment-id knowledge-test --report var/learning-stage-reports/model-live-eval
 ```
 
 候选 Commit、数据集、Prompt、模型和服务环境必须保持一致。报告会保存模式、数据集版本、模型、代码版本、结果计数、Token、延迟、Trace ID 和失败样例，不得保存 API Key、Bearer Token 或私有 Provider 地址。
@@ -29,7 +29,7 @@ model-eval --dataset datasets/model-interaction/golden-set-v2.jsonl --base-url h
 Knowledge Service 需要预先导入 `datasets/retrieval/golden-set-v1.jsonl` 引用的版本化文档、ACL 和 Embedding。本地固定身份是 `tenant-a / local-user / support`，数据集文档必须对这组身份可见。
 
 ```text
-retrieval-eval --dataset datasets/retrieval/golden-set-v1.jsonl --base-url http://localhost:8081 --top-k 5 --min-recall 0.80 --min-hit-rate 0.90 --min-mrr 0.60 --max-duplicate-rate 0.02 --max-p95-ms 1500 --report var/learning-stage-reports/retrieval-eval --commit working-tree
+retrieval-eval --dataset datasets/retrieval/golden-set-v1.jsonl --base-url http://localhost:8081 --top-k 5 --min-recall 0.80 --min-hit-rate 0.90 --min-mrr 0.60 --max-duplicate-rate 0.02 --max-p95-ms 1500 --report var/learning-stage-reports/retrieval-eval
 ```
 
 Runner 记录实际排名、Embedding 模型、Recall@K、HitRate@K、MRR、重复率和 p95 延迟。任一阈值失败，或一轮结果出现多个 Embedding 模型，进程都会非零退出。
@@ -45,7 +45,7 @@ Agent 评测指向已部署的 Ticket Agent Service，不使用一枚全权测�
 分别把三枚短时令牌写入 `target/eval-secrets/create-token`、`run-token` 和 `read-token`，再运行：
 
 ```text
-agent-eval --dataset datasets/agent/golden-set-v2.jsonl --base-url https://ticket-agent-test.example.com --create-token-file target/eval-secrets/create-token --run-token-file target/eval-secrets/run-token --read-token-file target/eval-secrets/read-token --report var/learning-stage-reports/agent-eval --commit working-tree
+agent-eval --dataset datasets/agent/golden-set-v2.jsonl --base-url https://ticket-agent-test.example.com --create-token-file target/eval-secrets/create-token --run-token-file target/eval-secrets/run-token --read-token-file target/eval-secrets/read-token --report var/learning-stage-reports/agent-eval
 ```
 
 Runner 会创建任务、运行到终态或等待确认状态，再读取审计时间线。它不调用确认接口，因此数据集执行期间出现任何写 Tool 成功审计，都表示副作用边界失守。

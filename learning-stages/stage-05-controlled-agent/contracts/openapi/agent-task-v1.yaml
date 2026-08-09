@@ -1,0 +1,342 @@
+openapi: 3.1.0
+info:
+  title: Agent Task API
+  version: 1.0.0
+  description: Auditable ticket-agent workflow. Identity and authorization facts come only from JWT claims.
+servers:
+  - url: http://localhost:8082
+paths:
+  /api/v1/agent/tasks:
+    post:
+      operationId: createAgentTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../json-schema/agent-task-request-v1.schema.json
+      responses:
+        '202':
+          description: The request was accepted. A duplicate returns the original acceptance receipt.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTaskReceipt'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/agent/tasks/{taskId}:
+    get:
+      operationId: getAgentTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Current task state and pending confirmation, if any.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTaskView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/agent/tasks/{taskId}/runs:
+    post:
+      operationId: runAgentTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: State after the bounded agent run stops, completes, rejects, or requests confirmation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTaskView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/agent/tasks/{taskId}/confirmation:
+    put:
+      operationId: decideAgentConfirmation
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmToolAction'
+      responses:
+        '200':
+          description: Confirmation decision and resulting tool execution state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmationDecisionReceipt'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/agent/tasks/{taskId}/audit:
+    get:
+      operationId: listAgentTaskAuditEvents
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Ordered audit events for the task.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentAuditEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+        pattern: '^[A-Za-z0-9._:-]+$'
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+  responses:
+    BadRequest:
+      description: Invalid request or business input.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Unauthorized:
+      description: Missing or invalid access token.
+    Forbidden:
+      description: The trusted principal lacks the required actor, scope, tenant, or role.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          examples:
+            wrongActor:
+              value:
+                code: AGENT_TASK_ACCESS_DENIED
+                message: delegated token actor must be customer-bff
+    NotFound:
+      description: The task does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Conflict:
+      description: Idempotency, task version, or state conflict.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Unavailable:
+      description: The configured model or downstream capability is unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    TooManyRequests:
+      description: Agent run concurrency is full; retry after a bounded delay.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+  schemas:
+    AgentTaskReceipt:
+      type: object
+      additionalProperties: false
+      required: [taskId, status, duplicate]
+      properties:
+        taskId:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          enum: [ACCEPTED]
+        duplicate:
+          type: boolean
+    AgentTaskView:
+      type: object
+      additionalProperties: false
+      required: [taskId, caseId, status, version, updatedAt]
+      properties:
+        taskId:
+          type: string
+        caseId:
+          type: string
+        status:
+          $ref: '#/components/schemas/AgentTaskState'
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        outcome:
+          type: [string, 'null']
+        confirmation:
+          oneOf:
+            - $ref: '#/components/schemas/ConfirmationView'
+            - type: 'null'
+        updatedAt:
+          type: string
+          format: date-time
+    AgentTaskState:
+      type: string
+      enum: [ACCEPTED, RUNNING, WAITING_CONFIRMATION, EXECUTING, EXECUTION_UNCERTAIN, COMPLETED, REJECTED, FAILED]
+    ConfirmationView:
+      type: object
+      additionalProperties: false
+      required: [confirmationId, actionId, toolName, risk, requiredRole, arguments, boundTaskVersion, expiresAt]
+      properties:
+        confirmationId:
+          type: string
+        actionId:
+          type: string
+        toolName:
+          type: string
+        risk:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        requiredRole:
+          type: string
+        arguments:
+          type: object
+          additionalProperties:
+            type: string
+        boundTaskVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        expiresAt:
+          type: string
+          format: date-time
+    ConfirmToolAction:
+      type: object
+      additionalProperties: false
+      required: [confirmationId, expectedTaskVersion, decision, reason]
+      properties:
+        confirmationId:
+          type: string
+          minLength: 1
+          maxLength: 64
+        expectedTaskVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        decision:
+          type: string
+          enum: [APPROVE, REJECT]
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    ConfirmationDecisionReceipt:
+      type: object
+      additionalProperties: false
+      required: [taskId, state, actionId, toolStatus, auditId, taskVersion, duplicate]
+      properties:
+        taskId:
+          type: string
+        state:
+          $ref: '#/components/schemas/AgentTaskState'
+        actionId:
+          type: string
+        toolStatus:
+          type: string
+          enum: [SUCCEEDED, REJECTED, NOT_EXECUTED, UNKNOWN]
+        auditId:
+          type: string
+        taskVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        duplicate:
+          type: boolean
+    AgentAuditEvent:
+      type: object
+      additionalProperties: false
+      required: [sequence, eventType, actorId, detail, occurredAt]
+      properties:
+        sequence:
+          type: integer
+          format: int64
+          minimum: 1
+        eventType:
+          type: string
+        actorId:
+          type: string
+        detail:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+    ApiError:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string

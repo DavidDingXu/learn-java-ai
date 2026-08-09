@@ -3,6 +3,8 @@ package com.xiaoding.javaai.knowledge.retrieval.infrastructure;
 import com.xiaoding.javaai.knowledge.retrieval.application.KnowledgeEmbedding;
 import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeEmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.embedding.EmbeddingOptions;
+import org.springframework.ai.embedding.EmbeddingRequest;
 
 import java.util.Comparator;
 import java.util.List;
@@ -29,7 +31,8 @@ public final class SpringAiKnowledgeEmbeddingModel implements KnowledgeEmbedding
         if (texts.stream().anyMatch(text -> text == null || text.isBlank())) {
             throw new IllegalArgumentException("texts must not contain blank values");
         }
-        var response = delegate.embedForResponse(List.copyOf(texts));
+        var options = EmbeddingOptions.builder().dimensions(expectedDimensions).build();
+        var response = delegate.call(new EmbeddingRequest(List.copyOf(texts), options));
         String model = response.getMetadata() == null ? null : response.getMetadata().getModel();
         if (model == null || model.isBlank()) {
             throw new IllegalStateException("embedding provider returned no model metadata");

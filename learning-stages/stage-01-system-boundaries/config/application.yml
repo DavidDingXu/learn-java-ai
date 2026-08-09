@@ -1,0 +1,6 @@
+# Stage 01 has no model dependency. The three processes establish ownership and ports first.
+spring:
+  ai:
+    model:
+      chat: none
+      embedding: none

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.xiaoding.example/agent-task-request-v1.schema.json",
+  "title": "AgentTaskRequestV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["caseId", "objective", "businessContext"],
+  "properties": {
+    "caseId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "businessContext": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 2000
+      },
+      "maxProperties": 32
+    }
+  }
+}

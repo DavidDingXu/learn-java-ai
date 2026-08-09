@@ -1,0 +1,43 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+  flyway:
+    enabled: false
+  ai:
+    model:
+      audio:
+        speech: none
+        transcription: none
+      chat: none
+      embedding: none
+      image: none
+      moderation: none
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+java-ai:
+  persistence:
+    mode: memory
+  agent:
+    knowledge-tool:
+      mode: disabled
+    write-tool:
+      mode: memory
+    downstream-token-mode: local
+    max-steps: 4
+    max-concurrent-runs: 4
+    confirmation-ttl: 15m
+    allowed-queues: refund-review,tier-2
+  security:
+    mode: fixed
+    jwt:
+      issuer: https://identity.example.test
+      audience: ticket-agent-service
+      jwk-set-uri: ""
+      hmac-secret: ""

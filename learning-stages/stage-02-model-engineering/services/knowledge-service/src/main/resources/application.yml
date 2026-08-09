@@ -1,0 +1,51 @@
+server:
+  port: 8081
+
+spring:
+  config:
+    import: optional:file:./config/application.yml
+  application:
+    name: knowledge-service
+  reactor:
+    context-propagation: auto
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      knowledgeAnswer:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+  bulkhead:
+    instances:
+      knowledgeAnswer:
+        max-concurrent-calls: 20
+        max-wait-duration: 0
+
+java-ai:
+  prompt:
+    knowledge-answer:
+      version: knowledge-answer-v1
+  security:
+    mode: fixed
+  knowledge:
+    mode: classpath
+    answer:
+      total-timeout: 30s
+      retry:
+        max-attempts: 2
+        delay: 100ms

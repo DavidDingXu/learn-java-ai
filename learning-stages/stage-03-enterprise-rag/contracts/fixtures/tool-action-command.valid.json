@@ -1,0 +1,8 @@
+{
+  "actionId": "action-123",
+  "ticketId": "ticket-456",
+  "actionType": "ADD_INTERNAL_NOTE",
+  "arguments": {
+    "note": "已联系支付渠道"
+  }
+}

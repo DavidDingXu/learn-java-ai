@@ -17,12 +17,14 @@ class SpringAiKnowledgeEmbeddingModelTest {
 
     @Test
     void maps_the_vector_and_provider_model_without_leaking_spring_ai_types() {
-        var adapter = new SpringAiKnowledgeEmbeddingModel(new StubEmbeddingModel(), 3);
+        var provider = new StubEmbeddingModel();
+        var adapter = new SpringAiKnowledgeEmbeddingModel(provider, 3);
 
         var embedding = adapter.embed("退款多久到账？");
 
         assertThat(embedding.vector()).containsExactly(0.1f, 0.2f, 0.3f);
         assertThat(embedding.model()).isEqualTo("text-embedding-v3");
+        assertThat(provider.lastRequest.getOptions().getDimensions()).isEqualTo(3);
     }
 
     @Test
@@ -42,8 +44,11 @@ class SpringAiKnowledgeEmbeddingModelTest {
 
     private static final class StubEmbeddingModel implements EmbeddingModel {
 
+        private EmbeddingRequest lastRequest;
+
         @Override
         public EmbeddingResponse call(EmbeddingRequest request) {
+            lastRequest = request;
             if (request.getInstructions().size() == 2) {
                 return new EmbeddingResponse(
                         List.of(

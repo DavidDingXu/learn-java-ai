@@ -1,0 +1,179 @@
+@knowledgeBaseUrl = http://localhost:8081
+
+### 01-health
+GET {{knowledgeBaseUrl}}/actuator/health
+
+> {%
+  client.test("Knowledge Service is UP", function() {
+    client.assert(response.status === 200, "health status must be 200");
+    client.assert(response.body.status === "UP", "service must be UP");
+  });
+%}
+
+### 02-upload-readable-policy
+POST {{knowledgeBaseUrl}}/api/v1/knowledge/documents/refund-policy/versions
+Content-Type: multipart/form-data; boundary=RagBoundary
+
+--RagBoundary
+Content-Disposition: form-data; name="metadata"
+Content-Type: application/json
+
+{"title":"退款政策","expectedRevision":0}
+--RagBoundary
+Content-Disposition: form-data; name="file"; filename="refund-policy-chunking-v1.md"
+Content-Type: text/markdown
+
+< datasets/knowledge/refund-policy-chunking-v1.md
+--RagBoundary--
+
+> {%
+  client.test("Readable policy version is created", function() {
+    client.assert(response.status === 201, "upload status must be 201");
+    client.assert(response.body.versionNumber === 1, "first version must be 1");
+  });
+%}
+
+### 03-publish-readable-policy
+POST {{knowledgeBaseUrl}}/api/v1/knowledge/documents/refund-policy/versions/1/publish
+Content-Type: application/json
+
+{
+  "expectedRevision": 1,
+  "effectiveFrom": "2026-08-01T00:00:00Z",
+  "effectiveUntil": null,
+  "acl": [
+    {"subjectType": "DEPARTMENT", "subjectId": "support"},
+    {"subjectType": "USER", "subjectId": "editor-42"}
+  ]
+}
+
+> {%
+  client.test("Publishing creates an index task", function() {
+    client.assert(response.status === 202, "publish status must be 202");
+    client.assert(response.body.indexTaskId !== null, "indexTaskId must exist");
+  });
+%}
+
+### 04-upload-acl-negative-document
+POST {{knowledgeBaseUrl}}/api/v1/knowledge/documents/finance-private/versions
+Content-Type: multipart/form-data; boundary=RagBoundary
+
+--RagBoundary
+Content-Disposition: form-data; name="metadata"
+Content-Type: application/json
+
+{"title":"财务内部流程","expectedRevision":0}
+--RagBoundary
+Content-Disposition: form-data; name="file"; filename="finance-private-v1.md"
+Content-Type: text/markdown
+
+< datasets/knowledge/finance-private-v1.md
+--RagBoundary--
+
+> {%
+  client.test("ACL-negative document version is created", function() {
+    client.assert(response.status === 201, "upload status must be 201");
+    client.assert(response.body.versionNumber === 1, "first version must be 1");
+  });
+%}
+
+### 05-publish-acl-negative-document
+POST {{knowledgeBaseUrl}}/api/v1/knowledge/documents/finance-private/versions/1/publish
+Content-Type: application/json
+
+{
+  "expectedRevision": 1,
+  "effectiveFrom": "2026-08-01T00:00:00Z",
+  "effectiveUntil": null,
+  "acl": [
+    {"subjectType": "DEPARTMENT", "subjectId": "finance"}
+  ]
+}
+
+> {%
+  client.test("Finance-only ACL is published", function() {
+    client.assert(response.status === 202, "publish status must be 202");
+    client.assert(response.body.indexTaskId !== null, "indexTaskId must exist");
+  });
+%}
+
+### 06-index-first-document
+POST {{knowledgeBaseUrl}}/internal/v1/knowledge/index-tasks/run-once
+
+> {%
+  client.test("First index task succeeds", function() {
+    client.assert(response.status === 200, "worker status must be 200");
+    client.assert(response.body.result === "SUCCEEDED", "first task must succeed");
+  });
+%}
+
+### 07-index-second-document
+POST {{knowledgeBaseUrl}}/internal/v1/knowledge/index-tasks/run-once
+
+> {%
+  client.test("Second index task succeeds", function() {
+    client.assert(response.body.result === "SUCCEEDED", "second task must succeed");
+  });
+%}
+
+### 08-vector-retrieval
+POST {{knowledgeBaseUrl}}/internal/v1/knowledge/retrieval/evaluations
+Content-Type: application/json
+
+{
+  "question": "退款审核通过后多久到账？",
+  "topK": 5,
+  "mode": "VECTOR"
+}
+
+> {%
+  client.test("ACL is applied before TopK", function() {
+    const ids = response.body.documentIds;
+    client.assert(ids.includes("refund-policy"), "refund policy must be retrieved");
+    client.assert(!ids.includes("finance-private"), "finance document must not be retrieved");
+  });
+%}
+
+### 09-hybrid-retrieval
+POST {{knowledgeBaseUrl}}/internal/v1/knowledge/retrieval/evaluations
+Content-Type: application/json
+
+{
+  "question": "银行卡退款到账时间",
+  "topK": 5,
+  "mode": "HYBRID"
+}
+
+> {%
+  client.test("Hybrid retrieval keeps the same ACL boundary", function() {
+    const ids = response.body.documentIds;
+    client.assert(ids.includes("refund-policy"), "refund policy must be retrieved");
+    client.assert(!ids.includes("finance-private"), "finance document must not be retrieved");
+  });
+%}
+
+### 10-grounded-answer
+POST {{knowledgeBaseUrl}}/api/v1/knowledge/answers
+Content-Type: application/json
+
+{
+  "question": "退款审核通过后通常多久到账？"
+}
+
+> {%
+  client.test("Answer contains a traceable citation", function() {
+    client.assert(response.status === 200, "answer status must be 200");
+    client.assert(response.body.citations.length > 0, "citations must not be empty");
+    client.assert(response.body.citations[0].documentId === "refund-policy",
+      "answer must cite refund-policy");
+  });
+%}
+
+### 11-idempotent-worker-observation
+POST {{knowledgeBaseUrl}}/internal/v1/knowledge/index-tasks/run-once
+
+> {%
+  client.test("No duplicate pending task remains", function() {
+    client.assert(response.body.result === "IDLE", "worker must be idle after both tasks");
+  });
+%}

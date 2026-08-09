@@ -1,0 +1,58 @@
+# Local defaults use a fixed identity and call both downstream services over HTTP.
+# Company identity settings take effect only when the corresponding adapter is selected.
+server:
+  port: 8080
+
+spring:
+  application:
+    name: customer-bff
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+
+java-ai:
+  consultation:
+    session-ttl: 30m
+    max-turns: 8
+    max-estimated-tokens: 1200
+    max-summary-chars: 800
+    rate-limit:
+      requests: 20
+      window: 1m
+  security:
+    # fixed requires no login system. Change to jwt when integrating company authentication.
+    mode: fixed
+    fixed:
+      tenant-id: tenant-a
+      subject: local-user
+      roles: customer
+      departments: support
+    jwt:
+      issuer: https://identity.example.com
+      audience: customer-bff
+      jwk-set-uri: https://identity.example.com/.well-known/jwks.json
+      hmac-secret: ""
+  identity:
+    # local provides a fixed service-to-service credential for local integration.
+    # Change to oauth2 only after a company Token Exchange endpoint is available.
+    delegation-mode: local
+    local-token-ttl: 5m
+    token-endpoint: https://identity.example.com/oauth2/token
+    client-id: customer-bff
+    client-secret: replace-with-secret-manager
+    timeout: 5s
+  downstream:
+    knowledge:
+      base-url: http://localhost:8081
+      timeout: 35s
+      stream-idle-timeout: 30s
+      stream-total-timeout: 2m
+    ticket:
+      base-url: http://localhost:8082
+      timeout: 5s

@@ -1,0 +1,10 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: knowledge-service
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

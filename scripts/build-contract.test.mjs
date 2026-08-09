@@ -36,6 +36,7 @@ test("knowledge service owns WebFlux, Spring AI and model resilience", () => {
     "spring-security-oauth2-resource-server",
     "spring-security-oauth2-jose",
     "spring-ai-starter-model-openai",
+    "spring-ai-starter-model-ollama",
     "spring-boot-micrometer-tracing-opentelemetry",
     "micrometer-tracing-bridge-otel",
     "micrometer-registry-prometheus",
@@ -120,8 +121,8 @@ test("each service has one reader-facing runtime config with replaceable adapter
   assert.match(knowledge, /mode:\s*fixed/);
   assert.match(knowledge, /password:\s*replace-with-your-database-password/);
   assert.match(sharedModelConfig, /chat:\s*openai/);
-  assert.match(sharedModelConfig, /embedding:\s*none/);
-  assert.match(sharedModelConfig, /mode:\s*ollama/);
+  assert.match(sharedModelConfig, /embedding:\s*openai/);
+  assert.match(sharedModelConfig, /ollama:[\s\S]*?base-url:\s*http:\/\/localhost:11434/);
   assert.match(sharedModelConfig, /model:\s*qwen3-embedding:4b/);
   assert.match(sharedModelConfig, /api-key:\s*replace-with-your-api-key/);
   assert.match(sharedModelConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);

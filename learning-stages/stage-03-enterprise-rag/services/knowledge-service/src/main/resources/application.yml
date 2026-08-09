@@ -1,0 +1,99 @@
+# Run from the project root so this service can load the shared model configuration.
+# Start with classpath knowledge; switch one mode when the RAG chapters introduce PostgreSQL.
+server:
+  port: 8081
+
+spring:
+  config:
+    import:
+      - optional:file:./config/application.yml
+      - optional:file:../../config/application.yml
+  application:
+    name: knowledge-service
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+  flyway:
+    enabled: false
+  reactor:
+    context-propagation: auto
+  codec:
+    max-in-memory-size: 6MB
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      knowledgeAnswer:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+  bulkhead:
+    instances:
+      knowledgeAnswer:
+        max-concurrent-calls: 20
+        max-wait-duration: 0
+
+java-ai:
+  prompt:
+    knowledge-answer:
+      version: knowledge-answer-v1
+  security:
+    # fixed provides a local identity. Change to jwt when integrating company authentication.
+    mode: fixed
+    jwt:
+      issuer: https://identity.example.com
+      audience: knowledge-service
+      jwk-set-uri: https://identity.example.com/.well-known/jwks.json
+      hmac-secret: ""
+      allowed-actors: customer-bff,ticket-agent-service,knowledge-admin-service
+  knowledge:
+    # classpath runs the first model-call chapters. postgres-rag enables upload, indexing and retrieval.
+    mode: classpath
+    embedding:
+      # provider uses the Spring AI model selected in config/application.yml; local-hash only exercises the workflow.
+      mode: provider
+    answer:
+      total-timeout: 30s
+      retry:
+        max-attempts: 2
+        delay: 100ms
+    retrieval:
+      mode: vector
+      top-k: 6
+      candidate-k: 20
+      lexical-search: true
+      rewrite-query: false
+      rerank: false
+    object-store:
+      local-root: ./var/knowledge-objects
+    postgres:
+      jdbc-url: jdbc:postgresql://localhost:5432/java_ai_knowledge
+      username: java_ai_knowledge
+      password: replace-with-your-database-password
+      maximum-pool-size: 10
+    indexing:
+      worker-id: knowledge-indexer-local
+      scheduler-enabled: true
+      scheduler-initial-delay: 5s
+      scheduler-delay: 1s
+      lease-duration: 45s
+      retry-delay: 2m
+      maximum-attempts: 3
+      max-chunk-characters: 1000
+      chunk-policy-version: policy-chunk-v1
+      embedding-batch-size: 16

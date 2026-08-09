@@ -1,0 +1,6 @@
+{
+  "caseId": "case-1001",
+  "objective": "尝试覆盖调用者身份",
+  "businessContext": {},
+  "tenantId": "other-tenant"
+}

@@ -7,4 +7,12 @@
 - `EnterpriseMcpRegistry` 只导入通过 HTTPS、允许列表和只读策略验证的 MCP 工具。
 - `A2aTaskCoordinator` 管理幂等、请求指纹、单调状态和 `UNKNOWN` 交付结果。
 
-建议按 `AgentScopeTicketRuntime`、`CollaborationPolicy`、`EnterpriseMcpRegistry`、`A2aTaskCoordinator` 的顺序阅读。它们分别对应 Tool 裁决、协作选择、远程工具准入和任务状态，不组成一个可独立启动的 Agent 应用，也不证明远程 Agent 的可用性、性能或信任等级。
+## 运行入口
+
+1. 在 `src/main/resources/application.properties` 填写 OpenAI 兼容 API 的 Key、Base URL 和模型名。
+2. 在 IDEA 运行 `AgentScopeLabApplication`。
+3. 观察模型先调用 `query_ticket`，再根据 Tool 返回的真实工单事实回答。
+
+这个入口使用 AgentScope 的 `OpenAIChatModel`、`ReActAgent`、`Toolkit` 和 `PermissionContextState`。`query_ticket` 被允许，写 Tool 没有授权；权限不是通过提示词假设出来的。
+
+再按 `AgentScopeTicketRuntime`、`CollaborationPolicy`、`EnterpriseMcpRegistry`、`A2aTaskCoordinator` 阅读应用层边界。当前入口证明单 Agent 的真实模型与 Tool 链路，`CollaborationPolicy` 只负责判断何时值得拆成多 Agent，并不冒充已经执行多个远程 Agent。
