@@ -2,8 +2,12 @@ package com.xiaoding.javaai.knowledge.answer.infrastructure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaoding.javaai.knowledge.answer.application.port.PolicyContextSource;
+import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeEmbeddingModel;
 import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeRetriever;
 import com.xiaoding.javaai.knowledge.retrieval.application.HybridKnowledgeRetrievalService;
+import com.xiaoding.javaai.knowledge.retrieval.infrastructure.DeterministicHashEmbeddingModel;
+import com.xiaoding.javaai.knowledge.retrieval.infrastructure.OllamaKnowledgeEmbeddingModel;
+import com.xiaoding.javaai.knowledge.retrieval.infrastructure.SpringAiKnowledgeEmbeddingModel;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -30,20 +34,50 @@ class KnowledgeRetrievalConfigurationTest {
                     "java-ai.knowledge.retrieval.candidate-k=20",
                     "java-ai.knowledge.retrieval.top-k=6"
             )
-            .withBean(DataSource.class, StubDataSource::new)
-            .withBean(ObjectMapper.class, ObjectMapper::new)
-            .withBean(EmbeddingModel.class, StubEmbeddingModel::new);
+            .withBean(DataSource.class, StubDataSource::new);
 
     @Test
     void wires_the_retriever_and_policy_context_without_replacing_an_external_data_source() {
-        contextRunner.run(context -> {
+        contextRunner.withBean(EmbeddingModel.class, StubEmbeddingModel::new).run(context -> {
             assertThat(context).hasSingleBean(DataSource.class);
+            assertThat(context).hasSingleBean(ObjectMapper.class);
+            assertThat(context).hasSingleBean(KnowledgeEmbeddingModel.class);
+            assertThat(context.getBean(KnowledgeEmbeddingModel.class))
+                    .isInstanceOf(SpringAiKnowledgeEmbeddingModel.class);
             assertThat(context).hasSingleBean(KnowledgeRetriever.class);
             assertThat(context.getBean(KnowledgeRetriever.class))
                     .isInstanceOf(HybridKnowledgeRetrievalService.class);
             assertThat(context).hasSingleBean(PolicyContextSource.class);
             assertThat(context.getBean(DataSource.class)).isInstanceOf(StubDataSource.class);
         });
+    }
+
+    @Test
+    void uses_a_1536_dimension_local_hash_model_without_a_provider_bean() {
+        contextRunner
+                .withPropertyValues("java-ai.knowledge.embedding.mode=local-hash")
+                .run(context -> {
+                    assertThat(context).hasSingleBean(KnowledgeEmbeddingModel.class);
+                    assertThat(context.getBean(KnowledgeEmbeddingModel.class))
+                            .isInstanceOf(DeterministicHashEmbeddingModel.class);
+                    assertThat(context.getBean(KnowledgeEmbeddingModel.class).embed("退款多久到账").vector())
+                            .hasSize(1536);
+                });
+    }
+
+    @Test
+    void wires_a_local_ollama_embedding_model_without_an_openai_embedding_bean() {
+        contextRunner
+                .withPropertyValues(
+                        "java-ai.knowledge.embedding.mode=ollama",
+                        "java-ai.knowledge.embedding.ollama.base-url=http://localhost:11434",
+                        "java-ai.knowledge.embedding.ollama.model=qwen3-embedding:4b"
+                )
+                .run(context -> {
+                    assertThat(context).hasSingleBean(KnowledgeEmbeddingModel.class);
+                    assertThat(context.getBean(KnowledgeEmbeddingModel.class))
+                            .isInstanceOf(OllamaKnowledgeEmbeddingModel.class);
+                });
     }
 
     private static final class StubEmbeddingModel implements EmbeddingModel {

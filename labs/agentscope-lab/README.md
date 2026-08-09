@@ -7,10 +7,4 @@
 - `EnterpriseMcpRegistry` 只导入通过 HTTPS、允许列表和只读策略验证的 MCP 工具。
 - `A2aTaskCoordinator` 管理幂等、请求指纹、单调状态和 `UNKNOWN` 交付结果。
 
-在项目根目录执行：
-
-```bash
-./mvnw -f labs/pom.xml -pl agentscope-lab test
-```
-
-测试验证本地策略和协议适配，不对远程 Agent 的可用性、性能或信任等级做假设。
+建议按 `AgentScopeTicketRuntime`、`CollaborationPolicy`、`EnterpriseMcpRegistry`、`A2aTaskCoordinator` 的顺序阅读。它们分别对应 Tool 裁决、协作选择、远程工具准入和任务状态，不组成一个可独立启动的 Agent 应用，也不证明远程 Agent 的可用性、性能或信任等级。

@@ -7,10 +7,4 @@
 - `ConfirmationGraph` 使用真实 Graph 运行时路由低风险直接执行和高风险人工审批。
 - `FrameworkCompatibilityDecision` 防止 Boot 3.5 / Spring AI 1.1 依赖意外进入 Boot 4 / Spring AI 2 主线。
 
-在项目根目录执行：
-
-```bash
-./mvnw -f labs/pom.xml -pl spring-ai-alibaba-lab test
-```
-
-默认测试使用确定性输入，用于检查映射、决策和路由逻辑，不代表 DashScope 账号、配额或生产环境已经验收。
+建议按 `DashScopeProviderAdapter`、`RetrievalReplacementExperiment`、`ConfirmationGraph`、`FrameworkCompatibilityDecision` 的顺序阅读。这个模块不是可独立启动的 DashScope 应用；接入真实账号时还要使用自己的凭证和语料验证配额、质量与生产环境边界。

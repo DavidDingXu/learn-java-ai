@@ -7,7 +7,13 @@ import org.springframework.core.env.Environment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
+        properties = {
+                "spring.config.import=optional:file:../../config/application.yml",
+                "java-ai.knowledge.mode=classpath"
+        }
+)
 class KnowledgeServiceDefaultStartupTest {
 
     @Autowired

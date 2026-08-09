@@ -7,10 +7,4 @@
 - A2A 实验验证任务创建、状态转移、重复请求和不确定交付结果。
 - 协议负责互操作；身份、权限、超时、幂等、审计和错误映射仍是应用责任。
 
-在项目根目录执行：
-
-```bash
-./mvnw -f labs/pom.xml -pl protocol-interop-lab test
-```
-
-默认测试在本机启动协议 Server，不访问外部服务。
+建议从 `EnterpriseMcpClient` 和 `EnterpriseA2aClient` 开始阅读，再看应用层怎样收紧服务器、工具和任务边界。这个模块不是远程 MCP/A2A 服务的启动器；连接真实服务时，仍需提供受管地址、凭证和业务侧准入规则。

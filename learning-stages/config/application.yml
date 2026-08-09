@@ -1,0 +1,13 @@
+stages:
+  knowledge-base-url: http://localhost:8081
+  ticket-base-url: http://localhost:8082
+  customer-base-url: http://localhost:8080
+  question: 退款通常多久到账？
+  rag:
+    allowed-document-id: refund-policy
+    blocked-document-id: reader-finance-policy
+    source-file: datasets/knowledge/refund-policy-chunking-v1.md
+    blocked-source-file: learning-stages/data/finance-policy.md
+    golden-set: datasets/retrieval/golden-set-v1.jsonl
+    report-directory: var/learning-stage-reports
+    state-file: var/learning-stage-reports/rag-stage-state.json

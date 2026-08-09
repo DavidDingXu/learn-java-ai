@@ -16,6 +16,8 @@ import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeLexical
 import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeQueryRewriter;
 import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeReranker;
 import com.xiaoding.javaai.knowledge.retrieval.application.port.RetrievalPlanProvider;
+import com.xiaoding.javaai.knowledge.retrieval.infrastructure.DeterministicHashEmbeddingModel;
+import com.xiaoding.javaai.knowledge.retrieval.infrastructure.OllamaKnowledgeEmbeddingModel;
 import com.xiaoding.javaai.knowledge.retrieval.infrastructure.PgVectorKnowledgeChunkSearchRepository;
 import com.xiaoding.javaai.knowledge.retrieval.infrastructure.SpringAiKnowledgeEmbeddingModel;
 import com.xiaoding.javaai.knowledge.retrieval.infrastructure.PostgresTrigramKnowledgeChunkSearchRepository;
@@ -30,12 +32,19 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.time.Duration;
 
 @Configuration
 @ConditionalOnProperty(name = "java-ai.knowledge.mode", havingValue = "postgres-rag")
 class KnowledgeRetrievalConfiguration {
 
     private static final int DOCUMENT_CHUNK_EMBEDDING_DIMENSIONS = 1536;
+
+    @Bean
+    @ConditionalOnMissingBean(ObjectMapper.class)
+    ObjectMapper knowledgePersistenceObjectMapper() {
+        return new ObjectMapper();
+    }
 
     @Bean(destroyMethod = "close")
     @ConditionalOnMissingBean(DataSource.class)
@@ -64,10 +73,38 @@ class KnowledgeRetrievalConfiguration {
     }
 
     @Bean
+    @ConditionalOnProperty(
+            name = "java-ai.knowledge.embedding.mode",
+            havingValue = "provider",
+            matchIfMissing = true
+    )
     KnowledgeEmbeddingModel knowledgeEmbeddingModel(
             EmbeddingModel embeddingModel
     ) {
         return new SpringAiKnowledgeEmbeddingModel(embeddingModel, DOCUMENT_CHUNK_EMBEDDING_DIMENSIONS);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "java-ai.knowledge.embedding.mode", havingValue = "local-hash")
+    KnowledgeEmbeddingModel localHashKnowledgeEmbeddingModel() {
+        return new DeterministicHashEmbeddingModel(DOCUMENT_CHUNK_EMBEDDING_DIMENSIONS);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "java-ai.knowledge.embedding.mode", havingValue = "ollama")
+    KnowledgeEmbeddingModel ollamaKnowledgeEmbeddingModel(
+            ObjectMapper objectMapper,
+            @Value("${java-ai.knowledge.embedding.ollama.base-url:http://localhost:11434}") String baseUrl,
+            @Value("${java-ai.knowledge.embedding.ollama.model:qwen3-embedding:4b}") String model,
+            @Value("${java-ai.knowledge.embedding.ollama.timeout-seconds:120}") long timeoutSeconds
+    ) {
+        return new OllamaKnowledgeEmbeddingModel(
+                baseUrl,
+                model,
+                DOCUMENT_CHUNK_EMBEDDING_DIMENSIONS,
+                objectMapper,
+                Duration.ofSeconds(timeoutSeconds)
+        );
     }
 
     @Bean

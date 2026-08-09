@@ -25,7 +25,7 @@ class KnowledgeRetrievalEvaluationControllerTest {
     void rejectsAnOversizedEvaluationQuestionBeforeRetrieval() {
         try (var validatorFactory = Validation.buildDefaultValidatorFactory()) {
             var violations = validatorFactory.getValidator().validate(
-                    new KnowledgeRetrievalEvaluationRequest("x".repeat(2001), 5)
+                    new KnowledgeRetrievalEvaluationRequest("x".repeat(2001), 5, null)
             );
 
             assertThat(violations)
@@ -55,12 +55,13 @@ class KnowledgeRetrievalEvaluationControllerTest {
                         retriever, clock, new JwtKnowledgeAccessScopeProvider());
 
         KnowledgeRetrievalEvaluationResponse response = controller.evaluate(
-                new KnowledgeRetrievalEvaluationRequest("退款多久到账？", 5),
+                new KnowledgeRetrievalEvaluationRequest("退款多久到账？", 5, null),
                 new JwtAuthenticationToken(delegatedJwt())
         ).block();
 
         assertThat(response.embeddingModel()).isEqualTo("embedding-v1");
         assertThat(response.chunkIds()).containsExactly("chunk-arrival");
+        assertThat(response.documentIds()).containsExactly("refund-policy");
         assertThat(captured.get().topK()).isEqualTo(5);
         assertThat(captured.get().effectiveAt()).isEqualTo(Instant.parse("2026-07-13T04:00:00Z"));
         assertThat(captured.get().accessScope().tenantId().value()).isEqualTo("tenant-a");

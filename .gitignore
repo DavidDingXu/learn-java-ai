@@ -4,9 +4,11 @@ target/
 node_modules/
 dist/
 coverage/
+var/
 
 .idea/
 *.iml
 
 .env
 *.log
+config/application-default.yml

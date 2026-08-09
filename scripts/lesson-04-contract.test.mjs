@@ -109,18 +109,20 @@ test("local model tests use one tracked placeholder YAML", () => {
   assert.doesNotMatch(powershell, /ExampleConfigFile|Copy-Item/);
 });
 
-test("reader Maven smoke commands resolve the root YAML from the service module", () => {
+test("reader startup uses the tracked YAML and application entrypoints", () => {
   for (const relativePath of [
     "README.md",
-    "docs/runbooks/live-model-smoke.md",
+    "docs/runbooks/local-toolchain.md",
     "docs/runbooks/runtime-configuration.md",
-    "docs/reports/lesson-33-ticket-agent-case.md",
-    "docs/reports/lesson-38-runtime-configuration.md",
   ]) {
     const content = read(relativePath);
-    assert.doesNotMatch(content, /file:config\/application\.yml/);
-    assert.match(content, /file:\.\.\/\.\.\/config\/application\.yml/);
+    assert.match(content, /config\/application\.yml/);
+    assert.match(content, /KnowledgeServiceApplication/);
+    assert.doesNotMatch(content, /(?:\.\/|\.\\)mvnw|LiveModelSmokeIT|file:\.\.\/\.\.\/config\/application\.yml/);
   }
+
+  const readme = read("README.md");
+  assert.match(readme, /POST http:\/\/localhost:8081\/api\/v1\/knowledge\/answers/);
 });
 
 test("live model tests validate the report path before calling the provider", () => {

@@ -21,12 +21,12 @@ class RetrievalGoldenDatasetContractTest {
                 .toAbsolutePath().normalize();
         Path goldenSet = Path.of("../../datasets/retrieval/golden-set-v1.jsonl")
                 .toAbsolutePath().normalize();
-        Set<String> actualChunkIds = new LinkedHashSet<>(new PolicyDocumentChunker(120)
+        Set<String> actualChunkIds = new LinkedHashSet<>(new PolicyDocumentChunker(1000)
                 .chunk(new ChunkDocumentCommand(
                         new TenantId("tenant-a"),
                         new DocumentId("refund-policy"),
-                        2,
-                        "policy-chunker-v1",
+                        1,
+                        "policy-chunk-v1",
                         Files.readString(fixture)
                 ))
                 .stream()

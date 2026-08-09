@@ -44,37 +44,34 @@ flowchart LR
 
 ## 快速开始
 
-本机只需一个包含 `java` 和 `javac` 的 JDK 21 或更高版本。项目自带 Maven Wrapper，不要求额外安装 Maven，也不要求配置项目专用的 Java 环境变量。
+本机准备 JDK 21 或更高版本，并用 IntelliJ IDEA 打开项目根目录。第一次体验只需要启动 Knowledge Service，不必先安装数据库、身份平台或其他中间件。
 
 ```bash
 git clone https://github.com/DavidDingXu/java-ai-engineering-practice.git
 cd java-ai-engineering-practice
-./mvnw verify
 ```
 
-Windows PowerShell：
+打开根目录的 `config/application.yml`，把 `spring.ai.openai.api-key` 换成自己的 Key。使用 OpenAI 兼容服务时，再修改同一文件中的 `base-url` 和模型名。不要提交填过真实 Key 的文件。
 
-```powershell
-git clone https://github.com/DavidDingXu/java-ai-engineering-practice.git
-Set-Location java-ai-engineering-practice
-.\mvnw.cmd verify
-```
+然后直接运行：
 
-这条命令验证三个 Java 21 服务和 Eval Runner，不访问真实模型、数据库或外部业务网络。
+- `services/knowledge-service` 中的 `KnowledgeServiceApplication`；
+- 启动成功后访问 `http://localhost:8081/actuator/health`；
+- 再调用 `POST http://localhost:8081/api/v1/knowledge/answers` 观察真实模型回答。
+
+macOS、Windows 的步骤相同，IDE 项目 SDK 都选择 JDK 21。
 
 ## 启动本地应用
 
-先打开根目录的 `config/application.yml`，把 `spring.ai.openai.api-key` 的占位值换成本地测试 Key。使用 OpenAI 兼容服务时，再修改同一文件中的 `base-url` 和模型名。Knowledge Service 和 Ticket Agent Service 会自动加载这份共享模型配置，不需要再设置环境变量或启动参数。
+Knowledge Service 和 Ticket Agent Service 会自动加载根目录的共享模型配置，不需要再设置环境变量或启动参数。
 
 本地默认使用固定身份，三个服务之间通过真实 HTTP 调用；会话、Agent 任务、确认、审计和写 Tool 使用进程内实现。因此第一次运行不需要 JWT、身份平台、Redis、Kafka 或数据库，也不会用固定答案代替模型调用。
 
-在三个终端中分别运行：
+需要体验完整咨询与工单链路时，在 IDE 中依次运行三个启动类：
 
-```bash
-./mvnw -pl services/knowledge-service spring-boot:run
-./mvnw -pl services/ticket-agent-service spring-boot:run
-./mvnw -pl apps/customer-bff spring-boot:run
-```
+1. `KnowledgeServiceApplication`；
+2. `TicketAgentServiceApplication`；
+3. `CustomerBffApplication`。
 
 默认端口为 8081、8082 和 8080。可以先检查服务组装与健康状态：
 
@@ -86,31 +83,38 @@ Customer Web 的独立运行方式见 [apps/customer-web/README.md](apps/custome
 
 ## 调用真实模型
 
-仓库已经提供不含真实密钥的 `config/application.yml`。如果已经按“启动本地应用”填写配置，可以直接运行 Java 集成测试：
+Knowledge Service 启动后，直接请求业务接口：
 
 ```bash
-./mvnw \
-  -pl services/knowledge-service \
-  -Dtest=LiveModelSmokeIT \
-  -Dspring.config.additional-location=file:../../config/application.yml \
-  -Djava-ai.smoke.report-path=target/live-model-smoke.md \
-  test
+curl --fail-with-body \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"退款通常多久到账？"}' \
+  http://localhost:8081/api/v1/knowledge/answers
 ```
 
-本地 YAML 使用明文只为降低测试门槛。生产 API Key、数据库密码、JWT 材料和客户端密钥必须由 Secret Manager、Vault 或部署平台 Secret 覆盖，不能进入 Git、镜像层或测试报告。更多边界见[真实模型冒烟验证](docs/runbooks/live-model-smoke.md)。
+Windows PowerShell：
+
+```powershell
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:8081/api/v1/knowledge/answers" `
+  -ContentType "application/json" `
+  -Body '{"question":"退款通常多久到账？"}'
+```
+
+响应中的 `answer`、`model` 和 `citations` 来自真实运行链路。生产 API Key、数据库密码、JWT 材料和客户端密钥必须由 Secret Manager、Vault 或部署平台 Secret 覆盖，不能进入 Git、镜像层或日志。
 
 ## 手动验证完整 RAG
 
 完整 RAG 与“模型接口能调用”不是一回事。当前实现需要以下条件同时成立：
 
 - PostgreSQL 已安装 `vector` 和 `pg_trgm` 扩展，数据库账号可以执行 Flyway 迁移和业务读写；
-- Embedding Provider 能返回 1536 维向量，Chat Provider 能完成最终回答；
+- 本地 Ollama 已下载并运行 `qwen3-embedding:4b`，Chat Provider 能完成最终回答；
 - 至少上传并发布一份文档，再由索引 Worker 生成 Chunk 和向量；
 - 查询使用 `tenant-a / local-user / support` 这组本地固定身份，ACL 必须允许该身份读取文档。
 
 本地文件对象存储已经内置，首次联调不需要 MinIO、Redis、Kafka 或身份平台。Query Rewrite 和 Rerank 默认关闭，也不是跑通主链路的前置条件。
 
-配置好 Provider 和专用 PostgreSQL 后，把 Knowledge Service 的运行模式切换为完整 RAG：
+配置好 Chat Provider、Ollama 和专用 PostgreSQL 后，把 Knowledge Service 的运行模式切换为完整 RAG。Ollama 只需在体验 RAG 时手动打开，不需要设为登录自启动：
 
 ```yaml
 java-ai:
@@ -122,15 +126,7 @@ java-ai:
       password: replace-with-your-database-password
 ```
 
-然后正常启动，不需要额外 Profile 或 JWT：
-
-```bash
-./mvnw -pl services/knowledge-service spring-boot:run
-```
-
-Windows 使用 `mvnw.cmd`，其余 Maven 参数相同。
-
-完整的上传、发布、索引和问答步骤见[知识文档导入](docs/runbooks/knowledge-ingestion.md)。只想检查 Java 规则时运行默认测试；只想确认 Provider 可调用时运行真实模型冒烟测试。两者都不能代替这条完整 RAG 联调。
+修改后重新运行 `KnowledgeServiceApplication`，不需要额外 Profile 或 JWT。完整的上传、发布、索引和问答步骤见[知识文档导入](docs/runbooks/knowledge-ingestion.md)。
 
 ## 接入公司基础设施
 
@@ -153,33 +149,20 @@ Windows 使用 `mvnw.cmd`，其余 Maven 参数相同。
 | [`quality/eval-runner`](quality/eval-runner/README.md) | 模型、检索、Agent 与安全评测 | Java 21 主 reactor |
 | [`apps/customer-web`](apps/customer-web/README.md) | 客户咨询前端 | Node.js 24 独立构建 |
 | [`integrations/jdk8-client`](integrations/jdk8-client/README.md) | Java 8 存量系统客户端 | JDK 8 独立构建 |
-| [`labs`](labs/README.md) | 框架迁移与 MCP/A2A 互操作 | 独立 Maven reactor |
+| [`labs`](labs/README.md) | 框架迁移与 MCP/A2A 互操作 | 与主应用隔离的代码实验 |
+| [`learning-stages`](learning-stages/README.md) | 专栏七个阶段的可运行学习切片 | 独立 reactor，不进入主应用依赖 |
 | [`contracts`](contracts/README.md) | OpenAPI、JSON Schema 与接口样例 | 契约源文件 |
 | [`datasets`](datasets/README.md) | Golden Set 与安全回归数据 | 版本化数据集 |
 
-根 Maven reactor 只聚合三个服务和 Eval Runner。labs、JDK8 客户端与 Customer Web 独立构建，避免框架实验依赖、Java 8 字节码和前端工具链污染主项目。
+三个服务共享 Java 21 依赖基线。labs、JDK8 客户端与 Customer Web 保持独立边界，避免框架实验依赖、Java 8 字节码和前端工具链污染主项目。
 
 ## 技术基线
 
 - 主 reactor：Java 21、Spring Boot 4.1.0、Spring AI 2.0.0。
 - labs：Spring AI Alibaba 1.1.2.3、LangChain4j 1.18.0、AgentScope 2.0.0、MCP Java SDK 2.0.0、A2A Java SDK 1.1.0.Final。
-- Java 8 客户端：独立 Maven 构建。
-- Maven Wrapper：3.9.14。
+- Java 8 客户端：独立 Java 8 模块。
 
 依赖版本与选择边界见[版本基线](docs/version-baseline.md)。
-
-## 验证方式
-
-| 目标 | 命令 | 外部依赖 |
-|---|---|---|
-| 主应用回归 | `./mvnw verify` | 无 |
-| 框架与协议实验 | `./mvnw -f labs/pom.xml verify` | 无 |
-| Customer Web | `cd apps/customer-web && npm ci && npm test && npm run build` | Node.js 24 |
-| Java 8 客户端 | `./mvnw -f integrations/jdk8-client/pom.xml verify` | 完整 JDK 8 |
-| 全仓库验证 | `scripts/verify-unit.sh` 或 `scripts/verify-unit.ps1` | JDK 21、JDK 8、Node.js 24 |
-| pgvector 集成 | CI `pgvector integration` 或 Maven 外部集成测试 | PostgreSQL + pgvector |
-
-全仓脚本会自动寻找本机安装的完整 JDK。它是聚合验证入口，不是启动普通 Java 服务的前置条件。模型、检索、Agent 和安全的专项入口见[文档导航](docs/README.md#运行与验证)。
 
 ## 生产接入边界
 
@@ -190,10 +173,12 @@ Windows 使用 `mvnw.cmd`，其余 Maven 参数相同。
 - 验证数据库迁移、备份恢复、并发容量、告警、回滚和未知结果对账；
 - 使用真实业务分布维护评测数据、阈值和安全案例。
 
-本机 health、单元测试或单次模型调用都不能代替这些验收。
+本机启动成功或单次模型调用都不能代替这些验收。
 
 ## 文档与社区
 
+- [七个阶段的可运行源码](learning-stages/README.md)：读到哪一段，就直接运行对应 `Application`。
+- [按专栏阶段阅读最终实现](docs/reader-code-path.md)：跑通学习切片后，再进入主工程看对应包和类。
 - [文档导航](docs/README.md)：架构、ADR、Runbook、数据集与验证档案。
 - [贡献指南](CONTRIBUTING.md)：开发环境、改动边界和 Pull Request 检查项。
 - [安全策略](SECURITY.md)：漏洞报告范围与私密报告方式。

@@ -11,15 +11,14 @@
 
 公开契约以 [`contracts/openapi/knowledge-service-v1.yaml`](../../contracts/openapi/knowledge-service-v1.yaml) 为准。租户、主体和部门范围来自服务端身份适配器，不从业务请求体读取。默认使用固定本地身份；接入公司项目时，可以切换到 JWT 或替换为现有鉴权系统。
 
-## 运行与测试
+## 直接启动
 
-```bash
-./mvnw -pl services/knowledge-service test
-./mvnw -pl services/knowledge-service spring-boot:run
-```
+在根目录 `config/application.yml` 填好模型 API Key，用 IDE 运行 `KnowledgeServiceApplication`。启动后访问 `http://localhost:8081/actuator/health`，再调用 `POST /api/v1/knowledge/answers`。
 
-默认使用固定的 `tenant-a / local-user / support` 身份和 classpath 上下文，并调用根目录共享配置中的真实 Chat Provider，不要求生成 Token。真实模型连接见 [Live Model Smoke](../../docs/runbooks/live-model-smoke.md)，完整写入链路见 [Knowledge Ingestion](../../docs/runbooks/knowledge-ingestion.md)。
+默认使用固定的 `tenant-a / local-user / support` 身份和 classpath 上下文，并调用根目录共享配置中的真实 Chat Provider，不要求生成 Token。完整写入链路见 [Knowledge Ingestion](../../docs/runbooks/knowledge-ingestion.md)。
 
-本地完整 RAG 将 `java-ai.knowledge.mode` 改为 `postgres-rag`，再填写 PostgreSQL 连接；HTTP 请求仍使用固定身份。正式部署按需将 `java-ai.security.mode` 改为 `jwt`，或接入公司鉴权实现。完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
+本地完整 RAG 将 `java-ai.knowledge.mode` 改为 `postgres-rag`，填写 PostgreSQL 连接，再把 Embedding 模式设为 `ollama`。安装 Ollama 应用并下载免费的 `qwen3-embedding:4b` 后，即可在本机运行语义检索；Chat 继续使用根目录 YAML 中的 OpenAI 兼容配置。HTTP 请求仍使用固定身份。完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
+
+`local-hash` 只用于排查上传、索引、ACL、pgvector、引用和回答流程，不提供语义质量证据。远程 Embedding 则使用 `provider` 模式。
 
 生产部署还需接入对象存储，并验证迁移、容量、备份恢复和检索质量。

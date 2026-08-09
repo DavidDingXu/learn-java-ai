@@ -16,16 +16,6 @@ npm run dev
 
 Windows PowerShell 使用相同的 `npm` 命令。
 
-## 验证
-
-```bash
-npm run typecheck
-npm test
-npm run build
-```
-
-这三项检查不需要访问真实 Customer BFF。项目根目录的 `scripts/verify-unit.sh` 和 `scripts/verify-unit.ps1` 也会安装锁定依赖，并执行类型检查、测试和生产构建。
-
 ## 完整联调所需条件
 
 本地完整咨询链路需要同时启动 Customer BFF、Knowledge Service 和 Ticket Agent，不要求身份平台。三个服务默认使用 localhost 地址和固定身份，可以直接联调。

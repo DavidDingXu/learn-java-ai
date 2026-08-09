@@ -33,7 +33,7 @@ import java.time.Clock;
 @RestController
 @RequestMapping("/api/v1/knowledge/documents")
 @ConditionalOnProperty(name = "java-ai.knowledge.mode", havingValue = "postgres-rag")
-public final class KnowledgeDocumentController {
+public class KnowledgeDocumentController {
 
     private static final int MAX_BUFFERED_UPLOAD_BYTES = 5 * 1024 * 1024 + 1;
 
@@ -61,7 +61,7 @@ public final class KnowledgeDocumentController {
     )
     Mono<ResponseEntity<UploadedDocumentResponse>> upload(
             Authentication authentication,
-            @PathVariable
+            @PathVariable("documentId")
             @Size(max = 160)
             @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._-]*") String documentId,
             @Valid @RequestPart("metadata") UploadDocumentMetadata metadata,
@@ -98,10 +98,10 @@ public final class KnowledgeDocumentController {
     )
     Mono<ResponseEntity<PublishedDocumentResponse>> publish(
             Authentication authentication,
-            @PathVariable
+            @PathVariable("documentId")
             @Size(max = 160)
             @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._-]*") String documentId,
-            @PathVariable int versionNumber,
+            @PathVariable("versionNumber") int versionNumber,
             @Valid @RequestBody PublishDocumentRequest request
     ) {
         var scope = accessScopeProvider.currentScope(authentication);

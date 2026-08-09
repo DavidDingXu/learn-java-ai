@@ -15,6 +15,9 @@ Knowledge Service 和 Ticket Agent Service 会自动读取根目录 `config/appl
 ```yaml
 spring:
   ai:
+    model:
+      chat: openai
+      embedding: none
     openai:
       api-key: replace-with-your-api-key
       base-url: https://api.openai.com/v1
@@ -28,47 +31,39 @@ spring:
 
 ## 启动三个服务
 
-从项目根目录打开三个终端，分别运行：
-
-```bash
-./mvnw -pl services/knowledge-service spring-boot:run
-./mvnw -pl services/ticket-agent-service spring-boot:run
-./mvnw -pl apps/customer-bff spring-boot:run
-```
-
-Windows PowerShell 将 `./mvnw` 换为 `.\mvnw.cmd`，Maven 参数保持不变。默认端口是 8081、8082 和 8080。
+在 IDE 中按顺序运行 `KnowledgeServiceApplication`、`TicketAgentServiceApplication` 和 `CustomerBffApplication`。默认端口是 8081、8082 和 8080，macOS 与 Windows 的启动方式相同。
 
 默认身份为 `tenant-a / local-user / support`，HTTP 请求不需要 JWT。固定身份只用于降低本地联调门槛，不会伪造模型、数据库或下游响应。
 
-## 只验证 Provider 接口
+## 先确认 Provider 接口
 
-真实模型冒烟测试用于确认 Provider 协议、响应映射和基础业务校验，不要求启动三个服务，也不连接数据库：
+只运行 `KnowledgeServiceApplication`，然后直接调用回答接口：
 
 ```bash
-./mvnw \
-  -pl services/knowledge-service \
-  -Dtest=LiveModelSmokeIT \
-  -Dspring.config.additional-location=file:../../config/application.yml \
-  -Djava-ai.smoke.report-path=target/live-model-smoke.md \
-  test
+curl --fail-with-body \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"退款通常多久到账？"}' \
+  http://localhost:8081/api/v1/knowledge/answers
 ```
 
 Windows PowerShell：
 
 ```powershell
-.\mvnw.cmd `
-  -pl services/knowledge-service `
-  -Dtest=LiveModelSmokeIT `
-  -Dspring.config.additional-location=file:../../config/application.yml `
-  -Djava-ai.smoke.report-path=target/live-model-smoke.md `
-  test
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:8081/api/v1/knowledge/answers" `
+  -ContentType "application/json" `
+  -Body '{"question":"退款通常多久到账？"}'
 ```
 
-该测试不验证数据库、ACL、向量检索、身份链路或端到端业务，不能替代完整 RAG 联调。
+这一步确认 Chat Provider、响应映射和基础业务校验已经进入真实运行链路，但不验证数据库、ACL、向量检索或完整 RAG。
 
 ## 开启完整 RAG
 
-完整 RAG 需要 PostgreSQL、`pgvector`、`pg_trgm`、Embedding Provider 和 Chat Provider。首次联调不需要 Redis、Kafka、MinIO 或身份平台。
+`java-ai.knowledge.mode=postgres-rag` 开启完整 RAG。它需要 PostgreSQL、`pgvector`、`pg_trgm` 和 Chat Provider。
+
+Embedding 有三种模式。`ollama` 使用免费的本地语义模型，适合第一次完整运行；`provider` 调用远程 Embedding 服务；`local-hash` 只用来排查上传、索引、ACL、pgvector、引用和回答流程，不提供语义质量证据。
+
+使用 `ollama` 前，在 macOS 或 Windows 安装 Ollama 应用，并在应用中下载 `qwen3-embedding:4b`。模型约 2.5 GB，支持中文，应用会把本地接口提供在 `http://localhost:11434`。需要运行 RAG 时再打开 Ollama 即可，不必设置登录自启动。
 
 修改 Knowledge Service 的 `application.yml`：
 
@@ -76,19 +71,23 @@ Windows PowerShell：
 java-ai:
   knowledge:
     mode: postgres-rag
+    embedding:
+      mode: ollama
+      ollama:
+        base-url: http://localhost:11434
+        model: qwen3-embedding:4b
+        timeout-seconds: 120
     postgres:
       jdbc-url: jdbc:postgresql://localhost:5432/java_ai_knowledge
       username: java_ai_knowledge
       password: replace-with-your-database-password
 ```
 
-然后按普通命令启动 Knowledge Service：
+根目录 `config/application.yml` 中保持 `spring.ai.model.embedding: none`，Chat 仍使用原来的 OpenAI 兼容配置。修改后直接重新运行 `KnowledgeServiceApplication`。应用会要求 Ollama 返回 1536 维向量；模型、数量或维度不匹配时，索引任务会明确失败。
 
-```bash
-./mvnw -pl services/knowledge-service spring-boot:run
-```
+Flyway 会创建项目表结构，并尝试启用 `vector` 与 `pg_trgm` 扩展，因此首次运行的数据库账号需要相应权限。上传、发布、索引和问答步骤见[知识文档导入](knowledge-ingestion.md)。
 
-Flyway 会创建项目表结构，并尝试启用 `vector` 与 `pg_trgm` 扩展，因此首次运行的数据库账号需要相应权限。当前向量列是 `vector(1536)`，Embedding 模型必须返回 1536 维向量。上传、发布、索引和问答步骤见[知识文档导入](knowledge-ingestion.md)。
+切换到远程 Embedding 时，把根目录 `config/application.yml` 中的 `spring.ai.model.embedding` 改回 `openai`，再将 `java-ai.knowledge.embedding.mode` 改为 `provider`。两处要一起修改。
 
 ## 按需替换基础设施
 
@@ -143,26 +142,15 @@ java-ai:
 
 Knowledge Service 的上传原文默认保存在本地文件系统，Customer BFF 的会话和限流默认保存在进程内。多实例部署前，必须分别替换为公司对象存储、共享会话和共享限流设施。
 
-## 测试配置
+## 运行边界
 
-`src/test/resources/application-test.yml` 和 `test` Profile 只供自动化测试使用。测试会装配专用的确定性模型、本地 HTTP Fixture 或内存 Repository，这些测试实例不会替换默认运行时的真实模型和跨服务 HTTP 调用。
+| 运行方式 | 能观察什么 |
+|---|---|
+| 只启动 Knowledge Service | 当前模型连接、回答映射与流式接口 |
+| `postgres-rag` + `ollama` | 免费本地语义 Embedding、pgvector、ACL、引用和回答 |
+| `postgres-rag` + `local-hash` | 文档、索引、ACL、pgvector、引用和回答流程，不证明语义质量 |
+| `postgres-rag` + `provider` | 远程 Embedding 下的检索与质量评测 |
+| 启动三个服务 | 会话、身份委托、Knowledge Tool 和工单转交 |
+| 接入目标环境 | 身份、数据库、真实 Tool、容量、迁移和回滚 |
 
-日常回归直接运行：
-
-```bash
-./mvnw verify
-```
-
-仓库中的 Shell 与 PowerShell 脚本用于聚合多个构建边界、选择本机 JDK 或生成专项报告。启动普通 Java 服务不依赖这些脚本。
-
-## 验证边界
-
-| 检查 | 入口 | 能证明什么 |
-|---|---|---|
-| 代码回归 | `./mvnw verify` | Java 构建、接口契约和业务规则 |
-| Provider API | `LiveModelSmokeIT` | 当前模型连接、协议与响应映射 |
-| 完整 RAG | `java-ai.knowledge.mode=postgres-rag` | 文档、Embedding、索引、ACL、检索、引用和回答 |
-| 跨服务联调 | 默认启动三个服务 | 会话、身份委托、Knowledge Tool 和工单转交 |
-| 目标环境验收 | 公司测试与发布流程 | 身份、数据库、真实 Tool、容量、迁移和回滚 |
-
-这些检查解决的问题不同。单元测试通过不能证明真实模型效果，单次模型调用也不能证明数据库、权限和 Tool 副作用可以上线。
+这些运行方式解决的问题不同。单次模型调用不能证明数据库、权限和 Tool 副作用可以上线。

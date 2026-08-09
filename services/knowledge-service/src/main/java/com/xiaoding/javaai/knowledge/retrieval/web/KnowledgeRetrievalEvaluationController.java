@@ -1,6 +1,9 @@
 package com.xiaoding.javaai.knowledge.retrieval.web;
 
 import com.xiaoding.javaai.knowledge.retrieval.application.RetrieveKnowledgeQuery;
+import com.xiaoding.javaai.knowledge.retrieval.application.HybridKnowledgeRetrievalService;
+import com.xiaoding.javaai.knowledge.retrieval.application.KnowledgeRetrievalResult;
+import com.xiaoding.javaai.knowledge.retrieval.application.RetrievalPlan;
 import com.xiaoding.javaai.knowledge.retrieval.application.port.KnowledgeRetriever;
 import com.xiaoding.javaai.knowledge.security.KnowledgeAccessScopeProvider;
 import jakarta.validation.Valid;
@@ -44,9 +47,31 @@ final class KnowledgeRetrievalEvaluationController {
         var query = new RetrieveKnowledgeQuery(
                 request.question(), accessScopeProvider.currentScope(authentication), Instant.now(clock), request.topK()
         );
-        return Mono.fromCallable(() -> KnowledgeRetrievalEvaluationResponse.from(
-                        retriever.retrieve(query)
-                ))
+        return Mono.fromCallable(() -> KnowledgeRetrievalEvaluationResponse.from(retrieve(query, request)))
                 .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    private KnowledgeRetrievalResult retrieve(
+            RetrieveKnowledgeQuery query,
+            KnowledgeRetrievalEvaluationRequest request
+    ) {
+        if (request.selectedMode() == RetrievalEvaluationMode.DEFAULT) {
+            return retriever.retrieve(query);
+        }
+        if (!(retriever instanceof HybridKnowledgeRetrievalService hybrid)) {
+            if (request.selectedMode() == RetrievalEvaluationMode.VECTOR) {
+                return retriever.retrieve(query);
+            }
+            throw new IllegalArgumentException(
+                    "HYBRID evaluation requires java-ai.knowledge.retrieval.mode=hybrid"
+            );
+        }
+        boolean lexicalSearch = request.selectedMode() == RetrievalEvaluationMode.HYBRID;
+        return hybrid.retrieve(query, new RetrievalPlan(
+                false,
+                lexicalSearch,
+                false,
+                Math.max(request.topK(), 20)
+        ));
     }
 }

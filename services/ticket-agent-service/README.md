@@ -11,12 +11,9 @@
 
 接口契约见 [`contracts/openapi/agent-task-v1.yaml`](../../contracts/openapi/agent-task-v1.yaml)。模型只能提出 Tool 意图，权限、参数、风险、确认、幂等与审计都由应用层处理。
 
-## 运行与测试
+## 直接启动
 
-```bash
-./mvnw -pl services/ticket-agent-service test
-./mvnw -pl services/ticket-agent-service spring-boot:run
-```
+先在根目录 `config/application.yml` 填好模型 API Key 并运行 `KnowledgeServiceApplication`，再用 IDE 运行 `TicketAgentServiceApplication`。启动后访问 `http://localhost:8082/actuator/health`。
 
 默认调用真实 Chat Provider 和 Knowledge Service，任务、确认与审计保存在内存中，写 Tool 使用带幂等检查的本地实现。这样可以直接验证 Agent 主链路，但不能证明重启恢复或真实 Legacy Tool 已经完成联调。评测与安全数据集的运行方式见[模型、检索与 Agent 评测](../../docs/runbooks/model-interaction-eval.md)和 [AI 安全回归](../../docs/runbooks/security-regression.md)。
 

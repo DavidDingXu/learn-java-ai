@@ -1,6 +1,6 @@
 # 文档导航
 
-本页按问题类型组织项目文档。首次使用可以先阅读系统上下文和本地构建说明，再根据要修改的能力进入 ADR、Runbook 或验证档案。
+本页按问题类型组织项目文档。首次使用可以先阅读系统上下文和本地启动说明，再根据要修改的能力进入 ADR、Runbook 或验证档案。
 
 ## 架构与决策
 
@@ -15,20 +15,17 @@
 | [框架选型矩阵](decisions/framework-selection-matrix.md) | 如何用同一业务接口和数据集比较候选方案 |
 | [版本基线](version-baseline.md) | JDK、Spring Boot、AI 框架和协议 SDK 的锁定版本 |
 
-## 运行与验证
+## 运行与联调
 
 | 文档 | 适用场景 |
 |---|---|
-| [本地构建与运行](runbooks/local-toolchain.md) | 选择 JDK、运行 Maven 和处理常见环境问题 |
+| [本地直接启动](runbooks/local-toolchain.md) | 填写模型配置并从 IDE 启动三个应用 |
 | [运行配置](runbooks/runtime-configuration.md) | 默认运行、完整 RAG 与公司基础设施怎样配置 |
-| [真实模型冒烟验证](runbooks/live-model-smoke.md) | 验证 Provider 连接、响应映射和业务校验 |
 | [知识导入与完整 RAG 联调](runbooks/knowledge-ingestion.md) | 准备 PostgreSQL/Provider，上传、发布、索引并验证最终回答 |
-| [模型、检索与 Agent 评测](runbooks/model-interaction-eval.md) | 运行契约、真实模型、检索和 Agent 数据集 |
-| [AI 安全回归](runbooks/security-regression.md) | 验证 JWT、ACL、Tool、Prompt 和确认边界 |
-| [发布检查](runbooks/release-checklist.md) | 构建、外部环境与运维检查项 |
 
 ## 接口与数据
 
+- [按专栏阶段阅读代码](reader-code-path.md)：完整仓库中每一阶段的最小阅读范围。
 - [`contracts/`](../contracts/README.md)：OpenAPI 3.1、JSON Schema 和正反例样例。
 - [`datasets/`](../datasets/README.md)：检索、模型、Agent 和安全 Golden Set。
 - [`labs/`](../labs/README.md)：Spring AI Alibaba、LangChain4j、AgentScope 与 MCP/A2A 的隔离实验。

@@ -9,18 +9,8 @@
 - [AgentScope](agentscope-lab/README.md)：Tool 权限、人工介入、协作决策、MCP 工具和 A2A 任务状态。
 - [MCP/A2A 互操作](protocol-interop-lab/README.md)：使用官方 SDK 验证协议交互与应用层信任边界。
 
-## 运行
+## 怎样阅读这些实验
 
-在项目根目录执行：
+这些模块不是可独立启动的完整应用，不需要把它们逐个运行一遍。阅读时只跟随各模块 README 标出的入口类，对照相同业务接口下的适配、裁决和协议边界。主应用仍从 `KnowledgeServiceApplication`、`TicketAgentServiceApplication` 和 `CustomerBffApplication` 启动。
 
-```bash
-./mvnw -f labs/pom.xml verify
-```
-
-Windows PowerShell：
-
-```powershell
-.\mvnw.cmd -f labs/pom.xml verify
-```
-
-默认测试不需要 Docker 或真实模型密钥。真实 Provider 和远程协议验证应使用独立、受密钥控制的集成测试，不能替代确定性回归。
+真实 Provider 或远程协议是否适合公司项目，要用自己的凭证、数据和目标环境另行判断；这里的代码只证明已写明的局部边界。

@@ -7,6 +7,10 @@ import jakarta.validation.constraints.Size;
 
 record KnowledgeRetrievalEvaluationRequest(
         @NotBlank @Size(max = 2000) String question,
-        @Min(1) @Max(100) int topK
+        @Min(1) @Max(100) int topK,
+        RetrievalEvaluationMode mode
 ) {
+    RetrievalEvaluationMode selectedMode() {
+        return mode == null ? RetrievalEvaluationMode.DEFAULT : mode;
+    }
 }

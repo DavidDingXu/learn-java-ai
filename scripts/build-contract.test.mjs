@@ -120,7 +120,9 @@ test("each service has one reader-facing runtime config with replaceable adapter
   assert.match(knowledge, /mode:\s*fixed/);
   assert.match(knowledge, /password:\s*replace-with-your-database-password/);
   assert.match(sharedModelConfig, /chat:\s*openai/);
-  assert.match(sharedModelConfig, /embedding:\s*openai/);
+  assert.match(sharedModelConfig, /embedding:\s*none/);
+  assert.match(sharedModelConfig, /mode:\s*ollama/);
+  assert.match(sharedModelConfig, /model:\s*qwen3-embedding:4b/);
   assert.match(sharedModelConfig, /api-key:\s*replace-with-your-api-key/);
   assert.match(sharedModelConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);
   assert.doesNotMatch(knowledge, /execution-mode|LOCAL_DISABLED|PROVIDER_PROTOCOL_FIXTURE/);
@@ -168,6 +170,15 @@ test("each service has one reader-facing runtime config with replaceable adapter
       `${service} must validate the selected adapter instead of a production profile`,
     );
   }
+});
+
+test("knowledge document routes name path variables without compiler metadata", () => {
+  const controller = read(
+    "services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/document/web/KnowledgeDocumentController.java",
+  );
+
+  assert.equal(controller.match(/@PathVariable\("documentId"\)/g)?.length, 2);
+  assert.equal(controller.match(/@PathVariable\("versionNumber"\)/g)?.length, 1);
 });
 
 test("build verification is cross-platform and self-contained", {

@@ -7,10 +7,4 @@
 - `LangChain4jTicketDecisionAdapter` 执行只读 Tool，并将结果解析为业务记录。
 - `FrameworkCoexistencePolicy` 按能力路由，不在模块之间传递框架对象。
 
-在项目根目录执行：
-
-```bash
-./mvnw -f labs/pom.xml -pl langchain4j-lab test
-```
-
-实验验证的是端口迁移和错误边界，不代表已完成真实 Provider、性能和生产运维验收。
+建议按 `LangChain4jPolicyAnswerAdapter`、`TenantScopedRagAdapter`、`LangChain4jTicketDecisionAdapter`、`FrameworkCoexistencePolicy` 的顺序阅读。这个模块验证的是端口迁移和错误边界，不是可独立启动的业务应用，也不代表已完成真实 Provider、性能和生产运维验收。

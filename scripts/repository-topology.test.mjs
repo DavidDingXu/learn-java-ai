@@ -185,6 +185,25 @@ test("Java 8 client is an independent Maven build", () => {
   assert.equal(clientPom.includes("<maven.surefire.version>3.5.6</maven.surefire.version>"), true);
 });
 
+test("learning stages use an independent reactor with seven reader modules", () => {
+  const stagePom = read("learning-stages/pom.xml");
+
+  assert.equal(tagBlock(stagePom, "parent"), "");
+  assert.deepEqual(moduleNames(stagePom), [
+    "stage-support",
+    "stage-01-system-boundaries",
+    "stage-02-model-engineering",
+    "stage-03-enterprise-rag",
+    "stage-04-customer-consultation",
+    "stage-05-controlled-agent",
+    "stage-06-production-readiness",
+    "stage-07-framework-boundaries",
+  ]);
+  for (const moduleName of moduleNames(stagePom).slice(1)) {
+    assertParent(`learning-stages/${moduleName}/pom.xml`, "java-ai-learning-stages", "../pom.xml");
+  }
+});
+
 test("top-level products and contract directories provide local documentation", () => {
   for (const readme of [
     "apps/customer-web/README.md",
@@ -196,6 +215,7 @@ test("top-level products and contract directories provide local documentation", 
     "services/ticket-agent-service/README.md",
     "quality/eval-runner/README.md",
     "integrations/jdk8-client/README.md",
+    "learning-stages/README.md",
   ]) {
     read(readme);
   }
@@ -331,16 +351,21 @@ test("public README matches the current service and build boundaries", () => {
   assert.match(readme, /安全回归/);
   assert.match(readme, /Micrometer/);
   assert.match(readme, /跨平台发布门禁/);
-  assert.match(readme, /labs.*独立构建/s);
+  assert.match(readme, /labs.*与主应用隔离的代码实验/s);
   assert.match(readme, /MCP Java SDK 2\.0\.0/);
   assert.match(readme, /A2A Java SDK 1\.1\.0\.Final/);
   assert.match(readme, /MCP Java SDK 2\.0\.0/);
   assert.match(readme, /A2A Java SDK 1\.1\.0\.Final/);
   assert.match(readme, /Java 8.*客户端/);
   assert.match(readme, /pgvector/);
-  assert.match(readme, /verify-unit/);
+  assert.match(readme, /config\/application\.yml/);
+  assert.match(readme, /KnowledgeServiceApplication/);
+  assert.match(readme, /TicketAgentServiceApplication/);
+  assert.match(readme, /CustomerBffApplication/);
+  assert.match(readme, /docs\/reader-code-path\.md/);
   assert.match(readme, /HTTP\/OpenAPI/);
   assert.match(readme, /不共享领域 JAR/);
+  assert.doesNotMatch(readme, /(?:\.\/|\.\\)mvnw|verify-unit|npm test/);
   assert.doesNotMatch(readme, /AiCallGateway|ai-[a-z-]+-demo|project-enterprise-rag|project-helpdesk-agent/);
 
   const labsReadme = read("labs/README.md");

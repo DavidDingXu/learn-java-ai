@@ -11,12 +11,9 @@
 
 公开契约见 [`contracts/openapi/customer-bff-v1.yaml`](../../contracts/openapi/customer-bff-v1.yaml)。
 
-## 运行与测试
+## 直接启动
 
-```bash
-./mvnw -pl apps/customer-bff test
-./mvnw -pl apps/customer-bff spring-boot:run
-```
+先运行 `KnowledgeServiceApplication` 和 `TicketAgentServiceApplication`，再用 IDE 运行 `CustomerBffApplication`。启动后访问 `http://localhost:8080/actuator/health`。
 
 默认使用固定客户身份和本地委托令牌，并通过 HTTP 调用两个下游服务，不需要先部署身份平台。前端运行方式见 [`apps/customer-web/README.md`](../customer-web/README.md)。
 
