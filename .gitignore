@@ -11,4 +11,4 @@ var/
 
 .env
 *.log
-config/application-default.yml
+**/config/application-default.yml

@@ -1,6 +1,5 @@
-# Knowledge Service and Ticket Agent Service import this shared model configuration.
-# Replace the API key and choose an Embedding Provider supported by your endpoint.
-# The Ollama block is a local option; switch spring.ai.model.embedding to ollama to use it.
+# Knowledge Service and Ticket Agent Service import these repository defaults.
+# Keep repository defaults unchanged; reader-owned values belong in config/application-default.yml.
 # Never commit a real key. Company deployments must override secrets through their secret manager.
 spring:
   ai:
@@ -15,12 +14,6 @@ spring:
         model: gpt-4.1-mini
       embedding:
         model: text-embedding-3-small
-    ollama:
-      base-url: http://localhost:11434
-      embedding:
-        model: qwen3-embedding:4b
-        truncate: true
-
 java-ai:
   knowledge:
     embedding:

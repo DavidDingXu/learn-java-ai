@@ -21,7 +21,7 @@ Status: VERIFIED_COMPONENT_CHAIN_SHARED_ENVIRONMENT_REQUIRED
 
 ./mvnw -pl services/ticket-agent-service \
   -Dtest=TicketAgentLiveModelSmokeIT \
-  -Dspring.config.additional-location=file:../../config/application.yml \
+  -Dspring.config.additional-location=file:../../config/application-default.yml \
   -Djava-ai.agent-smoke.report-path=target/agent-live-model-smoke.md \
   test
 ```

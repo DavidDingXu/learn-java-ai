@@ -1,24 +1,13 @@
-# Knowledge Service
+# Knowledge Service：模型工程阶段
 
-企业知识文档、检索与 RAG 回答服务。该模块拥有文档业务版本、ACL、索引任务、分块、检索版本指针和引用映射，不拥有客户会话或工单业务状态。
-
-## 主要边界
-
-- `/api/v1/knowledge/documents`：文档上传、版本发布与 ACL。
-- `/api/v1/knowledge/answers`：完整回答和 SSE 流式回答。
-- `/internal/v1/knowledge/index-tasks`：受 `knowledge:index` 权限保护的索引任务入口。
-- `/internal/v1/knowledge/retrieval/evaluations`：受 `knowledge:eval` 权限保护的检索评测入口。
-
-公开契约以 [`contracts/openapi/knowledge-service-v1.yaml`](../../contracts/openapi/knowledge-service-v1.yaml) 为准。租户、主体和部门范围来自服务端身份适配器，不从业务请求体读取。默认使用固定本地身份；接入公司项目时，可以切换到 JWT 或替换为现有鉴权系统。
+这个切片只包含第 04-12 篇使用的回答链路：真实 Chat Provider、委托身份、Prompt、结构化输出、SSE、超时重试和模型元数据。`document`、`indexing`、`retrieval` 与 PostgreSQL 尚未进入本阶段。
 
 ## 直接启动
 
-在根目录 `config/application.yml` 填好模型 API Key，用 IDE 运行 `KnowledgeServiceApplication`。启动后访问 `http://localhost:8081/actuator/health`，再调用 `POST /api/v1/knowledge/answers`。
+项目根目录唯一的 `config/application-default.yml` 保存 API Key、Base URL 和模型名。在 IDEA 中运行 `KnowledgeServiceApplication`，再打开阶段根目录的 `model-engineering-learning-journey.http`：
 
-默认使用固定的 `tenant-a / local-user / support` 身份和 classpath 上下文，并调用根目录共享配置中的真实 Chat Provider，不要求生成 Token。完整写入链路见 [Knowledge Ingestion](../../docs/runbooks/knowledge-ingestion.md)。
+- `02-first-model-answer` 观察回答、模型名和 Trace；
+- `03-structured-refusal` 观察稳定的结构化响应；
+- `04-streaming-answer` 观察 SSE 响应。
 
-本地完整 RAG 将 `java-ai.knowledge.mode` 改为 `postgres-rag`，填写 PostgreSQL 连接，再把 Embedding 模式设为 `ollama`。安装 Ollama 应用并下载免费的 `qwen3-embedding:4b` 后，即可在本机运行语义检索；Chat 继续使用根目录 YAML 中的 OpenAI 兼容配置。HTTP 请求仍使用固定身份。完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
-
-`local-hash` 只用于排查上传、索引、ACL、pgvector、引用和回答流程，不提供语义质量证据。远程 Embedding 则使用 `provider` 模式。
-
-生产部署还需接入对象存储，并验证迁移、容量、备份恢复和检索质量。
+阅读代码时从 `KnowledgeAnswerController` 进入，再沿 `KnowledgeAnswerService`、`KnowledgeAnswerModel` 到 `SpringAiKnowledgeAnswerModel`。这一阶段可以忽略其他阶段目录和完整项目中的 RAG 包。

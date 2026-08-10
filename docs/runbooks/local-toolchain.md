@@ -4,7 +4,7 @@
 
 准备 JDK 21 或更高版本，用 IntelliJ IDEA 打开项目根目录，并把 Project SDK 设为 JDK 21。
 
-在根目录 `config/application.yml` 中填写模型 API Key。使用 OpenAI 兼容服务时，再按实际协议修改 `base-url`、Chat 模型和 Embedding 模型。真实 Key 只能留在本机，不能提交到 Git。
+把根目录的 `config/application-default.example.yml` 复制为 `config/application-default.yml`，填写 API Key、Base URL、Chat 模型和 Embedding 模型。这个被 Git 忽略的文件是唯一的读者配置。
 
 直接运行 `services/knowledge-service` 中的 `KnowledgeServiceApplication`。默认端口是 `8081`，本地固定身份和 classpath 知识已经配好，不需要 PostgreSQL、身份平台或消息中间件。
 
@@ -48,7 +48,7 @@ Customer Web 需要 Node.js 24。进入 `apps/customer-web` 后执行 `npm ci` �
 
 完整 RAG 额外需要 PostgreSQL、`pgvector`、`pg_trgm` 和可返回 1536 维向量的 Embedding Provider。把 Knowledge Service 的 `java-ai.knowledge.mode` 改为 `postgres-rag`，填写数据库连接后，重新运行 `KnowledgeServiceApplication`。
 
-上传、发布、索引和问答的连续步骤见[知识文档导入](knowledge-ingestion.md)。
+安装、手动启停和建库见 [RAG 本地准备](rag-prerequisites.md)，上传、发布、索引和问答见[知识文档导入](knowledge-ingestion.md)。
 
 ## 常见问题
 
@@ -58,7 +58,7 @@ Customer Web 需要 Node.js 24。进入 `apps/customer-web` 后执行 `npm ci` �
 
 ### 启动后提示 API Key 无效
 
-确认根目录 `config/application.yml` 已替换占位 Key，并且 IDE 的 Working directory 是项目根目录。兼容 Provider 还要同时核对 `base-url` 和模型名。
+确认根目录 `config/application-default.yml` 已替换占位 Key，并且 IDE 的 Working directory 是项目根目录。兼容 Provider 还要同时核对 `base-url` 和模型名。
 
 ### Knowledge Service 正常，完整链路仍失败
 

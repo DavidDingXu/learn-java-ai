@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.MOCK,
         properties = {
-                "spring.config.import=optional:file:../../config/application.yml",
+                "spring.config.import=optional:file:../../config/application-base.yml",
                 "java-ai.knowledge.mode=classpath"
         }
 )

@@ -4,7 +4,7 @@
 
 - Knowledge Service、Ticket Agent Service 和 Customer BFF 的主资源目录各自只有一个 `application.yml`。
 - 默认运行使用真实 Chat Provider、固定身份和跨服务 HTTP；会话、Agent 状态、审计和写 Tool 使用进程内实现。
-- 仓库保留带占位 Key 的 `config/application.yml`，Knowledge Service 和 Ticket Agent Service 会自动读取。使用默认 OpenAI 配置时只需填写 API Key，运行后不能提交真实值。
+- 仓库保留带占位 Key 的 `config/application-default.yml`，Knowledge Service 和 Ticket Agent Service 会自动读取。使用默认 OpenAI 配置时只需填写 API Key，运行后不能提交真实值。
 - 将 `java-ai.knowledge.mode` 改为 `postgres-rag` 后，Knowledge Service 会启用 PostgreSQL/pgvector、Embedding、索引与检索；固定本地身份不要求 HTTP 请求携带 Token。
 - PostgreSQL、JWT、Token Exchange 和下游地址都保留明确配置键，由对应 `mode` 选择适配器。密钥占位值必须由部署平台或密钥系统覆盖。
 - Knowledge Service 和 Ticket Agent Service 只保留直接控制模型、数据库、JWT 和 Tool 的配置，不使用没有调用方的外部集成总开关。
@@ -20,13 +20,13 @@ node --test scripts/build-contract.test.mjs scripts/verification-scripts.test.mj
   -Dsurefire.failIfNoSpecifiedTests=false test
 ```
 
-填写 `config/application.yml` 中的 API Key 后执行测试：
+填写 `config/application-default.yml` 中的 API Key 后执行测试：
 
 ```bash
 ./mvnw \
   -pl services/knowledge-service \
   -Dtest=LiveModelSmokeIT \
-  -Dspring.config.additional-location=file:../../config/application.yml \
+  -Dspring.config.additional-location=file:../../config/application-default.yml \
   -Djava-ai.smoke.report-path=target/live-model-smoke.md \
   test
 ```
@@ -37,7 +37,7 @@ Windows PowerShell：
 .\mvnw.cmd `
   -pl services/knowledge-service `
   -Dtest=LiveModelSmokeIT `
-  -Dspring.config.additional-location=file:../../config/application.yml `
+  -Dspring.config.additional-location=file:../../config/application-default.yml `
   -Djava-ai.smoke.report-path=target/live-model-smoke.md `
   test
 ```

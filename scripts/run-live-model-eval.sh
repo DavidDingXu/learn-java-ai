@@ -6,7 +6,7 @@ ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 enter_java_ai_main_jdk
 REPORT_PREFIX=${1:-"$ROOT_DIR/docs/reports/lesson-12-live-model-eval"}
 PORT=${JAVA_AI_EVAL_PORT:-18081}
-CONFIG_FILE="$ROOT_DIR/config/application.yml"
+CONFIG_FILE="$ROOT_DIR/config/application-base.yml"
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
   printf 'ERROR: Missing %s. Restore the tracked shared model configuration.\n' "$CONFIG_FILE" >&2

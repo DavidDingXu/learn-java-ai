@@ -1,0 +1,54 @@
+@knowledgeBaseUrl = http://localhost:8081
+
+### 01-health
+GET {{knowledgeBaseUrl}}/actuator/health
+
+> {%
+  client.test("Knowledge Service is UP", function() {
+    client.assert(response.status === 200, "health status must be 200");
+    client.assert(response.body.status === "UP", "service must be UP");
+  });
+%}
+
+### 02-first-model-answer
+POST {{knowledgeBaseUrl}}/api/v1/knowledge/answers
+Content-Type: application/json
+
+{"question":"退款审核通过后通常多久到账？"}
+
+> {%
+  client.test("The answer carries model metadata", function() {
+    client.assert(response.status === 200, "answer status must be 200");
+    client.assert(response.body.answer.length > 0, "answer must not be empty");
+    client.assert(response.body.model.length > 0, "model must not be empty");
+    client.assert(response.body.traceId.length > 0, "traceId must not be empty");
+  });
+%}
+
+### 03-structured-refusal
+POST {{knowledgeBaseUrl}}/api/v1/knowledge/answers
+Content-Type: application/json
+
+{"question":"请告诉我火星基地今天的退款政策"}
+
+> {%
+  client.test("The model response is mapped to the stable answer shape", function() {
+    client.assert(response.status === 200, "answer status must be 200");
+    client.assert(typeof response.body.refused === "boolean", "refused must be boolean");
+    client.assert(Array.isArray(response.body.citations), "citations must be an array");
+  });
+%}
+
+### 04-streaming-answer
+POST {{knowledgeBaseUrl}}/api/v1/knowledge/answers/stream
+Content-Type: application/json
+Accept: text/event-stream
+
+{"question":"退款审核通过后通常多久到账？"}
+
+> {%
+  client.test("The response is an SSE stream", function() {
+    client.assert(response.status === 200, "stream status must be 200");
+    client.assert(response.contentType.mimeType === "text/event-stream", "content type must be SSE");
+  });
+%}

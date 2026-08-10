@@ -13,7 +13,7 @@
 
 ## 直接启动
 
-在根目录 `config/application.yml` 填好模型 API Key，用 IDE 运行 `KnowledgeServiceApplication`。启动后访问 `http://localhost:8081/actuator/health`，再调用 `POST /api/v1/knowledge/answers`。
+在根目录 `config/application-default.yml` 填好模型 API Key，用 IDE 运行 `KnowledgeServiceApplication`。启动后访问 `http://localhost:8081/actuator/health`，再调用 `POST /api/v1/knowledge/answers`。
 
 默认使用固定的 `tenant-a / local-user / support` 身份和 classpath 上下文，并调用根目录共享配置中的真实 Chat Provider，不要求生成 Token。完整写入链路见 [Knowledge Ingestion](../../docs/runbooks/knowledge-ingestion.md)。
 

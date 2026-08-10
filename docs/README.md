@@ -21,6 +21,7 @@
 |---|---|
 | [本地直接启动](runbooks/local-toolchain.md) | 填写模型配置并从 IDE 启动三个应用 |
 | [运行配置](runbooks/runtime-configuration.md) | 默认运行、完整 RAG 与公司基础设施怎样配置 |
+| [RAG 本地准备](runbooks/rag-prerequisites.md) | 安装并手动启停 PostgreSQL/pgvector，建库、配置 Embedding 和恢复实验 |
 | [知识导入与完整 RAG 联调](runbooks/knowledge-ingestion.md) | 准备 PostgreSQL/Provider，上传、发布、索引并验证最终回答 |
 
 ## 接口与数据

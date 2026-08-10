@@ -43,7 +43,7 @@ Windows 使用 `.\mvnw.cmd` 与 `.\scripts\verify-unit.ps1`。无法运行某项
 
 ## 配置与密钥
 
-仓库只允许提交不可用的占位值。本地真实模型测试使用已被 Git 忽略的 `config/application.yml`。不要把 API Key、Bearer Token、内网地址、用户数据或私有 Provider 详情写入代码、Fixture、日志、截图和测试报告。
+仓库只允许提交不可用的占位值。本地真实模型测试使用已被 Git 忽略的 `config/application-default.yml`。不要把 API Key、Bearer Token、内网地址、用户数据或私有 Provider 详情写入代码、Fixture、日志、截图和测试报告。
 
 如果发现密钥泄露，先撤销和轮换，再按 [SECURITY.md](SECURITY.md) 私密报告；仅从最新提交删除不能消除历史泄露。
 

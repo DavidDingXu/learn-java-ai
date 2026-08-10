@@ -2,6 +2,14 @@
 
 仓库保存一份完整业务实现，同时在 [`learning-stages`](../learning-stages/README.md) 中提供七个可直接运行的学习切片。先运行当前阶段的 `Application`，看到可观察结果后，再按下面的入口进入最终实现。
 
+## 先把搜索范围缩到当前阶段
+
+不要把仓库根目录和七个阶段同时作为一个 IDEA 项目全局搜索。每到一个阶段，新开窗口并导入该阶段的根 `pom.xml`，`Find in Files` 和 `Search Everywhere` 使用 `Project Files` 范围。这样只会索引当前阶段自己的增量，以及它明确复用的前序模块。
+
+文章顶部的“本篇代码范围”是本次阅读白名单。先从列出的 Controller、应用服务或 Runner 进入；没有列出的包暂时不读。需要对照最终实现时，再单独打开仓库根项目。七个阶段用于学习增量，根目录模块是部署和继续开发的完整实现，两者不要在同一个搜索结果里混读。
+
+所有阶段共享项目根目录唯一的 `config/application-default.yml`。阶段目录中的 `config/application-base.yml` 只是不可编辑的公共默认值，不复制 API Key，也不为本地、远程各建一套配置。
+
 ## 01-12：模型调用
 
 先运行 `KnowledgeServiceApplication`，再按调用方向阅读：
@@ -27,7 +35,7 @@
 7. `RetrievalPolicyContextSource`：检索结果进入回答上下文；
 8. `RetrievalMetricsCalculator`：检索质量计算。
 
-连续操作步骤见[知识文档导入](runbooks/knowledge-ingestion.md)。
+连续操作步骤见 [RAG 本地准备](runbooks/rag-prerequisites.md)和[知识文档导入](runbooks/knowledge-ingestion.md)。
 
 ## 22-25：客户咨询
 

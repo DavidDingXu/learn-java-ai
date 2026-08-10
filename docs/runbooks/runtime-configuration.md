@@ -10,7 +10,7 @@
 | Ticket Agent Service | 内存任务与审计、HTTP Knowledge Tool、内存写 Tool、固定身份 | Agent 决策、人工确认、幂等和跨服务调用 |
 | Customer BFF | 固定身份、本地委托令牌、真实下游 HTTP | 会话、限流、SSE 转发和工单转交 |
 
-Knowledge Service 和 Ticket Agent Service 会自动读取根目录 `config/application.yml`。第一次运行只需要替换其中的模型 API Key；使用 OpenAI 兼容服务时，再修改 `base-url` 和模型名。
+Knowledge Service、Ticket Agent Service 和七个学习阶段都读取项目根目录同一份 `config/application-default.yml`。先把 `config/application-default.example.yml` 复制为该文件，再填写 API Key、Base URL 与两个模型名。
 
 ```yaml
 spring:
@@ -61,29 +61,11 @@ Invoke-RestMethod -Method Post `
 
 `java-ai.knowledge.mode=postgres-rag` 开启完整 RAG。它需要 PostgreSQL、`pgvector`、`pg_trgm` 和 Chat Provider。
 
-业务层有两种模式。`provider` 使用 Spring AI 当前选择的 Embedding Provider；`local-hash` 只用来排查上传、索引、ACL、pgvector、引用和回答流程，不提供语义质量证据。`provider` 下面既可以选择免费的本地 Ollama API，也可以选择远程 OpenAI 兼容 API。
+业务层保持 `provider`，默认让 Chat 与 Embedding 使用同一个 OpenAI 兼容 API。`local-hash` 只排查上传、索引、ACL、pgvector、引用和回答流程，不提供语义质量证据，不进入读者的正常验证路径。
 
-使用 `ollama` 前，在 macOS 或 Windows 安装 Ollama 应用，并在应用中下载 `qwen3-embedding:4b`。模型约 2.5 GB，支持中文，应用会把本地接口提供在 `http://localhost:11434`。需要运行 RAG 时再打开 Ollama 即可，不必设置登录自启动。
+把 `java-ai.knowledge.mode` 改成 `postgres-rag` 并填写 PostgreSQL 后，直接重新运行 `KnowledgeServiceApplication`。通用适配器会要求当前 Provider 返回 1536 维向量；模型、数量或维度不匹配时，索引任务会明确失败。
 
-修改根目录 `config/application.yml`：
-
-```yaml
-spring:
-  ai:
-    model:
-      embedding: ollama
-    ollama:
-      base-url: http://localhost:11434
-      embedding:
-        model: qwen3-embedding:4b
-        truncate: true
-```
-
-Knowledge Service 的 `application.yml` 中保持 `java-ai.knowledge.embedding.mode: provider`，再把 `java-ai.knowledge.mode` 改成 `postgres-rag` 并填写 PostgreSQL。Chat 仍使用原来的 OpenAI 兼容配置。修改后直接重新运行 `KnowledgeServiceApplication`。通用适配器会要求当前 Provider 返回 1536 维向量；模型、数量或维度不匹配时，索引任务会明确失败。
-
-Flyway 会创建项目表结构，并尝试启用 `vector` 与 `pg_trgm` 扩展，因此首次运行的数据库账号需要相应权限。上传、发布、索引和问答步骤见[知识文档导入](knowledge-ingestion.md)。
-
-切换到远程 Embedding 时，只需把根目录 `config/application.yml` 中的 `spring.ai.model.embedding` 改回 `openai` 并填写远程模型配置。业务层仍保持 `provider`，不需要修改 Java 代码。
+Flyway 会创建项目表结构，并尝试启用 `vector` 与 `pg_trgm` 扩展，因此首次运行的数据库账号需要相应权限。安装、手动启停、建库、Ollama 备用方案和重跑方式见 [RAG 本地准备](rag-prerequisites.md)，业务步骤见[知识文档导入](knowledge-ingestion.md)。
 
 ## 按需替换基础设施
 
@@ -143,9 +125,9 @@ Knowledge Service 的上传原文默认保存在本地文件系统，Customer BF
 | 运行方式 | 能观察什么 |
 |---|---|
 | 只启动 Knowledge Service | 当前模型连接、回答映射与流式接口 |
-| `postgres-rag` + `ollama` | 免费本地语义 Embedding、pgvector、ACL、引用和回答 |
-| `postgres-rag` + `local-hash` | 文档、索引、ACL、pgvector、引用和回答流程，不证明语义质量 |
-| `postgres-rag` + `provider` | 远程 Embedding 下的检索与质量评测 |
+| `postgres-rag` + `provider` | 统一远程 Chat/Embedding API 下的检索与质量评测 |
+| `postgres-rag` + `ollama` | 远程接口没有 Embedding 时，只替换本地 Embedding API |
+| `postgres-rag` + `local-hash` | 仅排查流程，不证明语义检索质量 |
 | 启动三个服务 | 会话、身份委托、Knowledge Tool 和工单转交 |
 | 接入目标环境 | 身份、数据库、真实 Tool、容量、迁移和回滚 |
 

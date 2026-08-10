@@ -2,6 +2,6 @@
 
 本阶段复用阶段 03-05 已完成的业务服务，并加入安全回归数据、完整评测入口、运行配置和发布检查。Micrometer 指标、并发准入与模型韧性是在前面业务链中逐步加入的，这里把它们放进同一套上线前观察与门禁，而不是再复制一套业务源码。
 
-用 IDEA 打开本阶段根 `pom.xml`，填写 `config/application.yml`，再运行三个 Spring Boot 主类。服务启动后直接访问各自的 `/actuator/health` 和 `/actuator/prometheus`，并按第 35-39 篇制造越权、容量耗尽和下游失败场景，观察稳定错误码、指标和审计记录。安全与综合评测直接运行本阶段的 `EvalRunner`。
+用 IDEA 打开本阶段根 `pom.xml`，复用项目根目录唯一的 `config/application-default.yml`，再运行三个 Spring Boot 主类。打开 `production-learning-journey.http` 观察健康状态、指标和输入拒绝；安全与综合评测直接运行本阶段的 `EvalRunner`。
 
 这里的“生产准备”表示代码已具备明确门禁，不表示任何读者环境已经自动满足容量、合规或上线审批要求。

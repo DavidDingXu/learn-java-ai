@@ -395,7 +395,8 @@ test("public README matches the current service and build boundaries", () => {
   assert.match(readme, /A2A Java SDK 1\.1\.0\.Final/);
   assert.match(readme, /Java 8.*客户端/);
   assert.match(readme, /pgvector/);
-  assert.match(readme, /config\/application\.yml/);
+  assert.match(readme, /config\/application-default\.example\.yml/);
+  assert.match(readme, /config\/application-default\.yml/);
   assert.match(readme, /KnowledgeServiceApplication/);
   assert.match(readme, /TicketAgentServiceApplication/);
   assert.match(readme, /CustomerBffApplication/);
@@ -520,11 +521,12 @@ test("public runtime documentation matches the single-YAML configuration model",
   for (const document of runtimeDocuments) {
     const content = read(document);
     assert.doesNotMatch(content, /application\.example\.yml|application-rag-postgres\.yml/, document);
+    assert.doesNotMatch(content, /打开根目录的 `config\/application\.yml`/, document);
   }
 
   const readme = read("README.md");
   assert.doesNotMatch(readme, /spring-boot\.run\.profiles=(?:demo|production|local-auth)/);
-  assert.match(readme, /config\/application\.yml/);
+  assert.match(readme, /config\/application-default\.yml/);
   assert.match(readme, /自动加载/);
   assert.match(readme, /java-ai\.knowledge\.mode[^\n]*postgres-rag/);
   assert.match(read("docs/runbooks/runtime-configuration.md"), /java-ai\.knowledge\.mode[^\n]*postgres-rag/);

@@ -38,7 +38,7 @@ class ModelResilienceContractTest {
         YamlPropertiesFactoryBean yaml = new YamlPropertiesFactoryBean();
         yaml.setResources(
                 new ClassPathResource("application.yml"),
-                new FileSystemResource(Path.of("..", "..", "config", "application.yml")));
+                new FileSystemResource(Path.of("..", "..", "config", "application-base.yml")));
         Properties properties = yaml.getObject();
 
         assertThat(properties).isNotNull();

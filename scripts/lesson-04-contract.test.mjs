@@ -43,7 +43,7 @@ test("lesson 04 ships deterministic policy without exposing verification modes",
   const policy = read("services/knowledge-service/src/main/resources/knowledge/refund-policy-v1.md");
   const metadata = read("services/knowledge-service/src/main/resources/knowledge/refund-policy-v1.properties");
   const runtime = read("services/knowledge-service/src/main/resources/application.yml");
-  const sharedModelConfig = read("config/application.yml");
+  const sharedModelConfig = read("config/application-base.yml");
   const openApi = read("contracts/openapi/knowledge-service-v1.yaml");
   const response = read("services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/answer/web/KnowledgeAnswerResponse.java");
 
@@ -64,10 +64,10 @@ test("live model smoke is cross-platform, YAML-configured and report-producing",
   const workflow = read(".github/workflows/live-model-smoke.yml");
   const runbook = read("docs/runbooks/live-model-smoke.md");
   const report = read("docs/reports/lesson-04-live-model-smoke.md");
-  const sharedModelConfig = read("config/application.yml");
+  const sharedModelConfig = read("config/application-base.yml");
 
   for (const content of [shell, powershell]) {
-    assert.match(content, /config[\\/]application\.yml/);
+    assert.match(content, /config[\\/]application-base\.yml/);
     assert.doesNotMatch(content, /application\.example\.yml|Copy-Item|\bcp\b/);
     assert.match(content, /spring\.config\.additional-location/);
     assert.doesNotMatch(content, /JAVA_AI_CHAT_(?:API_KEY|BASE_URL|MODEL)/);
@@ -75,7 +75,7 @@ test("live model smoke is cross-platform, YAML-configured and report-producing",
   assert.match(sharedModelConfig, /api-key:\s*replace-with-your-api-key/);
   assert.match(sharedModelConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);
   assert.match(sharedModelConfig, /model:\s*gpt-4\.1-mini/);
-  assert.match(runbook, /config[\\/]application\.yml/);
+  assert.match(runbook, /config[\\/]application-default\.yml/);
   assert.match(runbook, /生产环境/);
   assert.match(workflow, /JAVA_AI_CHAT_API_KEY/);
 
@@ -97,11 +97,12 @@ test("live model smoke is cross-platform, YAML-configured and report-producing",
 
 test("local model tests use one tracked placeholder YAML", () => {
   const ignore = read(".gitignore");
-  const config = read("config/application.yml");
+  const config = read("config/application-base.yml");
   const shell = read("scripts/run-live-model-smoke.sh");
   const powershell = read("scripts/run-live-model-smoke.ps1");
 
-  assert.doesNotMatch(ignore, /^config\/application\.yml$/m);
+  assert.doesNotMatch(ignore, /^config\/application-base\.yml$/m);
+  assert.equal(existsSync(path.join(projectRoot, "config/application.yml")), false);
   assert.equal(existsSync(path.join(projectRoot, "config/application.example.yml")), false);
   assert.match(config, /api-key:\s*replace-with-your-api-key/);
   assert.doesNotMatch(config, /sk-[A-Za-z0-9]{20,}/);
@@ -109,14 +110,14 @@ test("local model tests use one tracked placeholder YAML", () => {
   assert.doesNotMatch(powershell, /ExampleConfigFile|Copy-Item/);
 });
 
-test("reader startup uses the tracked YAML and application entrypoints", () => {
+test("reader startup uses the ignored local YAML and application entrypoints", () => {
   for (const relativePath of [
     "README.md",
     "docs/runbooks/local-toolchain.md",
     "docs/runbooks/runtime-configuration.md",
   ]) {
     const content = read(relativePath);
-    assert.match(content, /config\/application\.yml/);
+    assert.match(content, /config\/application-default\.yml/);
     assert.match(content, /KnowledgeServiceApplication/);
     assert.doesNotMatch(content, /(?:\.\/|\.\\)mvnw|LiveModelSmokeIT|file:\.\.\/\.\.\/config\/application\.yml/);
   }
@@ -156,7 +157,7 @@ test("live model smoke validates the YAML placeholder without reading environmen
     const source = read(relativePath);
     assert.match(source, /spring\.ai\.openai\.api-key/);
     assert.match(source, /replace-with-your-api-key/);
-    assert.match(source, /config\/application\.yml/);
+    assert.match(source, /config\/application-default\.yml/);
     assert.doesNotMatch(source, /System\.getenv|requiredEnvironment/);
   }
 });

@@ -47,7 +47,7 @@ class LiveModelSmokeIT {
     void requireSmokeConfiguration() throws IOException {
         reportPath = prepareReportPath(Path.of(requiredSystemProperty("java-ai.smoke.report-path")));
         if (apiKey.isBlank() || "replace-with-your-api-key".equals(apiKey)) {
-            throw new IllegalStateException("请先在 config/application.yml 中填写 spring.ai.openai.api-key");
+            throw new IllegalStateException("请先在 config/application-default.yml 中填写 spring.ai.openai.api-key");
         }
     }
 

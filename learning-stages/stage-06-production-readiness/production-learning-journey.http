@@ -1,0 +1,52 @@
+@knowledgeBaseUrl = http://localhost:8081
+@ticketBaseUrl = http://localhost:8082
+@customerBaseUrl = http://localhost:8080
+
+### 01-knowledge-health
+GET {{knowledgeBaseUrl}}/actuator/health
+
+> {%
+  client.test("Knowledge Service is UP", function() {
+    client.assert(response.status === 200, "knowledge health must be 200");
+  });
+%}
+
+### 02-ticket-health
+GET {{ticketBaseUrl}}/actuator/health
+
+> {%
+  client.test("Ticket Agent Service is UP", function() {
+    client.assert(response.status === 200, "ticket health must be 200");
+  });
+%}
+
+### 03-customer-health
+GET {{customerBaseUrl}}/actuator/health
+
+> {%
+  client.test("Customer BFF is UP", function() {
+    client.assert(response.status === 200, "customer health must be 200");
+  });
+%}
+
+### 04-prometheus-metrics
+GET {{ticketBaseUrl}}/actuator/prometheus
+
+> {%
+  client.test("Prometheus output is exposed", function() {
+    client.assert(response.status === 200, "metrics status must be 200");
+    client.assert(response.body.length > 0, "metrics body must not be empty");
+  });
+%}
+
+### 05-invalid-input-has-stable-client-error
+POST {{customerBaseUrl}}/api/v1/customer/consultations/answers
+Content-Type: application/json
+
+{"question":""}
+
+> {%
+  client.test("Invalid input is rejected before a model call", function() {
+    client.assert(response.status === 400, "blank question must return 400");
+  });
+%}

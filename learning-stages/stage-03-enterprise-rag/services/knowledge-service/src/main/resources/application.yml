@@ -6,8 +6,10 @@ server:
 spring:
   config:
     import:
-      - optional:file:./config/application.yml
-      - optional:file:../../config/application.yml
+      - optional:file:./config/application-base.yml
+      - optional:file:../../config/application-base.yml
+      - optional:file:./config/application-default.yml
+      - optional:file:../../config/application-default.yml
   application:
     name: knowledge-service
   autoconfigure:
@@ -65,7 +67,7 @@ java-ai:
     # classpath runs the first model-call chapters. postgres-rag enables upload, indexing and retrieval.
     mode: classpath
     embedding:
-      # provider uses the Spring AI model selected in config/application.yml; local-hash only exercises the workflow.
+      # provider uses the Spring AI model selected in config/application-default.yml; local-hash only exercises the workflow.
       mode: provider
     answer:
       total-timeout: 30s

@@ -1,6 +1,6 @@
 # 版本基线
 
-锁定日期：2026-07-17
+锁定日期：2026-08-10
 
 以下版本是仓库的兼容性基线，不表示所有公司项目都应使用同样的版本。
 
@@ -23,6 +23,9 @@
 | Labs JUnit | 6.0.3 | `labs/pom.xml` |
 | Legacy Java target | 8 | `integrations/jdk8-client/pom.xml` |
 | Legacy JUnit | 5.11.4 | `integrations/jdk8-client/pom.xml` |
+| PostgreSQL local RAG baseline | 17.10 | `docs/runbooks/rag-prerequisites.md` local verification |
+| pgvector local RAG baseline | 0.8.6 | `docs/runbooks/rag-prerequisites.md` local verification |
+| Ollama fallback baseline | 0.32.6 | `docs/runbooks/rag-prerequisites.md` local verification |
 
 ## 维护规则
 

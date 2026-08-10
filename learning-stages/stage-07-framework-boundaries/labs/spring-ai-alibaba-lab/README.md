@@ -9,9 +9,18 @@
 
 ## 运行入口
 
-1. 在 `src/main/resources/application.yml` 选择 `provider`、`retrieval`、`graph` 或 `compatibility`。
-2. `provider` 模式必须填写真实 DashScope API Key、Base URL 和模型名。
+1. 在项目根目录唯一的 `config/application-default.yml` 追加 `lab.mode`，可选 `provider`、`retrieval`、`graph` 或 `compatibility`。
+2. `provider` 模式再在同一文件追加真实的 `lab.dashscope.api-key`、`base-url` 和模型名。
 3. 在 IDEA 运行 `SpringAiAlibabaLabApplication`。
+
+```yaml
+lab:
+  mode: provider
+  dashscope:
+    api-key: replace-with-your-dashscope-api-key
+    base-url: https://dashscope.aliyuncs.com
+    chat-model: qwen-plus
+```
 
 `provider` 会通过真实 `DashScopeChatModel` 打印回答与 Provider 元数据。`retrieval` 使用同一组 Golden Case 输出 Recall、MRR 和 p95；它用于检查替换决策，不会假装已经调用 Embedding/Rerank 服务。`graph` 运行真实 Graph 状态流转，`compatibility` 输出主线与候选版本应采用的隔离边界。
 

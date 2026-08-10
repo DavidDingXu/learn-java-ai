@@ -4,7 +4,7 @@ $RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 . (Join-Path $PSScriptRoot "main-java-runtime.ps1")
 $ReportPrefix = if ($args.Count -gt 0) { $args[0] } else { Join-Path $RootDir "docs/reports/lesson-12-live-model-eval" }
 $Port = if ($env:JAVA_AI_EVAL_PORT) { $env:JAVA_AI_EVAL_PORT } else { "18081" }
-$ConfigFile = Join-Path $RootDir "config\application.yml"
+$ConfigFile = Join-Path $RootDir "config\application-base.yml"
 
 if (-not (Test-Path $ConfigFile)) {
   throw "Missing $ConfigFile. Restore the tracked shared model configuration."

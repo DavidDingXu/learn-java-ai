@@ -51,7 +51,7 @@ git clone https://github.com/DavidDingXu/java-ai-engineering-practice.git
 cd java-ai-engineering-practice
 ```
 
-打开根目录的 `config/application.yml`，把 `spring.ai.openai.api-key` 换成自己的 Key。使用 OpenAI 兼容服务时，再修改同一文件中的 `base-url` 和模型名。不要提交填过真实 Key 的文件。
+把根目录的 `config/application-default.example.yml` 复制为 `config/application-default.yml`，填写 API Key、Base URL、Chat 模型和 Embedding 模型。后一个文件已被 Git 忽略，也是整套项目唯一需要维护的本地配置。
 
 然后直接运行：
 
@@ -108,13 +108,13 @@ Invoke-RestMethod -Method Post `
 完整 RAG 与“模型接口能调用”不是一回事。当前实现需要以下条件同时成立：
 
 - PostgreSQL 已安装 `vector` 和 `pg_trgm` 扩展，数据库账号可以执行 Flyway 迁移和业务读写；
-- 本地 Ollama 已下载并运行 `qwen3-embedding:4b`，Chat Provider 能完成最终回答；
+- 同一个 OpenAI 兼容 Provider 能完成 Chat 与 Embedding 调用；如果它不提供 Embedding，再使用 Ollama 替代这一项；
 - 至少上传并发布一份文档，再由索引 Worker 生成 Chunk 和向量；
 - 查询使用 `tenant-a / local-user / support` 这组本地固定身份，ACL 必须允许该身份读取文档。
 
 本地文件对象存储已经内置，首次联调不需要 MinIO、Redis、Kafka 或身份平台。Query Rewrite 和 Rerank 默认关闭，也不是跑通主链路的前置条件。
 
-配置好 Chat Provider、Ollama 和专用 PostgreSQL 后，把 Knowledge Service 的运行模式切换为完整 RAG。Ollama 只需在体验 RAG 时手动打开，不需要设为登录自启动：
+配置好 Provider 和专用 PostgreSQL 后，把 Knowledge Service 的运行模式切换为完整 RAG：
 
 ```yaml
 java-ai:
@@ -126,7 +126,7 @@ java-ai:
       password: replace-with-your-database-password
 ```
 
-修改后重新运行 `KnowledgeServiceApplication`，不需要额外 Profile 或 JWT。完整的上传、发布、索引和问答步骤见[知识文档导入](docs/runbooks/knowledge-ingestion.md)。
+修改后重新运行 `KnowledgeServiceApplication`，不需要额外 Profile 或 JWT。PostgreSQL/pgvector 的安装、手动启停、建库和恢复见 [RAG 本地准备](docs/runbooks/rag-prerequisites.md)，完整业务步骤见[知识文档导入](docs/runbooks/knowledge-ingestion.md)。
 
 ## 接入公司基础设施
 
@@ -137,7 +137,7 @@ java-ai:
 - Customer BFF：接入公司身份平台时，将固定身份改为 JWT，并将本地委托改为 OAuth2 Token Exchange；
 - 多实例部署：把 Knowledge Service 的本地原文存储，以及 Customer BFF 的进程内会话和限流替换为共享实现。
 
-这些配置项都在各服务的 `application.yml` 中，默认值可以直接支持本地学习。生产 API Key、数据库密码、JWT 材料和客户端密钥必须由 Secret Manager、Vault 或部署平台 Secret 覆盖。完整配置和接入边界见[运行配置](docs/runbooks/runtime-configuration.md)。
+模型和数据库参数统一写入根目录 `config/application-default.yml`，各服务 `application.yml` 只保留版本化的业务默认值。生产 API Key、数据库密码、JWT 材料和客户端密钥必须由 Secret Manager、Vault 或部署平台 Secret 覆盖。完整配置和接入边界见[运行配置](docs/runbooks/runtime-configuration.md)。
 
 ## 模块说明
 

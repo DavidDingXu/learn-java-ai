@@ -6,7 +6,10 @@ import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
@@ -85,7 +88,23 @@ public final class SpringAiAlibabaLabApplication {
         yaml.setResources(new ClassPathResource("application.yml"));
         Properties properties = yaml.getObject();
         if (properties == null) throw new IllegalStateException("application.yml cannot be loaded");
+        Path localConfig = localConfig();
+        if (localConfig != null) {
+            YamlPropertiesFactoryBean localYaml = new YamlPropertiesFactoryBean();
+            localYaml.setResources(new FileSystemResource(localConfig));
+            Properties localProperties = localYaml.getObject();
+            if (localProperties != null) properties.putAll(localProperties);
+        }
         return properties;
+    }
+
+    private static Path localConfig() {
+        for (Path candidate : List.of(
+                Path.of("config/application-default.yml"),
+                Path.of("../../config/application-default.yml"))) {
+            if (Files.isRegularFile(candidate)) return candidate;
+        }
+        return null;
     }
 
     private static String configuredSecret(Properties config, String name) {

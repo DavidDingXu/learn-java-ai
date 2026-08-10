@@ -1,0 +1,63 @@
+@customerBaseUrl = http://localhost:8080
+
+### 01-health
+GET {{customerBaseUrl}}/actuator/health
+
+> {%
+  client.test("Customer BFF is UP", function() {
+    client.assert(response.status === 200, "health status must be 200");
+  });
+%}
+
+### 02-answer-and-open-session
+POST {{customerBaseUrl}}/api/v1/customer/consultations/answers
+Content-Type: application/json
+
+{"question":"退款审核通过后通常多久到账？"}
+
+> {%
+  client.test("A conversation and answer attempt are created", function() {
+    client.assert(response.status === 200, "answer status must be 200");
+    client.assert(response.body.conversationId.length > 0, "conversationId must exist");
+    client.assert(response.body.attemptId.length > 0, "attemptId must exist");
+    client.global.set("conversationId", response.body.conversationId);
+    client.global.set("attemptId", response.body.attemptId);
+  });
+%}
+
+### 03-record-negative-feedback
+PUT {{customerBaseUrl}}/api/v1/customer/consultations/{{conversationId}}/attempts/{{attemptId}}/feedback
+Content-Type: application/json
+
+{"rating":"NOT_HELPFUL","reasonCode":"ANSWER_INCOMPLETE","comment":"没有说明到账范围"}
+
+> {%
+  client.test("Feedback is attached to the same attempt", function() {
+    client.assert(response.status === 204, "feedback status must be 204");
+  });
+%}
+
+### 04-retry-answer
+POST {{customerBaseUrl}}/api/v1/customer/consultations/{{conversationId}}/attempts/{{attemptId}}/retry
+
+> {%
+  client.test("Retry creates a new attempt in the same conversation", function() {
+    client.assert(response.status === 200, "retry status must be 200");
+    client.assert(response.body.conversationId === client.global.get("conversationId"), "conversation must be reused");
+    client.assert(response.body.retryOfAttemptId === client.global.get("attemptId"), "retry link must be preserved");
+    client.global.set("retryAttemptId", response.body.attemptId);
+  });
+%}
+
+### 05-handoff-to-ticket
+POST {{customerBaseUrl}}/api/v1/customer/consultations/{{conversationId}}/attempts/{{retryAttemptId}}/handoffs
+Content-Type: application/json
+
+{"reasonCode":"CUSTOMER_REQUESTED_HUMAN"}
+
+> {%
+  client.test("Handoff returns a ticket task receipt", function() {
+    client.assert(response.status === 202, "handoff status must be 202");
+    client.assert(response.body.taskId.length > 0, "taskId must exist");
+  });
+%}

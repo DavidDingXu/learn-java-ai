@@ -9,7 +9,7 @@
 
 ## 运行入口
 
-1. 在 `src/main/resources/application.properties` 填写 OpenAI 兼容 API 的 Key、Base URL 和模型名。
+1. 使用项目根目录唯一的 `config/application-default.yml`，程序会复用其中的 OpenAI 兼容 API Key、Base URL 和 Chat 模型。
 2. 将 `lab.mode` 设为 `answer`、`rag` 或 `tool`。
 3. 在 IDEA 运行 `LangChain4jLabApplication`。
 

@@ -14,4 +14,4 @@
 | `stage-06-production-readiness` | 35-39 | 在既有业务服务上加入安全回归、生产评测数据、部署配置和发布门禁 |
 | `stage-07-framework-boundaries` | 40-51 | Spring AI Alibaba、LangChain4j、AgentScope、MCP 和 A2A 的边界实验 |
 
-学习时直接用 IDEA 打开对应阶段的根 `pom.xml`。需要模型或数据库的阶段，先填写该目录下的 `config/application.yml`，再运行 README 指定的 Java 主类。阶段 04-06 的 Maven Reactor 会自动导入前面阶段中没有变化的模块，读者不需要手工安装或复制它们。
+学习时直接用 IDEA 打开对应阶段的根 `pom.xml`。需要模型或数据库的阶段统一读取项目根目录唯一的 `config/application-default.yml`，不在阶段之间复制配置。阶段 04-06 会直接导入前面阶段中没有变化的模块，读者不需要手工安装或复制它们。

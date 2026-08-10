@@ -8,7 +8,7 @@
 
 ## 本地演示配置
 
-项目根目录的 `config/application.yml` 已给出 OpenAI API 地址、演示模型和不可用的占位 Key。使用 OpenAI 时只需替换这一项：
+先把项目根目录的 `config/application-default.example.yml` 复制为 `config/application-default.yml`。使用 OpenAI 时只需替换这一项：
 
 ```yaml
 spring:
@@ -19,7 +19,7 @@ spring:
 
 如果使用其他 OpenAI 兼容服务，再在同一文件中修改 `base-url`、`chat.model` 和 `embedding.model`。只要当前终端使用完整 JDK 21 或更新版本，就不需要配置 Java 环境变量。
 
-本地文件使用明文是为了降低演示门槛。填入真实 Key 后不能提交，运行结束后应恢复占位值。生产环境必须通过 Secret Manager、Vault 或部署平台 Secret 覆盖 `spring.ai.openai.api-key`，不能把真实密钥保存在仓库或镜像中。
+本地文件已被 Git 忽略，不需要运行后恢复占位值。生产环境必须通过 Secret Manager、Vault 或部署平台 Secret 覆盖 `spring.ai.openai.api-key`，不能把真实密钥保存在仓库或镜像中。
 
 ## 直接运行两个 main 方法
 

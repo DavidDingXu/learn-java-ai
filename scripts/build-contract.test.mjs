@@ -115,17 +115,21 @@ test("each service has one reader-facing runtime config with replaceable adapter
   }
 
   const knowledge = read("services/knowledge-service/src/main/resources/application.yml");
-  const sharedModelConfig = read("config/application.yml");
-  assert.match(knowledge, /import:[\s\S]*?config\/application\.yml/);
+  const sharedModelConfig = read("config/application-base.yml");
+  const readerModelConfig = read("config/application-default.example.yml");
+  assert.match(knowledge, /import:[\s\S]*?config\/application-base\.yml/);
+  assert.match(knowledge, /import:[\s\S]*?config\/application-default\.yml/);
   assert.match(knowledge, /mode:\s*classpath/);
   assert.match(knowledge, /mode:\s*fixed/);
   assert.match(knowledge, /password:\s*replace-with-your-database-password/);
   assert.match(sharedModelConfig, /chat:\s*openai/);
   assert.match(sharedModelConfig, /embedding:\s*openai/);
-  assert.match(sharedModelConfig, /ollama:[\s\S]*?base-url:\s*http:\/\/localhost:11434/);
-  assert.match(sharedModelConfig, /model:\s*qwen3-embedding:4b/);
   assert.match(sharedModelConfig, /api-key:\s*replace-with-your-api-key/);
   assert.match(sharedModelConfig, /base-url:\s*https:\/\/api\.openai\.com\/v1/);
+  assert.match(readerModelConfig, /api-key:\s*replace-with-your-api-key/);
+  assert.match(readerModelConfig, /chat:[\s\S]*?model:\s*gpt-4\.1-mini/);
+  assert.match(readerModelConfig, /embedding:[\s\S]*?model:\s*text-embedding-3-small/);
+  assert.doesNotMatch(readerModelConfig, /ollama:/);
   assert.doesNotMatch(knowledge, /execution-mode|LOCAL_DISABLED|PROVIDER_PROTOCOL_FIXTURE/);
   assert.doesNotMatch(knowledge, /external-integrations-enabled/);
 

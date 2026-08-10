@@ -19,6 +19,23 @@
 - `McpLabApplication`：本地启动真实 MCP Server，并由官方客户端完成发现和调用。
 - `A2aLabApplication`：本地启动 A2A 服务，并由官方客户端发现 Agent Card、发送任务和读取结果。
 
-需要模型的实验先填写各模块的 `src/main/resources/application.yml` 或 `application.properties`。读者不需要执行单元测试，也不需要配置环境变量。主业务应用仍从 `KnowledgeServiceApplication`、`TicketAgentServiceApplication` 和 `CustomerBffApplication` 启动。
+需要模型的实验继续读取项目根目录唯一的 `config/application-default.yml`。LangChain4j 与 AgentScope 直接复用其中的 OpenAI 兼容配置；Spring AI Alibaba 的 DashScope 实验在同一文件追加 `lab.dashscope` 与 `lab.mode`。各模块 `src/main/resources` 中的文件只是不可编辑的默认值。
+
+## 每篇实验实际运行到哪里
+
+| 篇目 | 运行方式 | 真实依赖 | 不能据此声称 |
+|---|---|---|---|
+| 40 | `SpringAiAlibabaLabApplication/provider` | DashScope Chat API | Provider 已满足公司语料质量和配额 |
+| 41 | `retrieval` 固定 Golden Case | 无外部服务 | 已在线调用 Embedding 或 Rerank |
+| 42 | `ConfirmationGraph` 本地状态图 | 真实 Graph 运行时 | 已接入工单持久化和人工系统 |
+| 43 | 兼容性决策程序 | 当前依赖版本 | 两条技术线可以混入同一 Boot 应用 |
+| 44 | LangChain4j `answer` | 真实 Chat API | 主业务已经迁移到 LangChain4j |
+| 45 | LangChain4j `rag` | 真实 Chat API、受控内存检索 | 已执行 pgvector ACL SQL |
+| 46 | LangChain4j `tool` | 真实 Chat API、本地只读 Tool | 写 Tool 可以绕过确认执行 |
+| 47 | 三种模式加共存策略 | 真实 Chat API | 两套框架必须运行在同一进程 |
+| 48 | AgentScope ReAct | 真实 Chat API、本地只读 Tool | 已实现完整工单 Agent |
+| 49 | `CollaborationPolicy` | 无外部服务 | 多个 Agent 已经协同执行 |
+| 50 | MCP 主类 | 本地真实 MCP Server 与官方客户端 | 远程企业 MCP 已完成鉴权与容量验证 |
+| 51 | A2A 主类 | 本地真实 A2A 服务与官方客户端 | 跨组织 Agent 已完成生产互操作 |
 
 一次真实调用只能证明当前凭证、模型和样例链路跑通。迁移到公司项目时仍要用自己的语料、权限、配额和目标环境重新评估质量与稳定性。

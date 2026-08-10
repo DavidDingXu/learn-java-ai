@@ -13,11 +13,11 @@
 
 ## 直接启动
 
-在根目录 `config/application.yml` 填好模型 API Key，用 IDE 运行 `KnowledgeServiceApplication`。启动后访问 `http://localhost:8081/actuator/health`，再调用 `POST /api/v1/knowledge/answers`。
+在项目根目录唯一的 `config/application-default.yml` 填好 Provider 和数据库配置，用 IDE 运行 `KnowledgeServiceApplication`。启动后打开阶段根目录的 `rag-learning-journey.http`。
 
-默认使用固定的 `tenant-a / local-user / support` 身份和 classpath 上下文，并调用根目录共享配置中的真实 Chat Provider，不要求生成 Token。完整写入链路见 [Knowledge Ingestion](../../docs/runbooks/knowledge-ingestion.md)。
+默认使用固定的 `tenant-a / local-user / support` 身份，不要求生成 Token。
 
-本地完整 RAG 将 `java-ai.knowledge.mode` 改为 `postgres-rag`，填写 PostgreSQL 连接，再把 Embedding 模式设为 `ollama`。安装 Ollama 应用并下载免费的 `qwen3-embedding:4b` 后，即可在本机运行语义检索；Chat 继续使用根目录 YAML 中的 OpenAI 兼容配置。HTTP 请求仍使用固定身份。完整清单见[运行配置](../../docs/runbooks/runtime-configuration.md)。
+本地完整 RAG 保持 `java-ai.knowledge.embedding.mode: provider`，默认让 Chat 与 Embedding 共用同一个 OpenAI 兼容 API。若远程接口没有 Embedding，再在同一份本地 YAML 中只切换 Ollama。安装、手动启停和建库见 [RAG 本地准备](../../../../docs/runbooks/rag-prerequisites.md)。
 
 `local-hash` 只用于排查上传、索引、ACL、pgvector、引用和回答流程，不提供语义质量证据。远程 Embedding 则使用 `provider` 模式。
 

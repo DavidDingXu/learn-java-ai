@@ -4,32 +4,29 @@ Knowledge Service 的 RAG 写入链路包含上传原文、保存文档与版本
 
 ## 完整 RAG 需要准备什么
 
-Knowledge Service 默认使用 classpath 上下文，适合先学习模型调用和回答协议。本 Runbook 把上下文切换为 PostgreSQL 检索，需要 PostgreSQL 和 Chat Provider；固定本地身份与文件对象存储由项目提供。Embedding 可以使用远程 OpenAI 兼容 API，也可以使用免费的本地 Ollama API。业务代码统一依赖 Spring AI 的 `EmbeddingModel`，不会感知具体 Provider。
+Knowledge Service 默认使用 classpath 上下文。本 Runbook 把上下文切换为 PostgreSQL 检索，需要 PostgreSQL 和一个同时支持 Chat、Embedding 的 OpenAI 兼容 Provider；固定本地身份与文件对象存储由项目提供。业务代码统一依赖 Spring AI 的 `EmbeddingModel`，不会感知具体 Provider。
 
-准备一个允许创建 `vector` 与 `pg_trgm` 扩展的专用 PostgreSQL 数据库，以及支持 Chat 的 OpenAI 兼容接口。再安装 Ollama 应用，在应用中下载 `qwen3-embedding:4b`，运行 RAG 时保持 Ollama 打开。应用启动时由 Flyway 按顺序执行 V1-V4：V1 创建文档、版本、ACL、任务和向量分块，V2 创建 trigram 索引，V3 增加发布审计字段，V4 创建检索版本指针。
+先按 [RAG 本地准备](rag-prerequisites.md)创建允许使用 `vector` 与 `pg_trgm` 扩展的专用 PostgreSQL 数据库。应用启动时由 Flyway 按顺序执行 V1-V4：V1 创建文档、版本、ACL、任务和向量分块，V2 创建 trigram 索引，V3 增加发布审计字段，V4 创建检索版本指针。
 
 Redis、Kafka、MinIO、Query Rewrite 和 Rerank 都不是首次联调的前置条件。原文默认写入本地文件目录；多实例部署时再替换为公司对象存储。
 
-## 所有运行参数都在 `application.yml`
+## 所有读者参数都在一份本地 YAML
 
-专栏阶段 03 把模型、数据库与 RAG 参数集中在阶段根目录的 `config/application.yml`。填写相应占位值后直接启动 `KnowledgeServiceApplication`：
+模型、数据库与 RAG 参数集中在项目根目录唯一的 `config/application-default.yml`。Chat 和 Embedding 默认共用 API Key 与 Base URL：
 
 ```yaml
 spring:
   ai:
     model:
       chat: openai
-      embedding: ollama
+      embedding: openai
     openai:
       api-key: replace-with-your-api-key
       base-url: https://api.openai.com/v1
+      chat:
+        model: gpt-4.1-mini
       embedding:
         model: text-embedding-3-small
-    ollama:
-      base-url: http://localhost:11434
-      embedding:
-        model: qwen3-embedding:4b
-        truncate: true
 
 java-ai:
   knowledge:
@@ -51,13 +48,11 @@ java-ai:
       password: replace-with-your-database-password
 ```
 
-为了演示配置位置，YAML 中保留了占位密码和 API Key。真实密钥不能提交到 Git；生产环境必须由公司密钥系统覆盖这些值。多实例部署也不应继续使用本地文件对象存储，需要替换为 S3 兼容实现。
-
-Ollama 不需要额外 API Key。把 `spring.ai.model.embedding` 设为 `ollama` 后，Spring AI 会通过本机 Embedding API 批量提交 Chunk；通用适配器会按 pgvector 的存储契约要求 Provider 返回 1536 维向量。报告会记录实际模型名，并将这次运行标记为语义质量证据。
+该本地文件已被 Git 忽略。生产环境必须由公司密钥系统覆盖这些值；多实例部署也不应继续使用本地文件对象存储，需要替换为 S3 兼容实现。
 
 `local-hash` 仍保留为故障排查选项。它不理解同义词或上下文，报告会显示 `deterministic-hash-v1-1536`，并将“可作为语义质量证据”标记为 `false`。
 
-需要评测远程 Embedding 时，把 `spring.ai.model.embedding` 改为 `openai`，并在根目录 `config/application.yml` 配好对应模型；`java-ai.knowledge.embedding.mode` 仍保持 `provider`。当前 Flyway Schema 将向量列定义为 `vector(1536)`。如果更换为其他维度，应新建向量列或索引版本，完成回填和检索评测后再切换。
+`java-ai.knowledge.embedding.mode` 保持 `provider`。当前 Flyway Schema 将向量列定义为 `vector(1536)`。如果统一远程接口不提供 Embedding，再按准备文档在同一份 YAML 中只把 Embedding 切换为 Ollama；如果更换为其他维度，应新建向量列或索引版本，完成回填和检索评测后再切换。
 
 数据库账号需要对 Knowledge Schema 具备 Flyway 迁移和业务读写权限。正式环境通常把迁移账号与运行账号拆开，示例为了便于首次运行使用同一个连接。
 
@@ -79,7 +74,7 @@ Ollama 不需要额外 API Key。把 `spring.ai.model.embedding` 设为 `ollama`
 - 生成带引用的回答；
 - 回放 Golden Set 并写出 Markdown 报告。
 
-最后运行 `EvalRunner` 的检索评测入口，报告位于 `var/reports`。这条路径不要求读者执行 Maven、单测或环境变量命令；模型和数据库配置都来自 `application.yml`。先看报告中的 Embedding 名称和“可作为语义质量证据”，再解释 Recall、HitRate 和 MRR。
+最后运行 `EvalRunner` 的检索评测入口，报告位于 `var/reports`。模型和数据库配置都来自唯一的 `application-default.yml`。先看报告中的 Embedding 名称和“可作为语义质量证据”，再解释 Recall、HitRate 和 MRR。
 
 `.http` 文件使用稳定文档 ID，默认面向干净的专用数据库。若这些 ID 已存在，接口会返回冲突，不会覆盖旧数据或偷偷清库。
 

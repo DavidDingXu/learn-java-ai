@@ -51,8 +51,9 @@ test("reader journey starts applications instead of build or test commands", () 
   assert.deepEqual(violations, []);
 
   const entry = read("README.md");
-  assert.match(entry, /config\/application\.yml/);
-  assert.match(entry, /spring\.ai\.openai\.api-key/);
+  assert.match(entry, /config\/application-default\.example\.yml/);
+  assert.match(entry, /config\/application-default\.yml/);
+  assert.match(entry, /API Key、Base URL、Chat 模型和 Embedding 模型/);
   assert.match(entry, /KnowledgeServiceApplication/);
   assert.match(entry, /POST http:\/\/localhost:8081\/api\/v1\/knowledge\/answers/);
 });
@@ -62,11 +63,52 @@ test("reader journey keeps local model settings in YAML instead of shell variabl
   const violations = readerPaths.filter((relativePath) => shellEnvironmentSetup.test(read(relativePath)));
 
   assert.deepEqual(violations, []);
-  const sharedConfig = read("config/application.yml");
+  const sharedConfig = read("config/application-default.example.yml");
   assert.match(sharedConfig, /api-key:\s*replace-with-your-api-key/);
   assert.match(sharedConfig, /embedding:\s*openai/);
-  assert.match(sharedConfig, /ollama:[\s\S]*?base-url:\s*http:\/\/localhost:11434/);
-  assert.match(sharedConfig, /model:\s*qwen3-embedding:4b/);
+  assert.match(sharedConfig, /chat:[\s\S]*?model:\s*gpt-4\.1-mini/);
+  assert.match(sharedConfig, /embedding:[\s\S]*?model:\s*text-embedding-3-small/);
+  assert.doesNotMatch(sharedConfig, /ollama:/);
+});
+
+test("reader secrets use an ignored local YAML loaded after repository defaults", () => {
+  const gitignore = read(".gitignore");
+  assert.match(gitignore, /\*\*\/config\/application-default\.yml/);
+  assert.equal(existsSync(path.join(projectRoot, "config/application-default.example.yml")), true);
+  assert.equal(existsSync(path.join(projectRoot, "config/application.yml")), false);
+  assert.equal(existsSync(path.join(projectRoot, "config/application-base.yml")), true);
+
+  const applicationConfigs = [
+    "services/knowledge-service/src/main/resources/application.yml",
+    "services/ticket-agent-service/src/main/resources/application.yml",
+    "learning-stages/stage-02-model-engineering/services/knowledge-service/src/main/resources/application.yml",
+    "learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/resources/application.yml",
+    "learning-stages/stage-04-customer-consultation/services/ticket-agent-service/src/main/resources/application.yml",
+    "learning-stages/stage-05-controlled-agent/services/ticket-agent-service/src/main/resources/application.yml",
+  ];
+
+  for (const relativePath of applicationConfigs) {
+    const config = read(relativePath);
+    assert.match(config, /optional:file:\.\/config\/application-default\.yml/, relativePath);
+  }
+
+  assert.match(read("README.md"), /config\/application-default\.yml/);
+  assert.doesNotMatch(read("README.md"), /打开根目录的 `config\/application\.yml`/);
+});
+
+test("reader has a continuous observable journey for each runnable stage", () => {
+  for (const relativePath of [
+    "learning-stages/stage-02-model-engineering/model-engineering-learning-journey.http",
+    "learning-stages/stage-03-enterprise-rag/rag-learning-journey.http",
+    "learning-stages/stage-04-customer-consultation/consultation-learning-journey.http",
+    "learning-stages/stage-05-controlled-agent/agent-learning-journey.http",
+    "learning-stages/stage-06-production-readiness/production-learning-journey.http",
+  ]) {
+    assert.equal(existsSync(path.join(projectRoot, relativePath)), true, relativePath);
+    assert.match(read(relativePath), /client\.test\(/, relativePath);
+  }
+
+  assert.equal(existsSync(path.join(projectRoot, "docs/runbooks/rag-prerequisites.md")), true);
 });
 
 test("all runnable backend modules name their direct IDE entrypoint", () => {

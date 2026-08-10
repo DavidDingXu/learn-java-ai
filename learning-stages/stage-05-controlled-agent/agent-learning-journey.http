@@ -1,0 +1,92 @@
+@ticketBaseUrl = http://localhost:8082
+
+### 01-health
+GET {{ticketBaseUrl}}/actuator/health
+
+> {%
+  client.test("Ticket Agent Service is UP", function() {
+    client.assert(response.status === 200, "health status must be 200");
+  });
+%}
+
+### 02-create-task
+POST {{ticketBaseUrl}}/api/v1/agent/tasks
+Content-Type: application/json
+Idempotency-Key: reader-agent-task-001
+
+{
+  "caseId": "CASE-READER-001",
+  "objective": "查询退款到账政策，并把需要人工处理的工单分配到 refund-review 队列",
+  "businessContext": {
+    "ticketId": "T-100",
+    "customerQuestion": "退款审核通过后通常多久到账？"
+  }
+}
+
+> {%
+  client.test("A stable task receipt is returned", function() {
+    client.assert(response.status === 202, "create status must be 202");
+    client.assert(response.body.taskId.length > 0, "taskId must exist");
+    client.assert(response.body.status === "ACCEPTED", "new task must be accepted");
+    client.global.set("taskId", response.body.taskId);
+  });
+%}
+
+### 03-run-controlled-agent
+POST {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}/runs
+
+> {%
+  client.test("The task reaches an explicit controlled state", function() {
+    const states = ["COMPLETED", "WAITING_CONFIRMATION", "FAILED"];
+    client.assert(response.status === 200, "run status must be 200");
+    client.assert(states.includes(response.body.status), "task must not stay ACCEPTED or RUNNING");
+    client.global.set("taskVersion", response.body.version);
+    if (response.body.confirmation) {
+      client.global.set("confirmationId", response.body.confirmation.confirmationId);
+    }
+  });
+%}
+
+### 04-read-task
+GET {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}
+
+> {%
+  client.test("The stored task matches the run result", function() {
+    client.assert(response.status === 200, "task status must be readable");
+    client.assert(response.body.taskId === client.global.get("taskId"), "task id must match");
+  });
+%}
+
+### 05-read-audit
+GET {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}/audit
+
+> {%
+  client.test("The run leaves an audit timeline", function() {
+    client.assert(response.status === 200, "audit status must be 200");
+    client.assert(response.body.length > 0, "audit must not be empty");
+  });
+%}
+
+# When request 03 returns WAITING_CONFIRMATION, copy confirmationId and version from its response
+# into the two variables below, then run request 06. Approval is intentionally explicit.
+@confirmationId = replace-from-run-response
+@confirmationVersion = 1
+
+### 06-confirm-write-action
+PUT {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}/confirmation
+Content-Type: application/json
+Idempotency-Key: reader-confirmation-001
+
+{
+  "confirmationId": "{{confirmationId}}",
+  "expectedTaskVersion": {{confirmationVersion}},
+  "decision": "APPROVED",
+  "reason": "人工核对工单和目标队列后批准"
+}
+
+> {%
+  client.test("A confirmation produces a durable receipt", function() {
+    client.assert(response.status === 200, "confirmation status must be 200");
+    client.assert(response.body.taskId === client.global.get("taskId"), "receipt must bind the task");
+  });
+%}

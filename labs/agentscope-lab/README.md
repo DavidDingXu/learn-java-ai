@@ -9,7 +9,7 @@
 
 ## 运行入口
 
-1. 在 `src/main/resources/application.properties` 填写 OpenAI 兼容 API 的 Key、Base URL 和模型名。
+1. 使用项目根目录唯一的 `config/application-default.yml`，程序会复用其中的 OpenAI 兼容 API Key、Base URL 和 Chat 模型。
 2. 在 IDEA 运行 `AgentScopeLabApplication`。
 3. 观察模型先调用 `query_ticket`，再根据 Tool 返回的真实工单事实回答。
 

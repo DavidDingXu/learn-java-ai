@@ -1,4 +1,4 @@
-# Fill in these values, open this stage as an IDEA project, then start KnowledgeServiceApplication.
+# Repository defaults only. Reader-owned values are loaded from the root config/application-default.yml.
 spring:
   ai:
     model:

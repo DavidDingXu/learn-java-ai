@@ -5,7 +5,7 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 PROJECT_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 . "$SCRIPT_DIR/main-java-runtime.sh"
 enter_java_ai_main_jdk
-CONFIG_FILE="$PROJECT_ROOT/config/application.yml"
+CONFIG_FILE="$PROJECT_ROOT/config/application-base.yml"
 REPORT_PATH="${JAVA_AI_LIVE_REPORT_PATH:-$PROJECT_ROOT/docs/reports/lesson-04-live-model-smoke.md}"
 
 die() {

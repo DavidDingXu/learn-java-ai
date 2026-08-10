@@ -13,7 +13,7 @@
 
 ## 直接启动
 
-先在根目录 `config/application.yml` 填好模型 API Key 并运行 `KnowledgeServiceApplication`，再用 IDE 运行 `TicketAgentServiceApplication`。启动后访问 `http://localhost:8082/actuator/health`。
+先在根目录 `config/application-default.yml` 填好模型 API Key 并运行 `KnowledgeServiceApplication`，再用 IDE 运行 `TicketAgentServiceApplication`。启动后访问 `http://localhost:8082/actuator/health`。
 
 默认调用真实 Chat Provider 和 Knowledge Service，任务、确认与审计保存在内存中，写 Tool 使用带幂等检查的本地实现。这样可以直接验证 Agent 主链路，但不能证明重启恢复或真实 Legacy Tool 已经完成联调。评测与安全数据集的运行方式见[模型、检索与 Agent 评测](../../docs/runbooks/model-interaction-eval.md)和 [AI 安全回归](../../docs/runbooks/security-regression.md)。
 

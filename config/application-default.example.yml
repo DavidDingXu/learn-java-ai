@@ -1,0 +1,24 @@
+# Copy this file to config/application-default.yml and edit the copy.
+# This is the only reader-owned configuration file. It is ignored by Git.
+spring:
+  ai:
+    model:
+      chat: openai
+      embedding: openai
+    openai:
+      api-key: replace-with-your-api-key
+      base-url: https://api.openai.com/v1
+      chat:
+        model: gpt-4.1-mini
+      embedding:
+        model: text-embedding-3-small
+
+java-ai:
+  knowledge:
+    mode: classpath
+    embedding:
+      mode: provider
+    postgres:
+      jdbc-url: jdbc:postgresql://localhost:5432/java_ai_knowledge
+      username: java_ai_knowledge
+      password: replace-with-your-database-password

@@ -8,7 +8,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
 . (Join-Path $PSScriptRoot "main-java-runtime.ps1")
 $MavenWrapper = Join-Path $ProjectRoot "mvnw.cmd"
-$ConfigFile = Join-Path $ProjectRoot "config\application.yml"
+$ConfigFile = Join-Path $ProjectRoot "config\application-base.yml"
 $ReportPath = if ([string]::IsNullOrWhiteSpace($env:JAVA_AI_LIVE_REPORT_PATH)) {
     Join-Path $ProjectRoot "docs\reports\lesson-04-live-model-smoke.md"
 } else {

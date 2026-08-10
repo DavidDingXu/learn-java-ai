@@ -68,8 +68,8 @@ public final class LangChain4jLabApplication {
     }
 
     private static void applyLocalOverride(Properties config) throws IOException {
-        Path localConfig = Path.of("config/application-default.yml");
-        if (!Files.isRegularFile(localConfig)) return;
+        Path localConfig = localConfig();
+        if (localConfig == null) return;
         try (InputStream input = Files.newInputStream(localConfig)) {
             Object loaded = new Yaml().load(input);
             if (!(loaded instanceof Map<?, ?> root)) return;
@@ -78,6 +78,15 @@ public final class LangChain4jLabApplication {
             copyText(openai, "base-url", config, "lab.openai.base-url");
             copyText(nested(openai, "chat"), "model", config, "lab.openai.model");
         }
+    }
+
+    private static Path localConfig() {
+        for (Path candidate : List.of(
+                Path.of("config/application-default.yml"),
+                Path.of("../../config/application-default.yml"))) {
+            if (Files.isRegularFile(candidate)) return candidate;
+        }
+        return null;
     }
 
     private static Map<?, ?> nested(Map<?, ?> source, String key) {

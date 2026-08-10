@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
 . (Join-Path $PSScriptRoot "main-java-runtime.ps1")
-$ConfigFile = Join-Path $ProjectRoot "config\application.yml"
+$ConfigFile = Join-Path $ProjectRoot "config\application-base.yml"
 $ReportPath = if ($env:JAVA_AI_AGENT_LIVE_REPORT_PATH) {
     $env:JAVA_AI_AGENT_LIVE_REPORT_PATH
 } else {

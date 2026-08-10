@@ -6,8 +6,10 @@ server:
 spring:
   config:
     import:
-      - optional:file:./config/application.yml
-      - optional:file:../../config/application.yml
+      - optional:file:./config/application-base.yml
+      - optional:file:../../config/application-base.yml
+      - optional:file:./config/application-default.yml
+      - optional:file:../../config/application-default.yml
   application:
     name: ticket-agent-service
   autoconfigure:
