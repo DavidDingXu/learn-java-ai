@@ -22,12 +22,13 @@
         <java.version>21</java.version>
         <maven.compiler.release>21</maven.compiler.release>
         <spring-ai-alibaba.version>1.1.2.3</spring-ai-alibaba.version>
-        <langchain4j.version>1.18.0</langchain4j.version>
-        <agentscope.version>2.0.0</agentscope.version>
+        <langchain4j.version>1.18.1</langchain4j.version>
+        <agentscope.version>2.0.2</agentscope.version>
         <mcp-java-sdk.version>2.0.0</mcp-java-sdk.version>
-        <a2a-java-sdk.version>1.1.0.Final</a2a-java-sdk.version>
-        <tomcat.version>11.0.22</tomcat.version>
-        <snakeyaml.version>2.4</snakeyaml.version>
+        <a2a-java-sdk.version>1.2.0.Final</a2a-java-sdk.version>
+        <tomcat.version>11.0.24</tomcat.version>
+        <snakeyaml.version>2.6</snakeyaml.version>
+        <slf4j.version>2.0.18</slf4j.version>
         <junit.version>6.0.3</junit.version>
         <maven.compiler.version>3.15.0</maven.compiler.version>
         <maven.enforcer.version>3.6.3</maven.enforcer.version>

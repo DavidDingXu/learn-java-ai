@@ -66,14 +66,14 @@ pgvector 的 Windows 安装需要 Visual Studio 的“使用 C++ 的桌面开发
 
 ## 4. 创建专用数据库与扩展
 
-下面的 SQL 只针对本地实验数据库。先连接默认的 `postgres` 数据库：
+下面的 SQL 只针对本地实验数据库。先用初始化 PostgreSQL 时创建的管理员账号连接默认的 `postgres` 数据库：
 
 ```sql
 CREATE ROLE java_ai_knowledge LOGIN PASSWORD 'replace-with-your-database-password';
 CREATE DATABASE java_ai_knowledge OWNER java_ai_knowledge;
 ```
 
-再连接 `java_ai_knowledge`，创建扩展并查看实际版本：
+仍使用数据库管理员连接 `java_ai_knowledge`，创建扩展并查看实际版本。不要把应用账号提升为超级用户；`java_ai_knowledge` 只需要拥有本数据库中的业务表：
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -101,6 +101,8 @@ java-ai:
 
 在 IDEA 中打开 `learning-stages/stage-03-enterprise-rag`，Working directory 选该阶段目录，运行 `KnowledgeServiceApplication`。随后打开 `rag-learning-journey.http`，从 `01-health` 开始按顺序执行。
 
+应用启动时会先检查 `vector` 与 `pg_trgm`。缺少任一扩展时，错误会直接列出需要由数据库管理员执行的 `CREATE EXTENSION`，不会要求应用账号获得额外权限。
+
 ## 5. 中断后继续与从头重跑
 
 请求名称就是检查点。中途失败时修好配置，从失败的请求继续，不要重复上传已经成功的固定文档；重复文档 ID 或旧 revision 返回 `409` 是并发保护，不是数据库故障。
@@ -119,6 +121,7 @@ CREATE DATABASE java_ai_knowledge OWNER java_ai_knowledge;
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | `extension "vector" is not available` | pgvector 没装进当前 PostgreSQL 17 | 确认 `pg_config` 和 pgvector 指向同一 PostgreSQL |
+| `Required PostgreSQL extensions are missing` | 数据库已创建，但管理员还没有安装 `vector` 或 `pg_trgm` | 用数据库管理员连接该学习库，执行错误信息列出的 `CREATE EXTENSION` |
 | `connection refused` | PostgreSQL 没有手动启动或端口不同 | 启动实例并核对 JDBC URL |
 | `embedding dimensions ... do not match expected 1536` | Embedding Provider 忽略了 1536 维请求 | 换支持维度参数的模型，或为新维度建立新的向量 Schema |
 | 上传或发布返回 `409` | 固定文档已经存在或 revision 过期 | 从下一检查点继续，或仅重建专用学习库 |

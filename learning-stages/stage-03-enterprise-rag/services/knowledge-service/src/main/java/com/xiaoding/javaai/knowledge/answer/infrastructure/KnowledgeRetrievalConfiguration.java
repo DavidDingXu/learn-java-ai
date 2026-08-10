@@ -60,8 +60,14 @@ class KnowledgeRetrievalConfiguration {
         config.setMaximumPoolSize(maximumPoolSize);
         config.setConnectionTimeout(3000);
         HikariDataSource dataSource = new HikariDataSource(config);
-        Flyway.configure().dataSource(dataSource).load().migrate();
-        return dataSource;
+        try {
+            PostgresExtensionVerifier.verify(dataSource);
+            Flyway.configure().dataSource(dataSource).load().migrate();
+            return dataSource;
+        } catch (RuntimeException error) {
+            dataSource.close();
+            throw error;
+        }
     }
 
     @Bean

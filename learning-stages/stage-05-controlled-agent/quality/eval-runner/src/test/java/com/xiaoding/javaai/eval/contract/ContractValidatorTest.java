@@ -17,7 +17,7 @@ class ContractValidatorTest {
         ContractValidationReport report = validator.validateRepository(contracts);
 
         assertTrue(report.valid(), () -> String.join(System.lineSeparator(), report.errors()));
-        assertEquals(4, report.validatedOpenApi());
+        assertEquals(2, report.validatedOpenApi());
         assertEquals(2, report.validatedSchemas());
         assertEquals(2, report.positiveFixtures());
         assertEquals(2, report.negativeFixtures());

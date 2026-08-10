@@ -109,6 +109,24 @@ function findPomFiles(relativeDirectory) {
   return results;
 }
 
+function relativeFiles(relativeDirectory) {
+  const root = path.join(projectRoot, relativeDirectory);
+  if (!existsSync(root)) return [];
+
+  const files = [];
+  const stack = [root];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      if (["target", "node_modules"].includes(entry.name)) continue;
+      const absolutePath = path.join(current, entry.name);
+      if (entry.isDirectory()) stack.push(absolutePath);
+      if (entry.isFile()) files.push(path.relative(root, absolutePath));
+    }
+  }
+  return files.sort();
+}
+
 test("root reactor contains only the four Java 21 mainline modules", () => {
   const rootPom = read("pom.xml");
 
@@ -236,6 +254,58 @@ test("learning stages are seven current-code capability slices", () => {
     existsSync(path.join(projectRoot, "learning-stages/stage-07-framework-boundaries/services")),
     false,
   );
+  assert.equal(
+    existsSync(path.join(projectRoot, "learning-stages/stage-04-customer-consultation/apps/customer-web/package.json")),
+    true,
+  );
+});
+
+test("learning-stage contracts and datasets do not reveal future capabilities", () => {
+  assert.deepEqual(relativeFiles("learning-stages/stage-02-model-engineering/contracts"), [
+    "README.md",
+    "openapi/knowledge-service-v1.yaml",
+  ]);
+  assert.deepEqual(relativeFiles("learning-stages/stage-02-model-engineering/datasets"), [
+    "README.md",
+    "model-interaction/golden-set-v1.jsonl",
+    "model-interaction/golden-set-v2.jsonl",
+    "security/jwt-boundary-cases-v1.jsonl",
+  ]);
+  assert.deepEqual(relativeFiles("learning-stages/stage-03-enterprise-rag/contracts"), [
+    "README.md",
+    "openapi/knowledge-service-v1.yaml",
+  ]);
+  assert.deepEqual(relativeFiles("learning-stages/stage-03-enterprise-rag/datasets"), [
+    "README.md",
+    "knowledge/finance-private-v1.md",
+    "knowledge/refund-policy-chunking-v1.md",
+    "retrieval/golden-set-v1.jsonl",
+  ]);
+  assert.deepEqual(relativeFiles("learning-stages/stage-04-customer-consultation/contracts"), [
+    "README.md",
+    "fixtures/agent-task-request.invalid.json",
+    "fixtures/agent-task-request.valid.json",
+    "json-schema/agent-task-request-v1.schema.json",
+    "openapi/agent-task-v1.yaml",
+    "openapi/customer-bff-v1.yaml",
+  ]);
+  assert.deepEqual(relativeFiles("learning-stages/stage-04-customer-consultation/datasets"), []);
+  assert.deepEqual(relativeFiles("learning-stages/stage-05-controlled-agent/datasets"), [
+    "README.md",
+    "agent/golden-set-v1.jsonl",
+    "agent/golden-set-v2.jsonl",
+  ]);
+
+  const stageTwoKnowledge = read(
+    "learning-stages/stage-02-model-engineering/contracts/openapi/knowledge-service-v1.yaml",
+  );
+  assert.doesNotMatch(stageTwoKnowledge, /knowledge\/documents|retrieval\/evaluations|index-tasks/);
+
+  const stageFourAgent = read(
+    "learning-stages/stage-04-customer-consultation/contracts/openapi/agent-task-v1.yaml",
+  );
+  assert.match(stageFourAgent, /\/api\/v1\/agent\/tasks:\n\s+post:/);
+  assert.doesNotMatch(stageFourAgent, /\/runs:|\/confirmation:|\/audit:|operationId: getAgentTask/);
 });
 
 test("top-level products and contract directories provide local documentation", () => {
@@ -371,6 +441,9 @@ test("Maven Wrapper is pinned to Maven 3.9.14", () => {
 
 test("public README matches the current service and build boundaries", () => {
   const readme = read("README.md");
+  const labsPom = read("labs/pom.xml");
+  const mcpVersion = tagValue(labsPom, "mcp-java-sdk.version");
+  const a2aVersion = tagValue(labsPom, "a2a-java-sdk.version");
 
   for (const requiredPath of [
     "services/knowledge-service",
@@ -389,10 +462,10 @@ test("public README matches the current service and build boundaries", () => {
   assert.match(readme, /Micrometer/);
   assert.match(readme, /跨平台发布门禁/);
   assert.match(readme, /labs.*与主应用隔离的代码实验/s);
-  assert.match(readme, /MCP Java SDK 2\.0\.0/);
-  assert.match(readme, /A2A Java SDK 1\.1\.0\.Final/);
-  assert.match(readme, /MCP Java SDK 2\.0\.0/);
-  assert.match(readme, /A2A Java SDK 1\.1\.0\.Final/);
+  assert.equal(Boolean(mcpVersion), true);
+  assert.equal(Boolean(a2aVersion), true);
+  assert.equal(readme.includes(`MCP Java SDK ${mcpVersion}`), true);
+  assert.equal(readme.includes(`A2A Java SDK ${a2aVersion}`), true);
   assert.match(readme, /Java 8.*客户端/);
   assert.match(readme, /pgvector/);
   assert.match(readme, /config\/application-default\.example\.yml/);

@@ -38,6 +38,15 @@ public final class BusinessToolCatalog {
         return policies.keySet();
     }
 
+    public Map<String, Set<String>> toolArgumentNames() {
+        Map<String, Set<String>> specifications = new LinkedHashMap<>();
+        policies.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> specifications.put(
+                        entry.getKey(), entry.getValue().allowedArguments()));
+        return Map.copyOf(specifications);
+    }
+
     public PreparedToolCall prepare(AgentDecision.UseTool proposal) {
         ToolPolicy policy = policies.get(proposal.toolName());
         if (policy == null) throw new IllegalArgumentException("unknown tool: " + proposal.toolName());

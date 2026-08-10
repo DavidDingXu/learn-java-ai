@@ -1,5 +1,6 @@
 package com.xiaoding.javaai.eval;
 
+import com.xiaoding.javaai.eval.agent.AgentEvaluationTokens;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -44,5 +45,10 @@ class EvalRunnerBuildTest {
         assertThrows(IllegalArgumentException.class, () -> EvalRunner.requiredCredential(
                 Map.of("bearer-token-file", blankTokenFile.toString()),
                 "bearer-token"));
+    }
+
+    @Test
+    void localAgentEvaluationDoesNotRequireTokenFiles() {
+        assertEquals(AgentEvaluationTokens.none(), EvalRunner.agentTokens(Map.of()));
     }
 }

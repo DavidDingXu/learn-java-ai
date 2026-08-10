@@ -43,7 +43,7 @@ java-ai:
     max-concurrent-runs: 16
     confirmation-ttl: 15m
     allowed-queues: refund-review,tier-2
-    downstream-timeout: 3s
+    downstream-timeout: 35s
     # Knowledge remains a real HTTP boundary. The write Tool is local until a legacy endpoint is available.
     knowledge-tool:
       mode: http

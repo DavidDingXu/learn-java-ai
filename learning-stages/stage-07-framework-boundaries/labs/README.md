@@ -13,29 +13,30 @@
 
 用 IDEA 把 `labs/pom.xml` 作为独立项目打开，再按文章运行对应主类：
 
-- `SpringAiAlibabaLabApplication`：DashScope Provider、检索替换、Graph 或兼容性决策。
-- `LangChain4jLabApplication`：真实 OpenAI 兼容 Provider 下的回答、RAG 或 Tool。
-- `AgentScopeLabApplication`：真实模型驱动的 ReAct Agent 与只读 Tool。
+- `SpringAiAlibabaLabApplication`、`DashScopeRetrievalLabApplication`、`ConfirmationGraphLabApplication`、`FrameworkCompatibilityLabApplication`：分别对应第 40-43 篇。
+- `LangChain4jLabApplication`、`LangChain4jRagLabApplication`、`LangChain4jToolLabApplication`：分别对应第 44-46 篇。
+- `AgentScopeLabApplication`：单 Agent 的真实模型与只读 Tool；`MultiAgentCollaborationApplication`：两个专家并行取证并由第三个 Agent 汇总。
+- `MultiAgentFailureApplication`：无需模型即可观察专家失败后停止汇总、转人工的路径。
 - `McpLabApplication`：本地启动真实 MCP Server，并由官方客户端完成发现和调用。
 - `A2aLabApplication`：本地启动 A2A 服务，并由官方客户端发现 Agent Card、发送任务和读取结果。
 
-需要模型的实验继续读取项目根目录唯一的 `config/application-default.yml`。LangChain4j 与 AgentScope 直接复用其中的 OpenAI 兼容配置；Spring AI Alibaba 的 DashScope 实验在同一文件追加 `lab.dashscope` 与 `lab.mode`。各模块 `src/main/resources` 中的文件只是不可编辑的默认值。
+需要模型的实验继续读取项目根目录唯一的 `config/application-default.yml`。LangChain4j 与 AgentScope 直接复用其中的 OpenAI 兼容配置；Spring AI Alibaba 的在线实验填写模板中预留的 `lab.dashscope`。各模块 `src/main/resources` 中的文件仅保存版本化默认值，不需要修改。
 
 ## 每篇实验实际运行到哪里
 
-| 篇目 | 运行方式 | 真实依赖 | 不能据此声称 |
+| 篇目 | 运行入口 | 读者会看到 | 评估边界 |
 |---|---|---|---|
-| 40 | `SpringAiAlibabaLabApplication/provider` | DashScope Chat API | Provider 已满足公司语料质量和配额 |
-| 41 | `retrieval` 固定 Golden Case | 无外部服务 | 已在线调用 Embedding 或 Rerank |
-| 42 | `ConfirmationGraph` 本地状态图 | 真实 Graph 运行时 | 已接入工单持久化和人工系统 |
-| 43 | 兼容性决策程序 | 当前依赖版本 | 两条技术线可以混入同一 Boot 应用 |
-| 44 | LangChain4j `answer` | 真实 Chat API | 主业务已经迁移到 LangChain4j |
-| 45 | LangChain4j `rag` | 真实 Chat API、受控内存检索 | 已执行 pgvector ACL SQL |
-| 46 | LangChain4j `tool` | 真实 Chat API、本地只读 Tool | 写 Tool 可以绕过确认执行 |
-| 47 | 三种模式加共存策略 | 真实 Chat API | 两套框架必须运行在同一进程 |
-| 48 | AgentScope ReAct | 真实 Chat API、本地只读 Tool | 已实现完整工单 Agent |
-| 49 | `CollaborationPolicy` | 无外部服务 | 多个 Agent 已经协同执行 |
-| 50 | MCP 主类 | 本地真实 MCP Server 与官方客户端 | 远程企业 MCP 已完成鉴权与容量验证 |
-| 51 | A2A 主类 | 本地真实 A2A 服务与官方客户端 | 跨组织 Agent 已完成生产互操作 |
+| 40 | `SpringAiAlibabaLabApplication` | DashScope 回答、Token、耗时、响应 ID | 换真实语料后再判断质量和配额 |
+| 41 | `DashScopeRetrievalLabApplication` | 在线 Embedding/Rerank 排名、Recall、MRR、耗时 | 换目标语料后再决定是否重建索引 |
+| 42 | `ConfirmationGraphLabApplication` | Graph 的直达、暂停和恢复 | 持久化与人工系统仍由业务接入 |
+| 43 | `FrameworkCompatibilityLabApplication` | 依赖线的隔离决策 | 两条框架线保持独立模块 |
+| 44 | `LangChain4jLabApplication` | 真实 Chat API 回答 | 只迁移业务端口，不迁移整个主应用 |
+| 45 | `LangChain4jRagLabApplication` | 真实 Chat API、受控租户语料和引用 | pgvector ACL 仍由主线 RAG 实现 |
+| 46 | `LangChain4jToolLabApplication` | 真实 Chat API、结构化输出和只读 Tool | 写动作继续经过确认边界 |
+| 47 | 三个入口加共存策略 | 同一业务端口的两种适配 | 两套框架无需塞进同一进程 |
+| 48 | `AgentScopeLabApplication` | ReAct Agent 调用获准的只读 Tool | 业务状态与权限仍由应用层掌握 |
+| 49 | `MultiAgentCollaborationApplication` | 两个专家并行取证、第三个 Agent 汇总 | 失败路径由协调器转人工 |
+| 50 | `McpLabApplication` | 本地 MCP Server 与官方客户端互操作 | 远程接入还要补企业鉴权和容量评估 |
+| 51 | `A2aLabApplication` | 本地 A2A 服务发现、任务发送与结果读取 | 跨组织接入还要协商身份与交付语义 |
 
-一次真实调用只能证明当前凭证、模型和样例链路跑通。迁移到公司项目时仍要用自己的语料、权限、配额和目标环境重新评估质量与稳定性。
+这些入口让读者先看到真实行为，再进入代码理解边界。迁移时再用自己的语料、权限、配额和目标环境评估质量与稳定性。

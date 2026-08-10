@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.time.Duration;
 
 public final class DashScopeProviderAdapter {
 
@@ -44,7 +45,9 @@ public final class DashScopeProviderAdapter {
                 List.of(new SystemMessage(requireText(systemInstruction, "systemInstruction")),
                         new UserMessage(requireText(question, "question"))),
                 options);
+        long startedAt = System.nanoTime();
         ChatResponse response = Objects.requireNonNull(chatModel.call(prompt), "chat response must not be null");
+        Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
         Generation generation = Objects.requireNonNull(response.getResult(), "chat response must contain a result");
 
         Map<String, Object> metadata = new LinkedHashMap<>();
@@ -59,8 +62,15 @@ public final class DashScopeProviderAdapter {
         if (finishReason != null && !finishReason.isBlank()) {
             metadata.put("finishReason", finishReason);
         }
-        return new ProviderAnswer(generation.getOutput().getText(),
+        var usage = response.getMetadata() == null ? null : response.getMetadata().getUsage();
+        ProviderUsage providerUsage = usage == null
+                ? ProviderUsage.unavailable()
+                : new ProviderUsage(usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
+        return new ProviderAnswer(
+                generation.getOutput().getText(),
                 responseModel == null || responseModel.isBlank() ? modelName : responseModel,
+                providerUsage,
+                latency,
                 metadata);
     }
 

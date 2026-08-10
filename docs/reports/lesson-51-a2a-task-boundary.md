@@ -11,7 +11,7 @@ Status: VERIFIED_CLIENT_INTEROPERABILITY_AND_LOCAL_TASK_CONTRACT
 - 状态只能单向推进；终态不能回退，交付结果不确定时可先进入 UNKNOWN，再等待可信终态。
 - 只有状态和回执完全一致时，重复终态回调才按幂等处理；冲突终态会作为协议冲突被拒绝。
 - 未知任务 ID 会被拒绝，且不会创建本地状态。
-- A2A Java SDK `1.1.0.Final` discovers a standard Agent Card, validates an allowlisted skill and sends a message over JSON-RPC.
+- A2A Java SDK `1.2.0.Final` discovers a standard Agent Card, validates an allowlisted skill and sends a message over JSON-RPC.
 - 官方客户端把响应映射为带 Artifact 的已完成 A2A Task。
 - AgentScope `A2aTaskCoordinator` 继续承担业务状态边界，SDK 枚举不会作为领域契约持久化。
 

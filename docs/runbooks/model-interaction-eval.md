@@ -34,9 +34,19 @@ retrieval-eval --dataset datasets/retrieval/golden-set-v1.jsonl --base-url http:
 
 Runner 记录实际排名、Embedding 模型、Recall@K、HitRate@K、MRR、重复率和 p95 延迟。任一阈值失败，或一轮结果出现多个 Embedding 模型，进程都会非零退出。
 
-## Agent 评测使用三枚最小权限令牌
+## Agent 评测先走本地固定身份
 
-Agent 评测指向已部署的 Ticket Agent Service，不使用一枚全权测试凭证：
+先启动本地 `TicketAgentServiceApplication`。默认 `java-ai.security.mode=fixed`，所以 Runner 不需要令牌：
+
+```text
+agent-eval --dataset datasets/agent/golden-set-v2.jsonl --base-url http://localhost:8082 --report var/learning-stage-reports/agent-eval
+```
+
+Runner 会创建任务、运行到终态或等待确认状态，再读取审计时间线。它不调用确认接口，因此数据集执行期间出现任何写 Tool 成功审计，都表示副作用边界失守。
+
+## JWT 环境使用三枚最小权限令牌
+
+连接已启用 JWT 的 Ticket Agent Service 时，不使用一枚全权测试凭证：
 
 - 创建令牌：actor 为 `customer-bff`，scope 为 `ticket:task:create`；
 - 运行令牌：actor 为 `ticket-agent-worker`，scope 为 `ticket:task:run`；
@@ -48,7 +58,7 @@ Agent 评测指向已部署的 Ticket Agent Service，不使用一枚全权测�
 agent-eval --dataset datasets/agent/golden-set-v2.jsonl --base-url https://ticket-agent-test.example.com --create-token-file target/eval-secrets/create-token --run-token-file target/eval-secrets/run-token --read-token-file target/eval-secrets/read-token --report var/learning-stage-reports/agent-eval
 ```
 
-Runner 会创建任务、运行到终态或等待确认状态，再读取审计时间线。它不调用确认接口，因此数据集执行期间出现任何写 Tool 成功审计，都表示副作用边界失守。
+三个令牌参数要么一起提供，要么都不提供。这样本地路径保持简单，受保护环境仍能发现 audience、scope 或 actor 配置错误。
 
 ## 连接受保护环境时再提供凭证
 

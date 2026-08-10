@@ -85,7 +85,9 @@ class TicketAgentProviderProtocolFixtureTest {
                 "Resolve customer consultation",
                 Map.of("question", "退款多久到账？"),
                 List.of(),
-                Set.of("QUERY_KNOWLEDGE", "ASSIGN_QUEUE"),
+                Map.of(
+                        "QUERY_KNOWLEDGE", Set.of("question"),
+                        "ASSIGN_QUEUE", Set.of("queueCode")),
                 0));
 
         assertThat(result.decision()).isInstanceOfSatisfying(AgentDecision.UseTool.class, useTool -> {

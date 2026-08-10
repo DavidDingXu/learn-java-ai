@@ -10,6 +10,7 @@ import io.agentscope.core.permission.PermissionRule;
 import io.agentscope.core.tool.Toolkit;
 import io.agentscope.extensions.model.openai.OpenAIChatModel;
 import org.yaml.snakeyaml.Yaml;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
-import java.util.List;
 
 public final class AgentScopeLabApplication {
 
@@ -25,40 +25,48 @@ public final class AgentScopeLabApplication {
     }
 
     public static void main(String[] args) {
-        Properties config = loadConfig();
-        OpenAIChatModel model = OpenAIChatModel.builder()
+        try {
+            Properties config = loadConfig();
+            OpenAIChatModel model = createModel(config);
+            Toolkit toolkit = new Toolkit();
+            toolkit.registerTool(new TicketBusinessTools());
+            PermissionContextState permissions = PermissionContextState.builder()
+                    .mode(PermissionMode.DEFAULT)
+                    .addAllowRule("query_ticket",
+                            new PermissionRule("query_ticket", null, PermissionBehavior.ALLOW, "ticket-policy"))
+                    .build();
+
+            try (ReActAgent agent = ReActAgent.builder()
+                    .name("ticket-reader")
+                    .sysPrompt("你是工单只读助手。必须先调用 query_ticket 获取事实，再用中文回答。")
+                    .model(model)
+                    .toolkit(toolkit)
+                    .permissionContext(permissions)
+                    .maxIters(4)
+                    .build()) {
+                RuntimeContext context = RuntimeContext.builder()
+                        .sessionId("tenant-a:T-100")
+                        .userId("employee-7")
+                        .build();
+                Msg answer = agent.call("查询工单 T-100 当前状态", context).block();
+                if (answer == null) throw new IllegalStateException("AgentScope returned no answer");
+                System.out.println(answer.getTextContent());
+            }
+        } finally {
+            Schedulers.shutdownNow();
+        }
+    }
+
+    static OpenAIChatModel createModel(Properties config) {
+        return OpenAIChatModel.builder()
                 .apiKey(configuredSecret(config, "lab.openai.api-key"))
                 .baseUrl(required(config, "lab.openai.base-url"))
                 .modelName(required(config, "lab.openai.model"))
                 .stream(false)
                 .build();
-        Toolkit toolkit = new Toolkit();
-        toolkit.registerTool(new TicketBusinessTools());
-        PermissionContextState permissions = PermissionContextState.builder()
-                .mode(PermissionMode.DEFAULT)
-                .addAllowRule("query_ticket",
-                        new PermissionRule("query_ticket", null, PermissionBehavior.ALLOW, "ticket-policy"))
-                .build();
-
-        try (ReActAgent agent = ReActAgent.builder()
-                .name("ticket-reader")
-                .sysPrompt("你是工单只读助手。必须先调用 query_ticket 获取事实，再用中文回答。")
-                .model(model)
-                .toolkit(toolkit)
-                .permissionContext(permissions)
-                .maxIters(4)
-                .build()) {
-            RuntimeContext context = RuntimeContext.builder()
-                    .sessionId("tenant-a:T-100")
-                    .userId("employee-7")
-                    .build();
-            Msg answer = agent.call("查询工单 T-100 当前状态", context).block();
-            if (answer == null) throw new IllegalStateException("AgentScope returned no answer");
-            System.out.println(answer.getTextContent());
-        }
     }
 
-    private static Properties loadConfig() {
+    static Properties loadConfig() {
         try (InputStream input = AgentScopeLabApplication.class.getResourceAsStream("/application.properties")) {
             if (input == null) throw new IllegalStateException("application.properties cannot be loaded");
             Properties config = new Properties();
@@ -84,10 +92,11 @@ public final class AgentScopeLabApplication {
     }
 
     private static Path localConfig() {
-        for (Path candidate : List.of(
-                Path.of("config/application-default.yml"),
-                Path.of("../../config/application-default.yml"))) {
+        Path current = Path.of("").toAbsolutePath().normalize();
+        while (current != null) {
+            Path candidate = current.resolve("config/application-default.yml");
             if (Files.isRegularFile(candidate)) return candidate;
+            current = current.getParent();
         }
         return null;
     }
@@ -102,7 +111,7 @@ public final class AgentScopeLabApplication {
         if (value instanceof String text && !text.isBlank()) target.setProperty(targetKey, text);
     }
 
-    private static String configuredSecret(Properties config, String name) {
+    static String configuredSecret(Properties config, String name) {
         String value = required(config, name);
         if (value.startsWith("replace-with-")) {
             throw new IllegalStateException("fill " + name + " in config/application-default.yml first");
@@ -110,7 +119,7 @@ public final class AgentScopeLabApplication {
         return value;
     }
 
-    private static String required(Properties config, String name) {
+    static String required(Properties config, String name) {
         String value = config.getProperty(name);
         if (value == null || value.isBlank()) throw new IllegalStateException("missing config: " + name);
         return value.strip();

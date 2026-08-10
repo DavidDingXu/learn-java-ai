@@ -1,7 +1,5 @@
 # Copy this file to config/application-default.yml and edit the copy.
 # This is the only reader-owned configuration file. It is ignored by Git.
-lab:
-  mode: answer
 
 spring:
   ai:
@@ -25,3 +23,14 @@ java-ai:
       jdbc-url: jdbc:postgresql://localhost:5432/java_ai_knowledge
       username: java_ai_knowledge
       password: replace-with-your-database-password
+
+# Optional: only lessons 40-41 call DashScope directly.
+lab:
+  dashscope:
+    api-key: replace-with-your-dashscope-api-key
+    base-url: https://dashscope.aliyuncs.com
+    chat-model: qwen-plus
+    embedding-model: text-embedding-v4
+    embedding-dimensions: 1024
+    rerank-model: gte-rerank-v2
+    rerank-top-n: 6

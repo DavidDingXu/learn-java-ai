@@ -1,8 +1,0 @@
-{
-  "caseId": "case-1001",
-  "objective": "判断退款工单是否需要转人工复核",
-  "businessContext": {
-    "ticketId": "ticket-456",
-    "paymentStatus": "REFUND_PROCESSING"
-  }
-}

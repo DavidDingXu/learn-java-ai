@@ -10,9 +10,10 @@
 ## 运行入口
 
 1. 使用项目根目录唯一的 `config/application-default.yml`，程序会复用其中的 OpenAI 兼容 API Key、Base URL 和 Chat 模型。
-2. 将 `lab.mode` 设为 `answer`、`rag` 或 `tool`。
-3. 在 IDEA 运行 `LangChain4jLabApplication`。
+2. 读第 44 篇时运行 `LangChain4jLabApplication`，查看 AI Services 适配后的真实回答。
+3. 读第 45 篇时运行 `LangChain4jRagLabApplication`，查看带来源的租户范围回答。
+4. 读第 46 篇时运行 `LangChain4jToolLabApplication`，查看结构化决策和 Tool 调用次数。
 
-`answer` 会打印真实模型回答，`rag` 会打印带来源的租户范围回答，`tool` 会打印结构化决策和 Tool 调用次数。三个模式都走真实 `OpenAiChatModel`，不是固定回答模型。
+三个入口都走真实 `OpenAiChatModel`。RAG 入口使用受控内存语料突出 ACL 和上下文边界，Tool 入口只注册只读查询；它们不是固定回答模型，也不会让读者先理解一套模式开关。
 
-建议再按 `LangChain4jPolicyAnswerAdapter`、`TenantScopedRagAdapter`、`LangChain4jTicketDecisionAdapter`、`FrameworkCoexistencePolicy` 的顺序阅读。这个实验验证端口迁移和错误边界，不代表已经完成性能、成本和生产运维验收。
+运行后再按 `LangChain4jPolicyAnswerAdapter`、`TenantScopedRagAdapter`、`LangChain4jTicketDecisionAdapter`、`FrameworkCoexistencePolicy` 的顺序阅读。这里回答的是业务端口能否平移；性能、成本和运维指标留给目标环境评估。

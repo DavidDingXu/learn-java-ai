@@ -86,8 +86,8 @@ public final class EvalRunner {
         System.out.println("       contract-eval --dataset <jsonl> --prompt-version <id> --environment-id <id> --report <path-prefix>");
         System.out.println("       model-eval --dataset <jsonl> --base-url <url> --mode <LIVE_MODEL|CONTRACT_FIXTURE> [--bearer-token-file <path>] --prompt-version <id> --environment-id <id> --report <path-prefix>");
         System.out.println("       retrieval-eval --dataset <jsonl> --base-url <url> [--bearer-token-file <path>] --top-k <n> --min-recall <ratio> --min-hit-rate <ratio> --min-mrr <ratio> --max-duplicate-rate <ratio> --max-p95-ms <ms> --report <path-prefix>");
-        System.out.println("       agent-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix>");
-        System.out.println("       security-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix>");
+        System.out.println("       agent-eval --dataset <jsonl> --base-url <url> [--create-token-file <path> --run-token-file <path> --read-token-file <path>] --report <path-prefix>");
+        System.out.println("       security-eval --dataset <jsonl> --base-url <url> [--create-token-file <path> --run-token-file <path> --read-token-file <path>] --report <path-prefix>");
     }
 
     private static void runAgentEval(Map<String, String> options) {
@@ -98,10 +98,7 @@ public final class EvalRunner {
                 .evaluate(
                         dataset,
                         URI.create(required(options, "base-url")),
-                        new AgentEvaluationTokens(
-                                requiredCredential(options, "create-token"),
-                                requiredCredential(options, "run-token"),
-                                requiredCredential(options, "read-token")),
+                        agentTokens(options),
                         codeRevision(options));
         Path reportPrefix = Path.of(required(options, "report"));
         new AgentEvaluationReportWriter().write(
@@ -203,7 +200,7 @@ public final class EvalRunner {
     }
 
     private static String codeRevision(Map<String, String> options) {
-        return options.getOrDefault("commit", "local-reader-run");
+        return options.getOrDefault("commit", "workspace");
     }
 
     static String requiredCredential(Map<String, String> options, String name) {
@@ -212,6 +209,13 @@ public final class EvalRunner {
             throw new IllegalArgumentException("missing required option --" + name + "-file");
         }
         return credential;
+    }
+
+    static AgentEvaluationTokens agentTokens(Map<String, String> options) {
+        return new AgentEvaluationTokens(
+                optionalCredential(options, "create-token"),
+                optionalCredential(options, "run-token"),
+                optionalCredential(options, "read-token"));
     }
 
     private static String optionalCredential(Map<String, String> options, String name) {

@@ -10,9 +10,10 @@
 ## 运行入口
 
 1. 使用项目根目录唯一的 `config/application-default.yml`，程序会复用其中的 OpenAI 兼容 API Key、Base URL 和 Chat 模型。
-2. 在 IDEA 运行 `AgentScopeLabApplication`。
-3. 观察模型先调用 `query_ticket`，再根据 Tool 返回的真实工单事实回答。
+2. 读第 48 篇时运行 `AgentScopeLabApplication`，观察模型先调用 `query_ticket`，再根据 Tool 返回的工单事实回答。
+3. 读第 49 篇时运行 `MultiAgentCollaborationApplication`，观察政策 Agent 与工单 Agent 并行取证，再由汇总 Agent 只根据两份结果作答。
+4. 再运行 `MultiAgentFailureApplication`，观察任一专家失败后跳过汇总并进入 `HUMAN_REQUIRED`。
 
-这个入口使用 AgentScope 的 `OpenAIChatModel`、`ReActAgent`、`Toolkit` 和 `PermissionContextState`。`query_ticket` 被允许，写 Tool 没有授权；权限不是通过提示词假设出来的。
+在线入口使用 AgentScope 的 `OpenAIChatModel`、`ReActAgent`、`Toolkit` 和 `PermissionContextState`。政策 Agent 与工单 Agent 拥有彼此隔离的只读 Tool 和权限；协调器负责并发、超时、失败短路和人工接管，模型不掌握这些控制权。
 
-再按 `AgentScopeTicketRuntime`、`CollaborationPolicy`、`EnterpriseMcpRegistry`、`A2aTaskCoordinator` 阅读应用层边界。当前入口证明单 Agent 的真实模型与 Tool 链路，`CollaborationPolicy` 只负责判断何时值得拆成多 Agent，并不冒充已经执行多个远程 Agent。
+再按 `AgentScopeTicketRuntime`、`CollaborationPolicy`、`MultiAgentCoordinator`、`EnterpriseMcpRegistry`、`A2aTaskCoordinator` 阅读应用层边界。两个在线 Agent 读取的是本地演示事实；接入实际系统时，只需要替换各自的 Tool 适配器，不改变协调与失败语义。

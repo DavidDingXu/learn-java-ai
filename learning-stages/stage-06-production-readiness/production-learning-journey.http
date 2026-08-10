@@ -29,13 +29,12 @@ GET {{customerBaseUrl}}/actuator/health
   });
 %}
 
-### 04-prometheus-metrics
+### 04-prometheus-is-not-public
 GET {{ticketBaseUrl}}/actuator/prometheus
 
 > {%
-  client.test("Prometheus output is exposed", function() {
-    client.assert(response.status === 200, "metrics status must be 200");
-    client.assert(response.body.length > 0, "metrics body must not be empty");
+  client.test("Prometheus endpoint is not anonymously exposed", function() {
+    client.assert(response.status === 401, "anonymous metrics request must be rejected");
   });
 %}
 

@@ -1,6 +1,4 @@
 lab:
-  # provider, retrieval, graph or compatibility
-  mode: provider
   dashscope:
     api-key: replace-with-your-dashscope-api-key
     base-url: https://dashscope.aliyuncs.com

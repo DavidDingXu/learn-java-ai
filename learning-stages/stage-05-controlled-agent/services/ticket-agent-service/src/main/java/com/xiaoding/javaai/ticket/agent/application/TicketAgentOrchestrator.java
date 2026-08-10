@@ -170,7 +170,7 @@ public final class TicketAgentOrchestrator implements RunAgentTask {
                             task.request().objective(),
                             task.request().businessContext(),
                             task.observations(),
-                            toolCatalog.toolNames(),
+                            toolCatalog.toolArgumentNames(),
                             step)),
                     "planner returned no result");
         } catch (RuntimeException error) {

@@ -17,10 +17,10 @@ class ContractValidatorTest {
         ContractValidationReport report = validator.validateRepository(contracts);
 
         assertTrue(report.valid(), () -> String.join(System.lineSeparator(), report.errors()));
-        assertEquals(4, report.validatedOpenApi());
-        assertEquals(2, report.validatedSchemas());
-        assertEquals(2, report.positiveFixtures());
-        assertEquals(2, report.negativeFixtures());
+        assertEquals(1, report.validatedOpenApi());
+        assertEquals(0, report.validatedSchemas());
+        assertEquals(0, report.positiveFixtures());
+        assertEquals(0, report.negativeFixtures());
         assertTrue(report.errors().isEmpty());
     }
 }

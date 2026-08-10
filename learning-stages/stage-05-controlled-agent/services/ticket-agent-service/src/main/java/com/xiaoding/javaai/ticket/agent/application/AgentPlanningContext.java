@@ -11,12 +11,15 @@ public record AgentPlanningContext(
         String objective,
         Map<String, String> businessContext,
         List<ToolObservation> observations,
-        Set<String> availableTools,
+        Map<String, Set<String>> availableTools,
         int step
 ) {
     public AgentPlanningContext {
         businessContext = Map.copyOf(businessContext);
         observations = List.copyOf(observations);
-        availableTools = Set.copyOf(availableTools);
+        availableTools = availableTools.entrySet().stream().collect(java.util.stream.Collectors.toUnmodifiableMap(
+                Map.Entry::getKey,
+                entry -> Set.copyOf(entry.getValue())
+        ));
     }
 }

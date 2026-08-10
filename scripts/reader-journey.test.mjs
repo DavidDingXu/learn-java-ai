@@ -45,6 +45,24 @@ function findFile(directory, expectedName) {
   return null;
 }
 
+function sourceSnapshot(directory) {
+  const snapshot = new Map();
+  const stack = [directory];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      if (entry.name === "target") continue;
+      const absolutePath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(absolutePath);
+      } else {
+        snapshot.set(path.relative(directory, absolutePath), readFileSync(absolutePath, "utf8"));
+      }
+    }
+  }
+  return [...snapshot.entries()].sort(([left], [right]) => left.localeCompare(right));
+}
+
 test("reader journey starts applications instead of build or test commands", () => {
   const forbiddenCommand = /(?:\.\/mvnw|\.\\mvnw\.cmd|\bmvn\s|npm\s+test|npm\s+run\s+(?:typecheck|build)|运行测试|执行测试)/i;
   const violations = readerPaths.filter((relativePath) => forbiddenCommand.test(read(relativePath)));
@@ -66,10 +84,11 @@ test("reader journey keeps local model settings in YAML instead of shell variabl
   assert.deepEqual(violations, []);
   const sharedConfig = read("config/application-default.example.yml");
   assert.match(sharedConfig, /api-key:\s*replace-with-your-api-key/);
-  assert.match(sharedConfig, /lab:\s*\n\s+mode:\s*answer/);
+  assert.doesNotMatch(sharedConfig, /\blab:\s*\n\s+mode:/);
   assert.match(sharedConfig, /embedding:\s*openai/);
   assert.match(sharedConfig, /chat:[\s\S]*?model:\s*gpt-4\.1-mini/);
   assert.match(sharedConfig, /embedding:[\s\S]*?model:\s*text-embedding-3-small/);
+  assert.match(sharedConfig, /lab:[\s\S]*?dashscope:[\s\S]*?api-key:\s*replace-with-your-dashscope-api-key/);
   assert.doesNotMatch(sharedConfig, /ollama:/);
 });
 
@@ -111,6 +130,37 @@ test("reader has a continuous observable journey for each runnable stage", () =>
   }
 
   assert.equal(existsSync(path.join(projectRoot, "docs/runbooks/rag-prerequisites.md")), true);
+
+  const productionJourney = read(
+    "learning-stages/stage-06-production-readiness/production-learning-journey.http",
+  );
+  assert.match(productionJourney, /Prometheus endpoint is not anonymously exposed/);
+  assert.match(productionJourney, /response\.status === 401/);
+  assert.doesNotMatch(productionJourney, /metrics status must be 200/);
+
+  const agentJourney = read(
+    "learning-stages/stage-05-controlled-agent/agent-learning-journey.http",
+  );
+  assert.match(agentJourney, /"queueCode": "refund-review"/);
+  assert.match(agentJourney, /response\.body\.confirmation\.boundTaskVersion/);
+  assert.match(agentJourney, /"decision": "APPROVE"/);
+  assert.match(agentJourney, /07-repeat-the-same-confirmation/);
+  assert.match(agentJourney, /response\.body\.duplicate === true/);
+  assert.doesNotMatch(agentJourney, /"decision": "APPROVED"|replace-from-run-response/);
+});
+
+test("learning stage navigation covers lessons 01 through 51 without gaps", () => {
+  const lessonNumbers = [];
+  for (const entry of readdirSync(path.join(projectRoot, "learning-stages"), { withFileTypes: true })) {
+    if (!entry.isDirectory() || !entry.name.startsWith("stage-")) continue;
+    const stageReadme = read(`learning-stages/${entry.name}/README.md`);
+    lessonNumbers.push(...[...stageReadme.matchAll(/^\|\s*(\d{2})\s*\|/gm)].map((match) => match[1]));
+  }
+
+  assert.deepEqual(
+    lessonNumbers.sort(),
+    Array.from({ length: 51 }, (_, index) => String(index + 1).padStart(2, "0")),
+  );
 });
 
 test("all runnable backend modules name their direct IDE entrypoint", () => {
@@ -145,6 +195,8 @@ test("seven learning stages contain real capability slices", () => {
     ["stage-04-customer-consultation", [
       "apps/customer-bff/src/main/java/com/xiaoding/javaai/customer/consultation/application/CustomerConsultationService.java",
       "apps/customer-bff/src/main/java/com/xiaoding/javaai/customer/consultation/domain/ConsultationSession.java",
+      "apps/customer-web/src/api/customer-bff-client.ts",
+      "apps/customer-web/src/features/consultation/ConsultationPage.tsx",
     ]],
     ["stage-05-controlled-agent", [
       "services/ticket-agent-service/src/main/java/com/xiaoding/javaai/ticket/agent/application/TicketAgentOrchestrator.java",
@@ -192,6 +244,16 @@ test("seven learning stages contain real capability slices", () => {
     existsSync(path.join(projectRoot, "learning-stages/stage-07-framework-boundaries/services")),
     false,
   );
+
+  const stageThreeEval = path.join(
+    projectRoot,
+    "learning-stages/stage-03-enterprise-rag/quality/eval-runner/src",
+  );
+  assert.equal(findFile(stageThreeEval, "AgentEvaluator.java"), null);
+  assert.doesNotMatch(
+    read("learning-stages/stage-03-enterprise-rag/quality/eval-runner/src/main/java/com/xiaoding/javaai/eval/EvalRunner.java"),
+    /agent-eval|security-eval|com\.xiaoding\.javaai\.eval\.agent/,
+  );
 });
 
 test("learning snapshots do not reintroduce teaching-only runtime glue", () => {
@@ -216,4 +278,11 @@ test("learning snapshots do not reintroduce teaching-only runtime glue", () => {
       }
     }
   }
+});
+
+test("framework stage mirrors the current lab sources instead of drifting copies", () => {
+  assert.deepEqual(
+    sourceSnapshot(path.join(projectRoot, "learning-stages/stage-07-framework-boundaries/labs")),
+    sourceSnapshot(path.join(projectRoot, "labs")),
+  );
 });

@@ -57,7 +57,10 @@ class TicketAgentLiveModelSmokeIT {
                 "Resolve a customer question about the current refund arrival policy",
                 Map.of("question", "退款审核通过后多久到账？"),
                 List.of(),
-                Set.of("QUERY_KNOWLEDGE", "ASSIGN_QUEUE", "REQUEST_MANUAL_REVIEW"),
+                Map.of(
+                        "QUERY_KNOWLEDGE", Set.of("question"),
+                        "ASSIGN_QUEUE", Set.of("queueCode"),
+                        "REQUEST_MANUAL_REVIEW", Set.of("reasonCode")),
                 0));
 
         assertThat(result.model()).isNotBlank();

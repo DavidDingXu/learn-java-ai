@@ -17,8 +17,6 @@ import java.util.List;
 public final class ContractValidator {
 
     private static final List<String> OPEN_API_FILES = List.of(
-            "openapi/knowledge-service-v1.yaml",
-            "openapi/customer-bff-v1.yaml",
             "openapi/agent-task-v1.yaml",
             "openapi/legacy-tool-v1.yaml"
     );

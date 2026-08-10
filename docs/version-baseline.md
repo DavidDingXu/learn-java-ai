@@ -16,10 +16,12 @@
 | ArchUnit | 1.4.2 | root `pom.xml` |
 | Maven Wrapper | 3.9.14 | `.mvn/wrapper/maven-wrapper.properties` |
 | Spring AI Alibaba BOM | 1.1.2.3 | `labs/pom.xml` |
-| LangChain4j BOM | 1.18.0 | `labs/pom.xml` |
-| AgentScope BOM | 2.0.0 | `labs/pom.xml` |
+| LangChain4j BOM | 1.18.1 | `labs/pom.xml` |
+| AgentScope BOM | 2.0.2 | `labs/pom.xml` |
 | MCP Java SDK | 2.0.0 | `labs/pom.xml` and `labs/protocol-interop-lab/pom.xml` |
-| A2A Java SDK | 1.1.0.Final | `labs/pom.xml` and `labs/protocol-interop-lab/pom.xml` |
+| A2A Java SDK | 1.2.0.Final | `labs/pom.xml` and `labs/protocol-interop-lab/pom.xml` |
+| Tomcat Embed | 11.0.24 | `labs/pom.xml` |
+| SnakeYAML | 2.6 | `labs/pom.xml` |
 | Labs JUnit | 6.0.3 | `labs/pom.xml` |
 | Legacy Java target | 8 | `integrations/jdk8-client/pom.xml` |
 | Legacy JUnit | 5.11.4 | `integrations/jdk8-client/pom.xml` |

@@ -1,105 +1,11 @@
 openapi: 3.1.0
 info:
-  title: Knowledge Service API
+  title: Knowledge Service API - Model Engineering Stage
   version: 1.0.0
-  description: Grounded enterprise knowledge answers. Caller identity comes only from the bearer token.
+  description: Stage 02 exposes only model answers and SSE streaming.
 servers:
   - url: http://localhost:8081
 paths:
-  /api/v1/knowledge/documents/{documentId}/versions:
-    post:
-      operationId: uploadKnowledgeDocumentVersion
-      description: Uploads one UTF-8 Markdown or plain-text document version. Tenant and editor identity come only from the bearer token.
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/DocumentId'
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [metadata, file]
-              properties:
-                metadata:
-                  $ref: '#/components/schemas/UploadDocumentMetadata'
-                file:
-                  type: string
-                  format: binary
-      responses:
-        '201':
-          description: The draft version was stored.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UploadedDocumentResponse'
-        '400':
-          description: Invalid metadata, UTF-8 content or media type.
-        '401':
-          description: Missing or invalid delegated token.
-        '403':
-          description: Authenticated token does not have knowledge:write scope.
-        '409':
-          description: Revision conflict or duplicate content.
-        '413':
-          description: File exceeds the 5 MiB upload limit.
-  /api/v1/knowledge/documents/{documentId}/versions/{versionNumber}/publish:
-    post:
-      operationId: publishKnowledgeDocumentVersion
-      description: Immediately publishes a draft, replaces its read ACL and creates one durable indexing task in the same database transaction. When replacing an indexed version, reads keep using the previous indexed version until the new index is ready.
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/DocumentId'
-        - name: versionNumber
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int32
-            minimum: 1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PublishDocumentRequest'
-      responses:
-        '202':
-          description: The business version is published and its indexing task is pending. The previous indexed version remains searchable until the new index is written and activated.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PublishedDocumentResponse'
-        '400':
-          description: Invalid effective window, ACL or future effectiveFrom.
-        '401':
-          description: Missing or invalid delegated token.
-        '403':
-          description: Authenticated token does not have knowledge:write scope.
-        '404':
-          description: Document does not exist in the token tenant.
-        '409':
-          description: Revision or document state conflict.
-  /internal/v1/knowledge/index-tasks/run-once:
-    post:
-      operationId: runOneKnowledgeIndexTask
-      description: Claims and executes at most one due indexing task. Intended for controlled operations and diagnostics.
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Runs at most one due task for the authenticated tenant. LOST_LEASE means another worker owns the current lease.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IndexTaskRunResponse'
-        '401':
-          description: Missing or invalid delegated token.
-        '403':
-          description: Authenticated token does not have knowledge:index scope.
   /api/v1/knowledge/answers:
     post:
       operationId: answerKnowledgeQuestion
@@ -113,25 +19,21 @@ paths:
               $ref: '#/components/schemas/KnowledgeAnswerRequest'
       responses:
         '200':
-          description: Grounded answer with source citations and model metadata.
+          description: Grounded answer or structured refusal.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/KnowledgeAnswerResponse'
         '400':
-          description: Invalid business input.
-        '401':
-          description: Missing or invalid delegated token.
-        '403':
-          description: Authenticated token does not have knowledge:answer scope.
+          $ref: '#/components/responses/BadRequest'
         '429':
-          description: Model concurrency limit reached.
+          $ref: '#/components/responses/Busy'
         '502':
-          description: Model output is invalid or the Provider rejects the request.
+          $ref: '#/components/responses/InvalidModelOutput'
         '503':
-          description: Model is not configured, rate limited, unavailable, or the circuit is open.
+          $ref: '#/components/responses/ModelUnavailable'
         '504':
-          description: Model call timed out.
+          $ref: '#/components/responses/ModelTimeout'
   /api/v1/knowledge/answers/stream:
     post:
       operationId: streamKnowledgeAnswer
@@ -145,150 +47,55 @@ paths:
               $ref: '#/components/schemas/KnowledgeAnswerRequest'
       responses:
         '200':
-          description: Ordered metadata, delta, heartbeat, citation, completed or error events.
+          description: SSE events named metadata, delta, heartbeat, citation, completed or error.
           content:
             text/event-stream:
               schema:
                 $ref: '#/components/schemas/AnswerStreamEvent'
         '400':
-          description: Invalid business input.
-        '401':
-          description: Missing or invalid delegated token.
-        '403':
-          description: Authenticated token does not have knowledge:answer scope.
-  /internal/v1/knowledge/retrieval/evaluations:
-    post:
-      operationId: evaluateKnowledgeRetrieval
-      description: Internal retrieval contract for versioned Golden Set evaluation. Identity and access scope come only from the bearer token.
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/KnowledgeRetrievalEvaluationRequest'
-      responses:
-        '200':
-          description: Ordered chunk identifiers returned by the configured retrieval plan.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/KnowledgeRetrievalEvaluationResponse'
-        '400':
-          description: Invalid question or TopK.
-        '401':
-          description: Missing or invalid delegated token.
-        '403':
-          description: Authenticated token does not have knowledge:eval scope.
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/Busy'
+        '503':
+          $ref: '#/components/responses/ModelUnavailable'
 components:
-  parameters:
-    DocumentId:
-      name: documentId
-      in: path
-      required: true
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 160
-        pattern: '^[A-Za-z0-9][A-Za-z0-9._-]*$'
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Request validation failed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Busy:
+      description: Model concurrency limit reached.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    InvalidModelOutput:
+      description: Provider response cannot be mapped to a valid business answer.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    ModelUnavailable:
+      description: Model is not configured, rate limited, circuit open or unavailable.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    ModelTimeout:
+      description: Model call exceeded the server timeout.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
   schemas:
-    UploadDocumentMetadata:
-      type: object
-      additionalProperties: false
-      required: [title, expectedRevision]
-      properties:
-        title:
-          type: string
-          minLength: 1
-          maxLength: 500
-        expectedRevision:
-          type: integer
-          format: int64
-          minimum: 0
-    UploadedDocumentResponse:
-      type: object
-      additionalProperties: false
-      required: [documentId, versionNumber, contentHash, revision]
-      properties:
-        documentId:
-          type: string
-        versionNumber:
-          type: integer
-          format: int32
-        contentHash:
-          type: string
-          pattern: '^sha256:[a-f0-9]{64}$'
-        revision:
-          type: integer
-          format: int64
-          minimum: 1
-    PublishDocumentRequest:
-      type: object
-      additionalProperties: false
-      required: [expectedRevision, effectiveFrom, acl]
-      properties:
-        expectedRevision:
-          type: integer
-          format: int64
-          minimum: 0
-        effectiveFrom:
-          type: string
-          format: date-time
-          description: Must not be later than the current service time; future activation requires an external scheduler to call this operation at the effective time.
-        effectiveUntil:
-          type: [string, 'null']
-          format: date-time
-        acl:
-          type: array
-          minItems: 1
-          maxItems: 100
-          items:
-            $ref: '#/components/schemas/DocumentAclGrant'
-    DocumentAclGrant:
-      type: object
-      additionalProperties: false
-      required: [subjectType, subjectId]
-      properties:
-        subjectType:
-          type: string
-          enum: [USER, DEPARTMENT, TENANT]
-        subjectId:
-          type: string
-          minLength: 1
-          maxLength: 160
-    PublishedDocumentResponse:
-      type: object
-      additionalProperties: false
-      required: [documentId, versionNumber, revision, indexTaskId, indexStatus]
-      properties:
-        documentId:
-          type: string
-        versionNumber:
-          type: integer
-          format: int32
-        revision:
-          type: integer
-          format: int64
-        indexTaskId:
-          type: string
-          format: uuid
-        indexStatus:
-          type: string
-          enum: [PENDING]
-    IndexTaskRunResponse:
-      type: object
-      additionalProperties: false
-      required: [result]
-      properties:
-        result:
-          type: string
-          enum: [IDLE, SUCCEEDED, FAILED, LOST_LEASE]
     KnowledgeAnswerRequest:
       type: object
       additionalProperties: false
@@ -307,9 +114,11 @@ components:
         summary:
           type: string
           maxLength: 1000
+          default: ''
         turns:
           type: array
           maxItems: 12
+          default: []
           items:
             $ref: '#/components/schemas/ConversationTurn'
     ConversationTurn:
@@ -327,25 +136,14 @@ components:
     KnowledgeAnswerResponse:
       type: object
       additionalProperties: false
-      required: [answer, citations, refused, refusalReason, model, usage, finishReason, traceId]
+      required: [answer, citations, refused, model, usage, finishReason, traceId]
       properties:
         answer:
           type: string
         citations:
           type: array
           items:
-            type: object
-            additionalProperties: false
-            required: [documentId, version, sectionId, title]
-            properties:
-              documentId:
-                type: string
-              version:
-                type: string
-              sectionId:
-                type: string
-              title:
-                type: string
+            $ref: '#/components/schemas/Citation'
         refused:
           type: boolean
         refusalReason:
@@ -353,53 +151,38 @@ components:
         model:
           type: string
         usage:
-          type: object
-          additionalProperties: false
-          required: [promptTokens, completionTokens, totalTokens]
-          properties:
-            promptTokens:
-              type: integer
-              format: int32
-              minimum: 0
-            completionTokens:
-              type: integer
-              format: int32
-              minimum: 0
-            totalTokens:
-              type: integer
-              format: int32
-              minimum: 0
+          $ref: '#/components/schemas/ModelUsage'
         finishReason:
           type: string
         traceId:
           type: string
-    KnowledgeRetrievalEvaluationRequest:
+    Citation:
       type: object
       additionalProperties: false
-      required: [question, topK]
+      required: [documentId, version, sectionId, title]
       properties:
-        question:
+        documentId:
           type: string
-          minLength: 1
-          maxLength: 2000
-        topK:
+        version:
+          type: string
+        sectionId:
+          type: string
+        title:
+          type: string
+    ModelUsage:
+      type: object
+      additionalProperties: false
+      required: [promptTokens, completionTokens, totalTokens]
+      properties:
+        promptTokens:
           type: integer
-          format: int32
-          minimum: 1
-          maximum: 100
-    KnowledgeRetrievalEvaluationResponse:
-      type: object
-      additionalProperties: false
-      required: [embeddingModel, chunkIds]
-      properties:
-        embeddingModel:
-          type: string
-          minLength: 1
-        chunkIds:
-          type: array
-          items:
-            type: string
-            minLength: 1
+          minimum: 0
+        completionTokens:
+          type: integer
+          minimum: 0
+        totalTokens:
+          type: integer
+          minimum: 0
     AnswerStreamEvent:
       oneOf:
         - $ref: '#/components/schemas/MetadataEvent'
@@ -413,58 +196,70 @@ components:
       additionalProperties: false
       required: [traceId, promptVersion]
       properties:
-        traceId: { type: string }
-        promptVersion: { type: string }
+        traceId:
+          type: string
+        promptVersion:
+          type: string
     DeltaEvent:
       type: object
       additionalProperties: false
       required: [text]
       properties:
-        text: { type: string }
+        text:
+          type: string
     HeartbeatEvent:
       type: object
       additionalProperties: false
       required: [epochMillis]
       properties:
-        epochMillis: { type: integer, format: int64 }
+        epochMillis:
+          type: integer
+          format: int64
     CitationEvent:
       type: object
       additionalProperties: false
       required: [citation]
       properties:
         citation:
-          type: object
-          additionalProperties: false
-          required: [documentId, version, sectionId, title]
-          properties:
-            documentId: { type: string }
-            version: { type: string }
-            sectionId: { type: string }
-            title: { type: string }
+          $ref: '#/components/schemas/Citation'
     CompletedEvent:
       type: object
       additionalProperties: false
-      required: [model, usage, finishReason, ttftMillis, refused, refusalReason]
+      required: [model, usage, finishReason, ttftMillis, refused]
       properties:
-        model: { type: string }
+        model:
+          type: string
         usage:
           $ref: '#/components/schemas/ModelUsage'
-        finishReason: { type: string }
-        ttftMillis: { type: integer, format: int64 }
-        refused: { type: boolean }
-        refusalReason: { type: [string, 'null'] }
+        finishReason:
+          type: string
+        ttftMillis:
+          type: integer
+          format: int64
+          minimum: 0
+        refused:
+          type: boolean
+        refusalReason:
+          type: [string, 'null']
     ErrorEvent:
       type: object
       additionalProperties: false
       required: [code, message]
       properties:
-        code: { type: string }
-        message: { type: string }
-    ModelUsage:
+        code:
+          type: string
+        message:
+          type: string
+    ProblemDetail:
       type: object
-      additionalProperties: false
-      required: [promptTokens, completionTokens, totalTokens]
+      additionalProperties: true
+      required: [status, title, detail]
       properties:
-        promptTokens: { type: integer, format: int32, minimum: 0 }
-        completionTokens: { type: integer, format: int32, minimum: 0 }
-        totalTokens: { type: integer, format: int32, minimum: 0 }
+        status:
+          type: integer
+        title:
+          type: string
+        detail:
+          type: string
+        code:
+          type: string

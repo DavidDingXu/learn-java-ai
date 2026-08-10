@@ -10,8 +10,6 @@ import org.springframework.core.io.FileSystemResource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.util.List;
 import java.util.Properties;
 
 public final class SpringAiAlibabaLabApplication {
@@ -21,17 +19,10 @@ public final class SpringAiAlibabaLabApplication {
 
     public static void main(String[] args) {
         Properties config = loadConfig();
-        switch (required(config, "lab.mode")) {
-            case "provider" -> runProvider(config);
-            case "retrieval" -> runRetrieval(config);
-            case "graph" -> runGraph(config);
-            case "compatibility" -> runCompatibility(config);
-            default -> throw new IllegalArgumentException(
-                    "lab.mode must be provider, retrieval, graph or compatibility");
-        }
+        runProvider(config);
     }
 
-    private static void runProvider(Properties config) {
+    static void runProvider(Properties config) {
         String apiKey = configuredSecret(config, "lab.dashscope.api-key");
         String model = required(config, "lab.dashscope.chat-model");
         DashScopeApi api = DashScopeApi.builder()
@@ -45,45 +36,12 @@ public final class SpringAiAlibabaLabApplication {
                 .build();
         ProviderAnswer answer = new DashScopeProviderAdapter(chatModel, model, 0.1, 500)
                 .answer("你是企业政策助手，没有依据时拒答。", "退款审核通过后通常多久到账？");
-        System.out.printf("model=%s answer=%s metadata=%s%n",
-                answer.model(), answer.text(), answer.providerMetadata());
+        System.out.printf("model=%s usage=%s latencyMs=%d responseId=%s answer=%s%n",
+                answer.model(), answer.usage(), answer.latency().toMillis(),
+                answer.providerMetadata().getOrDefault("responseId", "unavailable"), answer.text());
     }
 
-    private static void runRetrieval(Properties config) {
-        DomesticRetrievalProfile profile = new DomesticRetrievalProfile(
-                required(config, "lab.dashscope.embedding-model"),
-                Integer.parseInt(required(config, "lab.dashscope.embedding-dimensions")),
-                required(config, "lab.dashscope.rerank-model"),
-                Integer.parseInt(required(config, "lab.dashscope.rerank-top-n")));
-        RetrievalReplacementExperiment experiment = new RetrievalReplacementExperiment(profile);
-        RetrievalExperimentReport report = experiment.evaluate(List.of(
-                new RetrievalGoldenCase("refund-1", List.of("refund-policy"),
-                        List.of("refund-policy", "shipping-policy"), Duration.ofMillis(85)),
-                new RetrievalGoldenCase("invoice-1", List.of("invoice-policy"),
-                        List.of("shipping-policy", "invoice-policy"), Duration.ofMillis(120))));
-        System.out.printf("embedding=%s rerank=%s recall=%.3f mrr=%.3f p95=%s%n",
-                experiment.embeddingOptions().getModel(), experiment.rerankOptions().getModel(),
-                report.recallAtK(), report.mrr(), report.p95Latency());
-    }
-
-    private static void runGraph(Properties config) {
-        RiskLevel risk = RiskLevel.valueOf(required(config, "lab.graph.risk"));
-        ApprovalDecision approval = ApprovalDecision.valueOf(required(config, "lab.graph.approval"));
-        ConfirmationResult result = new ConfirmationGraph().run(risk, approval);
-        System.out.printf("status=%s visited=%s%n", result.status(), result.visitedNodes());
-    }
-
-    private static void runCompatibility(Properties config) {
-        FrameworkCompatibilityDecision decision = FrameworkCompatibilityDecision.compare(
-                new FrameworkBaseline("Spring AI", "2.0.0", "4.1.0"),
-                new FrameworkBaseline("Spring AI Alibaba",
-                        required(config, "lab.compatibility.candidate-version"),
-                        required(config, "lab.compatibility.candidate-boot-line")));
-        System.out.printf("inPlace=%s boundary=%s reasons=%s%n",
-                decision.inPlaceCompatible(), decision.boundary(), decision.reasons());
-    }
-
-    private static Properties loadConfig() {
+    static Properties loadConfig() {
         YamlPropertiesFactoryBean yaml = new YamlPropertiesFactoryBean();
         yaml.setResources(new ClassPathResource("application.yml"));
         Properties properties = yaml.getObject();
@@ -99,23 +57,24 @@ public final class SpringAiAlibabaLabApplication {
     }
 
     private static Path localConfig() {
-        for (Path candidate : List.of(
-                Path.of("config/application-default.yml"),
-                Path.of("../../config/application-default.yml"))) {
+        Path current = Path.of("").toAbsolutePath().normalize();
+        while (current != null) {
+            Path candidate = current.resolve("config/application-default.yml");
             if (Files.isRegularFile(candidate)) return candidate;
+            current = current.getParent();
         }
         return null;
     }
 
-    private static String configuredSecret(Properties config, String name) {
+    static String configuredSecret(Properties config, String name) {
         String value = required(config, name);
         if (value.startsWith("replace-with-")) {
-            throw new IllegalStateException("fill " + name + " in application.yml first");
+            throw new IllegalStateException("fill " + name + " in config/application-default.yml first");
         }
         return value;
     }
 
-    private static String required(Properties config, String name) {
+    static String required(Properties config, String name) {
         String value = config.getProperty(name);
         if (value == null || value.isBlank()) throw new IllegalStateException("missing config: " + name);
         return value.strip();

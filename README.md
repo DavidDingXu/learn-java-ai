@@ -159,7 +159,7 @@ java-ai:
 ## 技术基线
 
 - 主 reactor：Java 21、Spring Boot 4.1.0、Spring AI 2.0.0。
-- labs：Spring AI Alibaba 1.1.2.3、LangChain4j 1.18.0、AgentScope 2.0.0、MCP Java SDK 2.0.0、A2A Java SDK 1.1.0.Final。
+- labs：Spring AI Alibaba 1.1.2.3、LangChain4j 1.18.1、AgentScope 2.0.2、MCP Java SDK 2.0.0、A2A Java SDK 1.2.0.Final。
 - Java 8 客户端：独立 Java 8 模块。
 
 依赖版本与选择边界见[版本基线](docs/version-baseline.md)。

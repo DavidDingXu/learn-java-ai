@@ -56,6 +56,27 @@ class AgentTaskHttpEvaluationClientTest {
         ), calls);
     }
 
+    @Test
+    void omits_authorization_for_the_local_fixed_identity_service() {
+        URI baseUrl = URI.create("http://127.0.0.1:" + server.getAddress().getPort());
+
+        new AgentTaskHttpEvaluationClient().evaluate(
+                baseUrl,
+                AgentEvaluationTokens.none(),
+                new AgentEvalCase(
+                        "assign", "assign ticket", Map.of("queueCode", "refund-review"),
+                        "WAITING_CONFIRMATION", "ASSIGN_QUEUE", "MEDIUM", "TICKET_OPERATOR",
+                        Map.of("queueCode", "refund-review"),
+                        List.of("TOOL_EXECUTION_SUCCEEDED"), List.of("customerPhone")),
+                "agent-eval:assign:commit");
+
+        assertEquals(List.of(
+                "POST /api/v1/agent/tasks null",
+                "POST /api/v1/agent/tasks/task-100/runs null",
+                "GET /api/v1/agent/tasks/task-100/audit null"
+        ), calls);
+    }
+
     private void handle(HttpExchange exchange) throws java.io.IOException {
         String authorization = exchange.getRequestHeaders().getFirst("Authorization");
         calls.add(exchange.getRequestMethod() + " " + exchange.getRequestURI().getPath() + " " + authorization);

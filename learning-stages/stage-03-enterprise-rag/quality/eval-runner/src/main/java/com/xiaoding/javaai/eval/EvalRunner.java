@@ -1,12 +1,5 @@
 package com.xiaoding.javaai.eval;
 
-import com.xiaoding.javaai.eval.agent.AgentEvalDataset;
-import com.xiaoding.javaai.eval.agent.AgentEvalDatasetLoader;
-import com.xiaoding.javaai.eval.agent.AgentEvaluationReport;
-import com.xiaoding.javaai.eval.agent.AgentEvaluationReportWriter;
-import com.xiaoding.javaai.eval.agent.AgentEvaluationTokens;
-import com.xiaoding.javaai.eval.agent.AgentEvaluator;
-import com.xiaoding.javaai.eval.agent.AgentTaskHttpEvaluationClient;
 import com.xiaoding.javaai.eval.contract.ContractValidationReport;
 import com.xiaoding.javaai.eval.contract.ContractValidator;
 import com.xiaoding.javaai.eval.model.ContractFixtureServer;
@@ -77,43 +70,11 @@ public final class EvalRunner {
             runRetrievalEval(parseOptions(args, 1));
             return;
         }
-        if (args.length > 0 && ("agent-eval".equals(args[0]) || "security-eval".equals(args[0]))) {
-            runAgentEval(parseOptions(args, 1));
-            return;
-        }
         System.out.println("eval-runner " + version());
         System.out.println("usage: contract-validate <contracts-directory>");
         System.out.println("       contract-eval --dataset <jsonl> --prompt-version <id> --environment-id <id> --report <path-prefix>");
         System.out.println("       model-eval --dataset <jsonl> --base-url <url> --mode <LIVE_MODEL|CONTRACT_FIXTURE> [--bearer-token-file <path>] --prompt-version <id> --environment-id <id> --report <path-prefix>");
         System.out.println("       retrieval-eval --dataset <jsonl> --base-url <url> [--bearer-token-file <path>] --top-k <n> --min-recall <ratio> --min-hit-rate <ratio> --min-mrr <ratio> --max-duplicate-rate <ratio> --max-p95-ms <ms> --report <path-prefix>");
-        System.out.println("       agent-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix>");
-        System.out.println("       security-eval --dataset <jsonl> --base-url <url> --create-token-file <path> --run-token-file <path> --read-token-file <path> --report <path-prefix>");
-    }
-
-    private static void runAgentEval(Map<String, String> options) {
-        AgentEvalDataset dataset = new AgentEvalDatasetLoader()
-                .load(Path.of(required(options, "dataset")));
-        AgentEvaluationReport report = new AgentEvaluator(
-                new AgentTaskHttpEvaluationClient(), Clock.systemUTC())
-                .evaluate(
-                        dataset,
-                        URI.create(required(options, "base-url")),
-                        new AgentEvaluationTokens(
-                                requiredCredential(options, "create-token"),
-                                requiredCredential(options, "run-token"),
-                                requiredCredential(options, "read-token")),
-                        codeRevision(options));
-        Path reportPrefix = Path.of(required(options, "report"));
-        new AgentEvaluationReportWriter().write(
-                report,
-                Path.of(reportPrefix + ".json"),
-                Path.of(reportPrefix + ".md"));
-        System.out.printf(
-                "dataset=%s passed=%d failed=%d result=%s%n",
-                report.datasetVersion(), report.passedCount(), report.failedCount(), report.passed());
-        if (!report.passed()) {
-            throw new IllegalStateException("Agent evaluation failed");
-        }
     }
 
     private static void runRetrievalEval(Map<String, String> options) {
@@ -203,7 +164,7 @@ public final class EvalRunner {
     }
 
     private static String codeRevision(Map<String, String> options) {
-        return options.getOrDefault("commit", "local-reader-run");
+        return options.getOrDefault("commit", "workspace");
     }
 
     static String requiredCredential(Map<String, String> options, String name) {

@@ -17,23 +17,9 @@ import java.util.List;
 public final class ContractValidator {
 
     private static final List<String> OPEN_API_FILES = List.of(
-            "openapi/knowledge-service-v1.yaml",
-            "openapi/customer-bff-v1.yaml",
-            "openapi/agent-task-v1.yaml",
-            "openapi/legacy-tool-v1.yaml"
+            "openapi/knowledge-service-v1.yaml"
     );
-    private static final List<SchemaFixture> SCHEMA_FIXTURES = List.of(
-            new SchemaFixture(
-                    "json-schema/agent-task-request-v1.schema.json",
-                    "fixtures/agent-task-request.valid.json",
-                    "fixtures/agent-task-request.invalid.json"
-            ),
-            new SchemaFixture(
-                    "json-schema/tool-action-command-v1.schema.json",
-                    "fixtures/tool-action-command.valid.json",
-                    "fixtures/tool-action-command.invalid.json"
-            )
-    );
+    private static final List<SchemaFixture> SCHEMA_FIXTURES = List.of();
 
     public ContractValidationReport validateRepository(Path contractsRoot) {
         List<String> errors = new ArrayList<>();

@@ -41,16 +41,14 @@ public final class AgentTaskHttpEvaluationClient implements AgentEvaluationClien
         String root = trimTrailingSlash(baseUrl.toString());
         try {
             String taskId = createTask(root, tokens.createToken(), evalCase, idempotencyKey);
-            JsonNode task = sendJson(HttpRequest.newBuilder(URI.create(
-                            root + "/api/v1/agent/tasks/" + requireSafeId(taskId) + "/runs"))
-                    .timeout(Duration.ofSeconds(90))
-                    .header("Authorization", "Bearer " + tokens.runToken())
+            HttpRequest.Builder runRequest = authorized(HttpRequest.newBuilder(URI.create(
+                    root + "/api/v1/agent/tasks/" + requireSafeId(taskId) + "/runs")), tokens.runToken());
+            JsonNode task = sendJson(runRequest.timeout(Duration.ofSeconds(90))
                     .POST(HttpRequest.BodyPublishers.noBody())
                     .build(), "run agent task");
-            JsonNode audit = sendJson(HttpRequest.newBuilder(URI.create(
-                            root + "/api/v1/agent/tasks/" + requireSafeId(taskId) + "/audit"))
-                    .timeout(Duration.ofSeconds(15))
-                    .header("Authorization", "Bearer " + tokens.readToken())
+            HttpRequest.Builder auditRequest = authorized(HttpRequest.newBuilder(URI.create(
+                    root + "/api/v1/agent/tasks/" + requireSafeId(taskId) + "/audit")), tokens.readToken());
+            JsonNode audit = sendJson(auditRequest.timeout(Duration.ofSeconds(15))
                     .GET()
                     .build(), "read agent audit");
             List<String> eventTypes = new ArrayList<>();
@@ -90,14 +88,18 @@ public final class AgentTaskHttpEvaluationClient implements AgentEvaluationClien
                 "caseId", evalCase.id(),
                 "objective", evalCase.objective(),
                 "businessContext", evalCase.businessContext()));
-        JsonNode receipt = sendJson(HttpRequest.newBuilder(URI.create(root + "/api/v1/agent/tasks"))
-                .timeout(Duration.ofSeconds(15))
-                .header("Authorization", "Bearer " + token)
+        HttpRequest.Builder createRequest = authorized(
+                HttpRequest.newBuilder(URI.create(root + "/api/v1/agent/tasks")), token);
+        JsonNode receipt = sendJson(createRequest.timeout(Duration.ofSeconds(15))
                 .header("Idempotency-Key", idempotencyKey)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build(), "create agent task");
         return requiredField(receipt, "taskId");
+    }
+
+    private static HttpRequest.Builder authorized(HttpRequest.Builder request, String token) {
+        return token == null ? request : request.header("Authorization", "Bearer " + token);
     }
 
     private JsonNode sendJson(HttpRequest request, String operation) throws Exception {

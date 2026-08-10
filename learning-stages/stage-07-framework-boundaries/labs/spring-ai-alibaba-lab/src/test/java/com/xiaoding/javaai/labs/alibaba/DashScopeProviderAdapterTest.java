@@ -3,6 +3,8 @@ package com.xiaoding.javaai.labs.alibaba;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -12,6 +14,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DashScopeProviderAdapterTest {
 
@@ -23,8 +26,11 @@ class DashScopeProviderAdapterTest {
         ProviderAnswer answer = adapter.answer("你只能依据给定制度回答。", "退款多久到账？");
 
         assertEquals("退款将在三个工作日内原路退回。", answer.text());
-        assertEquals("qwen-plus", answer.model());
+        assertEquals("qwen-plus-2026-08", answer.model());
+        assertEquals(new ProviderUsage(12, 5, 17), answer.usage());
+        assertTrue(answer.latency().toNanos() >= 0);
         assertFalse(answer.providerMetadata().containsKey("apiKey"));
+        assertEquals("response-1", answer.providerMetadata().get("responseId"));
         DashScopeChatOptions options = (DashScopeChatOptions) model.prompt.getOptions();
         assertEquals("qwen-plus", options.getModel());
         assertEquals(0.2, options.getTemperature());
@@ -40,7 +46,14 @@ class DashScopeProviderAdapterTest {
         @Override
         public ChatResponse call(Prompt prompt) {
             this.prompt = prompt;
-            return new ChatResponse(List.of(new Generation(new AssistantMessage("退款将在三个工作日内原路退回。"))));
+            ChatResponseMetadata metadata = ChatResponseMetadata.builder()
+                    .id("response-1")
+                    .model("qwen-plus-2026-08")
+                    .usage(new DefaultUsage(12, 5, 17))
+                    .build();
+            return new ChatResponse(
+                    List.of(new Generation(new AssistantMessage("退款将在三个工作日内原路退回。"))),
+                    metadata);
         }
     }
 }

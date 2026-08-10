@@ -12,14 +12,16 @@ GET {{ticketBaseUrl}}/actuator/health
 ### 02-create-task
 POST {{ticketBaseUrl}}/api/v1/agent/tasks
 Content-Type: application/json
-Idempotency-Key: reader-agent-task-001
+Idempotency-Key: reader-agent-task-{{$uuid}}
 
 {
   "caseId": "CASE-READER-001",
   "objective": "查询退款到账政策，并把需要人工处理的工单分配到 refund-review 队列",
   "businessContext": {
     "ticketId": "T-100",
-    "customerQuestion": "退款审核通过后通常多久到账？"
+    "customerQuestion": "退款审核通过后通常多久到账？",
+    "question": "退款审核通过后通常多久到账？",
+    "queueCode": "refund-review"
   }
 }
 
@@ -41,10 +43,11 @@ POST {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}/runs
     client.assert([200, 503].includes(response.status), "run must return a result or a stable unavailable response");
     if (response.status === 200) {
       client.assert(states.includes(response.body.status), "task must not stay ACCEPTED or RUNNING");
-      client.global.set("taskVersion", response.body.version);
-      if (response.body.confirmation) {
-        client.global.set("confirmationId", response.body.confirmation.confirmationId);
-      }
+      client.assert(response.body.status === "WAITING_CONFIRMATION", "the complete case must pause before the write tool");
+      client.assert(response.body.confirmation.toolName === "ASSIGN_QUEUE", "the proposed write tool must be ASSIGN_QUEUE");
+      client.assert(response.body.confirmation.arguments.queueCode === "refund-review", "the queue must come from business context");
+      client.global.set("confirmationId", response.body.confirmation.confirmationId);
+      client.global.set("confirmationVersion", response.body.confirmation.boundTaskVersion);
     } else {
       client.assert(response.body.code === "AGENT_RUN_UNAVAILABLE", "failure must use the stable public error code");
     }
@@ -73,20 +76,15 @@ GET {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}/audit
   });
 %}
 
-# When request 03 returns WAITING_CONFIRMATION, copy confirmationId and version from its response
-# into the two variables below, then run request 06. Approval is intentionally explicit.
-@confirmationId = replace-from-run-response
-@confirmationVersion = 1
-
 ### 06-confirm-write-action
 PUT {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}/confirmation
 Content-Type: application/json
-Idempotency-Key: reader-confirmation-001
+Idempotency-Key: reader-confirmation-{{taskId}}
 
 {
   "confirmationId": "{{confirmationId}}",
   "expectedTaskVersion": {{confirmationVersion}},
-  "decision": "APPROVED",
+  "decision": "APPROVE",
   "reason": "人工核对工单和目标队列后批准"
 }
 
@@ -94,5 +92,43 @@ Idempotency-Key: reader-confirmation-001
   client.test("A confirmation produces a durable receipt", function() {
     client.assert(response.status === 200, "confirmation status must be 200");
     client.assert(response.body.taskId === client.global.get("taskId"), "receipt must bind the task");
+    client.assert(response.body.state === "COMPLETED", "the approved local write must complete");
+    client.assert(response.body.toolStatus === "SUCCEEDED", "the tool receipt must be explicit");
+    client.assert(response.body.duplicate === false, "the first decision must not be a duplicate");
+    client.global.set("actionId", response.body.actionId);
+  });
+%}
+
+### 07-repeat-the-same-confirmation
+PUT {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}/confirmation
+Content-Type: application/json
+Idempotency-Key: reader-confirmation-{{taskId}}
+
+{
+  "confirmationId": "{{confirmationId}}",
+  "expectedTaskVersion": {{confirmationVersion}},
+  "decision": "APPROVE",
+  "reason": "人工核对工单和目标队列后批准"
+}
+
+> {%
+  client.test("The same decision returns the original receipt", function() {
+    client.assert(response.status === 200, "duplicate confirmation status must be 200");
+    client.assert(response.body.actionId === client.global.get("actionId"), "duplicate confirmation must keep the action id");
+    client.assert(response.body.duplicate === true, "the repeated decision must be marked duplicate");
+  });
+%}
+
+### 08-read-final-audit
+GET {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}/audit
+
+> {%
+  client.test("The final audit contains read, confirmation and write events", function() {
+    client.assert(response.status === 200, "audit status must be 200");
+    const eventTypes = response.body.map(event => event.eventType);
+    client.assert(eventTypes.includes("READ_TOOL_SUCCEEDED"), "knowledge lookup must be audited");
+    client.assert(eventTypes.includes("CONFIRMATION_REQUESTED"), "confirmation request must be audited");
+    client.assert(eventTypes.includes("CONFIRMATION_APPROVED"), "approval must be audited");
+    client.assert(eventTypes.includes("TOOL_EXECUTION_SUCCEEDED"), "write completion must be audited");
   });
 %}

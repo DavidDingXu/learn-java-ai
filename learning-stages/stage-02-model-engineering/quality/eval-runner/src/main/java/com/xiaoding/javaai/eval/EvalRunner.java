@@ -114,7 +114,7 @@ public final class EvalRunner {
     }
 
     private static String codeRevision(Map<String, String> options) {
-        return options.getOrDefault("commit", "local-reader-run");
+        return options.getOrDefault("commit", "workspace");
     }
 
     static String requiredCredential(Map<String, String> options, String name) {

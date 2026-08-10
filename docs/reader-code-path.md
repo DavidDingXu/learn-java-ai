@@ -47,7 +47,7 @@
 4. `KnowledgeAnswerStreamClient`：知识服务 SSE 边界；
 5. `TicketTaskClient`：工单升级边界。
 
-前端只需要看 `apps/customer-web/src` 中的页面状态与 API 适配，不要从前端反推租户和权限规则。
+前端从 `learning-stages/stage-04-customer-consultation/apps/customer-web/src` 阅读页面状态与 API 适配，不要从前端反推租户和权限规则。
 
 ## 26-34：受控工单 Agent
 
@@ -78,9 +78,12 @@
 
 | 篇目 | 运行入口 | 重点代码 |
 |---|---|---|
-| 40-43 | `SpringAiAlibabaLabApplication` | `DashScopeProviderAdapter`、`RetrievalReplacementExperiment`、`ConfirmationGraph`、`FrameworkCompatibilityDecision` |
-| 44-47 | `LangChain4jLabApplication` | `LangChain4jPolicyAnswerAdapter`、`TenantScopedRagAdapter`、`LangChain4jTicketDecisionAdapter`、`FrameworkCoexistencePolicy` |
-| 48-49 | `AgentScopeLabApplication` | `AgentScopeTicketRuntime`、`CollaborationPolicy` |
+| 40 | `SpringAiAlibabaLabApplication` | `DashScopeProviderAdapter` |
+| 41 | `DashScopeRetrievalLabApplication` | `OnlineRetrievalReplacementExperiment` |
+| 42-43 | `ConfirmationGraphLabApplication`、`FrameworkCompatibilityLabApplication` | `ConfirmationGraph`、`FrameworkCompatibilityDecision` |
+| 44-47 | `LangChain4jLabApplication`、`LangChain4jRagLabApplication`、`LangChain4jToolLabApplication` | `LangChain4jPolicyAnswerAdapter`、`TenantScopedRagAdapter`、`LangChain4jTicketDecisionAdapter`、`FrameworkCoexistencePolicy` |
+| 48 | `AgentScopeLabApplication` | `AgentScopeTicketRuntime` |
+| 49 | `MultiAgentCollaborationApplication` | `CollaborationPolicy`、`MultiAgentCoordinator` |
 | 50 | `McpLabApplication` | `EnterpriseMcpClient` |
 | 51 | `A2aLabApplication` | `EnterpriseA2aClient`、`A2aTaskCoordinator` |
 

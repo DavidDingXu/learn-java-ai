@@ -2,13 +2,26 @@ package com.xiaoding.javaai.eval.agent;
 
 public record AgentEvaluationTokens(String createToken, String runToken, String readToken) {
     public AgentEvaluationTokens {
-        createToken = requireText(createToken, "createToken");
-        runToken = requireText(runToken, "runToken");
-        readToken = requireText(readToken, "readToken");
+        createToken = normalize(createToken);
+        runToken = normalize(runToken);
+        readToken = normalize(readToken);
+        int configured = (createToken == null ? 0 : 1)
+                + (runToken == null ? 0 : 1)
+                + (readToken == null ? 0 : 1);
+        if (configured != 0 && configured != 3) {
+            throw new IllegalArgumentException("configure all three agent tokens or none of them");
+        }
     }
 
-    private static String requireText(String value, String name) {
-        if (value == null || value.isBlank()) throw new IllegalArgumentException(name + " must not be blank");
-        return value.trim();
+    public static AgentEvaluationTokens none() {
+        return new AgentEvaluationTokens(null, null, null);
+    }
+
+    public boolean configured() {
+        return createToken != null;
+    }
+
+    private static String normalize(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }
