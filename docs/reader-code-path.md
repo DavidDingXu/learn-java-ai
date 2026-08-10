@@ -6,7 +6,7 @@
 
 不要把仓库根目录和七个阶段同时作为一个 IDEA 项目全局搜索。每到一个阶段，新开窗口并导入该阶段的根 `pom.xml`，`Find in Files` 和 `Search Everywhere` 使用 `Project Files` 范围。这样只会索引当前阶段自己的增量，以及它明确复用的前序模块。
 
-文章顶部的“本篇代码范围”是本次阅读白名单。先从列出的 Controller、应用服务或 Runner 进入；没有列出的包暂时不读。需要对照最终实现时，再单独打开仓库根项目。七个阶段用于学习增量，根目录模块是部署和继续开发的完整实现，两者不要在同一个搜索结果里混读。
+每个阶段 README 都列出了本阶段新增能力和启动入口。先从对应的 `Application`、阶段 HTTP 文件和下文列出的 Controller、应用服务或 Runner 进入；其余包暂时不读。需要对照最终实现时，再单独打开仓库根项目。七个阶段用于学习增量，根目录模块是部署和继续开发的完整实现，两者不要在同一个搜索结果里混读。
 
 所有阶段共享项目根目录唯一的 `config/application-default.yml`。阶段目录中的 `config/application-base.yml` 只是不可编辑的公共默认值，不复制 API Key，也不为本地、远程各建一套配置。
 
@@ -74,13 +74,14 @@
 
 ## 40-51：框架与协议边界实验
 
-`labs` 不是一组需要逐个启动的应用。每篇只看对应入口：
+`labs` 不是一个需要同时启动所有模块的组合应用。读到一组实验时，只运行对应的 `main`，再查看它调用的适配器：
 
-| 篇目 | 阅读入口 |
-|---|---|
-| 40-43 | `DashScopeProviderAdapter`、`RetrievalReplacementExperiment`、`ConfirmationGraph`、`FrameworkCompatibilityDecision` |
-| 44-47 | `LangChain4jPolicyAnswerAdapter`、`TenantScopedRagAdapter`、`LangChain4jTicketDecisionAdapter`、`FrameworkCoexistencePolicy` |
-| 48-49 | `AgentScopeTicketRuntime`、`CollaborationPolicy` |
-| 50-51 | `EnterpriseMcpClient`、`EnterpriseA2aClient`、`A2aTaskCoordinator` |
+| 篇目 | 运行入口 | 重点代码 |
+|---|---|---|
+| 40-43 | `SpringAiAlibabaLabApplication` | `DashScopeProviderAdapter`、`RetrievalReplacementExperiment`、`ConfirmationGraph`、`FrameworkCompatibilityDecision` |
+| 44-47 | `LangChain4jLabApplication` | `LangChain4jPolicyAnswerAdapter`、`TenantScopedRagAdapter`、`LangChain4jTicketDecisionAdapter`、`FrameworkCoexistencePolicy` |
+| 48-49 | `AgentScopeLabApplication` | `AgentScopeTicketRuntime`、`CollaborationPolicy` |
+| 50 | `McpLabApplication` | `EnterpriseMcpClient` |
+| 51 | `A2aLabApplication` | `EnterpriseA2aClient`、`A2aTaskCoordinator` |
 
 这些入口回答的是“适配边界是否成立”，不是“一个新的完整业务系统已经跑通”。主应用仍由前三个 `Application` 类启动。

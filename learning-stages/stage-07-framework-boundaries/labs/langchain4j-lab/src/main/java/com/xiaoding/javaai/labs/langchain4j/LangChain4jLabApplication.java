@@ -70,9 +70,14 @@ public final class LangChain4jLabApplication {
     private static void applyLocalOverride(Properties config) throws IOException {
         Path localConfig = localConfig();
         if (localConfig == null) return;
+        applyLocalOverride(config, localConfig);
+    }
+
+    static void applyLocalOverride(Properties config, Path localConfig) throws IOException {
         try (InputStream input = Files.newInputStream(localConfig)) {
             Object loaded = new Yaml().load(input);
             if (!(loaded instanceof Map<?, ?> root)) return;
+            copyText(nested(root, "lab"), "mode", config, "lab.mode");
             Map<?, ?> openai = nested(nested(nested(root, "spring"), "ai"), "openai");
             copyText(openai, "api-key", config, "lab.openai.api-key");
             copyText(openai, "base-url", config, "lab.openai.base-url");
@@ -102,7 +107,7 @@ public final class LangChain4jLabApplication {
     private static String configuredSecret(Properties config, String name) {
         String value = required(config, name);
         if (value.startsWith("replace-with-")) {
-            throw new IllegalStateException("fill " + name + " in application.properties first");
+            throw new IllegalStateException("fill " + name + " in config/application-default.yml first");
         }
         return value;
     }

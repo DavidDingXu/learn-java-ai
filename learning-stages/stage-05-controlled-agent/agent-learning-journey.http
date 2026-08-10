@@ -38,11 +38,15 @@ POST {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}/runs
 > {%
   client.test("The task reaches an explicit controlled state", function() {
     const states = ["COMPLETED", "WAITING_CONFIRMATION", "FAILED"];
-    client.assert(response.status === 200, "run status must be 200");
-    client.assert(states.includes(response.body.status), "task must not stay ACCEPTED or RUNNING");
-    client.global.set("taskVersion", response.body.version);
-    if (response.body.confirmation) {
-      client.global.set("confirmationId", response.body.confirmation.confirmationId);
+    client.assert([200, 503].includes(response.status), "run must return a result or a stable unavailable response");
+    if (response.status === 200) {
+      client.assert(states.includes(response.body.status), "task must not stay ACCEPTED or RUNNING");
+      client.global.set("taskVersion", response.body.version);
+      if (response.body.confirmation) {
+        client.global.set("confirmationId", response.body.confirmation.confirmationId);
+      }
+    } else {
+      client.assert(response.body.code === "AGENT_RUN_UNAVAILABLE", "failure must use the stable public error code");
     }
   });
 %}
@@ -52,8 +56,10 @@ GET {{ticketBaseUrl}}/api/v1/agent/tasks/{{taskId}}
 
 > {%
   client.test("The stored task matches the run result", function() {
+    const states = ["COMPLETED", "WAITING_CONFIRMATION", "FAILED"];
     client.assert(response.status === 200, "task status must be readable");
     client.assert(response.body.taskId === client.global.get("taskId"), "task id must match");
+    client.assert(states.includes(response.body.status), "stored task must not remain ACCEPTED or RUNNING");
   });
 %}
 

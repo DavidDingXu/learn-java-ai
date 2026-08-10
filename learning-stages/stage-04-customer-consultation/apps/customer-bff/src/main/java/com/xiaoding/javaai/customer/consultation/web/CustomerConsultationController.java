@@ -75,8 +75,8 @@ public final class CustomerConsultationController {
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     Mono<Void> feedback(
-            @PathVariable String conversationId,
-            @PathVariable String attemptId,
+            @PathVariable("conversationId") String conversationId,
+            @PathVariable("attemptId") String attemptId,
             @Valid @RequestBody AnswerFeedbackRequest request,
             Authentication authentication
     ) {
@@ -91,8 +91,8 @@ public final class CustomerConsultationController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     Mono<CustomerAnswerResponse> retry(
-            @PathVariable String conversationId,
-            @PathVariable String attemptId,
+            @PathVariable("conversationId") String conversationId,
+            @PathVariable("attemptId") String attemptId,
             Authentication authentication
     ) {
         return service.retry(accessTokenProvider.current(authentication),
@@ -107,8 +107,8 @@ public final class CustomerConsultationController {
     )
     @ResponseStatus(HttpStatus.ACCEPTED)
     Mono<TicketHandoffReceipt> handoff(
-            @PathVariable String conversationId,
-            @PathVariable String attemptId,
+            @PathVariable("conversationId") String conversationId,
+            @PathVariable("attemptId") String attemptId,
             @Valid @RequestBody ConsultationHandoffRequest request,
             Authentication authentication
     ) {

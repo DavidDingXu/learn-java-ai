@@ -85,7 +85,7 @@ public final class WebClientTicketTaskClient implements TicketTaskClient {
         if (!snapshot.conversationSummary().isBlank()) {
             context.put("conversationSummary", truncate(snapshot.conversationSummary(), 2000));
         }
-        if (snapshot.refusalReason() != null) {
+        if (snapshot.refusalReason() != null && !snapshot.refusalReason().isBlank()) {
             context.put("refusalReason", truncate(snapshot.refusalReason(), 2000));
         }
         addFeedback(context, snapshot.feedback());

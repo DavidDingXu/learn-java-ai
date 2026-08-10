@@ -1,5 +1,8 @@
 # Copy this file to config/application-default.yml and edit the copy.
 # This is the only reader-owned configuration file. It is ignored by Git.
+lab:
+  mode: answer
+
 spring:
   ai:
     model:

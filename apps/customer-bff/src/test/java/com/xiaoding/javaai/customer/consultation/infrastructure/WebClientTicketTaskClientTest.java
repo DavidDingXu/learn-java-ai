@@ -47,7 +47,7 @@ class WebClientTicketTaskClientTest {
                 "conversation-1", "attempt-1", "tenant-a", "customer-42",
                 "退款多久到账？", "退款通常在 1 到 5 个工作日到账。",
                 List.of(new CitationView("refund-policy", "v1", "arrival-time", "退款到账时间")),
-                null, null, "", "CUSTOMER_REQUESTED_HUMAN",
+                "", null, "", "CUSTOMER_REQUESTED_HUMAN",
                 "handoff:tenant-a:conversation-1:attempt-1", "trace-123",
                 Instant.parse("2026-07-13T04:00:00Z")
         );
@@ -64,6 +64,7 @@ class WebClientTicketTaskClientTest {
         assertThat(body)
                 .contains("\"caseId\":\"conversation-1\"")
                 .contains("\"sourceTraceId\":\"trace-123\"")
+                .doesNotContain("refusalReason")
                 .doesNotContain("tenant-a")
                 .doesNotContain("customer-42");
         assertThat(receipt.taskId()).isEqualTo("task-100");

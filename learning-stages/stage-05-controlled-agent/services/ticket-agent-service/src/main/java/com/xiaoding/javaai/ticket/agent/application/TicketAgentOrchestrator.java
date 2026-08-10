@@ -113,7 +113,7 @@ public final class TicketAgentOrchestrator implements RunAgentTask {
                 return rejected;
             }
             AgentDecision.UseTool useTool = (AgentDecision.UseTool) decision;
-            PreparedToolCall call = toolCatalog.prepare(useTool);
+            PreparedToolCall call = prepareTool(task, useTool, step);
             if (call.effect() == ToolEffect.READ) {
                 long startedAt = System.nanoTime();
                 ToolObservation observation;
@@ -175,6 +175,17 @@ public final class TicketAgentOrchestrator implements RunAgentTask {
                     "planner returned no result");
         } catch (RuntimeException error) {
             throw failUnavailable(task, "PLANNER_UNAVAILABLE", step, null, error);
+        }
+    }
+
+    private PreparedToolCall prepareTool(AgentTask task, AgentDecision.UseTool proposal, int step) {
+        try {
+            return toolCatalog.prepare(proposal);
+        } catch (IllegalArgumentException error) {
+            String trustedToolName = toolCatalog.toolNames().contains(proposal.toolName())
+                    ? proposal.toolName()
+                    : null;
+            throw failUnavailable(task, "INVALID_TOOL_PROPOSAL", step, trustedToolName, error);
         }
     }
 

@@ -153,6 +153,32 @@ class TicketAgentOrchestratorTest {
     }
 
     @Test
+    void closes_the_running_task_when_the_model_proposes_invalid_tool_arguments() {
+        InMemoryAgentTaskRepository repository = acceptedTask();
+        InMemoryAgentAuditTrail audit = new InMemoryAgentAuditTrail();
+        TicketAgentPlanner planner = context -> AgentPlanningResult.decisionOnly(
+                new AgentDecision.UseTool("QUERY_KNOWLEDGE", Map.of(), "查询退款制度"));
+        AgentReadToolExecutor executor = (call, task) -> fail("invalid tool proposal must not execute");
+        TicketAgentOrchestrator orchestrator = orchestrator(repository, planner, executor, audit);
+
+        assertThatThrownBy(() -> orchestrator.run("task-100"))
+                .isInstanceOf(AgentRunUnavailableException.class)
+                .satisfies(error -> assertThat(((AgentRunUnavailableException) error).reasonCode())
+                        .isEqualTo("INVALID_TOOL_PROPOSAL"))
+                .hasMessage("agent run dependency is unavailable");
+
+        AgentTask failed = repository.findById("task-100").orElseThrow();
+        assertThat(failed.state()).isEqualTo(AgentTaskState.FAILED);
+        assertThat(failed.outcome()).isEqualTo("INVALID_TOOL_PROPOSAL");
+        assertThat(audit.findByTaskId("task-100"))
+                .extracting(AgentAuditEvent::eventType)
+                .containsExactly("AGENT_RUN_STARTED", "AGENT_PLAN_RECORDED", "AGENT_TASK_FAILED");
+        assertThat(audit.findByTaskId("task-100").getLast().detail())
+                .isEqualTo("reasonCode=INVALID_TOOL_PROPOSAL, step=0, tool=QUERY_KNOWLEDGE")
+                .doesNotContain("missing argument");
+    }
+
+    @Test
     void closes_the_running_task_and_records_a_safe_audit_when_the_read_tool_is_unavailable() {
         InMemoryAgentTaskRepository repository = acceptedTask();
         InMemoryAgentAuditTrail audit = new InMemoryAgentAuditTrail();

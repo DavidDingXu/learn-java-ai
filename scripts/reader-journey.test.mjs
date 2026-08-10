@@ -18,6 +18,7 @@ const readerPaths = [
   "labs/protocol-interop-lab/README.md",
   "labs/spring-ai-alibaba-lab/README.md",
   "docs/README.md",
+  "docs/reader-code-path.md",
   "docs/runbooks/local-toolchain.md",
   "docs/runbooks/runtime-configuration.md",
   "docs/runbooks/knowledge-ingestion.md",
@@ -65,6 +66,7 @@ test("reader journey keeps local model settings in YAML instead of shell variabl
   assert.deepEqual(violations, []);
   const sharedConfig = read("config/application-default.example.yml");
   assert.match(sharedConfig, /api-key:\s*replace-with-your-api-key/);
+  assert.match(sharedConfig, /lab:\s*\n\s+mode:\s*answer/);
   assert.match(sharedConfig, /embedding:\s*openai/);
   assert.match(sharedConfig, /chat:[\s\S]*?model:\s*gpt-4\.1-mini/);
   assert.match(sharedConfig, /embedding:[\s\S]*?model:\s*text-embedding-3-small/);

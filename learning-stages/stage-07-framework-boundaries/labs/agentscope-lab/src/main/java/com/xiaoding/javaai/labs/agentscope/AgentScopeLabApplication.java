@@ -105,7 +105,7 @@ public final class AgentScopeLabApplication {
     private static String configuredSecret(Properties config, String name) {
         String value = required(config, name);
         if (value.startsWith("replace-with-")) {
-            throw new IllegalStateException("fill " + name + " in application.properties first");
+            throw new IllegalStateException("fill " + name + " in config/application-default.yml first");
         }
         return value;
     }
