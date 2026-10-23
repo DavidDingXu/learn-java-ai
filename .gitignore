@@ -12,3 +12,5 @@ var/
 .env
 *.log
 **/config/application-default.yml
+site/dist/
+site/__pycache__/

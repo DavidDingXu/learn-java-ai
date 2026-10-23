@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const readerPaths = [
   "README.md",
+  "docs/getting-started.md",
   "services/knowledge-service/README.md",
   "services/ticket-agent-service/README.md",
   "apps/customer-bff/README.md",
@@ -69,7 +70,7 @@ test("reader journey starts applications instead of build or test commands", () 
 
   assert.deepEqual(violations, []);
 
-  const entry = read("README.md");
+  const entry = read("docs/getting-started.md");
   assert.match(entry, /config\/application-default\.example\.yml/);
   assert.match(entry, /config\/application-default\.yml/);
   assert.match(entry, /API Key、Base URL、Chat 模型和 Embedding 模型/);
@@ -113,8 +114,8 @@ test("reader secrets use an ignored local YAML loaded after repository defaults"
     assert.match(config, /optional:file:\.\/config\/application-default\.yml/, relativePath);
   }
 
-  assert.match(read("README.md"), /config\/application-default\.yml/);
-  assert.doesNotMatch(read("README.md"), /打开根目录的 `config\/application\.yml`/);
+  assert.match(read("docs/getting-started.md"), /config\/application-default\.yml/);
+  assert.doesNotMatch(read("docs/getting-started.md"), /打开根目录的 `config\/application\.yml`/);
 });
 
 test("reader has a continuous observable journey for each runnable stage", () => {

@@ -13,9 +13,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +54,14 @@ class ProviderProtocolFixtureTest {
         PROVIDER.shutdown();
     }
 
+    @BeforeEach
+    void resetProviderQueue() throws InterruptedException {
+        PROVIDER.setDispatcher(new QueueDispatcher());
+        while (PROVIDER.takeRequest(1, TimeUnit.MILLISECONDS) != null) {
+            // Each assertion must observe requests from its own scenario.
+        }
+    }
+
     @DynamicPropertySource
     static void providerProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.ai.model.chat", () -> "openai");
@@ -59,7 +69,8 @@ class ProviderProtocolFixtureTest {
         registry.add("spring.ai.openai.base-url", () -> PROVIDER.url("/").toString());
         registry.add("spring.ai.openai.chat.model", () -> "fixture-model");
         registry.add("spring.ai.openai.max-retries", () -> 0);
-        registry.add("java-ai.knowledge.answer.total-timeout", () -> "1s");
+        // Protocol assertions must allow for a cold HTTP client on CI runners.
+        registry.add("java-ai.knowledge.answer.total-timeout", () -> "5s");
         registry.add("java-ai.knowledge.answer.retry.delay", () -> "10ms");
     }
 
@@ -96,7 +107,7 @@ class ProviderProtocolFixtureTest {
     @Test
     void doesNotRetryTimedOutProviderResponsesOrDropCancellationErrors() throws Exception {
         int requestCountBefore = PROVIDER.getRequestCount();
-        PROVIDER.enqueue(successfulProviderResponse().setBodyDelay(3, TimeUnit.SECONDS));
+        PROVIDER.enqueue(successfulProviderResponse().setBodyDelay(7, TimeUnit.SECONDS));
         Logger operatorLogger = (Logger) LoggerFactory.getLogger("reactor.core.publisher.Operators");
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
@@ -106,8 +117,8 @@ class ProviderProtocolFixtureTest {
             StepVerifier.create(answerKnowledgeQuestion.answer(
                             command("退款审核通过了，为什么还没到账？")))
                     .expectErrorSatisfies(error -> assertThat(error).isInstanceOf(TimeoutException.class))
-                    .verify(Duration.ofSeconds(3));
-            TimeUnit.SECONDS.sleep(2);
+                    .verify(Duration.ofSeconds(8));
+            TimeUnit.SECONDS.sleep(3);
         } finally {
             operatorLogger.detachAppender(appender);
             appender.stop();

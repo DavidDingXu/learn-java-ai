@@ -440,7 +440,7 @@ test("Maven Wrapper is pinned to Maven 3.9.14", () => {
 });
 
 test("public README matches the current service and build boundaries", () => {
-  const readme = read("README.md");
+  const readme = read("README.md") + "\n" + read("docs/getting-started.md");
   const labsPom = read("labs/pom.xml");
   const mcpVersion = tagValue(labsPom, "mcp-java-sdk.version");
   const a2aVersion = tagValue(labsPom, "a2a-java-sdk.version");
@@ -456,7 +456,6 @@ test("public README matches the current service and build boundaries", () => {
     assert.match(readme, new RegExp(requiredPath.replaceAll("/", "\\/")));
   }
 
-  assert.match(readme, /完整开源课程/);
   assert.match(readme, /\]\(docs\/course\/README\.md\)/);
   assert.match(readme, /受控 Agent/);
   assert.match(readme, /安全回归/);
@@ -598,7 +597,7 @@ test("public runtime documentation matches the single-YAML configuration model",
     assert.doesNotMatch(content, /打开根目录的 `config\/application\.yml`/, document);
   }
 
-  const readme = read("README.md");
+  const readme = read("docs/getting-started.md");
   assert.doesNotMatch(readme, /spring-boot\.run\.profiles=(?:demo|production|local-auth)/);
   assert.match(readme, /config\/application-default\.yml/);
   assert.match(readme, /自动加载/);

@@ -56,7 +56,7 @@ Windows 使用 `.\mvnw.cmd` 与 `.\scripts\verify-unit.ps1`。无法运行某项
 - 未提交密钥、令牌、内网地址、客户数据或本地 IDE 文件。
 - Pull Request 描述列出已运行命令和关键结果。
 
-提交 Pull Request 即表示同意以本项目的 [Apache License 2.0](LICENSE) 提供所提交的内容。
+提交 Pull Request 即表示同意按本项目的 [许可说明](LICENSING.md) 提供所提交的内容。
 
 ## 课程正文与导航
 
@@ -69,3 +69,5 @@ node scripts/check-course.mjs
 ```
 
 它核对全文数量、文章标题、实践入口、图片和仓库内链接。文案或图片修改运行此检查即可；涉及代码行为时，仍需执行相应项目测试。命令适用于 macOS、Windows 和 Linux。
+
+贡献的文章与插图采用 CC BY-NC-SA 4.0，贡献的代码采用 PolyForm Noncommercial 1.0.0；详见 [许可说明](LICENSING.md)。

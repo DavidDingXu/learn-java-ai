@@ -112,7 +112,7 @@ test("local model tests use one tracked placeholder YAML", () => {
 
 test("reader startup uses the ignored local YAML and application entrypoints", () => {
   for (const relativePath of [
-    "README.md",
+    "docs/getting-started.md",
     "docs/runbooks/local-toolchain.md",
     "docs/runbooks/runtime-configuration.md",
   ]) {
@@ -122,7 +122,7 @@ test("reader startup uses the ignored local YAML and application entrypoints", (
     assert.doesNotMatch(content, /(?:\.\/|\.\\)mvnw|LiveModelSmokeIT|file:\.\.\/\.\.\/config\/application\.yml/);
   }
 
-  const readme = read("README.md");
+  const readme = read("docs/getting-started.md");
   assert.match(readme, /POST http:\/\/localhost:8081\/api\/v1\/knowledge\/answers/);
 });
 
