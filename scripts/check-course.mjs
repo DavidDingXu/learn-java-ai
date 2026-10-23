@@ -71,7 +71,7 @@ for (const chapter of catalog.chapters) {
     continue;
   }
   const body = readFileSync(file, 'utf8');
-  if (!body.startsWith(`# ${chapter.title}\n`)) errors.push(`${chapter.path}: title differs from catalog`);
+  if (body.split(/\r?\n/, 1)[0] !== `# ${chapter.title}`) errors.push(`${chapter.path}: title differs from catalog`);
   if (body.length < 1000) errors.push(`${chapter.path}: full article content is missing`);
   if (!body.includes('[完整目录](') || !body.includes('[课程首页](')) errors.push(`${chapter.path}: chapter navigation is missing`);
   const encoded = encodeURI(path.posix.relative('docs/course', chapter.path));

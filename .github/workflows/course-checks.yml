@@ -18,5 +18,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+      - name: Test newline compatibility and missing-image detection
+        run: node --test scripts/check-course.test.mjs
       - name: Check full articles, images and navigation
         run: node scripts/check-course.mjs
