@@ -57,3 +57,15 @@ Windows 使用 `.\mvnw.cmd` 与 `.\scripts\verify-unit.ps1`。无法运行某项
 - Pull Request 描述列出已运行命令和关键结果。
 
 提交 Pull Request 即表示同意以本项目的 [Apache License 2.0](LICENSE) 提供所提交的内容。
+
+## 课程正文与导航
+
+完整课程入口在 [课程目录](docs/course/README.md)。文章、插图或顺序调整后，同步该目录、`docs/course/catalog.json` 和受影响的前后章节导航。
+
+在仓库根目录使用 Node.js 20 或更高版本运行：
+
+```bash
+node scripts/check-course.mjs
+```
+
+它核对全文数量、文章标题、实践入口、图片和仓库内链接。文案或图片修改运行此检查即可；涉及代码行为时，仍需执行相应项目测试。命令适用于 macOS、Windows 和 Linux。

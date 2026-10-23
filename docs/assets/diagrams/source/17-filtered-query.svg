@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="718" viewBox="0 0 1200 718">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#C8D5DA"/></marker>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2F6FED"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#178A68"/></marker>
+    <marker id="arrowAmber" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#B66B12"/></marker>
+    <marker id="arrowCoral" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#C84B4B"/></marker>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M 48 0 L 0 0 0 48" fill="none" stroke="#DFE8EB" stroke-width="1"/></pattern>
+  </defs>
+  <rect width="1200" height="718" fill="#F6F9FA"/>
+  <rect width="1200" height="718" fill="url(#grid)" opacity="0.24"/>
+  <rect data-content-frame="true" x="36" y="30" width="1128" height="658" rx="16" fill="#FFFFFF" stroke="#D7E2E6" stroke-width="2"/>
+  <rect x="76" y="64" width="56" height="6" rx="3" fill="#2F6FED"/>
+  <text x="76" y="100" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="19" font-weight="750" fill="#2F6FED" letter-spacing="0"><tspan x="76" dy="0">FILTER BEFORE TOPK</tspan></text>
+  <text x="76" y="146" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="38" font-weight="760" fill="#14242D" letter-spacing="0"><tspan x="76" dy="0">正确 SQL 要先形成可读集合，再排序截断</tspan></text>
+  <text x="76" y="192" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="450" fill="#5D6B73" letter-spacing="0"><tspan x="76" dy="0">业务有效期、检索版本和 ACL 都是候选资格，向量距离只在合法候选内生效</tspan></text>
+  <g data-diagram-kind="flow"><path data-flow-connector="true" d="M 324.5 297 H 344.5" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><path data-flow-connector="true" d="M 587 297 H 607" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><path data-flow-connector="true" d="M 849.5 297 H 869.5" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><path data-flow-connector="true" d="M 993.75 358 V 422" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><path data-flow-connector="true" d="M 875.5 489 H 855.5" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><path data-flow-connector="true" d="M 613 489 H 593" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><rect data-bounded="true" data-flow-node="true" x="92" y="240" width="228.5" height="114" rx="10" fill="#EAF1FF" stroke="#2F6FED" stroke-width="2"/>
+        <circle cx="114" cy="262" r="15" fill="#2F6FED"/>
+        <text x="114" y="268" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="114" dy="0">1</tspan></text>
+        <text x="206.25" y="306" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="206.25" dy="0">完整租户 JOIN</tspan></text><rect data-bounded="true" data-flow-node="true" x="354.5" y="240" width="228.5" height="114" rx="10" fill="#FFFFFF" stroke="#14242D" stroke-width="2"/>
+        <circle cx="376.5" cy="262" r="15" fill="#14242D"/>
+        <text x="376.5" y="268" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="376.5" dy="0">2</tspan></text>
+        <text x="468.75" y="306" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="468.75" dy="0">业务已发布</tspan></text><rect data-bounded="true" data-flow-node="true" x="617" y="240" width="228.5" height="114" rx="10" fill="#FFFFFF" stroke="#14242D" stroke-width="2"/>
+        <circle cx="639" cy="262" r="15" fill="#14242D"/>
+        <text x="639" y="268" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="639" dy="0">3</tspan></text>
+        <text x="731.25" y="306" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="731.25" dy="0">有效时间窗口</tspan></text><rect data-bounded="true" data-flow-node="true" x="879.5" y="240" width="228.5" height="114" rx="10" fill="#FFFFFF" stroke="#14242D" stroke-width="2"/>
+        <circle cx="901.5" cy="262" r="15" fill="#14242D"/>
+        <text x="901.5" y="268" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="901.5" dy="0">4</tspan></text>
+        <text x="993.75" y="289" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="993.75" dy="0">检索版本</tspan><tspan x="993.75" dy="34">指针</tspan></text><rect data-bounded="true" data-flow-node="true" x="879.5" y="432" width="228.5" height="114" rx="10" fill="#FFFFFF" stroke="#14242D" stroke-width="2"/>
+        <circle cx="901.5" cy="454" r="15" fill="#14242D"/>
+        <text x="901.5" y="460" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="901.5" dy="0">5</tspan></text>
+        <text x="993.75" y="481" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="993.75" dy="0">ACL EXISTS</tspan><tspan x="993.75" dy="34">可读主体</tspan></text><rect data-bounded="true" data-flow-node="true" x="617" y="432" width="228.5" height="114" rx="10" fill="#FFFFFF" stroke="#14242D" stroke-width="2"/>
+        <circle cx="639" cy="454" r="15" fill="#14242D"/>
+        <text x="639" y="460" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="639" dy="0">6</tspan></text>
+        <text x="731.25" y="481" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="731.25" dy="0">ORDER BY</tspan><tspan x="731.25" dy="34">向量距离</tspan></text><rect data-bounded="true" data-flow-node="true" x="354.5" y="432" width="228.5" height="114" rx="10" fill="#E5F5EF" stroke="#178A68" stroke-width="2"/>
+        <circle cx="376.5" cy="454" r="15" fill="#178A68"/>
+        <text x="376.5" y="460" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="376.5" dy="0">7</tspan></text>
+        <text x="468.75" y="498" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="468.75" dy="0">LIMIT TopK</tspan></text></g>
+  <g data-diagram-note="true">
+    <rect x="76" y="576" width="6" height="96" rx="3" fill="#2F6FED"/>
+    <text x="104" y="606" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="25" font-weight="540" fill="#5D6B73" letter-spacing="0"><tspan x="104" dy="0">FROM / JOIN 确定关系，WHERE / EXISTS 形成授权候选集，ORDER BY 与 LIMIT 只能出</tspan><tspan x="104" dy="34">现在这些条件之后。</tspan></text>
+  </g>
+</svg>

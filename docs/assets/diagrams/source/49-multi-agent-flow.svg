@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1080" viewBox="0 0 1200 1080">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#C8D5DA"/></marker>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2F6FED"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#178A68"/></marker>
+    <marker id="arrowAmber" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#B66B12"/></marker>
+    <marker id="arrowCoral" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#C84B4B"/></marker>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M 48 0 L 0 0 0 48" fill="none" stroke="#DFE8EB" stroke-width="1"/></pattern>
+  </defs>
+  <rect width="1200" height="1080" fill="#F6F9FA"/>
+  <rect width="1200" height="1080" fill="url(#grid)" opacity="0.24"/>
+  <rect data-content-frame="true" x="36" y="30" width="1128" height="1020" rx="16" fill="#FFFFFF" stroke="#D7E2E6" stroke-width="2"/>
+  <rect x="76" y="64" width="56" height="6" rx="3" fill="#2F6FED"/>
+  <text x="76" y="100" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="19" font-weight="750" fill="#2F6FED" letter-spacing="0"><tspan x="76" dy="0">LIVE MULTI-AGENT</tspan></text>
+  <text x="76" y="146" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="38" font-weight="760" fill="#14242D" letter-spacing="0"><tspan x="76" dy="0">两个专家并行取证，成功后才进入汇总</tspan></text>
+  <text x="76" y="192" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="450" fill="#5D6B73" letter-spacing="0"><tspan x="76" dy="0">真实 ReActAgent 使用隔离 Tool；协调器掌握超时、失败短路和人工接管</tspan></text>
+  <g data-diagram-kind="multi-agent"><polygon points="600,240 760,292 600,344 440,292" fill="#EAF1FF" stroke="#2F6FED" stroke-width="3"/>
+      <text x="600" y="300" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="23" font-weight="700" fill="#2F6FED" letter-spacing="0"><tspan x="600" dy="0">两个独立只读 WorkUnit</tspan></text>
+      <path d="M 600 348 V 386 H 327 V 414" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/>
+      <path d="M 600 386 H 873 V 414" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/>
+      <text x="600" y="376" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="19" font-weight="750" fill="#2F6FED" letter-spacing="0"><tspan x="600" dy="0">并行</tspan></text><rect data-bounded="true" data-parallel-lane="true" x="92" y="424" width="470" height="218" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="3"/>
+        <rect x="92" y="424" width="470" height="64" rx="12" fill="#EAF1FF"/>
+        <text x="116" y="465" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="27" font-weight="750" fill="#2F6FED" letter-spacing="0"><tspan x="116" dy="0">policy-agent</tspan></text>
+        <text x="116" y="527" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="19" font-weight="700" fill="#5D6B73" letter-spacing="0"><tspan x="116" dy="0">隔离 Toolkit</tspan></text>
+        <text x="116" y="563" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="25" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="116" dy="0">PolicyBusinessTools</tspan></text>
+        <path d="M 116 582 H 538" stroke="#C8D5DA" stroke-width="2"/>
+        <text x="116" y="619" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="23" font-weight="600" fill="#2F6FED" letter-spacing="0"><tspan x="116" dy="0">输出：政策证据</tspan></text><rect data-bounded="true" data-parallel-lane="true" x="638" y="424" width="470" height="218" rx="12" fill="#FFFFFF" stroke="#178A68" stroke-width="3"/>
+        <rect x="638" y="424" width="470" height="64" rx="12" fill="#E5F5EF"/>
+        <text x="662" y="465" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="27" font-weight="750" fill="#178A68" letter-spacing="0"><tspan x="662" dy="0">ticket-agent</tspan></text>
+        <text x="662" y="527" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="19" font-weight="700" fill="#5D6B73" letter-spacing="0"><tspan x="662" dy="0">隔离 Toolkit</tspan></text>
+        <text x="662" y="563" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="25" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="662" dy="0">TicketBusinessTools</tspan></text>
+        <path d="M 662 582 H 1084" stroke="#C8D5DA" stroke-width="2"/>
+        <text x="662" y="619" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="23" font-weight="600" fill="#178A68" letter-spacing="0"><tspan x="662" dy="0">输出：工单证据</tspan></text><path d="M 327 646 V 696 H 402" fill="none" stroke="#178A68" stroke-width="4"/>
+      <path d="M 873 646 V 696 H 402" fill="none" stroke="#178A68" stroke-width="4" marker-end="url(#arrowGreen)"/>
+      <circle cx="402" cy="696" r="9" fill="#178A68"/><rect data-bounded="true" x="92" y="724" width="620" height="116" rx="12" fill="#E5F5EF" stroke="#178A68" stroke-width="3"/>
+      <text x="402" y="790" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="25" font-weight="700" fill="#178A68" letter-spacing="0"><tspan x="402" dy="0">summary-agent 汇总两份 SpecialistResult</tspan></text>
+      <path d="M 402 844 V 864" fill="none" stroke="#178A68" stroke-width="4" marker-end="url(#arrowGreen)"/>
+      <rect data-bounded="true" x="280" y="874" width="244" height="68" rx="34" fill="#178A68"/>
+      <text x="402" y="917" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="402" dy="0">COMPLETED</tspan></text><path d="M 520 646 V 664 H 1128 V 782 H 1118" fill="none" stroke="#C84B4B" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#arrowCoral)"/>
+      <path d="M 1066 646 V 664" fill="none" stroke="#C84B4B" stroke-width="4" stroke-dasharray="10 8"/>
+      <text x="1006" y="652" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="19" font-weight="750" fill="#C84B4B" letter-spacing="0"><tspan x="1006" dy="0">任一失败或超时</tspan></text>
+      <rect data-bounded="true" x="790" y="724" width="318" height="116" rx="12" fill="#FDECEC" stroke="#C84B4B" stroke-width="3"/>
+      <text x="949" y="774" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="750" fill="#C84B4B" letter-spacing="0"><tspan x="949" dy="0">HUMAN_REQUIRED</tspan></text>
+      <text x="949" y="808" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="20" font-weight="600" fill="#C84B4B" letter-spacing="0"><tspan x="949" dy="0">跳过汇总，转人工接管</tspan></text></g>
+  <g data-diagram-note="true">
+    <rect x="76" y="972" width="6" height="62" rx="3" fill="#2F6FED"/>
+    <text x="104" y="1002" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="25" font-weight="540" fill="#5D6B73" letter-spacing="0"><tspan x="104" dy="0">每个专家拥有独立 Toolkit、权限和 RuntimeContext；协调控制不交给模型。</tspan></text>
+  </g>
+</svg>

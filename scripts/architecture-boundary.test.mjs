@@ -23,7 +23,10 @@ function markdownFiles(relativeDirectory) {
 }
 
 test("public project documentation avoids opaque authoring language", () => {
-  const publicDocuments = markdownFiles(".");
+  // Course articles describe business concepts (including actual legal contracts).
+  // Keep this engineering terminology rule scoped to project documentation.
+  const courseDirectory = path.join("docs", "course") + path.sep;
+  const publicDocuments = markdownFiles(".").filter((file) => !file.startsWith(courseDirectory));
   const opaqueWording = /合同|收口|闭环|沉淀|教学(?:样例|数据|回归)|\bthe\s+column\b|\bcolumn\s+completion\b|\bbusiness\s+contracts?\b|\bteaching\s+(?:cases|data|regressions?)\b|\bPhase\s+[A-Z]\b|\bReset\s+Delivery\b/i;
   const violations = publicDocuments.flatMap((relativePath) =>
     read(relativePath)

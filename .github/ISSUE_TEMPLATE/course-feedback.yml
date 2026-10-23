@@ -1,0 +1,28 @@
+name: 文章勘误与学习问题
+description: 反馈文章、图片、链接或实践步骤的问题
+title: "[课程] "
+body:
+  - type: input
+    id: chapter
+    attributes:
+      label: 章节或页面
+      description: 粘贴文章链接或填写章节编号。
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题与预期
+      description: 哪段内容有问题、实际观察到什么、你期望什么？
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现方式与版本（如适用）
+      description: 提供操作、命令、系统和工具版本；截图与日志请先脱敏。
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: 建议或依据（可选）
+      description: 可以附上官方文档、最小复现或脱敏实践案例。

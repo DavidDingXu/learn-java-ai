@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#C8D5DA"/></marker>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2F6FED"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#178A68"/></marker>
+    <marker id="arrowAmber" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#B66B12"/></marker>
+    <marker id="arrowCoral" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#C84B4B"/></marker>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M 48 0 L 0 0 0 48" fill="none" stroke="#DFE8EB" stroke-width="1"/></pattern>
+  </defs>
+  <rect width="1200" height="650" fill="#F6F9FA"/>
+  <rect width="1200" height="650" fill="url(#grid)" opacity="0.24"/>
+  <rect data-content-frame="true" x="36" y="30" width="1128" height="590" rx="16" fill="#FFFFFF" stroke="#D7E2E6" stroke-width="2"/>
+  <rect x="76" y="64" width="56" height="6" rx="3" fill="#2F6FED"/>
+  <text x="76" y="100" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="19" font-weight="750" fill="#2F6FED" letter-spacing="0"><tspan x="76" dy="0">ARGUMENT COMPILATION</tspan></text>
+  <text x="76" y="146" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="38" font-weight="760" fill="#14242D" letter-spacing="0"><tspan x="76" dy="0">模型参数要编译成服务端拥有的 PreparedToolCall</tspan></text>
+  <text x="76" y="192" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="450" fill="#5D6B73" letter-spacing="0"><tspan x="76" dy="0">先拒绝未知字段，再补全规范、业务枚举、风险与请求指纹</tspan></text>
+  <g data-diagram-kind="flow"><path data-flow-connector="true" d="M 412 280 H 432" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><path data-flow-connector="true" d="M 762 280 H 782" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><path data-flow-connector="true" d="M 950 324 V 388" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><path data-flow-connector="true" d="M 788 438 H 768" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><path data-flow-connector="true" d="M 438 438 H 418" fill="none" stroke="#2F6FED" stroke-width="4" marker-end="url(#arrowBlue)"/><rect data-bounded="true" data-flow-node="true" x="92" y="240" width="316" height="80" rx="10" fill="#EAF1FF" stroke="#2F6FED" stroke-width="2"/>
+        <circle cx="114" cy="262" r="15" fill="#2F6FED"/>
+        <text x="114" y="268" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="114" dy="0">1</tspan></text>
+        <text x="250" y="289" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="250" dy="0">模型 arguments</tspan></text><rect data-bounded="true" data-flow-node="true" x="442" y="240" width="316" height="80" rx="10" fill="#FFFFFF" stroke="#14242D" stroke-width="2"/>
+        <circle cx="464" cy="262" r="15" fill="#14242D"/>
+        <text x="464" y="268" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="464" dy="0">2</tspan></text>
+        <text x="600" y="289" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="600" dy="0">字段白名单</tspan></text><rect data-bounded="true" data-flow-node="true" x="792" y="240" width="316" height="80" rx="10" fill="#FFFFFF" stroke="#14242D" stroke-width="2"/>
+        <circle cx="814" cy="262" r="15" fill="#14242D"/>
+        <text x="814" y="268" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="814" dy="0">3</tspan></text>
+        <text x="950" y="289" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="950" dy="0">必填与长度</tspan></text><rect data-bounded="true" data-flow-node="true" x="792" y="398" width="316" height="80" rx="10" fill="#FFFFFF" stroke="#14242D" stroke-width="2"/>
+        <circle cx="814" cy="420" r="15" fill="#14242D"/>
+        <text x="814" y="426" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="814" dy="0">4</tspan></text>
+        <text x="950" y="447" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="950" dy="0">金额 / 币种 / 队列校验</tspan></text><rect data-bounded="true" data-flow-node="true" x="442" y="398" width="316" height="80" rx="10" fill="#FFFFFF" stroke="#14242D" stroke-width="2"/>
+        <circle cx="464" cy="420" r="15" fill="#14242D"/>
+        <text x="464" y="426" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="464" dy="0">5</tspan></text>
+        <text x="600" y="447" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="600" dy="0">服务端风险与角色</tspan></text><rect data-bounded="true" data-flow-node="true" x="92" y="398" width="316" height="80" rx="10" fill="#E5F5EF" stroke="#178A68" stroke-width="2"/>
+        <circle cx="114" cy="420" r="15" fill="#178A68"/>
+        <text x="114" y="426" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="16" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="114" dy="0">6</tspan></text>
+        <text x="250" y="447" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="650" fill="#14242D" letter-spacing="0"><tspan x="250" dy="0">SHA-256 指纹</tspan></text></g>
+  <g data-diagram-note="true">
+    <rect x="76" y="508" width="6" height="96" rx="3" fill="#2F6FED"/>
+    <text x="104" y="538" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="25" font-weight="540" fill="#5D6B73" letter-spacing="0"><tspan x="104" dy="0">tenantId、actor、risk、requiredRole 和 idempotencyKey 不允许由模型传入，它</tspan><tspan x="104" dy="34">们属于服务端事实。</tspan></text>
+  </g>
+</svg>

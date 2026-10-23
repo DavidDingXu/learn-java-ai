@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="768" viewBox="0 0 1200 768">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#C8D5DA"/></marker>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2F6FED"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#178A68"/></marker>
+    <marker id="arrowAmber" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#B66B12"/></marker>
+    <marker id="arrowCoral" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#C84B4B"/></marker>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M 48 0 L 0 0 0 48" fill="none" stroke="#DFE8EB" stroke-width="1"/></pattern>
+  </defs>
+  <rect width="1200" height="768" fill="#F6F9FA"/>
+  <rect width="1200" height="768" fill="url(#grid)" opacity="0.24"/>
+  <rect data-content-frame="true" x="36" y="30" width="1128" height="708" rx="16" fill="#FFFFFF" stroke="#D7E2E6" stroke-width="2"/>
+  <rect x="76" y="64" width="56" height="6" rx="3" fill="#2F6FED"/>
+  <text x="76" y="100" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="19" font-weight="750" fill="#2F6FED" letter-spacing="0"><tspan x="76" dy="0">DEPENDENCY ISOLATION</tspan></text>
+  <text x="76" y="146" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="38" font-weight="760" fill="#14242D" letter-spacing="0"><tspan x="76" dy="0">Spring AI Alibaba 为什么放在独立 lab</tspan></text>
+  <text x="76" y="192" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="24" font-weight="450" fill="#5D6B73" letter-spacing="0"><tspan x="76" dy="0">主线和实验线拥有不同的 Spring Boot、Spring AI 与扩展依赖代际</tspan></text>
+  <g data-diagram-kind="layers"><rect data-bounded="true" data-layer="true" x="92" y="240" width="1016" height="78" rx="10" fill="#EAF1FF" stroke="#2F6FED" stroke-width="2"/>
+        <rect x="92" y="240" width="340" height="78" rx="10" fill="#2F6FED"/>
+        <text x="114" y="288" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="26" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="114" dy="0">Mainline</tspan></text>
+        <text x="456" y="288" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="26" font-weight="540" fill="#14242D" letter-spacing="0"><tspan x="456" dy="0">Boot 4.1 + Spring AI 2.0，承载生产业务主线</tspan></text><path d="M 600 322 V 339" fill="none" stroke="#C8D5DA" stroke-width="4" marker-end="url(#arrow)"/><rect data-bounded="true" data-layer="true" x="116" y="344" width="968" height="78" rx="10" fill="#E5F5EF" stroke="#178A68" stroke-width="2"/>
+        <rect x="116" y="344" width="340" height="78" rx="10" fill="#178A68"/>
+        <text x="138" y="392" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="26" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="138" dy="0">Alibaba Lab</tspan></text>
+        <text x="480" y="392" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="26" font-weight="540" fill="#14242D" letter-spacing="0"><tspan x="480" dy="0">Spring AI Alibaba 1.1.2.x，验证 DashScope 与 Graph</tspan></text><path d="M 600 426 V 443" fill="none" stroke="#C8D5DA" stroke-width="4" marker-end="url(#arrow)"/><rect data-bounded="true" data-layer="true" x="140" y="448" width="920" height="78" rx="10" fill="#FFF2DE" stroke="#B66B12" stroke-width="2"/>
+        <rect x="140" y="448" width="340" height="78" rx="10" fill="#B66B12"/>
+        <text x="162" y="496" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="26" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="162" dy="0">稳定接口与规则</tspan></text>
+        <text x="504" y="496" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="26" font-weight="540" fill="#14242D" letter-spacing="0"><tspan x="504" dy="0">问题、答案、检索指标和确认状态保持稳定</tspan></text><path d="M 600 530 V 547" fill="none" stroke="#C8D5DA" stroke-width="4" marker-end="url(#arrow)"/><rect data-bounded="true" data-layer="true" x="164" y="552" width="872" height="78" rx="10" fill="#F6F9FA" stroke="#14242D" stroke-width="2"/>
+        <rect x="164" y="552" width="340" height="78" rx="10" fill="#14242D"/>
+        <text x="186" y="600" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="26" font-weight="750" fill="#FFFFFF" letter-spacing="0"><tspan x="186" dy="0">引入条件</tspan></text>
+        <text x="528" y="600" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="26" font-weight="540" fill="#14242D" letter-spacing="0"><tspan x="528" dy="0">依赖兼容、回归通过、指标达标并且可以回滚</tspan></text></g>
+  <g data-diagram-note="true">
+    <rect x="76" y="660" width="6" height="62" rx="3" fill="#2F6FED"/>
+    <text x="104" y="690" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif" font-size="25" font-weight="540" fill="#5D6B73" letter-spacing="0"><tspan x="104" dy="0">隔离不是否定框架，而是防止一次实验升级整个应用平台。</tspan></text>
+  </g>
+</svg>

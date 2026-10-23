@@ -456,7 +456,8 @@ test("public README matches the current service and build boundaries", () => {
     assert.match(readme, new RegExp(requiredPath.replaceAll("/", "\\/")));
   }
 
-  assert.match(readme, /企业场景的 Java AI 应用工程参考实现/);
+  assert.match(readme, /完整开源课程/);
+  assert.match(readme, /\]\(docs\/course\/README\.md\)/);
   assert.match(readme, /受控 Agent/);
   assert.match(readme, /安全回归/);
   assert.match(readme, /Micrometer/);

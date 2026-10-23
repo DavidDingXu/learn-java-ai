@@ -1,0 +1,579 @@
+{
+  "title": "Java AI 应用开发实战",
+  "repository": "DavidDingXu/learn-java-ai",
+  "articleCount": 52,
+  "chapters": [
+    {
+      "id": "01",
+      "title": "专栏介绍：Java 后端怎样系统学习 AI 应用开发落地",
+      "path": "docs/course/01-column-introduction.md",
+      "group": "01",
+      "groupTitle": "系统边界与第一条调用",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-01-system-boundaries/README.md"
+      }
+    },
+    {
+      "id": "02",
+      "title": "从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统",
+      "path": "docs/course/02-system-context.md",
+      "group": "01",
+      "groupTitle": "系统边界与第一条调用",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-01-system-boundaries/README.md"
+      }
+    },
+    {
+      "id": "03",
+      "title": "Spring AI 为什么做主线，其他框架放在哪里",
+      "path": "docs/course/03-framework-selection.md",
+      "group": "01",
+      "groupTitle": "系统边界与第一条调用",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-01-system-boundaries/README.md"
+      }
+    },
+    {
+      "id": "04",
+      "title": "先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路",
+      "path": "docs/course/04-first-model-call.md",
+      "group": "01",
+      "groupTitle": "系统边界与第一条调用",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-01-system-boundaries/README.md"
+      }
+    },
+    {
+      "id": "05",
+      "title": "多租户、身份和权限为什么不能相信请求参数",
+      "path": "docs/course/05-delegated-identity.md",
+      "group": "01",
+      "groupTitle": "系统边界与第一条调用",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-01-system-boundaries/README.md"
+      }
+    },
+    {
+      "id": "06",
+      "title": "JDK8 老系统不升级：先划清现代 AI 服务与老系统边界",
+      "path": "docs/course/06-jdk8-boundary.md",
+      "group": "01",
+      "groupTitle": "系统边界与第一条调用",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-01-system-boundaries/README.md"
+      }
+    },
+    {
+      "id": "07",
+      "title": "一次模型调用内部发生了什么：Message、Options、Token 与响应元数据",
+      "path": "docs/course/07-model-call-metadata.md",
+      "group": "02",
+      "groupTitle": "模型调用工程化",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-02-model-engineering/README.md"
+      }
+    },
+    {
+      "id": "08",
+      "title": "Prompt 的工程边界：模板、版本、授权知识与提示注入",
+      "path": "docs/course/08-prompt-boundaries.md",
+      "group": "02",
+      "groupTitle": "模型调用工程化",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-02-model-engineering/README.md"
+      }
+    },
+    {
+      "id": "09",
+      "title": "结构化输出为什么会失败：Schema、DTO 和业务校验",
+      "path": "docs/course/09-structured-output.md",
+      "group": "02",
+      "groupTitle": "模型调用工程化",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-02-model-engineering/README.md"
+      }
+    },
+    {
+      "id": "10",
+      "title": "流式输出原理与实现：SSE、取消、心跳、断连和 TTFT",
+      "path": "docs/course/10-sse-streaming.md",
+      "group": "02",
+      "groupTitle": "模型调用工程化",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-02-model-engineering/README.md"
+      }
+    },
+    {
+      "id": "11",
+      "title": "超时、并发保护、重试和降级：为什么不需要万能模型网关",
+      "path": "docs/course/11-model-resilience.md",
+      "group": "02",
+      "groupTitle": "模型调用工程化",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-02-model-engineering/README.md"
+      }
+    },
+    {
+      "id": "12",
+      "title": "真实模型调用之后：怎样建立评测基线与可观测性",
+      "path": "docs/course/12-eval-observation.md",
+      "group": "02",
+      "groupTitle": "模型调用工程化",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-02-model-engineering/README.md"
+      }
+    },
+    {
+      "id": "13",
+      "title": "企业知识库先解决什么：文档、版本、状态和冲突",
+      "path": "docs/course/13-document-domain.md",
+      "group": "03",
+      "groupTitle": "企业 RAG",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-03-enterprise-rag/README.md"
+      }
+    },
+    {
+      "id": "14",
+      "title": "文档上传链路：对象存储、内容校验、隔离和解析失败",
+      "path": "docs/course/14-document-upload.md",
+      "group": "03",
+      "groupTitle": "企业 RAG",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-03-enterprise-rag/README.md"
+      }
+    },
+    {
+      "id": "15",
+      "title": "文档切分为什么影响召回：标题、条款、元数据和粒度",
+      "path": "docs/course/15-document-chunking.md",
+      "group": "03",
+      "groupTitle": "企业 RAG",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-03-enterprise-rag/README.md"
+      }
+    },
+    {
+      "id": "16",
+      "title": "向量检索原理与 pgvector 实现",
+      "path": "docs/course/16-pgvector-search.md",
+      "group": "03",
+      "groupTitle": "企业 RAG",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-03-enterprise-rag/README.md"
+      }
+    },
+    {
+      "id": "17",
+      "title": "权限为什么必须在 TopK 之前过滤",
+      "path": "docs/course/17-acl-before-topk.md",
+      "group": "03",
+      "groupTitle": "企业 RAG",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-03-enterprise-rag/README.md"
+      }
+    },
+    {
+      "id": "18",
+      "title": "混合检索、Query Rewrite、Rerank 什么时候有用",
+      "path": "docs/course/18-hybrid-retrieval.md",
+      "group": "03",
+      "groupTitle": "企业 RAG",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-03-enterprise-rag/README.md"
+      }
+    },
+    {
+      "id": "19",
+      "title": "RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入",
+      "path": "docs/course/19-grounded-rag-answer.md",
+      "group": "03",
+      "groupTitle": "企业 RAG",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-03-enterprise-rag/README.md"
+      }
+    },
+    {
+      "id": "20",
+      "title": "增量索引为什么需要任务、租约和失败恢复",
+      "path": "docs/course/20-incremental-indexing.md",
+      "group": "03",
+      "groupTitle": "企业 RAG",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-03-enterprise-rag/README.md"
+      }
+    },
+    {
+      "id": "21",
+      "title": "RAG 质量怎样量化：Golden Set、Recall@K 和坏案例",
+      "path": "docs/course/21-rag-evaluation.md",
+      "group": "03",
+      "groupTitle": "企业 RAG",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-03-enterprise-rag/README.md"
+      }
+    },
+    {
+      "id": "22",
+      "title": "C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合",
+      "path": "docs/course/22-thin-bff.md",
+      "group": "04",
+      "groupTitle": "客户咨询与工单升级",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-04-customer-consultation/README.md"
+      }
+    },
+    {
+      "id": "23",
+      "title": "多轮会话原理：短期状态、裁剪、总结和过期",
+      "path": "docs/course/23-conversation-state.md",
+      "group": "04",
+      "groupTitle": "客户咨询与工单升级",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-04-customer-consultation/README.md"
+      }
+    },
+    {
+      "id": "24",
+      "title": "用户怎样判断回答可信：证据、反馈、拒答和重试",
+      "path": "docs/course/24-answer-trust.md",
+      "group": "04",
+      "groupTitle": "客户咨询与工单升级",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-04-customer-consultation/README.md"
+      }
+    },
+    {
+      "id": "25",
+      "title": "机器人解决不了时怎样平滑升级工单",
+      "path": "docs/course/25-ticket-handoff.md",
+      "group": "04",
+      "groupTitle": "客户咨询与工单升级",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-04-customer-consultation/README.md"
+      }
+    },
+    {
+      "id": "26",
+      "title": "Agent 与普通聊天有什么区别：目标、状态和受控执行",
+      "path": "docs/course/26-agent-boundary.md",
+      "group": "05",
+      "groupTitle": "受控 Agent 与老系统接入",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-05-controlled-agent/README.md"
+      }
+    },
+    {
+      "id": "27",
+      "title": "Tool Calling 原理与查询 Tool：最小权限、最小参数和最小返回",
+      "path": "docs/course/27-query-tools.md",
+      "group": "05",
+      "groupTitle": "受控 Agent 与老系统接入",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-05-controlled-agent/README.md"
+      }
+    },
+    {
+      "id": "28",
+      "title": "为什么模型只能选择工具：参数污染、结果污染和业务规则边界",
+      "path": "docs/course/28-tool-trust-boundaries.md",
+      "group": "05",
+      "groupTitle": "受控 Agent 与老系统接入",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-05-controlled-agent/README.md"
+      }
+    },
+    {
+      "id": "29",
+      "title": "写操作为什么必须先做风险分级",
+      "path": "docs/course/29-action-risk.md",
+      "group": "05",
+      "groupTitle": "受控 Agent 与老系统接入",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-05-controlled-agent/README.md"
+      }
+    },
+    {
+      "id": "30",
+      "title": "人工确认为什么不能只传一个字符串 token",
+      "path": "docs/course/30-approval-receipt.md",
+      "group": "05",
+      "groupTitle": "受控 Agent 与老系统接入",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-05-controlled-agent/README.md"
+      }
+    },
+    {
+      "id": "31",
+      "title": "幂等、并发和审计怎样跨越本地与远程事务边界",
+      "path": "docs/course/31-action-consistency.md",
+      "group": "05",
+      "groupTitle": "受控 Agent 与老系统接入",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-05-controlled-agent/README.md"
+      }
+    },
+    {
+      "id": "32",
+      "title": "JDK8 老系统接入 AI：OpenAPI、Java 8 客户端、认证、超时与错误处理",
+      "path": "docs/course/32-jdk8-integration.md",
+      "group": "05",
+      "groupTitle": "受控 Agent 与老系统接入",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-05-controlled-agent/README.md"
+      }
+    },
+    {
+      "id": "33",
+      "title": "串联工单 Agent 业务链：知识查询、人工确认与 JDK8 执行",
+      "path": "docs/course/33-ticket-agent-case.md",
+      "group": "05",
+      "groupTitle": "受控 Agent 与老系统接入",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-05-controlled-agent/README.md"
+      }
+    },
+    {
+      "id": "34",
+      "title": "Agent 质量怎样评测：工具路径、参数、拒绝和副作用",
+      "path": "docs/course/34-agent-evaluation.md",
+      "group": "05",
+      "groupTitle": "受控 Agent 与老系统接入",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-05-controlled-agent/README.md"
+      }
+    },
+    {
+      "id": "35",
+      "title": "AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权",
+      "path": "docs/course/35-ai-security-regression.md",
+      "group": "06",
+      "groupTitle": "评测、安全与上线治理",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-06-production-readiness/README.md"
+      }
+    },
+    {
+      "id": "36",
+      "title": "观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本",
+      "path": "docs/course/36-observability.md",
+      "group": "06",
+      "groupTitle": "评测、安全与上线治理",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-06-production-readiness/README.md"
+      }
+    },
+    {
+      "id": "37",
+      "title": "缓存、熔断、限流和降级：只保留业务真正需要的部分",
+      "path": "docs/course/37-production-resilience.md",
+      "group": "06",
+      "groupTitle": "评测、安全与上线治理",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-06-production-readiness/README.md"
+      }
+    },
+    {
+      "id": "38",
+      "title": "项目配置实战：让默认配置跑通，再按需替换基础设施",
+      "path": "docs/course/38-runtime-configuration.md",
+      "group": "06",
+      "groupTitle": "评测、安全与上线治理",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-06-production-readiness/README.md"
+      }
+    },
+    {
+      "id": "39",
+      "title": "上线前最后核对什么：测试、Eval、密钥配置、发布和回滚",
+      "path": "docs/course/39-release-checklist.md",
+      "group": "06",
+      "groupTitle": "评测、安全与上线治理",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-06-production-readiness/README.md"
+      }
+    },
+    {
+      "id": "40",
+      "title": "DashScope Provider 适配实验：配置隔离、响应差异和回归边界",
+      "path": "docs/course/40-dashscope-provider-replacement.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "41",
+      "title": "Embedding 与 Rerank 替换实验：怎样设计同集评测",
+      "path": "docs/course/41-domestic-embedding-rerank.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "42",
+      "title": "Graph 人工确认路由实验：何时比现有状态机更合适",
+      "path": "docs/course/42-graph-confirmation-flow.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "43",
+      "title": "Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本",
+      "path": "docs/course/43-spring-ai-alibaba-compatibility.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "44",
+      "title": "LangChain4j AI Services 适配实验：迁移一个低风险用例",
+      "path": "docs/course/44-langchain4j-ai-services.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "45",
+      "title": "LangChain4j RAG 适配实验：复用现有业务契约",
+      "path": "docs/course/45-langchain4j-rag-contract.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "46",
+      "title": "LangChain4j Tool 实验：只读调用与结构化输出",
+      "path": "docs/course/46-langchain4j-tool-structured-output.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "47",
+      "title": "Spring AI 与 LangChain4j 共存实验：按业务能力选择框架",
+      "path": "docs/course/47-spring-ai-langchain4j-coexistence.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "48",
+      "title": "AgentScope Tool 裁决实验：注册、身份传递与权限映射",
+      "path": "docs/course/48-agentscope-runtime-contracts.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "49",
+      "title": "多 Agent 实际协作：并行取证、结果汇总与失败转人工",
+      "path": "docs/course/49-multi-agent-human-intervention.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "50",
+      "title": "MCP 互操作实验：发现、准入、调用与远程失败",
+      "path": "docs/course/50-mcp-enterprise-tools.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "51",
+      "title": "A2A 互操作实验：任务映射、幂等与状态边界",
+      "path": "docs/course/51-a2a-task-collaboration.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    },
+    {
+      "id": "52",
+      "title": "结束语：把 Java + AI 能力迁移到真实公司项目",
+      "path": "docs/course/52-column-conclusion.md",
+      "group": "07",
+      "groupTitle": "框架与协议迁移",
+      "practice": {
+        "label": "本阶段可运行源码",
+        "path": "learning-stages/stage-07-framework-boundaries/README.md"
+      }
+    }
+  ]
+}
