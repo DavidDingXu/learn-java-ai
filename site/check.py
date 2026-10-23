@@ -16,10 +16,13 @@ class Page(HTMLParser):
         self.digest = None
         self.article_depth = 0
         self.article_text = []
+        self.community_count = 0
         self.feed(text)
 
     def handle_starttag(self, tag, attributes):
         attrs = dict(attributes)
+        if tag == 'div' and 'community-section' in attrs.get('class', '').split():
+            self.community_count += 1
         if attrs.get('id'):
             self.ids.add(attrs['id'])
         for key in ['href', 'src']:
@@ -69,6 +72,13 @@ def check():
         page = pages[(DIST / article['url']).resolve()]
         assert page.digest == hashlib.sha256(source.encode()).hexdigest(), f'{article["id"]}: stale article'
         assert len(''.join(page.article_text)) > 1000, f'{article["id"]}: incomplete article'
+    qr = (DIST / 'assets/wechat-official-account.jpg').resolve()
+    for route in ['index.html', *[article['url'] for article in manifest['articles']]]:
+        file = (DIST / route).resolve()
+        page = pages[file]
+        assert page.community_count == 1, f'{route}: missing or duplicated community section'
+        assert f'https://github.com/{catalog["repository"]}/issues' in page.links, f'{route}: incorrect feedback repository'
+        assert any((file.parent / unquote(urlsplit(image).path)).resolve() == qr for image in page.images), f'{route}: missing official account QR code'
     print(f'{catalog["repository"]}: {len(manifest["articles"])} article pages, {len(images)} images, {links} site links and anchors verified')
 
 

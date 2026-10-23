@@ -186,3 +186,5 @@ html{scroll-padding-top:76px}#article-body h2,#article-body h3{scroll-margin-top
 /* Course articles start with prose, rather than a metadata line. */
 #article-body h1+p{font-size:var(--body-size);line-height:2;color:var(--ink);margin:24px 0}
 @media(max-width:600px){#article-body h1+p{font-size:calc(var(--body-size) - 1px);line-height:1.95;margin:19px 0}}
+
+.community-mini>summary{padding-block:8px}

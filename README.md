@@ -1,10 +1,14 @@
 # Java AI 应用开发实战
 
+<p align="center">
+  <a href="https://daviddingxu.github.io/learn-java-ai/"><img src="docs/assets/readme-cover.svg" alt="Java AI 应用开发实战：52 篇完整文章  /  7 个模块  /  7 个运行阶段" width="100%"></a>
+</p>
+
+<p align="center"><a href="https://daviddingxu.github.io/learn-java-ai/"><strong>开始阅读 →</strong></a> &nbsp;·&nbsp; <a href="docs/course/README.md"><strong>完整目录</strong></a> &nbsp;·&nbsp; <a href="#动手实践"><strong>动手实践</strong></a> &nbsp;·&nbsp; <a href="learning-stages/README.md"><strong>阶段源码</strong></a> &nbsp;·&nbsp; <a href="docs/getting-started.md"><strong>运行指南</strong></a></p>
+
+<p align="center"><img src="https://img.shields.io/badge/%E8%AF%BE%E7%A8%8B-%E5%B7%B2%E5%AE%8C%E7%BB%93-2f7d4a?style=flat-square" alt="课程：已完结"> <img src="https://img.shields.io/badge/%E4%BD%BF%E7%94%A8%E8%8C%83%E5%9B%B4-%E9%9D%9E%E5%95%86%E4%B8%9A-64776d?style=flat-square" alt="使用范围：非商业"></p>
+
 沿一条客户服务链路，学习模型调用、企业 RAG、受控 Agent 与 Java 系统接入。从第一条真实模型调用，逐步走到评测、安全、发布与回滚。
-
-**[在线阅读](https://daviddingxu.github.io/learn-java-ai/) · [完整目录](docs/course/README.md) · [分阶段源码](learning-stages/README.md) · [运行指南](docs/getting-started.md)**
-
-**课程已完结 · 52 篇完整文章 · 7 个学习模块 · 7 个可运行阶段**
 
 ## 适合谁学
 
