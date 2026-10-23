@@ -439,7 +439,7 @@ test("Maven Wrapper is pinned to Maven 3.9.14", () => {
   assert.match(wrapperProperties, /apache-maven-3\.9\.14-bin\.zip/);
 });
 
-test("public README matches the current service and build boundaries", () => {
+test("public reading and runtime guides match the current service and build boundaries", () => {
   const readme = read("README.md") + "\n" + read("docs/getting-started.md");
   const labsPom = read("labs/pom.xml");
   const mcpVersion = tagValue(labsPom, "mcp-java-sdk.version");
@@ -456,9 +456,12 @@ test("public README matches the current service and build boundaries", () => {
     assert.match(readme, new RegExp(requiredPath.replaceAll("/", "\\/")));
   }
 
-  assert.match(readme, /(?:\]\(|href=["'])docs\/course\/README\.md(?:\)|["'])/);
+  // Full article navigation is checked by check-course.mjs; the homepage keeps
+  // runtime details behind explicit reader-facing links.
+  assert.match(read("README.md"), /(?:\]\(|href=["'])docs\/getting-started\.md(?:\)|["'])/);
+  assert.match(read("README.md"), /(?:\]\(|href=["'])learning-stages\/README\.md(?:\)|["'])/);
   assert.match(readme, /受控 Agent/);
-  assert.match(readme, /安全回归/);
+  assert.match(readme, /安全(?:评测|回归)/);
   assert.match(readme, /Micrometer/);
   assert.match(readme, /跨平台发布门禁/);
   assert.match(readme, /labs.*与主应用隔离的代码实验/s);
@@ -520,7 +523,7 @@ test("public project surface excludes authoring and internal delivery artifacts"
 
   for (const document of docs) {
     const content = read(document);
-    assert.doesNotMatch(content, /付费专栏|公众号|文章排期|备稿|小红书|作者工作流|author workstation|Phase [A-Z]|Reset Delivery/);
+    assert.doesNotMatch(content, /付费专栏|公众号(?:排期|备稿|发布计划)|文章排期|备稿|小红书|作者工作流|author workstation|Phase [A-Z]|Reset Delivery/);
   }
 });
 
