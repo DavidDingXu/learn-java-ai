@@ -119,4 +119,4 @@ AI 服务比普通 CRUD 更容易出现长延迟、限流、模型不可用和�
 
 [课程首页](../../README.md) · [完整目录](README.md) · [← 多租户、身份和权限为什么不能相信请求参数](05-delegated-identity.md) · [一次模型调用内部发生了什么：Message、Options、Token 与响应元数据 →](07-model-call-metadata.md)
 
-动手实践：[本阶段可运行源码](../../learning-stages/stage-01-system-boundaries/README.md)
+动手实践：[本阶段可运行源码](../../learning-stages/stage-02-model-engineering/README.md)

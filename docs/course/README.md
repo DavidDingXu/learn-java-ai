@@ -13,9 +13,9 @@
 | 01 | [专栏介绍：Java 后端怎样系统学习 AI 应用开发落地](01-column-introduction.md) | [本阶段可运行源码](../../learning-stages/stage-01-system-boundaries/README.md) |
 | 02 | [从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统](02-system-context.md) | [本阶段可运行源码](../../learning-stages/stage-01-system-boundaries/README.md) |
 | 03 | [Spring AI 为什么做主线，其他框架放在哪里](03-framework-selection.md) | [本阶段可运行源码](../../learning-stages/stage-01-system-boundaries/README.md) |
-| 04 | [先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路](04-first-model-call.md) | [本阶段可运行源码](../../learning-stages/stage-01-system-boundaries/README.md) |
-| 05 | [多租户、身份和权限为什么不能相信请求参数](05-delegated-identity.md) | [本阶段可运行源码](../../learning-stages/stage-01-system-boundaries/README.md) |
-| 06 | [JDK8 老系统不升级：先划清现代 AI 服务与老系统边界](06-jdk8-boundary.md) | [本阶段可运行源码](../../learning-stages/stage-01-system-boundaries/README.md) |
+| 04 | [先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路](04-first-model-call.md) | [本阶段可运行源码](../../learning-stages/stage-02-model-engineering/README.md) |
+| 05 | [多租户、身份和权限为什么不能相信请求参数](05-delegated-identity.md) | [本阶段可运行源码](../../learning-stages/stage-02-model-engineering/README.md) |
+| 06 | [JDK8 老系统不升级：先划清现代 AI 服务与老系统边界](06-jdk8-boundary.md) | [本阶段可运行源码](../../learning-stages/stage-02-model-engineering/README.md) |
 
 <a id="module-02"></a>
 

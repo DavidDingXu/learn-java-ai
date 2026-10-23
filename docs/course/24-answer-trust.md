@@ -14,7 +14,6 @@
 
 这些信号最终要落到页面上。移动端把引用折叠在当前回答内，用户可以继续反馈、重新生成或转人工；`attemptId` 和 `traceId` 留给服务端关联，不直接展示给客户。
 
-<!-- visual-origin: screenshot: column/assets/reports/customer-web-browser-qa.md -->
 ![Customer Web 移动端回答界面（脱敏演示数据）](../assets/screenshots/24-customer-web-mobile.png)
 
 | 信号 | 自动验证方式 | 用户价值 |

@@ -120,4 +120,4 @@ JWT、Session 或网关身份适合提供主体、租户和粗粒度权限。具
 
 [课程首页](../../README.md) · [完整目录](README.md) · [← 先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路](04-first-model-call.md) · [JDK8 老系统不升级：先划清现代 AI 服务与老系统边界 →](06-jdk8-boundary.md)
 
-动手实践：[本阶段可运行源码](../../learning-stages/stage-01-system-boundaries/README.md)
+动手实践：[本阶段可运行源码](../../learning-stages/stage-02-model-engineering/README.md)

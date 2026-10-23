@@ -113,7 +113,7 @@ def build(target=None):
         menu = f'<button class="icon-button menu-toggle js-only" type="button" aria-label="打开课程目录" aria-controls="course-sidebar" aria-expanded="false">{icon("menu")}</button>' if article else ''
         return f'''<a class="skip-link" href="#main-content">跳到正文</a><header class="site-header"><div class="header-inner">{menu}
 <a class="brand" href="{root}index.html" aria-label="{esc(config['brand'])} · 学习站首页"><img src="{root}assets/brand.png" alt="" width="36" height="36"><span><strong>{esc(config['brand'])}</strong><small>{esc(catalog['title'])}</small></span></a>
-<nav class="header-nav" aria-label="主导航"><a href="{root}index.html#curriculum">课程目录</a><a href="{root}index.html#practice">动手实践</a><a href="{github}" target="_blank" rel="noopener">GitHub {icon('external')}</a></nav>
+<nav class="header-nav" aria-label="主导航"><a href="{root}index.html#curriculum">课程目录</a><a href="{root}index.html#downloads">离线阅读</a><a href="{github}" target="_blank" rel="noopener">GitHub {icon('external')}</a></nav>
 <div class="header-controls"><button class="icon-button theme-toggle js-only" type="button" aria-label="切换到深色主题" title="切换到深色主题"><span class="theme-light-icon">{icon('moon')}</span><span class="theme-dark-icon">{icon('sun')}</span></button><button class="search-trigger js-only" type="button" aria-label="搜索课程">{icon('search')}<span>搜索课程</span><kbd>⌘ K</kbd></button></div></div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header>'''
 
     def dialogs():
@@ -127,7 +127,7 @@ def build(target=None):
         return '<details class="community-mini"><summary>关注与交流 · 好好用 AI</summary>' + content + '</details>' if compact else content
 
     def footer(page):
-        contact = '<div class="page-width">' + community(page) + '</div>' if page == 'index.html' else ''
+        contact = '<div class="page-width" id="community">' + community(page) + '</div>' if page == 'index.html' else ''
         return contact + f'<footer class="site-footer page-width"><div><strong>{esc(config["brand"])}</strong><span>{esc(catalog["title"])}</span></div><a href="{rel("license.html", page)}">非商业使用 · 许可说明</a></footer>'
 
     def resolve_url(value, source, page, image=False):
@@ -138,6 +138,9 @@ def build(target=None):
         if not original.is_relative_to(ROOT):
             raise ValueError(f'Resource outside repository: {source}: {value}')
         if image:
+            vector = original.parent.parent / 'source' / original.with_suffix('.svg').name
+            if original.suffix.lower() == '.png' and vector.is_file():
+                original = vector
             if not original.is_file():
                 raise ValueError(f'Missing image: {source}: {value}')
             destination = Path('assets/content') / original.relative_to(ROOT)
@@ -236,11 +239,14 @@ def build_home(config, catalog, records, groups, output, head, header, dialogs, 
         rail.append(f'<a href="#stage-{group}"><span>模块 {group}</span><strong>{esc(title)}</strong>{icon("arrow")}</a>')
         links = ''.join(f'<li><a class="course-row" href="{row["url"]}"><span class="course-number">{row["id"] if row["id"] not in ("INTRO", "END") else "·"}</span><span class="course-title">{esc(row["title"])}</span><span class="course-row-arrow">{icon("arrow")}</span></a></li>' for row in rows)
         stages.append(f'<section class="catalog-stage" id="stage-{group}"><header><span class="stage-marker">模块 {group}</span><div><h3>{esc(title)}</h3><p>{esc(config["groupNotes"].get(group, ""))}</p></div><span class="lesson-range">{len(rows)} 篇</span></header><ol class="course-rows">{links}</ol></section>')
-    practices = ''.join(f'<a class="experiment-feature" href="{github}/blob/main/{quote(item["path"])}" target="_blank" rel="noopener"><span class="experiment-number">0{i+1}</span><div><h3>{esc(item["title"])}</h3><p>{esc(item["description"])}</p><span class="text-link">查看实践 {icon("external")}</span></div></a>' for i, item in enumerate(config['practice']))
+    practices = ''.join(f'<a class="experiment-feature" href="{github}/blob/main/{quote(item["path"])}" target="_blank" rel="noopener"><span class="experiment-number">0{i+1}</span><div><h3>{esc(item["title"])}</h3><p>{esc(item["description"])}</p><span class="text-link">查看配套资源 {icon("external")}</span></div></a>' for i, item in enumerate(config['practice']))
+    slug = catalog['repository'].split('/')[-1]
+    edition = json.loads((ROOT / 'book/edition.json').read_text(encoding='utf-8'))
+    downloads = f'<section class="downloads-section page-width" id="downloads"><div class="section-heading"><div><h2>把课程放进你的书架。</h2><p>完整正文与配图均可离线阅读。PDF 保留固定版式，EPUB 适合手机和平板。</p></div></div><div class="download-links"><a class="button primary" href="downloads/{slug}.pdf" download>下载 PDF {icon("arrow")}</a><a class="button secondary" href="downloads/{slug}.epub" download>下载 EPUB {icon("arrow")}</a></div><p class="download-note">作者：{esc(edition["author"])} · 第 1 版 · {esc(edition["date"])} · 非商业使用</p></section>'
     page = (head(catalog['title'], 'index.html') + '<body class="home-page" data-root="./">' + header('index.html')
             + '<main id="main-content"><div class="hero-band"><section class="home-hero page-width"><div class="hero-copy"><p class="book-eyebrow">' + esc(config['brand'].upper()) + ' · 免费阅读 · 非商业使用</p><h1>' + esc(config['headline'][0]) + '<br><em>' + esc(config['headline'][1]) + '</em></h1><p>' + esc(config['description']) + '</p><div class="hero-actions"><a class="button primary" id="continue-learning" href="' + records[0]['url'] + '"><span>开始学习</span>' + icon('arrow') + '</a><a class="hero-secondary" href="#curriculum">浏览完整目录</a></div><p class="hero-note" id="resume-label">课程已完结 · ' + str(len(records)) + ' 篇 · ' + str(len(groups)) + ' 个模块</p></div><div class="model-preview course-preview"><div class="model-caption"><span>' + esc(config['pipelineTitle']) + '</span></div><div class="model-pipeline">' + pipeline + '</div><p class="pipeline-note">' + esc(config['readingNote']) + '</p></div></section></div>'
             + '<section class="curriculum-section page-width" id="curriculum"><div class="section-heading"><div><h2>沿着问题，一步步学下去。</h2><p>' + esc(config['curriculumNote']) + '</p></div><div class="home-progress">完整课程<strong>' + str(len(records)) + ' 篇</strong></div></div><div class="curriculum-layout"><aside class="path-rail"><nav aria-label="课程模块">' + ''.join(rail) + '</nav></aside><div>' + ''.join(stages) + '</div></div></section>'
-            + '<section class="experiments-section page-width" id="practice"><div class="section-heading"><div><h2>读懂之后，亲手做一遍。</h2><p>把文章里的方法，放回代码和真实交付过程。</p></div></div><div class="experiment-features">' + practices + '</div></section></main>' + footer('index.html') + dialogs() + '</body></html>')
+            + '<section class="experiments-section page-width" id="practice"><div class="section-heading"><div><h2>需要动手时，再打开配套资源。</h2><p>正文可以独立阅读。代码与模板用于进一步理解和验证。</p></div></div><div class="experiment-features">' + practices + '</div></section>' + downloads + '</main>' + footer('index.html') + dialogs() + '</body></html>')
     (output / 'index.html').write_text(page, encoding='utf-8')
 
 

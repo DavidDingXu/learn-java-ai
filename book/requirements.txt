@@ -1,0 +1,4 @@
+Markdown==3.11.2
+beautifulsoup4==4.14.3
+weasyprint==68.0
+pypdf==6.12.0

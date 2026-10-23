@@ -72,6 +72,11 @@ def check():
         page = pages[(DIST / article['url']).resolve()]
         assert page.digest == hashlib.sha256(source.encode()).hexdigest(), f'{article["id"]}: stale article'
         assert len(''.join(page.article_text)) > 1000, f'{article["id"]}: incomplete article'
+    home = pages[(DIST / 'index.html').resolve()]
+    assert 'downloads' in home.ids and 'community' in home.ids, 'Missing homepage reading/feedback entry'
+    slug = catalog['repository'].split('/')[-1]
+    for extension in ('pdf', 'epub'):
+        assert f'downloads/{slug}.{extension}' in home.links, f'Missing {extension} download'
     qr = (DIST / 'assets/wechat-official-account.jpg').resolve()
     for route in ['index.html', *[article['url'] for article in manifest['articles']]]:
         file = (DIST / route).resolve()

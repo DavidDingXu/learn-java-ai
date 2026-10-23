@@ -61,6 +61,7 @@ function verifyLink(document, rawUrl, image = false) {
 assert.equal(catalog.chapters.length, catalog.articleCount, 'catalog article count');
 assert.equal(new Set(catalog.chapters.map(ch => ch.id)).size, catalog.articleCount, 'unique chapter ids');
 assert.equal(new Set(catalog.chapters.map(ch => ch.path)).size, catalog.articleCount, 'unique chapter paths');
+const readme = readFileSync(path.join(root, 'README.md'), 'utf8');
 const index = readFileSync(path.join(root, 'docs/course/README.md'), 'utf8');
 
 for (const chapter of catalog.chapters) {
@@ -76,6 +77,7 @@ for (const chapter of catalog.chapters) {
   if (!body.includes('[完整目录](') || !body.includes('[课程首页](')) errors.push(`${chapter.path}: chapter navigation is missing`);
   const encoded = encodeURI(path.posix.relative('docs/course', chapter.path));
   if (!index.includes(`](${encoded})`)) errors.push(`${chapter.path}: not linked from course index`);
+  if (!readme.includes(`](${encodeURI(chapter.path)})`)) errors.push(`${chapter.path}: not linked from root README`);
   verifyLink('README.md', chapter.practice.path);
 }
 
@@ -84,6 +86,7 @@ for (const document of documents) {
   if (!existsSync(file)) { errors.push(`missing document ${document}`); continue; }
   const content = withoutFencedCode(readFileSync(file, 'utf8'));
   if (/\/Users\/|file:\/\/|\/private\/var\/folders\//.test(content)) errors.push(`${document}: local workstation path`);
+  if (/作者侧验收|正式实战文章只能|文章必须写清当前入口|<!--\s*visual-origin:/.test(content)) errors.push(`${document}: author-only material`);
   for (const match of content.matchAll(/(!?)\[[^\]\n]*\]\(\s*(<[^>]+>|[^\s)]+)(?:\s+["'][^\n]*?["'])?\s*\)/g)) {
     verifyLink(document, match[2], match[1] === '!');
   }

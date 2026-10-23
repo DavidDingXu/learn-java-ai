@@ -22,8 +22,26 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
-          cache-dependency-path: site/requirements.txt
-      - run: python -m pip install -r site/requirements.txt
+          cache-dependency-path: book/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu-core fonts-noto-cjk
+      - name: Install Pandoc 3.9.0.2
+        run: |
+          curl -fsSL --retry 2 --max-time 180 https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-linux-amd64.tar.gz -o /tmp/pandoc.tar.gz
+          tar -xzf /tmp/pandoc.tar.gz -C /tmp
+          echo "/tmp/pandoc-3.9.0.2/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: book/.cache/fonts
+          key: book-fonts-${{ hashFiles('book/fonts.json') }}
+      - run: python -m pip install -r book/requirements.txt
+      - run: python book/build.py
+      - run: python book/check.py
+      - name: Validate EPUB 3
+        run: |
+          curl -fsSL --retry 2 https://github.com/w3c/epubcheck/releases/download/v5.4.0/epubcheck-5.4.0.zip -o /tmp/epubcheck.zip
+          echo "33350c61038e71dfb3d45a76aed04bf5481e6d5500cb780f6e98db8bbd15a28c  /tmp/epubcheck.zip" | sha256sum --check
+          unzip -q /tmp/epubcheck.zip -d /tmp/epubcheck
+          java -jar /tmp/epubcheck/epubcheck-5.4.0/epubcheck.jar site/dist/downloads/*.epub
       - run: python site/build.py
       - run: python site/check.py
       - uses: actions/upload-pages-artifact@v4

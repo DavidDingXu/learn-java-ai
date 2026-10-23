@@ -7,7 +7,7 @@
   "description": "沿着一条客户服务链路，把模型、企业 RAG、受控 Agent 和 JDK8 老系统接在一起，再补齐评测、安全与上线治理。",
   "pipelineTitle": "沿同一条业务链，逐步构建系统",
   "readingNote": "模型负责生成，业务系统掌握规则与执行。",
-  "curriculumNote": "52 篇完整文章，七个可运行阶段。读到哪里，就运行对应的业务能力。",
+  "curriculumNote": "52 篇完整文章，沿同一条业务链展开；阅读无需先启动工程。",
   "pipeline": [
     {
       "id": "19",

@@ -14,3 +14,6 @@ var/
 **/config/application-default.yml
 site/dist/
 site/__pycache__/
+
+book/.cache/
+book/__pycache__/

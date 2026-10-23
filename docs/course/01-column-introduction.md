@@ -8,7 +8,6 @@ Java 后端工程师转向 AI 应用开发，第一道门槛通常不是模型�
 
 项目里既有 Java 服务，也有面向客户的 Web 页面。下面这张图来自配套 Customer Web 的实际运行界面：回答正文、参考来源、反馈、重新生成和转人工共用同一次回答记录，前端不直接访问知识库或工单服务。
 
-<!-- visual-origin: screenshot: column/assets/reports/customer-web-browser-qa.md -->
 ![Customer Web 桌面端运行界面（脱敏联调数据）](../assets/screenshots/01-customer-web-desktop.png)
 
 ## 从业务链开始，而不是从框架 API 开始

@@ -1,0 +1,4 @@
+docs/** linguist-documentation
+site/** linguist-documentation
+book/** linguist-documentation
+site/assets/vendor/** linguist-vendored

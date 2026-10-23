@@ -71,3 +71,9 @@ node scripts/check-course.mjs
 它核对全文数量、文章标题、实践入口、图片和仓库内链接。文案或图片修改运行此检查即可；涉及代码行为时，仍需执行相应项目测试。命令适用于 macOS、Windows 和 Linux。
 
 贡献的文章与插图采用 CC BY-NC-SA 4.0，贡献的代码采用 PolyForm Noncommercial 1.0.0；详见 [许可说明](LICENSING.md)。
+
+## 目录与内容维护
+
+`docs/course/` 存放课程正文；`learning-stages/` 保留分阶段工程；`apps/`、`services/`、`integrations/` 和 `labs/` 按应用、领域能力、集成与实验划分。`site/`、`book/` 分别构建阅读站和电子书。
+
+文章顺序和链接以 `docs/course/catalog.json` 为准，根目录 README 展示每篇文章。修改文章后运行课程检查；书稿编排与电子书构建见 [电子书维护说明](book/README.md)。

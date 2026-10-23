@@ -139,4 +139,4 @@ Content-Type: application/json
 
 [课程首页](../../README.md) · [完整目录](README.md) · [← Spring AI 为什么做主线，其他框架放在哪里](03-framework-selection.md) · [多租户、身份和权限为什么不能相信请求参数 →](05-delegated-identity.md)
 
-动手实践：[本阶段可运行源码](../../learning-stages/stage-01-system-boundaries/README.md)
+动手实践：[本阶段可运行源码](../../learning-stages/stage-02-model-engineering/README.md)

@@ -15,7 +15,7 @@ function fixture(t, newline = '\n') {
   function write(file, text) {
     writeFileSync(path.join(root, file), text.replaceAll('\n', newline));
   }
-  write('README.md', '# 示例课程\n\n[完整目录](docs/course/README.md)\n');
+  write('README.md', '# 示例课程\n\n[完整目录](docs/course/README.md)\n\n[示例章节](docs/course/01-example.md)\n');
   write('CONTRIBUTING.md', '# 贡献指南\n');
   write('docs/course/README.md', '# 目录\n\n[示例章节](01-example.md)\n');
   write('docs/course/01-example.md', '# 示例章节\n\n' + '这里是用于验证课程文件读取的完整内容。'.repeat(80)
@@ -46,4 +46,21 @@ test('rejects an article whose referenced image is missing', (t) => {
   const result = run(root);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /missing local target sample\.png/);
+});
+
+
+test('rejects a chapter missing from the root README navigation', (t) => {
+  const root = fixture(t);
+  writeFileSync(path.join(root, 'README.md'), '# 课程\n');
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /not linked from root README/);
+});
+
+test('rejects author-only production notes in published course pages', (t) => {
+  const root = fixture(t);
+  writeFileSync(path.join(root, 'CONTRIBUTING.md'), '# 指南\n正式实战文章只能基于这些记录展开。\n');
+  const result = run(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /author-only material/);
 });

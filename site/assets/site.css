@@ -188,3 +188,6 @@ html{scroll-padding-top:76px}#article-body h2,#article-body h3{scroll-margin-top
 @media(max-width:600px){#article-body h1+p{font-size:calc(var(--body-size) - 1px);line-height:1.95;margin:19px 0}}
 
 .community-mini>summary{padding-block:8px}
+
+/* Keep the zoom action discoverable on touch screens. */
+.image-open::after{content:"放大查看";display:block;text-align:right;padding:5px 2px;color:var(--muted);font:12px/1.5 var(--sans)}
