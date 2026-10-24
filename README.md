@@ -113,9 +113,13 @@
 
 ## 参与与交流
 
-欢迎 Star 收藏，按需要回查。问题与勘误请提交 [Issue](https://github.com/DavidDingXu/learn-java-ai/issues)，改进内容请参考[贡献指南](CONTRIBUTING.md)。可在[阅读站](https://daviddingxu.github.io/learn-java-ai/#community)扫码关注公众号。网站与电子书的维护方法见[构建说明](docs/BUILD.md)。
+欢迎 Star 收藏，按需要回查。问题与勘误请提交 [Issue](https://github.com/DavidDingXu/learn-java-ai/issues)，改进内容请参考[贡献指南](CONTRIBUTING.md)。网站与电子书的维护方法见[构建说明](docs/BUILD.md)。
 
-作者：**DavidDingXu** · 公众号「**好好用 AI**」
+作者：**DavidDingXu** · 微信公众号「**好好用 AI**」
+
+<p>
+  <a href="tools/site/assets/wechat-official-account.jpg"><img src="tools/site/assets/wechat-official-account.jpg" alt="微信公众号：好好用 AI" width="140"></a>
+</p>
 
 ## 许可
 
