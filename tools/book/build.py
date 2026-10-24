@@ -19,8 +19,8 @@ from bs4 import BeautifulSoup, Comment, NavigableString
 import markdown
 from markdown.extensions.toc import slugify_unicode
 
-ROOT = Path(__file__).resolve().parents[1]
-BOOK = ROOT / 'book'
+ROOT = Path(__file__).resolve().parents[2]
+BOOK = ROOT / 'tools/book'
 
 def esc(value):
     return html.escape(str(value), quote=True)
@@ -56,11 +56,11 @@ def fonts():
 
 def compile_manuscript():
     edition = json.loads((BOOK / 'edition.json').read_text(encoding='utf-8'))
-    light = re.search(r':root\{([^}]+)\}', (ROOT/'site/assets/site.css').read_text()).group(1)
+    light = re.search(r':root\{([^}]+)\}', (ROOT/'tools/site/assets/site.css').read_text()).group(1)
     edition['theme'] = {name:value.strip() for name,value in re.findall(r'--([a-z-]+):([^;]+)',light) if name in ('paper','ink','muted','accent','accent-dark','accent-wash','line','soft')}
     edition['accent'] = edition['theme']['accent']
     catalog = json.loads((ROOT / 'docs/course/catalog.json').read_text(encoding='utf-8'))
-    website = json.loads((ROOT / 'site/course.json').read_text(encoding='utf-8'))['url']
+    website = json.loads((ROOT / 'tools/site/course.json').read_text(encoding='utf-8'))['url']
     repository = 'https://github.com/' + catalog['repository']
     revision = subprocess.check_output(['git','rev-parse','HEAD'], cwd=ROOT, text=True).strip()
     rows = catalog['chapters']
@@ -256,7 +256,7 @@ def compile_manuscript():
             refs.append(f'<a href="#chapter-{first["id"]}">{esc(label)}</a>');i=last+1
         chapter_text='<a href="#contents">全书</a>' if len(members)==len(rows) else '、'.join(refs)
         resource+=f'<tr><td>{chapter_text}</td><td><a href="{href}">{esc(display)}</a></td></tr>'
-    resource+='</tbody></table><h2>勘误与交流</h2><p>反馈时注明书名、电子版版本、章节和具体位置。代码问题请附运行环境与复现步骤。</p><p><a href="'+repository+'/issues">'+repository+'/issues</a></p><p>微信公众号：好好用 AI</p><img class="contact-qr" src="'+(ROOT/'site/assets/wechat-official-account.jpg').as_uri()+'" alt="好好用 AI 微信公众号二维码"></section>'
+    resource+='</tbody></table><h2>勘误与交流</h2><p>反馈时注明书名、电子版版本、章节和具体位置。代码问题请附运行环境与复现步骤。</p><p><a href="'+repository+'/issues">'+repository+'/issues</a></p><p>微信公众号：好好用 AI</p><img class="contact-qr" src="'+(ROOT/'tools/site/assets/wechat-official-account.jpg').as_uri()+'" alt="好好用 AI 微信公众号二维码"></section>'
     toc='<nav class="book-toc" id="contents" aria-label="全书目录"><h1>目录</h1><ul><li><a href="#preface">前言</a></li><li><a href="#reading-guide">如何阅读本书</a></li>'+''.join(toc_items)+'<li class="toc-part"><a href="#glossary">术语索引</a></li><li><a href="#resources">章节与配套资源</a></li></ul></nav>'
     manuscript=cover+titlepage+copyright+''.join(front)+toc+str(result)+glossary+resource
     final=fragment(manuscript);ids=[x['id'] for x in final.select('[id]')]
@@ -266,14 +266,14 @@ def compile_manuscript():
     for file in sorted(BOOK.rglob('*')):
         if file.is_file() and '.cache' not in file.parts and '__pycache__' not in file.parts:
             sources[file.relative_to(ROOT).as_posix()]=hashlib.sha256(file.read_bytes()).hexdigest()
-    for asset in ['site/assets/site.css','site/course.json','docs/course/catalog.json','docs/assets/readme-cover.png','site/assets/wechat-official-account.jpg']:
+    for asset in ['tools/site/assets/site.css','tools/site/course.json','docs/course/catalog.json','docs/assets/readme-cover.png','tools/site/assets/wechat-official-account.jpg']:
         sources[asset]=hashlib.sha256((ROOT/asset).read_bytes()).hexdigest()
     manifest={'title':edition['title'],'author':edition['author'],'version':edition['version'],'date':edition['date'],'repository':catalog['repository'],'git_commit':revision,'language':edition['language'],'sources':sources,**stats}
     manifest['content_sha256']=hashlib.sha256(json.dumps(sources,sort_keys=True).encode()).hexdigest()
     return manuscript,edition,manifest
 
 def build(output=None, html_only=False):
-    output=Path(output).resolve() if output else ROOT/'site/dist/downloads'
+    output=Path(output).resolve() if output else ROOT/'tools/site/dist/downloads'
     output.mkdir(parents=True,exist_ok=True)
     content,edition,manifest=compile_manuscript()
     font_dir=fonts()

@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
-          cache-dependency-path: book/requirements.txt
+          cache-dependency-path: tools/book/requirements.txt
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu-core fonts-noto-cjk
       - name: Install Pandoc 3.9.0.2
         run: |
@@ -31,22 +31,22 @@ jobs:
           echo "/tmp/pandoc-3.9.0.2/bin" >> "$GITHUB_PATH"
       - uses: actions/cache@v4
         with:
-          path: book/.cache/fonts
-          key: book-fonts-${{ hashFiles('book/fonts.json') }}
-      - run: python -m pip install -r book/requirements.txt
-      - run: python book/build.py
-      - run: python book/check.py
+          path: tools/book/.cache/fonts
+          key: book-fonts-${{ hashFiles('tools/book/fonts.json') }}
+      - run: python -m pip install -r tools/book/requirements.txt
+      - run: python tools/book/build.py
+      - run: python tools/book/check.py
       - name: Validate EPUB 3
         run: |
           curl -fsSL --retry 2 https://github.com/w3c/epubcheck/releases/download/v5.4.0/epubcheck-5.4.0.zip -o /tmp/epubcheck.zip
           echo "33350c61038e71dfb3d45a76aed04bf5481e6d5500cb780f6e98db8bbd15a28c  /tmp/epubcheck.zip" | sha256sum --check
           unzip -q /tmp/epubcheck.zip -d /tmp/epubcheck
-          java -jar /tmp/epubcheck/epubcheck-5.4.0/epubcheck.jar site/dist/downloads/*.epub
-      - run: python site/build.py
-      - run: python site/check.py
+          java -jar /tmp/epubcheck/epubcheck-5.4.0/epubcheck.jar tools/site/dist/downloads/*.epub
+      - run: python tools/site/build.py
+      - run: python tools/site/check.py
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: site/dist
+          path: tools/site/dist
   deploy:
     if: github.event_name != 'pull_request'
     needs: build

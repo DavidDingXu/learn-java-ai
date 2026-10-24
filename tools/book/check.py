@@ -12,7 +12,7 @@ from build import compile_manuscript,ROOT,BOOK
 
 def check():
     content,edition,current=compile_manuscript()
-    directory=ROOT/'site/dist/downloads';slug=edition['slug']
+    directory=ROOT/'tools/site/dist/downloads';slug=edition['slug']
     manifest=json.loads((directory/(slug+'-manifest.json')).read_text(encoding='utf-8'))
     # Source changes are never silently paired with an older offline edition.
     assert manifest['sources']==current['sources'],'Offline edition has stale sources'

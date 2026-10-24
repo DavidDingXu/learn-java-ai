@@ -14,8 +14,8 @@ from urllib.parse import quote, unquote, urlsplit
 import markdown
 from markdown.extensions.toc import slugify_unicode
 
-ROOT = Path(__file__).resolve().parents[1]
-SITE = ROOT / 'site'
+ROOT = Path(__file__).resolve().parents[2]
+SITE = ROOT / 'tools/site'
 ICONS = {
     'arrow': '<path d="M5 12h14M13 6l6 6-6 6"/>',
     'back': '<path d="M19 12H5m6-6-6 6 6 6"/>',
@@ -241,7 +241,7 @@ def build_home(config, catalog, records, groups, output, head, header, dialogs, 
         stages.append(f'<section class="catalog-stage" id="stage-{group}"><header><span class="stage-marker">模块 {group}</span><div><h3>{esc(title)}</h3><p>{esc(config["groupNotes"].get(group, ""))}</p></div><span class="lesson-range">{len(rows)} 篇</span></header><ol class="course-rows">{links}</ol></section>')
     practices = ''.join(f'<a class="experiment-feature" href="{github}/blob/main/{quote(item["path"])}" target="_blank" rel="noopener"><span class="experiment-number">0{i+1}</span><div><h3>{esc(item["title"])}</h3><p>{esc(item["description"])}</p><span class="text-link">查看配套资源 {icon("external")}</span></div></a>' for i, item in enumerate(config['practice']))
     slug = catalog['repository'].split('/')[-1]
-    edition = json.loads((ROOT / 'book/edition.json').read_text(encoding='utf-8'))
+    edition = json.loads((ROOT / 'tools/book/edition.json').read_text(encoding='utf-8'))
     downloads = f'<section class="downloads-section page-width" id="downloads"><div class="section-heading"><div><h2>把课程放进你的书架。</h2><p>完整正文与配图均可离线阅读。PDF 保留固定版式，EPUB 适合手机和平板。</p></div></div><div class="download-links"><a class="button primary" href="downloads/{slug}.pdf" download>下载 PDF {icon("arrow")}</a><a class="button secondary" href="downloads/{slug}.epub" download>下载 EPUB {icon("arrow")}</a></div><p class="download-note">作者：{esc(edition["author"])} · 第 1 版 · {esc(edition["date"])} · 非商业使用</p></section>'
     page = (head(catalog['title'], 'index.html') + '<body class="home-page" data-root="./">' + header('index.html')
             + '<main id="main-content"><div class="hero-band"><section class="home-hero page-width"><div class="hero-copy"><p class="book-eyebrow">' + esc(config['brand'].upper()) + ' · 免费阅读 · 非商业使用</p><h1>' + esc(config['headline'][0]) + '<br><em>' + esc(config['headline'][1]) + '</em></h1><p>' + esc(config['description']) + '</p><div class="hero-actions"><a class="button primary" id="continue-learning" href="' + records[0]['url'] + '"><span>开始学习</span>' + icon('arrow') + '</a><a class="hero-secondary" href="#curriculum">浏览完整目录</a></div><p class="hero-note" id="resume-label">课程已完结 · ' + str(len(records)) + ' 篇 · ' + str(len(groups)) + ' 个模块</p></div><div class="model-preview course-preview"><div class="model-caption"><span>' + esc(config['pipelineTitle']) + '</span></div><div class="model-pipeline">' + pipeline + '</div><p class="pipeline-note">' + esc(config['readingNote']) + '</p></div></section></div>'

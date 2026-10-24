@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-ROOT = Path(__file__).resolve().parents[1]
-DIST = ROOT / 'site/dist'
+ROOT = Path(__file__).resolve().parents[2]
+DIST = ROOT / 'tools/site/dist'
 
 
 class Page(HTMLParser):
