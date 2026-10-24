@@ -34,7 +34,7 @@
         <swagger-parser.version>2.1.45</swagger-parser.version>
         <json-schema-validator.version>3.0.6</json-schema-validator.version>
         <maven-shade.version>3.6.2</maven-shade.version>
-        <mockwebserver.version>4.12.0</mockwebserver.version>
+        <mockwebserver.version>5.5.0</mockwebserver.version>
         <pgvector-java.version>0.1.6</pgvector-java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
