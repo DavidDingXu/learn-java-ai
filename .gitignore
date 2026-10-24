@@ -12,11 +12,7 @@ var/
 .env
 *.log
 **/config/application-default.yml
-tools/site/dist/
-tools/site/__pycache__/
 
-tools/book/.cache/
-tools/book/__pycache__/
 
 # Local publishing outputs and environments
 __pycache__/
@@ -26,3 +22,7 @@ __pycache__/
 *.epub
 .env.*
 !.env.example
+
+# Local publishing tools
+/tools/site/
+/tools/book/

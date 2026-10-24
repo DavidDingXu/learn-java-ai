@@ -74,6 +74,6 @@ node scripts/check-course.mjs
 
 ## 目录与内容维护
 
-`docs/course/` 存放课程正文；`learning-stages/` 保留分阶段工程；`apps/`、`services/`、`integrations/` 和 `labs/` 按应用、领域能力、集成与实验划分。`tools/site/`、`tools/book/` 分别构建阅读站和电子书。
+`docs/course/` 存放课程正文；`learning-stages/` 保留分阶段工程；`apps/`、`services/`、`integrations/` 和 `labs/` 按应用、领域能力、集成与实验划分。
 
-文章顺序和链接以 `docs/course/catalog.json` 为准，根目录 README 展示每篇文章。修改文章后运行课程检查；书稿编排与电子书构建见 [网站与电子书构建说明](docs/BUILD.md)。
+文章顺序和链接以 `docs/course/catalog.json` 为准，根目录 README 展示每篇文章。修改文章后运行课程检查，并在 GitHub 或 Markdown 编辑器中预览。阅读站和电子书由维护者统一更新；贡献正文、图示和代码无需安装官方排版工具。

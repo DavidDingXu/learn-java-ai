@@ -7,6 +7,11 @@
   <a href="https://daviddingxu.github.io/learn-java-ai/"><img src="docs/assets/read-online.svg" alt="在线阅读" width="216" height="52"></a>
   <a href="https://daviddingxu.github.io/learn-java-ai/#downloads"><img src="docs/assets/download-book.svg" alt="下载 PDF / EPUB" width="216" height="52"></a>
 </p>
+<p align="center">
+  <a href="https://github.com/DavidDingXu/learn-java-ai/stargazers"><img src="https://img.shields.io/github/stars/DavidDingXu/learn-java-ai?style=flat&amp;color=2f7d4a&amp;labelColor=30363d" alt="GitHub Stars"></a>
+  <a href="https://github.com/DavidDingXu/learn-java-ai/releases/latest"><img src="https://img.shields.io/github/v/release/DavidDingXu/learn-java-ai?style=flat&amp;color=2f7d4a&amp;labelColor=30363d" alt="最新正式版本"></a>
+  <a href="LICENSING.md"><img src="https://img.shields.io/badge/license-Non--commercial-2f7d4a?style=flat&amp;labelColor=30363d" alt="仅限非商业使用"></a>
+</p>
 
 ## 沿着一条业务链，学习 Java + AI
 
@@ -113,12 +118,12 @@
 
 ## 参与与交流
 
-欢迎 Star 收藏，按需要回查。问题与勘误请提交 [Issue](https://github.com/DavidDingXu/learn-java-ai/issues)，改进内容请参考[贡献指南](CONTRIBUTING.md)。网站与电子书的维护方法见[构建说明](docs/BUILD.md)。
+欢迎 Star 收藏，按需要回查。问题与勘误请提交 [Issue](https://github.com/DavidDingXu/learn-java-ai/issues)，改进内容请参考[贡献指南](CONTRIBUTING.md)。
 
 作者：**DavidDingXu** · 微信公众号「**好好用 AI**」
 
 <p>
-  <a href="tools/site/assets/wechat-official-account.jpg"><img src="tools/site/assets/wechat-official-account.jpg" alt="微信公众号：好好用 AI" width="140"></a>
+  <a href="docs/assets/wechat-official-account.jpg"><img src="docs/assets/wechat-official-account.jpg" alt="微信公众号：好好用 AI" width="140"></a>
 </p>
 
 ## 许可
