@@ -1,0 +1,167 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MCP 互操作实验：发现、准入、调用与远程失败 · Learn Java AI</title><meta name="description" content="沿着一条客户服务链路，把模型、企业 RAG、受控 Agent 和 JDK8 老系统接在一起，再补齐评测、安全与上线治理。"><meta name="source-sha256" content="495c4da5866de0e24b14b00853c1c5c916e0a0f5e099fd3ce0a64acd75a6cfd3">
+<link rel="canonical" href="https://daviddingxu.github.io/learn-java-ai/course/50.html"><link rel="icon" href="../assets/brand.png">
+<script>try{const t=localStorage.getItem('haohai-course-theme');document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}catch(_){document.documentElement.dataset.theme='light'}</script>
+<link rel="stylesheet" href="../assets/site.css"><script defer src="../assets/search-index.js"></script><script defer src="../assets/site.js"></script></head><body class="article-page" data-root="../" data-page="50"><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header"><div class="header-inner"><button class="icon-button menu-toggle js-only" type="button" aria-label="打开课程目录" aria-controls="course-sidebar" aria-expanded="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<a class="brand" href="../index.html" aria-label="Learn Java AI · 学习站首页"><img src="../assets/brand.png" alt="" width="36" height="36"><span><strong>Learn Java AI</strong><small>Java AI 应用开发实战</small></span></a>
+<nav class="header-nav" aria-label="主导航"><a href="../index.html#curriculum">课程目录</a><a href="../index.html#downloads">离线阅读</a><a href="https://github.com/DavidDingXu/learn-java-ai" target="_blank" rel="noopener">GitHub <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></nav>
+<div class="header-controls"><button class="icon-button theme-toggle js-only" type="button" aria-label="切换到深色主题" title="切换到深色主题"><span class="theme-light-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A9 9 0 0 1 9.5 3.5a9 9 0 1 0 11 11Z"/></svg></span><span class="theme-dark-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span></button><button class="search-trigger js-only" type="button" aria-label="搜索课程"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><span>搜索课程</span><kbd>⌘ K</kbd></button></div></div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header><div class="sidebar-scrim" hidden></div><div class="reader-layout"><aside class="course-sidebar" id="course-sidebar" aria-label="课程目录"><div class="sidebar-heading"><a href="../index.html#curriculum">课程目录</a><button class="icon-button menu-close js-only" type="button" aria-label="关闭课程目录"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><nav aria-label="全部文章"><details class="sidebar-stage"><summary><span class="stage-index">模块 01</span>系统边界与第一条调用</summary><a class="lesson-link" data-lesson="01" href="01.html"><span class="lesson-number">01</span><span>专栏介绍：Java 后端怎样系统学习 AI 应用开发落地</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="02" href="02.html"><span class="lesson-number">02</span><span>从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="03" href="03.html"><span class="lesson-number">03</span><span>Spring AI 为什么做主线，其他框架放在哪里</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="04" href="04.html"><span class="lesson-number">04</span><span>先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="05" href="05.html"><span class="lesson-number">05</span><span>多租户、身份和权限为什么不能相信请求参数</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="06" href="06.html"><span class="lesson-number">06</span><span>JDK8 老系统不升级：先划清现代 AI 服务与老系统边界</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 02</span>模型调用工程化</summary><a class="lesson-link" data-lesson="07" href="07.html"><span class="lesson-number">07</span><span>一次模型调用内部发生了什么：Message、Options、Token 与响应元数据</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="08" href="08.html"><span class="lesson-number">08</span><span>Prompt 的工程边界：模板、版本、授权知识与提示注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="09" href="09.html"><span class="lesson-number">09</span><span>结构化输出为什么会失败：Schema、DTO 和业务校验</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="10" href="10.html"><span class="lesson-number">10</span><span>流式输出原理与实现：SSE、取消、心跳、断连和 TTFT</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="11" href="11.html"><span class="lesson-number">11</span><span>超时、并发保护、重试和降级：为什么不需要万能模型网关</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="12" href="12.html"><span class="lesson-number">12</span><span>真实模型调用之后：怎样建立评测基线与可观测性</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 03</span>企业 RAG</summary><a class="lesson-link" data-lesson="13" href="13.html"><span class="lesson-number">13</span><span>企业知识库先解决什么：文档、版本、状态和冲突</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="14" href="14.html"><span class="lesson-number">14</span><span>文档上传链路：对象存储、内容校验、隔离和解析失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="15" href="15.html"><span class="lesson-number">15</span><span>文档切分为什么影响召回：标题、条款、元数据和粒度</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="16" href="16.html"><span class="lesson-number">16</span><span>向量检索原理与 pgvector 实现</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="17" href="17.html"><span class="lesson-number">17</span><span>权限为什么必须在 TopK 之前过滤</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="18" href="18.html"><span class="lesson-number">18</span><span>混合检索、Query Rewrite、Rerank 什么时候有用</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="19" href="19.html"><span class="lesson-number">19</span><span>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="20" href="20.html"><span class="lesson-number">20</span><span>增量索引为什么需要任务、租约和失败恢复</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="21" href="21.html"><span class="lesson-number">21</span><span>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 04</span>客户咨询与工单升级</summary><a class="lesson-link" data-lesson="22" href="22.html"><span class="lesson-number">22</span><span>C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="23" href="23.html"><span class="lesson-number">23</span><span>多轮会话原理：短期状态、裁剪、总结和过期</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="24" href="24.html"><span class="lesson-number">24</span><span>用户怎样判断回答可信：证据、反馈、拒答和重试</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="25" href="25.html"><span class="lesson-number">25</span><span>机器人解决不了时怎样平滑升级工单</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 05</span>受控 Agent 与老系统接入</summary><a class="lesson-link" data-lesson="26" href="26.html"><span class="lesson-number">26</span><span>Agent 与普通聊天有什么区别：目标、状态和受控执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="27" href="27.html"><span class="lesson-number">27</span><span>Tool Calling 原理与查询 Tool：最小权限、最小参数和最小返回</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="28" href="28.html"><span class="lesson-number">28</span><span>为什么模型只能选择工具：参数污染、结果污染和业务规则边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="29" href="29.html"><span class="lesson-number">29</span><span>写操作为什么必须先做风险分级</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="30" href="30.html"><span class="lesson-number">30</span><span>人工确认为什么不能只传一个字符串 token</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="31" href="31.html"><span class="lesson-number">31</span><span>幂等、并发和审计怎样跨越本地与远程事务边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="32" href="32.html"><span class="lesson-number">32</span><span>JDK8 老系统接入 AI：OpenAPI、Java 8 客户端、认证、超时与错误处理</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="33" href="33.html"><span class="lesson-number">33</span><span>串联工单 Agent 业务链：知识查询、人工确认与 JDK8 执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="34" href="34.html"><span class="lesson-number">34</span><span>Agent 质量怎样评测：工具路径、参数、拒绝和副作用</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 06</span>评测、安全与上线治理</summary><a class="lesson-link" data-lesson="35" href="35.html"><span class="lesson-number">35</span><span>AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="36" href="36.html"><span class="lesson-number">36</span><span>观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="37" href="37.html"><span class="lesson-number">37</span><span>缓存、熔断、限流和降级：只保留业务真正需要的部分</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="38" href="38.html"><span class="lesson-number">38</span><span>项目配置实战：让默认配置跑通，再按需替换基础设施</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="39" href="39.html"><span class="lesson-number">39</span><span>上线前最后核对什么：测试、Eval、密钥配置、发布和回滚</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage" open><summary><span class="stage-index">模块 07</span>框架与协议迁移</summary><a class="lesson-link" data-lesson="40" href="40.html"><span class="lesson-number">40</span><span>DashScope Provider 适配实验：配置隔离、响应差异和回归边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="41" href="41.html"><span class="lesson-number">41</span><span>Embedding 与 Rerank 替换实验：怎样设计同集评测</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="42" href="42.html"><span class="lesson-number">42</span><span>Graph 人工确认路由实验：何时比现有状态机更合适</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="43" href="43.html"><span class="lesson-number">43</span><span>Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="44" href="44.html"><span class="lesson-number">44</span><span>LangChain4j AI Services 适配实验：迁移一个低风险用例</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="45" href="45.html"><span class="lesson-number">45</span><span>LangChain4j RAG 适配实验：复用现有业务契约</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="46" href="46.html"><span class="lesson-number">46</span><span>LangChain4j Tool 实验：只读调用与结构化输出</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="47" href="47.html"><span class="lesson-number">47</span><span>Spring AI 与 LangChain4j 共存实验：按业务能力选择框架</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="48" href="48.html"><span class="lesson-number">48</span><span>AgentScope Tool 裁决实验：注册、身份传递与权限映射</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="49" href="49.html"><span class="lesson-number">49</span><span>多 Agent 实际协作：并行取证、结果汇总与失败转人工</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="50" href="50.html" aria-current="page"><span class="lesson-number">50</span><span>MCP 互操作实验：发现、准入、调用与远程失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="51" href="51.html"><span class="lesson-number">51</span><span>A2A 互操作实验：任务映射、幂等与状态边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="52" href="52.html"><span class="lesson-number">52</span><span>结束语：把 Java + AI 能力迁移到真实公司项目</span><span class="lesson-state" aria-hidden="true"></span></a></details></nav><p class="sidebar-note">模型负责生成，业务系统掌握规则与执行。</p></aside><main class="reader-main" id="main-content"><div class="article-context"><span>框架与协议迁移</span><div class="reading-tools js-only"><div class="font-controls" role="group" aria-label="正文字号"><button type="button" data-font="-1" aria-label="减小正文字号">A−</button><span id="font-size-label" aria-live="polite">18</span><button type="button" data-font="1" aria-label="增大正文字号">A+</button></div><button type="button" class="focus-toggle" aria-pressed="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>专注阅读</span></button></div></div><div class="mobile-context"><nav class="reading-route" aria-label="本篇路线"><details><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#mcp-位于-agent-与远程工具之间">MCP 位于 Agent 与远程工具之间</a></li>
+<li><a href="#服务器目录由平台统一管理">服务器目录由平台统一管理</a></li>
+<li><a href="#将模型参数编译成远程请求">将模型参数编译成远程请求</a></li>
+<li><a href="#远程调用按结果确定性分类">远程调用按结果确定性分类</a></li>
+<li><a href="#用互操作基线管理协议升级">用互操作基线管理协议升级</a></li>
+<li><a href="#远程工具还要通过数据合规和互操作验证">远程工具还要通过数据合规和互操作验证</a></li>
+</ul>
+</div>
+</details></nav></div><article id="article-body"><h1 id="mcp-互操作实验发现准入调用与远程失败">MCP 互操作实验：发现、准入、调用与远程失败</h1>
+<p>当企业工具越来越多时，为每个 Agent 单独维护一套 HTTP 适配器成本很高。MCP（Model Context Protocol，模型上下文协议）提供了统一的能力发现与调用方式，让 Client 可以读取工具 Schema，再按协议发起调用。</p>
+<p>但“能够发现”不等于“允许使用”。远程 Server、工具描述、参数 Schema 和返回结果都属于外部输入；当前用户能操作哪些对象、写动作是否需要确认、失败后怎样恢复，仍由本地业务系统决定。</p>
+<p>协议 lab 使用官方 Java SDK 验证 Streamable HTTP（基于 HTTP、可承载普通响应或流式事件的 MCP 传输）的初始化、工具发现和只读调用。企业接入时，再在协议之上增加受管服务器目录、本地工具白名单、受信身份、风险策略和审计。</p>
+<h2 id="mcp-位于-agent-与远程工具之间">MCP 位于 Agent 与远程工具之间</h2>
+<p>典型流程包含 Client、Server 与业务系统。AI 应用中的 MCP Client 连接远程 Server，完成能力协商和工具发现；模型只能看到本地批准后的工具；实际调用再由 Client 发往 Server。</p>
+<pre><code class="language-text">读取受管服务器配置
+-&gt; 建立加密连接并认证服务器
+-&gt; 协商协议能力
+-&gt; tools/list 获取候选 Schema
+-&gt; 企业工具目录和策略筛选
+-&gt; 注册到 Agent Toolkit
+-&gt; 模型产生 Tool Call
+-&gt; 本地参数、身份、权限和风险校验
+-&gt; tools/call
+-&gt; 校验远程结果并审计
+</code></pre>
+<p>MCP 统一了 <code>tools/list</code> 和 <code>tools/call</code> 等交互，但本地系统仍要决定哪些服务器和工具可以进入目录，并负责权限、超时、重试、数据分级，以及失败后的状态处理。</p>
+<h2 id="服务器目录由平台统一管理">服务器目录由平台统一管理</h2>
+<p>生产 MCP Server 不应由用户在请求参数里随意传 URL。服务器目录应由配置中心或管理平台维护，记录 serverId、owner、环境、endpoint、认证方式、允许能力、数据等级和审批状态。</p>
+<p>至少检查：</p>
+<ul>
+<li>只允许 HTTPS，证书和主机名验证不能关闭；</li>
+<li>endpoint 必须命中域名或网络白名单；</li>
+<li>禁止回环、链路本地、云元数据和内网任意地址，防止 SSRF（服务端请求伪造）；</li>
+<li>禁止自动跟随到未批准域名的重定向；</li>
+<li>DNS 解析与连接目标要防止重绑定，避免同一域名在校验后改解析到内网地址；</li>
+<li>Server 版本和协议能力需要兼容；</li>
+<li>连接、工具列表和 Schema 大小都有上限。</li>
+</ul>
+<p>开发环境连接本地 Server 可以单独配置，但不能把“允许任意 localhost”带到生产策略。远程服务器变更 endpoint 或证书时应重新审批，而不是静默接受。</p>
+<p><code>EnterpriseMcpRegistry</code> 的服务器目录是 <code>serverId -&gt; HTTPS endpoint</code> 映射。业务请求只能提交 <code>serverId</code>，注册回执中的真实地址由目录查出。这样无法用一个已批准的 ID 替换成请求方指定的私有地址。</p>
+<p>实验代码还会拒绝 HTTP、带用户信息、查询参数或 fragment 的受管地址。DNS 重绑定、连接目标复查和跨域重定向需要在 HTTP 传输层继续处理，不是这个工具目录已经验证的能力。</p>
+<h3 id="工具发现后进入本地白名单">工具发现后进入本地白名单</h3>
+<p><code>tools/list</code> 返回的是候选能力。Server 可以新增工具、修改描述、扩大参数范围，甚至在被入侵后返回危险 Schema。Client 不能把整个列表直接交给模型。</p>
+<p>代码把这组检查拆成两部分。AgentScope lab 验证外部 Tool 怎样进入本地 Toolkit；独立协议 lab 则使用官方 MCP Client 完成 <code>initialize</code> 和 <code>tools/list</code>。</p>
+<p>只有工具名命中本地白名单、输入 Schema 是对象、描述非空，并且实验规则明确标注为只读且非破坏性，才进入本地已发现目录。<code>EnterpriseMcpRegistry</code> 会先校验整批发现结果。其中任一工具不合规时，前面的工具也不会半途注册到 Toolkit。</p>
+<p>这里的 <code>readOnlyHint</code> 和 <code>destructiveHint</code> 只是远端声明，不是可信授权。代码检查它们是为了拒绝声明不一致的 Server，工具能否进入本地目录仍由白名单和业务策略决定。生产目录还要固定 Server 身份、工具输入 Schema 的稳定摘要（Schema Hash）、风险等级与 owner，不能仅凭远端 Hint 自动放行。</p>
+<p>加入工具目录和获得单次调用授权是两个动作。<code>EnterpriseMcpRegistry</code> 把符合目录规则的外部工具注册到 <code>Toolkit</code>。同一个 <code>Toolkit</code> 再交给 <code>AgentScopeTicketRuntime</code> 做 <code>PermissionEngine</code> 裁决。配套测试故意注册两个只读工具，只给其中一个配置本地 ALLOW 规则：有规则的通过，只进入目录却没有授权规则的被拒绝。这条边界防止开发者把“能被模型看到”误当成“当前身份可以执行”。</p>
+<p>生产目录还应固定：</p>
+<pre><code class="language-text">serverId + toolName + schemaHash + riskLevel + owner + policyVersion
+</code></pre>
+<p>Schema Hash 变化时停止自动注册并告警。新增 optional 字段也可能改变模型行为，不能仅按 JSON Schema 的兼容规则判断业务兼容。</p>
+<h3 id="三段认证保护不同边界">三段认证保护不同边界</h3>
+<p><img alt="MCP 接入必须同时通过三层信任" src="../assets/content/docs/assets/diagrams/source/50-mcp-trust-layers.svg" /></p>
+<p>第一段是 Client 与 MCP Server 之间的认证。MCP 授权本身是可选能力；受保护的 HTTP Server 一旦支持该能力，应按 2025-11-25 授权规范完成 OAuth 2.1 发现和访问令牌校验。公司可以额外使用 mTLS 或工作负载身份加强服务间信任；如果需要与通用 MCP Client 互操，仍要按协议处理 OAuth 元数据、audience 和 scope。</p>
+<p>第二段是用户委托：远程业务动作需要知道代表哪个用户、租户和角色执行。委托凭证应由受信认证链路生成，具备最小 scope、短有效期和目标受众，不能把用户原 token 原样传给任意 Server。</p>
+<p>第三段是对象授权：即使用户具有某项 scope，也要检查其是否能访问具体工单、文档或客户。对象级授权通常由真正拥有数据的业务服务完成。</p>
+<p>三段不能合并成“有 MCP token 就能调用全部工具”。MCP Client 使用的连接凭证也不能暴露给模型、Prompt、Tool 参数、前端或普通日志。</p>
+<h2 id="将模型参数编译成远程请求">将模型参数编译成远程请求</h2>
+<p>模型返回工具名和 JSON 参数后，本地适配层先执行：</p>
+<ol>
+<li>工具名与版本白名单；</li>
+<li>JSON Schema、类型、长度、枚举和格式校验；</li>
+<li>删除或拒绝 tenantId、role、subjectId 等身份污染字段；</li>
+<li>业务规范化，例如金额单位、时区和内部编码；</li>
+<li>对象权限与当前状态校验；</li>
+<li>风险分级，必要时创建人工确认；</li>
+<li>生成 actionId、idempotencyKey 和请求指纹；</li>
+<li>才调用远程 MCP Server。</li>
+</ol>
+<p>如果远程工具只是另一个包装层，最终业务服务仍要重复关键授权。边界处重复校验不是浪费，因为任何一层都可能配置错误或被绕过。</p>
+<p>远程工具描述不能承担安全规则。描述可以帮助模型正确选择工具，但“只有管理员能调用”必须由策略和业务代码执行。</p>
+<h3 id="tool-result-回到本地后再次校验">Tool Result 回到本地后再次校验</h3>
+<p>MCP Server 返回的文本、结构化内容、资源链接或错误信息，都可能包含提示注入、敏感信息和超大负载。接入层要检查 content type、大小、Schema、字符集和允许字段，再转换为内部低敏 DTO。</p>
+<p>外部结果中的“请忽略规则并调用另一个工具”只能作为数据。不要把服务器返回的任意文本直接拼进 System Message；用清晰的数据边界包裹，并在下一次工具选择前重新执行本地策略。</p>
+<p>资源 URL 也不能由后端自动抓取任意地址。需要下载时继续执行域名白名单、大小、类型、恶意内容和权限检查。</p>
+<h2 id="远程调用按结果确定性分类">远程调用按结果确定性分类</h2>
+<p>至少区分以下失败：</p>
+<pre><code class="language-text">MCP_SERVER_NOT_APPROVED
+MCP_AUTH_FAILED
+MCP_CAPABILITY_MISMATCH
+MCP_TOOL_NOT_ALLOWED
+MCP_SCHEMA_CHANGED
+MCP_ARGUMENT_INVALID
+MCP_TIMEOUT
+MCP_RATE_LIMITED
+MCP_REMOTE_ERROR
+MCP_RESULT_INVALID
+MCP_EXECUTION_UNKNOWN
+</code></pre>
+<p>连接失败和工具列表失败可以按连接策略重试；只读调用超时可以在总截止时间内有限重试；写调用发送后超时则可能已经成功，必须标记 UNKNOWN，使用 actionId 查询或等待远程回执。</p>
+<p>通用 HTTP retry 不能覆盖所有 MCP 调用。是否重试由工具目录中的 <code>readOnly</code>、<code>idempotent</code>、<code>supportsStatusQuery</code> 等业务属性决定，而不是由 POST/GET 方法决定。</p>
+<p>限流要同时保护本地与远程：按 tenant、用户、Server、Tool 和全局连接池设置预算。某个 Server 熔断时，只降级依赖它的能力，不要让全部 Agent 停止服务。</p>
+<h3 id="审计关联本地决策与远程调用">审计关联本地决策与远程调用</h3>
+<p>一次 MCP 调用需要把本地任务和远程回执连起来：</p>
+<ul>
+<li>taskId、stepId、traceId；</li>
+<li>serverId、toolName、schemaHash；</li>
+<li>tenant、subject、delegation scope；</li>
+<li>参数摘要、actionId、idempotencyKey；</li>
+<li>本地策略决策与确认单；</li>
+<li>MCP request id、远程 receipt；</li>
+<li>耗时、结果状态和错误分类。</li>
+</ul>
+<p>远程 Server 也应记录自己的调用者、委托身份和业务结果。双方通过 request id 或 actionId 对账。只有本地“发送成功”的日志，无法证明远端动作是否完成。</p>
+<h2 id="用互操作基线管理协议升级">用互操作基线管理协议升级</h2>
+<p>MCP 协议版本、Client SDK、Server 实现和 Tool Schema 是四个独立版本。升级协议库前要验证握手、能力协商、错误映射、认证和传输；Server 发布前要比较 Tool Catalog；Schema 变化要重跑 Golden Set 和安全回归。</p>
+<p>建议采用先影子发现、后只读、再有限写入的顺序：</p>
+<pre><code class="language-text">开发环境契约测试
+-&gt; 预发连接与认证
+-&gt; 生产只执行 tools/list 并比较 Schema
+-&gt; 小流量只读工具
+-&gt; 人工确认的低风险写工具
+-&gt; 评估是否扩大
+</code></pre>
+<p>回滚不只是降级 SDK，还要能在目录中禁用单个 Server 或 Tool，撤销凭证，并让等待中的任务进入明确状态。</p>
+<h3 id="平台拥有连接生命周期与配置">平台拥有连接生命周期与配置</h3>
+<p>MCP Client 连接不能由每次用户请求临时创建。连接管理器应按 Server 维护连接池、健康状态、协议能力和最近一次 Schema，设置空闲回收、最大并发和重新连接退避。某个 Server 持续失败时熔断，避免每个 Agent 轮次都重新握手。</p>
+<p>配置变更由平台或服务 owner 审批。业务研发可以申请使用一个工具，但不能自行扩大 Server 网络权限、修改认证 scope 或跳过 Schema 校验。目录变更应产生审计事件，并能够回到上一版本。</p>
+<p>多实例部署时，工具目录需要一致版本。不能让一半实例看到新工具、一半仍使用旧 Schema，否则同一 Prompt 会产生不同路径。发布时先完成目录同步和兼容验证，再开放模型可见性。</p>
+<h2 id="远程工具还要通过数据合规和互操作验证">远程工具还要通过数据合规和互操作验证</h2>
+<p>远程 MCP Server 可能部署在另一个网络区、云账号甚至外部供应商。接入前要明确哪些字段会离开当前服务，数据分类是否允许，日志和 artifact 保存在哪里，供应商是否会把这些数据用于模型训练，以及删除和留存规则如何执行。</p>
+<p>工具参数应在本地完成脱敏和最小化。能够传订单内部编号，就不传手机号；能够传政策条款 ID，就不传整份客户对话。若任务需要跨境或外部处理敏感数据，应由合规与数据 owner 明确批准，不能靠工具描述默认同意。</p>
+<p>远程 Server 返回的错误也可能包含其内部敏感信息。对用户只映射稳定错误码，原始错误按安全等级受控保存。</p>
+<h3 id="直接运行-mcp-发现与调用">直接运行 MCP 发现与调用</h3>
+<p>运行 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-07-framework-boundaries/labs/protocol-interop-lab/src/main/java/com/xiaoding/javaai/labs/protocol/McpLabApplication.java">McpLabApplication</a>，不需要 API Key，也不需要预先安装 MCP Server。主类会在随机端口启动官方 Java Server，再由官方 Client 通过 Streamable HTTP 完成初始化、工具发现和 <code>tools/call</code>。</p>
+<p>控制台会打印 Server 名称、协商后的协议版本、获准工具，以及 <code>query_ticket</code> 返回的工单状态。看到 <code>tools=[query_ticket]</code> 和 <code>ticket=T-100,status=OPEN</code>，说明发现、准入和调用确实经过了真实协议链路。</p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-07-framework-boundaries/labs/protocol-interop-lab/src/main/java/com/xiaoding/javaai/labs/protocol/mcp/EnterpriseMcpClient.java">EnterpriseMcpClient</a> 不把远端工具列表直接交给模型。它先调用官方 SDK 的 <code>initialize()</code>，再执行 <code>listTools()</code>，用本地批准目录和只读规则筛选。所有必需工具都验证通过后，候选集才会整体进入可调用目录；任何一个工具声明为可写或破坏性操作，整批发现都失败。</p>
+<pre><code class="language-java">McpDiscoveryReceipt receipt = enterpriseClient.initializeAndDiscover();
+CallToolResult result = enterpriseClient.callReadTool(
+        &quot;query_ticket&quot;,
+        Map.of(&quot;ticketId&quot;, &quot;T-100&quot;));
+</code></pre>
+<p>自动化边界检查还会让 Server 同时暴露一个破坏性工具，确认整批发现失败后，不会留下前面已经通过的只读工具。可观察的协议体验由上面的 <code>McpLabApplication</code> 提供。</p>
+<p>协议 lab 单独建 reactor 还有一个现实原因：AgentScope <code>2.0.2</code> 维护自己的 MCP SDK 传递依赖，协议 lab 则直接锁定 MCP SDK <code>2.0.0</code>。直接在 AgentScope lab 强制覆盖主版本，会把“协议升级实验”变成对框架依赖树的破坏性替换。</p>
+<p>隔离后，业务适配接口可以复用，两套 SDK 的依赖树和升级风险分别验证。</p>
+<h3 id="协议互操作与业务策略分开判断">协议互操作与业务策略分开判断</h3>
+<p>当前目录规则处理受管 HTTPS 地址、未批准 Server、未登记工具、整批校验失败不留半注册状态、只读工具注册和本地权限裁决。工具已进入 Toolkit，不代表当前身份已经获得调用权。</p>
+<p>独立协议实验使用受控 MCP Server，完成真实初始化、工具发现、调用和响应映射。实际 OAuth、网络阻断、超时、Schema 热更新和远端写操作，仍要连接目标 Server 验证。只在本地构造 <code>ToolSchema</code>，不能证明远程互操作。</p>
+<p>协议 lab 使用官方 Java Client 与 Server，通过 Streamable HTTP 完成初始化、发现和只读调用。AgentScope lab 则复用同一个 <code>Toolkit</code>，验证加入工具目录和获得调用授权是两道独立检查。</p>
+<p>生产 OAuth、附加的 mTLS 或工作负载身份、网络策略、对象级授权、Schema 变更审批和远程写操作，仍需要在目标环境验证。</p>
+<p>MCP 降低的是工具适配的协议成本。它统一调用方式，但授权、数据边界、执行结果和故障处理责任仍然留在本地业务系统与工具提供方。</p>
+<p>MCP 适合标准化一次工具调用。如果另一个 Agent 自己持有长任务、状态和结果，这项协作就不再是 Tool Call，应使用 A2A 任务协议处理发现、提交与状态映射。</p>
+<p>参考资料：</p>
+<ul>
+<li><a href="https://modelcontextprotocol.io/specification/2025-11-25">MCP 2025-11-25 Specification</a></li>
+<li><a href="https://github.com/modelcontextprotocol/java-sdk/releases">MCP Java SDK 发布记录</a></li>
+</ul></article><div class="practice-link"><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-07-framework-boundaries/README.md" target="_blank" rel="noopener"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></svg> 本阶段可运行源码 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></div><nav class="chapter-nav" aria-label="前后篇"><a href="49.html"><span>上一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></span><strong>多 Agent 实际协作：并行取证、结果汇总与失败转人工</strong></a><a href="51.html"><span>下一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><strong>A2A 互操作实验：任务映射、幂等与状态边界</strong></a></nav><footer class="reader-footer">Java AI 应用开发实战 · <a href="../license.html">非商业使用</a><details class="community-mini"><summary>关注与交流 · 好好用 AI</summary><div class="community-section"><div><p>交流学习中的问题与实践心得。</p><p>代码问题和勘误，欢迎在 <a href="https://github.com/DavidDingXu/learn-java-ai/issues" target="_blank" rel="noopener">GitHub 提交 Issue</a>。</p></div><a class="qr-link" href="../assets/wechat-official-account.jpg" target="_blank" rel="noopener" aria-label="查看好好用 AI 公众号二维码原图"><img src="../assets/wechat-official-account.jpg" alt="好好用 AI 微信公众号二维码" width="130" height="130" loading="lazy"><p class="qr-caption">微信扫码 · 点击查看原图</p></a></div></details></footer></main><aside class="context-sidebar" aria-label="本篇辅助导航"><div class="context-inner"><nav class="reading-route" aria-label="本篇路线"><details open><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#mcp-位于-agent-与远程工具之间">MCP 位于 Agent 与远程工具之间</a></li>
+<li><a href="#服务器目录由平台统一管理">服务器目录由平台统一管理</a></li>
+<li><a href="#将模型参数编译成远程请求">将模型参数编译成远程请求</a></li>
+<li><a href="#远程调用按结果确定性分类">远程调用按结果确定性分类</a></li>
+<li><a href="#用互操作基线管理协议升级">用互操作基线管理协议升级</a></li>
+<li><a href="#远程工具还要通过数据合规和互操作验证">远程工具还要通过数据合规和互操作验证</a></li>
+</ul>
+</div>
+</details></nav></div></aside></div><dialog class="search-dialog" id="search-dialog" aria-labelledby="search-label"><form method="dialog" class="search-heading"><label for="course-search" id="search-label"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>搜索课程</label><button class="icon-button" aria-label="关闭搜索"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form><input id="course-search" type="search" placeholder="搜索概念、代码或问题…" autocomplete="off" spellcheck="false"><p class="search-status" id="search-status" role="status">搜索全部 52 篇文章。</p><div class="search-results" id="search-results"></div><footer>↑ ↓ 选择结果 <span>Enter 打开 · Esc 关闭</span></footer></dialog>
+<dialog class="image-viewer" id="image-viewer" aria-label="放大配图"><header><span>查看配图</span><div class="image-actions"><button type="button" id="image-size">原尺寸</button><button type="button" id="close-image" autofocus>关闭</button></div></header><div class="image-canvas"><img id="large-image" alt=""></div><footer><p id="image-description"></p><a id="original-image" target="_blank" rel="noopener">打开原图 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></footer></dialog><div class="toast" id="toast" role="status"></div></body></html>

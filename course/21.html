@@ -1,0 +1,254 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例 · Learn Java AI</title><meta name="description" content="沿着一条客户服务链路，把模型、企业 RAG、受控 Agent 和 JDK8 老系统接在一起，再补齐评测、安全与上线治理。"><meta name="source-sha256" content="93c25fb3245e5c4133394369077f4a79df329f4a9b16cca9d193c4b7126a4446">
+<link rel="canonical" href="https://daviddingxu.github.io/learn-java-ai/course/21.html"><link rel="icon" href="../assets/brand.png">
+<script>try{const t=localStorage.getItem('haohai-course-theme');document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}catch(_){document.documentElement.dataset.theme='light'}</script>
+<link rel="stylesheet" href="../assets/site.css"><script defer src="../assets/search-index.js"></script><script defer src="../assets/site.js"></script></head><body class="article-page" data-root="../" data-page="21"><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header"><div class="header-inner"><button class="icon-button menu-toggle js-only" type="button" aria-label="打开课程目录" aria-controls="course-sidebar" aria-expanded="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<a class="brand" href="../index.html" aria-label="Learn Java AI · 学习站首页"><img src="../assets/brand.png" alt="" width="36" height="36"><span><strong>Learn Java AI</strong><small>Java AI 应用开发实战</small></span></a>
+<nav class="header-nav" aria-label="主导航"><a href="../index.html#curriculum">课程目录</a><a href="../index.html#downloads">离线阅读</a><a href="https://github.com/DavidDingXu/learn-java-ai" target="_blank" rel="noopener">GitHub <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></nav>
+<div class="header-controls"><button class="icon-button theme-toggle js-only" type="button" aria-label="切换到深色主题" title="切换到深色主题"><span class="theme-light-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A9 9 0 0 1 9.5 3.5a9 9 0 1 0 11 11Z"/></svg></span><span class="theme-dark-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span></button><button class="search-trigger js-only" type="button" aria-label="搜索课程"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><span>搜索课程</span><kbd>⌘ K</kbd></button></div></div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header><div class="sidebar-scrim" hidden></div><div class="reader-layout"><aside class="course-sidebar" id="course-sidebar" aria-label="课程目录"><div class="sidebar-heading"><a href="../index.html#curriculum">课程目录</a><button class="icon-button menu-close js-only" type="button" aria-label="关闭课程目录"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><nav aria-label="全部文章"><details class="sidebar-stage"><summary><span class="stage-index">模块 01</span>系统边界与第一条调用</summary><a class="lesson-link" data-lesson="01" href="01.html"><span class="lesson-number">01</span><span>专栏介绍：Java 后端怎样系统学习 AI 应用开发落地</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="02" href="02.html"><span class="lesson-number">02</span><span>从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="03" href="03.html"><span class="lesson-number">03</span><span>Spring AI 为什么做主线，其他框架放在哪里</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="04" href="04.html"><span class="lesson-number">04</span><span>先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="05" href="05.html"><span class="lesson-number">05</span><span>多租户、身份和权限为什么不能相信请求参数</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="06" href="06.html"><span class="lesson-number">06</span><span>JDK8 老系统不升级：先划清现代 AI 服务与老系统边界</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 02</span>模型调用工程化</summary><a class="lesson-link" data-lesson="07" href="07.html"><span class="lesson-number">07</span><span>一次模型调用内部发生了什么：Message、Options、Token 与响应元数据</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="08" href="08.html"><span class="lesson-number">08</span><span>Prompt 的工程边界：模板、版本、授权知识与提示注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="09" href="09.html"><span class="lesson-number">09</span><span>结构化输出为什么会失败：Schema、DTO 和业务校验</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="10" href="10.html"><span class="lesson-number">10</span><span>流式输出原理与实现：SSE、取消、心跳、断连和 TTFT</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="11" href="11.html"><span class="lesson-number">11</span><span>超时、并发保护、重试和降级：为什么不需要万能模型网关</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="12" href="12.html"><span class="lesson-number">12</span><span>真实模型调用之后：怎样建立评测基线与可观测性</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage" open><summary><span class="stage-index">模块 03</span>企业 RAG</summary><a class="lesson-link" data-lesson="13" href="13.html"><span class="lesson-number">13</span><span>企业知识库先解决什么：文档、版本、状态和冲突</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="14" href="14.html"><span class="lesson-number">14</span><span>文档上传链路：对象存储、内容校验、隔离和解析失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="15" href="15.html"><span class="lesson-number">15</span><span>文档切分为什么影响召回：标题、条款、元数据和粒度</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="16" href="16.html"><span class="lesson-number">16</span><span>向量检索原理与 pgvector 实现</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="17" href="17.html"><span class="lesson-number">17</span><span>权限为什么必须在 TopK 之前过滤</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="18" href="18.html"><span class="lesson-number">18</span><span>混合检索、Query Rewrite、Rerank 什么时候有用</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="19" href="19.html"><span class="lesson-number">19</span><span>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="20" href="20.html"><span class="lesson-number">20</span><span>增量索引为什么需要任务、租约和失败恢复</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="21" href="21.html" aria-current="page"><span class="lesson-number">21</span><span>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 04</span>客户咨询与工单升级</summary><a class="lesson-link" data-lesson="22" href="22.html"><span class="lesson-number">22</span><span>C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="23" href="23.html"><span class="lesson-number">23</span><span>多轮会话原理：短期状态、裁剪、总结和过期</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="24" href="24.html"><span class="lesson-number">24</span><span>用户怎样判断回答可信：证据、反馈、拒答和重试</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="25" href="25.html"><span class="lesson-number">25</span><span>机器人解决不了时怎样平滑升级工单</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 05</span>受控 Agent 与老系统接入</summary><a class="lesson-link" data-lesson="26" href="26.html"><span class="lesson-number">26</span><span>Agent 与普通聊天有什么区别：目标、状态和受控执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="27" href="27.html"><span class="lesson-number">27</span><span>Tool Calling 原理与查询 Tool：最小权限、最小参数和最小返回</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="28" href="28.html"><span class="lesson-number">28</span><span>为什么模型只能选择工具：参数污染、结果污染和业务规则边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="29" href="29.html"><span class="lesson-number">29</span><span>写操作为什么必须先做风险分级</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="30" href="30.html"><span class="lesson-number">30</span><span>人工确认为什么不能只传一个字符串 token</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="31" href="31.html"><span class="lesson-number">31</span><span>幂等、并发和审计怎样跨越本地与远程事务边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="32" href="32.html"><span class="lesson-number">32</span><span>JDK8 老系统接入 AI：OpenAPI、Java 8 客户端、认证、超时与错误处理</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="33" href="33.html"><span class="lesson-number">33</span><span>串联工单 Agent 业务链：知识查询、人工确认与 JDK8 执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="34" href="34.html"><span class="lesson-number">34</span><span>Agent 质量怎样评测：工具路径、参数、拒绝和副作用</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 06</span>评测、安全与上线治理</summary><a class="lesson-link" data-lesson="35" href="35.html"><span class="lesson-number">35</span><span>AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="36" href="36.html"><span class="lesson-number">36</span><span>观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="37" href="37.html"><span class="lesson-number">37</span><span>缓存、熔断、限流和降级：只保留业务真正需要的部分</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="38" href="38.html"><span class="lesson-number">38</span><span>项目配置实战：让默认配置跑通，再按需替换基础设施</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="39" href="39.html"><span class="lesson-number">39</span><span>上线前最后核对什么：测试、Eval、密钥配置、发布和回滚</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 07</span>框架与协议迁移</summary><a class="lesson-link" data-lesson="40" href="40.html"><span class="lesson-number">40</span><span>DashScope Provider 适配实验：配置隔离、响应差异和回归边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="41" href="41.html"><span class="lesson-number">41</span><span>Embedding 与 Rerank 替换实验：怎样设计同集评测</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="42" href="42.html"><span class="lesson-number">42</span><span>Graph 人工确认路由实验：何时比现有状态机更合适</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="43" href="43.html"><span class="lesson-number">43</span><span>Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="44" href="44.html"><span class="lesson-number">44</span><span>LangChain4j AI Services 适配实验：迁移一个低风险用例</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="45" href="45.html"><span class="lesson-number">45</span><span>LangChain4j RAG 适配实验：复用现有业务契约</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="46" href="46.html"><span class="lesson-number">46</span><span>LangChain4j Tool 实验：只读调用与结构化输出</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="47" href="47.html"><span class="lesson-number">47</span><span>Spring AI 与 LangChain4j 共存实验：按业务能力选择框架</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="48" href="48.html"><span class="lesson-number">48</span><span>AgentScope Tool 裁决实验：注册、身份传递与权限映射</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="49" href="49.html"><span class="lesson-number">49</span><span>多 Agent 实际协作：并行取证、结果汇总与失败转人工</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="50" href="50.html"><span class="lesson-number">50</span><span>MCP 互操作实验：发现、准入、调用与远程失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="51" href="51.html"><span class="lesson-number">51</span><span>A2A 互操作实验：任务映射、幂等与状态边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="52" href="52.html"><span class="lesson-number">52</span><span>结束语：把 Java + AI 能力迁移到真实公司项目</span><span class="lesson-state" aria-hidden="true"></span></a></details></nav><p class="sidebar-note">模型负责生成，业务系统掌握规则与执行。</p></aside><main class="reader-main" id="main-content"><div class="article-context"><span>企业 RAG</span><div class="reading-tools js-only"><div class="font-controls" role="group" aria-label="正文字号"><button type="button" data-font="-1" aria-label="减小正文字号">A−</button><span id="font-size-label" aria-live="polite">18</span><button type="button" data-font="1" aria-label="增大正文字号">A+</button></div><button type="button" class="focus-toggle" aria-pressed="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>专注阅读</span></button></div></div><div class="mobile-context"><nav class="reading-route" aria-label="本篇路线"><details><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#先把质量问题拆到每一层">先把质量问题拆到每一层</a></li>
+<li><a href="#用三个指标观察覆盖与排序">用三个指标观察覆盖与排序</a></li>
+<li><a href="#让每次实验能够解释结果变化">让每次实验能够解释结果变化</a></li>
+<li><a href="#把检索指标补成完整质量门槛">把检索指标补成完整质量门槛</a></li>
+<li><a href="#用连续实验的数据直接生成检索报告">用连续实验的数据直接生成检索报告</a></li>
+<li><a href="#建立第一版可信基线">建立第一版可信基线</a></li>
+</ul>
+</div>
+</details></nav></div><article id="article-body"><h1 id="rag-质量怎样量化golden-setrecallk-和坏案例">RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</h1>
+<p>检索增强生成（RAG）准备上线时，评审会上常听到一句话：“大家试了十几个问题，回答看起来还不错。”可一旦有人把 Chunk 长度从 500 调到 800，或者替换了 Embedding 模型，团队很难说清效果到底变好还是变坏。</p>
+<p>只看最终文字也定位不了问题。答案错误，可能是知识缺失、切分破坏语义、检索漏召回、重排阶段排错位置，也可能是模型没有使用已经找到的证据；答案正确，也可能只是模型碰巧知道。</p>
+<p>这就需要分层评测：先看正确证据有没有进入 TopK、排在什么位置，再检查引用与结论、拒答行为以及延迟和 Token。把这些样例整理成固定评测集（Golden Set）后，模型、Prompt 或检索策略的每次变化才有可比较的基线。</p>
+<p>配套代码实现了这套评测流程。版本化 Golden Set 保存问题与期望 Chunk。独立评测程序 Eval Runner 使用带 <code>knowledge:eval</code> 权限的短期 Token 调用内部评测接口。它根据实际召回顺序计算 Recall@K、HitRate@K、平均倒数排名（Mean Reciprocal Rank，MRR）、重复率和 p95 延迟。回答忠实度、拒答和线上反馈仍要单独评估，不能用检索分数代替。</p>
+<h2 id="先把质量问题拆到每一层">先把质量问题拆到每一层</h2>
+<p>一个 RAG 请求至少经过知识准备、检索、上下文组装、模型生成和业务校验。最终答案错误，只说明链路某处出了问题；最终答案正确，也不代表链路可靠。模型可能没有使用检索证据，只是凭参数记忆碰巧答对；也可能引用了错误文档，却写出了符合常识的结果。</p>
+<p>质量指标要与系统边界一一对应：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>质量层</th>
+<th>需要回答的问题</th>
+<th>常用指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>检索覆盖</td>
+<td>正确证据是否进入候选集</td>
+<td>Recall@K、HitRate@K</td>
+</tr>
+<tr>
+<td>检索排序</td>
+<td>正确证据是否足够靠前</td>
+<td>MRR、nDCG@K（同时考虑多条证据相关度和位置）</td>
+</tr>
+<tr>
+<td>引用与忠实度</td>
+<td>回答里的结论是否由引用支持</td>
+<td>引用命中率、声明支持率</td>
+</tr>
+<tr>
+<td>拒答边界</td>
+<td>证据不足时是否拒答，可回答时是否过度拒答</td>
+<td>拒答精准率、拒答召回率</td>
+</tr>
+<tr>
+<td>系统效率</td>
+<td>质量收益是否值得链路成本</td>
+<td>p50/p95 延迟、Token、调用成本</td>
+</tr>
+</tbody>
+</table></div>
+<p>这些指标不能简单加权成一个“RAG 总分”。跨租户泄露一次，不应该被十条措辞良好的回答抵消；Recall@5 从 0.82 提高到 0.85，如果 p95 延迟翻倍，也未必值得上线。发布判断需要硬性安全条件、分层质量阈值与运行预算，而不是一个看起来完整的百分比。</p>
+<p>检索评测应先于生成评测。若正确证据根本没有进入 TopK，继续调 Prompt 或更换聊天模型通常没有意义。反过来，正确证据稳定出现在前两名，答案仍然编造条件，问题才更可能位于上下文组装、生成或业务校验。</p>
+<h3 id="golden-set-保存可重复的业务样例">Golden Set 保存可重复的业务样例</h3>
+<p>Golden Set 是一组可以重复执行、有人负责维护的业务样例。它至少要固定问题、访问范围、评测时刻、可接受证据和期望行为，而不是只存一问一答。Runner 的数据集不接收 <code>tenantId</code>、<code>subjectId</code> 和部门列表，这些可信身份来自评测 Token，防止数据文件越过服务端权限边界。</p>
+<p>当前检索集包含 50 条回归案例，围绕三段政策知识构造口语、省略、同义改写和越界问题。它们用于检查数据加载、身份、Chunk ID、指标和阈值逻辑。公司项目要从搜索日志、客服工单、无结果查询、权限边界和政策变更中重新抽样，并保留数据来源与标注责任人。</p>
+<p>一条面向检索的样例可以包含：</p>
+<pre><code class="language-json">{
+  &quot;datasetVersion&quot;: &quot;retrieval-golden-v1&quot;,
+  &quot;id&quot;: &quot;refund-arrival-time&quot;,
+  &quot;question&quot;: &quot;退款审核通过后多久到账？&quot;,
+  &quot;expectedChunkIds&quot;: [&quot;chunk-7f926e84da079f9d29d2dfb6&quot;]
+}
+</code></pre>
+<p>这个 Chunk ID 不是手写别名，而是由租户、文档、版本、切分策略、顺序、标题路径和规范化正文共同生成。测试会重新切分源文档，及时发现固定评测集（Golden Set）引用的 Chunk 是否已经发生变化。</p>
+<p>当前项目面向实时咨询，<code>effectiveAt</code> 由知识服务可信时钟生成，身份范围由 Token 提供。公司若要评测历史工单，应新增受权限保护的历史评测接口，由服务端校验调用方身份和允许回看的时间范围，不能让普通问答接口接受任意时间和租户字段。<code>forbiddenChunkIds</code>、业务标签与可接受证据组适合在数据集规模扩大后加入，但仍不能替代服务端 ACL 与版本过滤。</p>
+<p><code>expectedChunkIds</code> 的语义必须写清。指标计算器把集合中的每个 Chunk 都视为回答该案例所需的证据，因此只召回其中一部分会降低 Recall。</p>
+<p>若两段内容可以互相替代，例如总部 FAQ 和正式政策都能独立支持同一结论，就不应简单把两者同时放进必需集合。更合适的数据结构是“可接受证据组”，规定每组命中一个即可。若问题需要同时命中退款时限与渠道限制两条规则，则两条都应该是必需证据。</p>
+<p>Golden Set 的来源比数量更重要。初始样例可以从客服高频问题、搜索无结果词、历史工单、政策变更和安全边界中抽取。数据集不能只收录“退款多久到账”这类简单问题，还应包含：</p>
+<ul>
+<li>正确条款使用同义表达、不包含问题原词的语义召回；</li>
+<li>错误码、制度编号和产品型号等精确词查询；</li>
+<li>旧版本比新版本措辞更相似，但已经失效；</li>
+<li>同租户越权文档和其他租户文档与问题高度相关；</li>
+<li>两段证据共同构成答案，漏掉任一段都会改变结论；</li>
+<li>知识不足、条件缺失、证据冲突和知识内 Prompt Injection；</li>
+<li>同一内容重复入库，候选列表出现重复 Chunk。</li>
+</ul>
+<p>每个坏案例都要有业务来源、风险标签和标注说明。标注人需要说明为什么这些 Chunk 是必需证据，哪些内容绝不能召回。没有说明的 ID 列表很快会失去可维护性：文档重新切分后，团队只看到一批过期标识，不知道该映射到哪个业务规则。</p>
+<h2 id="用三个指标观察覆盖与排序">用三个指标观察覆盖与排序</h2>
+<p>对单个案例，Recall@K 的定义是：原始前 K 个位置中，去重后命中的必需证据数量，占全部必需证据数量的比例。</p>
+<pre><code class="language-text">Recall@K(q) = |TopK(q) ∩ Relevant(q)| / |Relevant(q)|
+</code></pre>
+<p>假设某问题需要两个 Chunk：<code>chunk-10</code> 和 <code>chunk-11</code>。检索前 3 名为 <code>[chunk-10, chunk-99, chunk-11]</code>，则 Recall@3 为 <code>2/2 = 1</code>。若只召回 <code>chunk-10</code>，Recall@3 为 <code>1/2 = 0.5</code>。这比“是否至少命中一个”更严格，适合答案需要组合多个条件的业务问题。</p>
+<p>整套数据集采用宏平均：先计算每条案例的 Recall，再对案例平均。</p>
+<pre><code class="language-text">Macro Recall@K = Σ Recall@K(q) / N
+</code></pre>
+<p>宏平均让每个问题拥有相同权重，避免某个包含大量证据的案例支配结果。若线上问题分布差异很大，还可以按业务流量计算加权指标，但发布报告仍应保留宏平均与分组结果。否则高频低风险问题会掩盖低频高风险问题的质量下降。</p>
+<p>Recall@K 也有代价。把 K 从 3 提高到 50，Recall 往往会上升，却会把更多噪声送进 Rerank 与模型上下文，增加延迟、Token 和错误引用机会。评测应同时比较多个有限 K 值，并把最终上下文预算作为约束。数字升高只有在成本可接受、证据仍然可用时才有价值。</p>
+<h3 id="hitratek-与-recallk-回答不同问题">HitRate@K 与 Recall@K 回答不同问题</h3>
+<p>HitRate@K 只判断前 K 名是否至少出现一个正确证据：</p>
+<pre><code class="language-text">Hit@K(q) = 1, TopK(q) 中至少有一个相关 Chunk
+          0, 否则
+HitRate@K = Σ Hit@K(q) / N
+</code></pre>
+<p>对于每个问题只需要一条证据的 FAQ，HitRate 很直观。对于需要多条规则共同回答的问题，它会显得过于乐观：期望两条证据，只命中一条时，HitRate 仍为 1，Recall 只有 0.5。</p>
+<p>两者一起看更有判断力。HitRate 很高而 Recall 偏低，常见原因是系统能找到主题相关内容，却经常漏掉补充条件、例外条款或跨文档证据。HitRate 和 Recall 同时偏低，则应先检查知识覆盖、切分、Embedding、查询改写或权限过滤。</p>
+<p><code>RetrievalMetricsCalculator</code> 将 Recall 小于 1 的案例加入 <code>failedCaseIds</code>。只要必需证据没有完整进入 TopK，就保留案例供人工定位原因。聚合平均数可以告诉团队整体趋势，失败 ID 才能告诉团队下一步该修哪条链路。</p>
+<h3 id="用-mrr-观察第一条正确证据的位置">用 MRR 观察第一条正确证据的位置</h3>
+<p>Recall 与 HitRate 不关心正确证据位于第一名还是第十名。实际 RAG 链路往往只给模型有限候选，排名越靠前越不容易被截断，也更容易在 Rerank 或上下文裁剪中保留。</p>
+<p>MRR（Mean Reciprocal Rank）先找到每个案例第一条相关结果的位置，再取倒数并求平均：</p>
+<pre><code class="language-text">RR(q) = 1 / rank(first relevant chunk)
+MRR   = Σ RR(q) / N
+</code></pre>
+<p>第一名命中得 1，第二名得 0.5，第三名约为 0.333，没有命中得 0。MRR 对第一条正确证据非常敏感，适合问答入口通常只需要一条主证据的场景。它不关心第二条、第三条相关证据的排序；多证据问题还要结合 Recall@K，或使用归一化折损累积增益（nDCG@K）观察多条相关证据的整体排序质量。</p>
+<p>指标测试使用三个案例：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>案例</th>
+<th>期望证据</th>
+<th>前 3 名结果</th>
+<th style="text-align: right;">Recall@3</th>
+<th style="text-align: right;">Hit@3</th>
+<th style="text-align: right;">RR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>refund-arrival</code></td>
+<td><code>chunk-10</code>、<code>chunk-11</code></td>
+<td><code>10, 99, 11</code></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td><code>refund-rejected</code></td>
+<td><code>chunk-20</code></td>
+<td><code>99, 20, 21</code></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.5</td>
+</tr>
+<tr>
+<td><code>invoice-change</code></td>
+<td><code>chunk-30</code></td>
+<td><code>40, 41, 42</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table></div>
+<p>三条案例的宏平均 Recall@3 与 HitRate@3 都是 <code>2/3</code>，MRR 是 <code>(1 + 0.5 + 0) / 3 = 0.5</code>。只看 Recall 会认为前两条同样成功；MRR 进一步指出第二条的正确证据排在第二名，排序仍有改进空间。</p>
+<h3 id="用代码固定指标计算口径">用代码固定指标计算口径</h3>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/quality/eval-runner/src/main/java/com/xiaoding/javaai/eval/retrieval/RetrievalEvalResult.java">RetrievalEvalResult</a> 只保留计算检索指标需要的三个字段：<code>caseId</code>、<code>expectedChunkIds</code> 和按顺序排列的 <code>retrievedChunkIds</code>。构造时拒绝空案例 ID、空期望集合和 <code>null</code> 结果列表，避免分母为零或把未执行误当成空召回。</p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/quality/eval-runner/src/main/java/com/xiaoding/javaai/eval/retrieval/RetrievalMetricsCalculator.java">RetrievalMetricsCalculator</a> 的主循环直接对应公式：</p>
+<pre><code class="language-java">for (RetrievalEvalResult evalCase : cases) {
+    List&lt;String&gt; topK = rawTopK(evalCase.retrievedChunkIds(), k);
+    Set&lt;String&gt; uniqueTopK = new LinkedHashSet&lt;&gt;(topK);
+    long relevantCount = uniqueTopK.stream()
+            .filter(evalCase.expectedChunkIds()::contains)
+            .count();
+    double recall = (double) relevantCount
+            / evalCase.expectedChunkIds().size();
+
+    int firstRelevantRank = firstRelevantRank(
+            topK, evalCase.expectedChunkIds());
+    if (firstRelevantRank &gt; 0) {
+        hitTotal += 1;
+        reciprocalRankTotal += 1.0d / firstRelevantRank;
+    }
+    if (!topK.isEmpty()) {
+        duplicateRateTotal += (double) (topK.size() - uniqueTopK.size())
+                / topK.size();
+    }
+    if (recall &lt; 1.0d) failedCaseIds.add(evalCase.caseId());
+}
+</code></pre>
+<p>TopK 必须先按服务实际返回的位置截取，重复结果不能在计算前被直接删除。假设结果是 <code>[chunk-1, chunk-1, chunk-2]</code>，K 为 2，真实送到下游的两个位置都被 <code>chunk-1</code> 占据，<code>chunk-2</code> 就没有进入 Top2。若先全局去重再取 K，会把指标美化成 <code>[chunk-1, chunk-2]</code>，掩盖重复候选正在浪费上下文预算。</p>
+<p>命中数量使用集合去重，避免同一正确 Chunk 被重复计数；排名和 K 的位置仍使用原始列表，MRR 因而能够反映重复项造成的真实挤占。<code>duplicateRateAtK</code> 单独统计重复位置占比，它常指向重复入库、融合未按稳定 ID 去重，或高度重叠切分。</p>
+<p>K 被限制在 1 到 100，避免无效参数和不受控候选规模。指标结果由 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/quality/eval-runner/src/main/java/com/xiaoding/javaai/eval/retrieval/RetrievalMetrics.java">RetrievalMetrics</a> 返回，包含 K、三个聚合指标、重复率和失败案例列表。纯 Java 计算器不依赖 Spring、数据库或模型，适合在单元测试中锁定公式；真实质量结论还要连接实际检索服务运行 HTTP 评测。</p>
+<h2 id="让每次实验能够解释结果变化">让每次实验能够解释结果变化</h2>
+<p>固定 Golden Set 仍然不够。Embedding 模型、索引内容、切分策略、TopK、混合检索、Query Rewrite、Rerank 和权限范围任一变化，指标都可能不同。若一次同时升级模型、调整 Chunk 大小和修改 Prompt，即使 Recall 提高，也无法知道是哪项变化造成的。</p>
+<p><img alt="Golden Set 驱动的 RAG 持续评测流程" src="../assets/content/docs/assets/diagrams/source/21-eval-loop.svg" /></p>
+<p>一轮可解释的离线评测应锁定这些条件：</p>
+<ul>
+<li>数据集版本、知识文档版本与索引版本；</li>
+<li>Embedding 模型、向量维度和距离函数；</li>
+<li>Chunk 策略版本、<code>candidateK</code>、<code>topK</code> 与相似度阈值；</li>
+<li>是否开启关键词检索、查询改写（Query Rewrite）、倒数排名融合（RRF）与重排（Rerank）；</li>
+<li>测试身份、部门范围、租户和 <code>effectiveAt</code>；</li>
+<li>回答模型、Prompt 版本、温度与上下文预算；</li>
+<li>代码版本和外部服务配置。</li>
+</ul>
+<p>检索实验与回答实验最好分开。先对同一批问题保存检索结果，比较 Recall、HitRate 和 MRR；确定候选质量后，再评测引用、拒答和回答支持率。这样聊天模型的随机性不会掩盖检索变化，检索结果也可以重复用于多个回答模型。</p>
+<p>对概率模型不要通过“失败就重跑，直到通过”清洗结果。需要多次运行时，应预先规定次数，报告均值、离散程度和单次失败。某条高风险案例十次中出现一次越权或虚构动作，也必须按发布风险处理，不能归入普通随机波动。</p>
+<h3 id="从坏案例定位失败层">从坏案例定位失败层</h3>
+<p>一个案例 Recall@5 为 0，不能直接得出“向量模型不行”。正确条款可能根本没有入库，也可能被错误权限过滤掉；还可能在向量通道召回后被 RRF 或 Rerank 挤出最终候选。修错层会让链路更复杂，却不解决原问题。</p>
+<p>可以按下面的顺序追查：</p>
+<ol>
+<li><strong>知识与切分</strong>：正确文档版本是否存在、是否已发布、Chunk 是否保留完整条件、稳定 ID 是否符合标注。</li>
+<li><strong>检索与过滤</strong>：正确 Chunk 是否进入向量或关键词候选；租户、ACL、状态和时效条件是否把它错误排除。</li>
+<li><strong>融合与重排</strong>：正确 Chunk 在各通道分别排第几，RRF 后是否下降，Rerank 是否因改写查询或候选噪声做出错误排序。</li>
+<li><strong>生成与校验</strong>：正确证据已经进入最终上下文时，模型是否引用并正确使用；应用层是否拦住未知引用和无证据结论。</li>
+</ol>
+<p>失败报告应保留每一层的稳定标识与排名，而不是只保存最终回答文本。对某条案例，至少能看到原问题、改写查询、各召回通道的候选 ID 与原始名次、融合名次、Rerank 名次、最终上下文、模型引用 ID、拒答原因和 Trace ID。内容可能含有敏感信息时，应做脱敏和访问控制，指标标签里只保存低基数失败类别。</p>
+<p>失败原因分类本身也值得统计。多数失败来自 <code>KNOWLEDGE_MISSING</code> 时，继续调 TopK 没有意义。出现 <code>ACL_FILTERED_EXPECTED_CHUNK</code> 时，先核对 Golden Set 的身份与权限标注。正确证据已在候选中却被移除时，再评估 Rerank 模型、Prompt 或候选规模。</p>
+<h2 id="把检索指标补成完整质量门槛">把检索指标补成完整质量门槛</h2>
+<p>Recall@K、HitRate@K 和 MRR 只评检索，不证明最终回答正确。完整 RAG 评测还要检查三组规则。</p>
+<p>第一组是引用规则。返回的每个引用必须属于本次最终上下文，文档版本和 Chunk ID 必须存在，禁止出现跨租户、已退役或超出访问范围的引用。引用命中率可以自动计算，但“引用内容是否支持具体结论”需要把答案拆成业务声明再核对。</p>
+<p>第二组是拒答规则。Golden Set 要标记哪些案例可回答、哪些必须拒答，以及拒答原因。可以计算拒答精准率和召回率：系统拒答的案例中有多少确实该拒答，该拒答的案例中有多少被正确拒绝。只追求拒答召回率会让系统对所有问题都说不知道；只追求回答率又会放大幻觉。</p>
+<p>第三组是安全与业务规则。跨租户证据、旧版本证据、伪造业务动作、未知引用、缺少确认的写操作等必须使用确定性断言，容忍值为零。它们不应该交给另一个模型打分，也不能被平均指标稀释。</p>
+<p>回答措辞是否直接、是否遗漏次要条件等语义维度，可以使用人工评分规则，或用大模型辅助评分（LLM-as-Judge）。评判模型必须先用人工标注集校准，记录模型和评分提示版本，并定期抽检偏差。它适合提供质量信号，不适合判断权限、金额、状态机和引用存在性等代码能够确定的事实。</p>
+<h3 id="按风险设置上线阈值">按风险设置上线阈值</h3>
+<p>一套可用的上线门禁通常包含三层规则。</p>
+<p>安全硬条件没有平均空间：跨租户召回、越权引用、失效版本泄露和无证据写操作必须为零。任何一条失败都应阻断。</p>
+<p>核心业务指标要与已经认可的基线比较。例如退款、发票、会员权益分别统计 Recall@K 和拒答结果，防止整体平均数不变但某个业务域质量明显下降。阈值可以使用“不得低于绝对下限”加“相对基线下降不得超过允许值”，具体数字必须由公司数据和风险决定，不能从通用教程抄一个 90%。</p>
+<p>效率指标承担预算约束。混合检索与 Rerank 可能提升 Recall，却增加 p95 延迟和调用成本。报告应同时显示质量增量、候选数量、模型调用数、Token 和延迟。若收益只出现在极少数低风险案例，关闭昂贵链路可能更合理。</p>
+<p>小数据集要展示分子、分母和具体变化。10 条样例从 8 条通过变成 9 条，不能只写“提升 12.5%”；它实际只修复了一条案例。数据集扩大后，可以按业务标签统计置信区间和趋势，但坏案例列表仍然不能被隐藏。</p>
+<h3 id="离线评测与线上反馈互相补充">离线评测与线上反馈互相补充</h3>
+<p>离线 Golden Set 可重复、可比较，适合发布前回归；它永远无法完整代表线上分布。线上反馈能暴露真实说法、新业务和长尾问题，却带有强烈噪声。用户点“有帮助”可能只是答案读起来顺，也可能因为问题本身不重要；没有点击不等于答案错误。</p>
+<p>线上需要保留低风险可观测信号：无结果查询、拒答原因、引用打开率、转人工率、用户显式反馈、重复提问、检索候选数量、延迟和错误。抽样进入坏案例库时要脱敏，并由业务人员确认期望证据与风险标签。未经标注的线上日志不能直接当 Golden Set。</p>
+<p>评测集还要防止“只为当前实现服务”。修复一个案例后可以新增回归样本，但不能为了让新模型通过而删除难题或放宽标准。长期核心集应保持稳定，新业务与事故样本可以放入增量集；报告分别展示核心回归、增量覆盖和线上抽样结果。</p>
+<h2 id="用连续实验的数据直接生成检索报告">用连续实验的数据直接生成检索报告</h2>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/quality/eval-runner/src/test/java/com/xiaoding/javaai/eval/retrieval/RetrievalMetricsCalculatorTest.java">RetrievalMetricsCalculatorTest</a> 验证宏平均 Recall、HitRate、MRR、重复率、失败案例列表，以及“原始 TopK 占位、命中集合去重”的口径。</p>
+<p>这组测试只检查指标计算。真实检索质量仍要连接知识服务、索引和 Embedding 模型运行。</p>
+<p>真实检索评测调用 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/web/KnowledgeRetrievalEvaluationController.java">KnowledgeRetrievalEvaluationController</a> 提供的内部接口。接口只接收问题和 TopK，租户、用户和部门来自服务端身份组件。本地使用固定身份，不需要 Token；正式环境应给评测调用方独立权限，不能让普通问答身份访问检索调试信息。底层 JDBC 检索会切换到 Reactor 专门承接阻塞调用的 <code>boundedElastic</code> 调度器，不占用 WebFlux 事件循环。</p>
+<p>第 13-20 篇已经通过 <code>.http</code> 文件准备好真实文档、ACL 和索引。现在在 IDEA 运行 <code>EvalRunner</code>，把下面一行填入 Program arguments；它会用同一份 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/datasets/retrieval/golden-set-v1.jsonl">Golden Set</a> 调用正在运行的 Knowledge Service：</p>
+<pre><code class="language-text">retrieval-eval --dataset datasets/retrieval/golden-set-v1.jsonl --base-url http://localhost:8081 --top-k 5 --min-recall 0.80 --min-hit-rate 0.90 --min-mrr 0.60 --max-duplicate-rate 0.02 --max-p95-ms 1500 --report var/reports/retrieval-eval
+</code></pre>
+<p>运行结束后打开 <code>var/reports/retrieval-eval.md</code>，查看 Recall@5、HitRate@5、MRR、重复率、p95 和逐案例失败列表。再对照 <code>.http</code> 文件的 <code>VECTOR</code> 与 <code>HYBRID</code> 响应，判断策略变化具体影响了哪些文档排序。</p>
+<p>若模型是 <code>qwen3-embedding:4b</code>，这些数字来自免费的本地语义模型，可以作为本机实验基线。切换到目标环境后，仍要用目标模型和业务数据重新评测。</p>
+<p>若模型是 <code>deterministic-hash-v1-1536</code>，这些数字只说明 Golden Set、pgvector 查询、ACL 和指标计算已经连通，不能评价语义召回。</p>
+<p>这个限制不能靠“本地跑出了 1.0”绕过去。候选数较少、TopK 较大时，本地哈希向量同样可能把所有允许访问的 Chunk 都带回来，Recall 自然是 1.0，却没有证明排序理解了问题。报告保留这组数，是为了让读者看清评测程序怎样工作，而不是制造一个漂亮基线。</p>
+<p>同一个 <code>EvalRunner</code> 也可以指向共享环境，用于阈值门禁、逐案例错误和 p95 延迟等更严格的发布评测。学习阶段先在本机把“固定输入、真实召回、可比较报告”跑通，再替换目标地址和身份配置。</p>
+<p>聊天模型参与回答评测时，再单独记录模型、Prompt、Token、延迟与 Trace。检索指标仍基于稳定 Chunk ID 和实际排序，不让评判模型猜“这段大概相关”。</p>
+<h2 id="建立第一版可信基线">建立第一版可信基线</h2>
+<p>第一版不需要上千条样例。先选择 30 到 100 条能代表核心业务与高风险边界的问题，确认每条问题的身份、时间、必需证据、禁止证据和拒答预期。数量较少时，人工复核标注质量比快速扩容更重要。</p>
+<p>把评测放在独立模块，通过受保护的 HTTP 接口调用知识服务，不依赖服务内部类。这样同一套 Golden Set 可以跑共享测试环境和候选版本，也可以在框架迁移时保持评测口径不变。数据集、索引、模型、Prompt 和检索计划都要有可追踪版本，任何“效果更好”的结论都必须指向同一批样例与同一运行预算。</p>
+<p>Eval Runner 可以直接接入测试环境发布流水线，但公司项目通常还要扩展可接受证据组、禁止召回、nDCG、分组统计、基线差异与失败原因。扩展时优先保留逐案例结果，聚合指标只是视图；一旦只保存平均数，最有价值的坏案例就丢了。</p>
+<p>RAG 评测要让团队知道一次变更修复了哪些问题、又破坏了哪些问题，以及新增延迟和成本是否可接受。检索指标先算清正确证据是否进入候选，引用和拒答评测再检查模型怎样使用证据。完成这些检查后，知识问答才能进入 C 端入口；BFF 负责身份委托、限流、SSE 代理和终端 DTO，知识服务继续负责检索与回答规则。</p></article><div class="practice-link"><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/README.md" target="_blank" rel="noopener"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></svg> 本阶段可运行源码 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></div><nav class="chapter-nav" aria-label="前后篇"><a href="20.html"><span>上一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></span><strong>增量索引为什么需要任务、租约和失败恢复</strong></a><a href="22.html"><span>下一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><strong>C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合</strong></a></nav><footer class="reader-footer">Java AI 应用开发实战 · <a href="../license.html">非商业使用</a><details class="community-mini"><summary>关注与交流 · 好好用 AI</summary><div class="community-section"><div><p>交流学习中的问题与实践心得。</p><p>代码问题和勘误，欢迎在 <a href="https://github.com/DavidDingXu/learn-java-ai/issues" target="_blank" rel="noopener">GitHub 提交 Issue</a>。</p></div><a class="qr-link" href="../assets/wechat-official-account.jpg" target="_blank" rel="noopener" aria-label="查看好好用 AI 公众号二维码原图"><img src="../assets/wechat-official-account.jpg" alt="好好用 AI 微信公众号二维码" width="130" height="130" loading="lazy"><p class="qr-caption">微信扫码 · 点击查看原图</p></a></div></details></footer></main><aside class="context-sidebar" aria-label="本篇辅助导航"><div class="context-inner"><nav class="reading-route" aria-label="本篇路线"><details open><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#先把质量问题拆到每一层">先把质量问题拆到每一层</a></li>
+<li><a href="#用三个指标观察覆盖与排序">用三个指标观察覆盖与排序</a></li>
+<li><a href="#让每次实验能够解释结果变化">让每次实验能够解释结果变化</a></li>
+<li><a href="#把检索指标补成完整质量门槛">把检索指标补成完整质量门槛</a></li>
+<li><a href="#用连续实验的数据直接生成检索报告">用连续实验的数据直接生成检索报告</a></li>
+<li><a href="#建立第一版可信基线">建立第一版可信基线</a></li>
+</ul>
+</div>
+</details></nav></div></aside></div><dialog class="search-dialog" id="search-dialog" aria-labelledby="search-label"><form method="dialog" class="search-heading"><label for="course-search" id="search-label"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>搜索课程</label><button class="icon-button" aria-label="关闭搜索"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form><input id="course-search" type="search" placeholder="搜索概念、代码或问题…" autocomplete="off" spellcheck="false"><p class="search-status" id="search-status" role="status">搜索全部 52 篇文章。</p><div class="search-results" id="search-results"></div><footer>↑ ↓ 选择结果 <span>Enter 打开 · Esc 关闭</span></footer></dialog>
+<dialog class="image-viewer" id="image-viewer" aria-label="放大配图"><header><span>查看配图</span><div class="image-actions"><button type="button" id="image-size">原尺寸</button><button type="button" id="close-image" autofocus>关闭</button></div></header><div class="image-canvas"><img id="large-image" alt=""></div><footer><p id="image-description"></p><a id="original-image" target="_blank" rel="noopener">打开原图 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></footer></dialog><div class="toast" id="toast" role="status"></div></body></html>

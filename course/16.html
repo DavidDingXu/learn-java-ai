@@ -1,0 +1,253 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>向量检索原理与 pgvector 实现 · Learn Java AI</title><meta name="description" content="沿着一条客户服务链路，把模型、企业 RAG、受控 Agent 和 JDK8 老系统接在一起，再补齐评测、安全与上线治理。"><meta name="source-sha256" content="ddbd984bcfd680d7a7e00b38bf0180054549cd18ef11af551ddd2e5b4a3841b0">
+<link rel="canonical" href="https://daviddingxu.github.io/learn-java-ai/course/16.html"><link rel="icon" href="../assets/brand.png">
+<script>try{const t=localStorage.getItem('haohai-course-theme');document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}catch(_){document.documentElement.dataset.theme='light'}</script>
+<link rel="stylesheet" href="../assets/site.css"><script defer src="../assets/search-index.js"></script><script defer src="../assets/site.js"></script></head><body class="article-page" data-root="../" data-page="16"><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header"><div class="header-inner"><button class="icon-button menu-toggle js-only" type="button" aria-label="打开课程目录" aria-controls="course-sidebar" aria-expanded="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<a class="brand" href="../index.html" aria-label="Learn Java AI · 学习站首页"><img src="../assets/brand.png" alt="" width="36" height="36"><span><strong>Learn Java AI</strong><small>Java AI 应用开发实战</small></span></a>
+<nav class="header-nav" aria-label="主导航"><a href="../index.html#curriculum">课程目录</a><a href="../index.html#downloads">离线阅读</a><a href="https://github.com/DavidDingXu/learn-java-ai" target="_blank" rel="noopener">GitHub <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></nav>
+<div class="header-controls"><button class="icon-button theme-toggle js-only" type="button" aria-label="切换到深色主题" title="切换到深色主题"><span class="theme-light-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A9 9 0 0 1 9.5 3.5a9 9 0 1 0 11 11Z"/></svg></span><span class="theme-dark-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span></button><button class="search-trigger js-only" type="button" aria-label="搜索课程"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><span>搜索课程</span><kbd>⌘ K</kbd></button></div></div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header><div class="sidebar-scrim" hidden></div><div class="reader-layout"><aside class="course-sidebar" id="course-sidebar" aria-label="课程目录"><div class="sidebar-heading"><a href="../index.html#curriculum">课程目录</a><button class="icon-button menu-close js-only" type="button" aria-label="关闭课程目录"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><nav aria-label="全部文章"><details class="sidebar-stage"><summary><span class="stage-index">模块 01</span>系统边界与第一条调用</summary><a class="lesson-link" data-lesson="01" href="01.html"><span class="lesson-number">01</span><span>专栏介绍：Java 后端怎样系统学习 AI 应用开发落地</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="02" href="02.html"><span class="lesson-number">02</span><span>从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="03" href="03.html"><span class="lesson-number">03</span><span>Spring AI 为什么做主线，其他框架放在哪里</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="04" href="04.html"><span class="lesson-number">04</span><span>先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="05" href="05.html"><span class="lesson-number">05</span><span>多租户、身份和权限为什么不能相信请求参数</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="06" href="06.html"><span class="lesson-number">06</span><span>JDK8 老系统不升级：先划清现代 AI 服务与老系统边界</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 02</span>模型调用工程化</summary><a class="lesson-link" data-lesson="07" href="07.html"><span class="lesson-number">07</span><span>一次模型调用内部发生了什么：Message、Options、Token 与响应元数据</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="08" href="08.html"><span class="lesson-number">08</span><span>Prompt 的工程边界：模板、版本、授权知识与提示注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="09" href="09.html"><span class="lesson-number">09</span><span>结构化输出为什么会失败：Schema、DTO 和业务校验</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="10" href="10.html"><span class="lesson-number">10</span><span>流式输出原理与实现：SSE、取消、心跳、断连和 TTFT</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="11" href="11.html"><span class="lesson-number">11</span><span>超时、并发保护、重试和降级：为什么不需要万能模型网关</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="12" href="12.html"><span class="lesson-number">12</span><span>真实模型调用之后：怎样建立评测基线与可观测性</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage" open><summary><span class="stage-index">模块 03</span>企业 RAG</summary><a class="lesson-link" data-lesson="13" href="13.html"><span class="lesson-number">13</span><span>企业知识库先解决什么：文档、版本、状态和冲突</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="14" href="14.html"><span class="lesson-number">14</span><span>文档上传链路：对象存储、内容校验、隔离和解析失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="15" href="15.html"><span class="lesson-number">15</span><span>文档切分为什么影响召回：标题、条款、元数据和粒度</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="16" href="16.html" aria-current="page"><span class="lesson-number">16</span><span>向量检索原理与 pgvector 实现</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="17" href="17.html"><span class="lesson-number">17</span><span>权限为什么必须在 TopK 之前过滤</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="18" href="18.html"><span class="lesson-number">18</span><span>混合检索、Query Rewrite、Rerank 什么时候有用</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="19" href="19.html"><span class="lesson-number">19</span><span>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="20" href="20.html"><span class="lesson-number">20</span><span>增量索引为什么需要任务、租约和失败恢复</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="21" href="21.html"><span class="lesson-number">21</span><span>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 04</span>客户咨询与工单升级</summary><a class="lesson-link" data-lesson="22" href="22.html"><span class="lesson-number">22</span><span>C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="23" href="23.html"><span class="lesson-number">23</span><span>多轮会话原理：短期状态、裁剪、总结和过期</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="24" href="24.html"><span class="lesson-number">24</span><span>用户怎样判断回答可信：证据、反馈、拒答和重试</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="25" href="25.html"><span class="lesson-number">25</span><span>机器人解决不了时怎样平滑升级工单</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 05</span>受控 Agent 与老系统接入</summary><a class="lesson-link" data-lesson="26" href="26.html"><span class="lesson-number">26</span><span>Agent 与普通聊天有什么区别：目标、状态和受控执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="27" href="27.html"><span class="lesson-number">27</span><span>Tool Calling 原理与查询 Tool：最小权限、最小参数和最小返回</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="28" href="28.html"><span class="lesson-number">28</span><span>为什么模型只能选择工具：参数污染、结果污染和业务规则边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="29" href="29.html"><span class="lesson-number">29</span><span>写操作为什么必须先做风险分级</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="30" href="30.html"><span class="lesson-number">30</span><span>人工确认为什么不能只传一个字符串 token</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="31" href="31.html"><span class="lesson-number">31</span><span>幂等、并发和审计怎样跨越本地与远程事务边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="32" href="32.html"><span class="lesson-number">32</span><span>JDK8 老系统接入 AI：OpenAPI、Java 8 客户端、认证、超时与错误处理</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="33" href="33.html"><span class="lesson-number">33</span><span>串联工单 Agent 业务链：知识查询、人工确认与 JDK8 执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="34" href="34.html"><span class="lesson-number">34</span><span>Agent 质量怎样评测：工具路径、参数、拒绝和副作用</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 06</span>评测、安全与上线治理</summary><a class="lesson-link" data-lesson="35" href="35.html"><span class="lesson-number">35</span><span>AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="36" href="36.html"><span class="lesson-number">36</span><span>观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="37" href="37.html"><span class="lesson-number">37</span><span>缓存、熔断、限流和降级：只保留业务真正需要的部分</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="38" href="38.html"><span class="lesson-number">38</span><span>项目配置实战：让默认配置跑通，再按需替换基础设施</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="39" href="39.html"><span class="lesson-number">39</span><span>上线前最后核对什么：测试、Eval、密钥配置、发布和回滚</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 07</span>框架与协议迁移</summary><a class="lesson-link" data-lesson="40" href="40.html"><span class="lesson-number">40</span><span>DashScope Provider 适配实验：配置隔离、响应差异和回归边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="41" href="41.html"><span class="lesson-number">41</span><span>Embedding 与 Rerank 替换实验：怎样设计同集评测</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="42" href="42.html"><span class="lesson-number">42</span><span>Graph 人工确认路由实验：何时比现有状态机更合适</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="43" href="43.html"><span class="lesson-number">43</span><span>Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="44" href="44.html"><span class="lesson-number">44</span><span>LangChain4j AI Services 适配实验：迁移一个低风险用例</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="45" href="45.html"><span class="lesson-number">45</span><span>LangChain4j RAG 适配实验：复用现有业务契约</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="46" href="46.html"><span class="lesson-number">46</span><span>LangChain4j Tool 实验：只读调用与结构化输出</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="47" href="47.html"><span class="lesson-number">47</span><span>Spring AI 与 LangChain4j 共存实验：按业务能力选择框架</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="48" href="48.html"><span class="lesson-number">48</span><span>AgentScope Tool 裁决实验：注册、身份传递与权限映射</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="49" href="49.html"><span class="lesson-number">49</span><span>多 Agent 实际协作：并行取证、结果汇总与失败转人工</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="50" href="50.html"><span class="lesson-number">50</span><span>MCP 互操作实验：发现、准入、调用与远程失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="51" href="51.html"><span class="lesson-number">51</span><span>A2A 互操作实验：任务映射、幂等与状态边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="52" href="52.html"><span class="lesson-number">52</span><span>结束语：把 Java + AI 能力迁移到真实公司项目</span><span class="lesson-state" aria-hidden="true"></span></a></details></nav><p class="sidebar-note">模型负责生成，业务系统掌握规则与执行。</p></aside><main class="reader-main" id="main-content"><div class="article-context"><span>企业 RAG</span><div class="reading-tools js-only"><div class="font-controls" role="group" aria-label="正文字号"><button type="button" data-font="-1" aria-label="减小正文字号">A−</button><span id="font-size-label" aria-live="polite">18</span><button type="button" data-font="1" aria-label="增大正文字号">A+</button></div><button type="button" class="focus-toggle" aria-pressed="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>专注阅读</span></button></div></div><div class="mobile-context"><nav class="reading-route" aria-label="本篇路线"><details><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#完整-rag-联调需要哪些组件">完整 RAG 联调需要哪些组件</a></li>
+<li><a href="#先说清向量检索能做什么">先说清向量检索能做什么</a></li>
+<li><a href="#用业务端口隔离模型与数据库细节">用业务端口隔离模型与数据库细节</a></li>
+<li><a href="#数据增长后再选择近似索引">数据增长后再选择近似索引</a></li>
+<li><a href="#区分基础设施故障和空召回">区分基础设施故障和空召回</a></li>
+<li><a href="#java-编排与-pgvector-行为分开判断">Java 编排与 pgvector 行为分开判断</a></li>
+</ul>
+</div>
+</details></nav></div><article id="article-body"><h1 id="向量检索原理与-pgvector-实现">向量检索原理与 pgvector 实现</h1>
+<p>第一条 pgvector 查询通常很快就能跑通：文本转成向量，SQL 按距离排序，再取前几条结果。真正麻烦的是，它即使配置错了也不一定报错，只会悄悄返回一批看似相关、实际不可靠的内容。</p>
+<p>例如，入库和查询使用了不同的文本向量模型（Embedding 模型），数据库列维度、距离函数与索引算子没有配套，SQL 仍可能执行。结果里如果又丢了文档版本和条款位置，应用连“这段内容从哪里来”都回答不了。</p>
+<p>下面把这条链路逐层拆开，从向量含义、pgvector 查询到 Java 端口，说明哪些配置要一起版本化，以及怎样判断检索结果是否值得交给大模型。</p>
+<h2 id="完整-rag-联调需要哪些组件">完整 RAG 联调需要哪些组件</h2>
+<p>这一篇直接观察第 13 篇连续实验输出的 <code>向量 TopK</code>。结果来自 PostgreSQL 的向量距离查询，向量默认由统一远程 Provider 生成。<code>local-hash</code> 只保留为故障排查选项；远程接口没有 Embedding 时，才改用本地 Ollama API。</p>
+<p>要把“上传文档 -&gt; 生成向量 -&gt; 检索证据 -&gt; 模型回答”整条链路跑通，当前项目需要：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>在链路中的作用</th>
+<th>是否可由本地实现替代</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PostgreSQL + <code>pgvector</code></td>
+<td>保存 Chunk 向量并执行相似度检索</td>
+<td>完整联调不可替代</td>
+</tr>
+<tr>
+<td>PostgreSQL <code>pg_trgm</code></td>
+<td>支持当前混合检索中的关键词候选</td>
+<td>当前 Schema 需要</td>
+</tr>
+<tr>
+<td>Embedding</td>
+<td>为文档和问题生成同一向量空间中的 1536 维向量</td>
+<td>默认复用统一远程 Provider</td>
+</tr>
+<tr>
+<td>Chat Provider</td>
+<td>根据检索证据生成回答或拒答</td>
+<td>只测检索时可不启用</td>
+</tr>
+<tr>
+<td>知识文档与 ACL</td>
+<td>提供可检索内容和权限样本</td>
+<td>仓库提供示例文档</td>
+</tr>
+<tr>
+<td>入站身份</td>
+<td>生成租户、用户和部门访问范围</td>
+<td>本地使用固定身份</td>
+</tr>
+</tbody>
+</table></div>
+<p>本地联调不需要先部署身份平台、Redis、Kafka 或 MinIO。将 <code>java-ai.knowledge.mode</code> 改为 <code>postgres-rag</code> 后，数据库和检索使用真实实现。业务层 Embedding 模式保持 <code>provider</code>，具体 Provider 由 <code>spring.ai.model.embedding</code> 选择。入站身份仍固定为 <code>tenant-a / local-user / support</code>。</p>
+<p><code>vector</code> 与 <code>pg_trgm</code> 由数据库管理员在专用学习库中预先创建，应用账号不需要超级权限。Knowledge Service 启动时会检查这两个扩展；缺失时直接列出管理员需要执行的 SQL，再停止启动，避免等到索引请求才暴露数据库准备不完整。</p>
+<p>上传、发布、索引和问答步骤集中放在阶段 03 的 <code>.http</code> 文件和“知识文档导入”Runbook 中。统一远程接口不支持 Embedding 时，RAG 准备文档提供 Ollama 的单项替代配置；它仍通过相同的 Spring AI <code>EmbeddingModel</code> 接口工作。</p>
+<h2 id="先说清向量检索能做什么">先说清向量检索能做什么</h2>
+<p>Embedding 模型把文本映射为固定维度的浮点向量。语义相近的文本，在所选距离度量下通常更接近。向量数据库做的事情，是从大量候选向量中找出离查询向量较近的一小批 Chunk。</p>
+<p>它没有判断政策是否有效，也没有判断用户是否有权阅读，更不能证明某段内容足以回答问题。向量相似度只表达当前模型表示空间中的接近程度。</p>
+<p>以“退款多久到账”为例，模型可能把它编码到“退款时效”“原路退回”“审核完成后到账”附近。它也可能召回“退货申请时限”，因为两段文字共享大量售后语义。后续应用仍要结合关键词、业务状态、权限、重排（Rerank）和回答规则处理候选结果。</p>
+<p>所以，RAG 链路应当把向量检索看成候选生成器，而不是答案生成器：</p>
+<pre><code class="language-text">用户问题
+  -&gt; 查询向量
+  -&gt; 受业务条件约束的 TopK 候选
+  -&gt; 可选的混合检索与 Rerank
+  -&gt; 引用校验和上下文组装
+  -&gt; 模型回答或拒答
+</code></pre>
+<p>这个认识会影响接口设计。检索结果不能只返回 <code>String content</code>，还要返回 <code>chunkId</code>、<code>documentId</code>、文档版本、标题路径、条款号和分数。否则答案看似有知识上下文，系统却无法展示引用，也无法定位召回错误来自哪个版本。</p>
+<h3 id="相似度分数不代表回答正确">相似度分数不代表回答正确</h3>
+<p>项目使用 pgvector 的余弦距离运算符 <code>&lt;=&gt;</code>。余弦相似度关注两个向量方向是否接近：</p>
+<pre><code class="language-text">cosine_similarity(a, b) = (a · b) / (||a|| * ||b||)
+cosine_distance(a, b)   = 1 - cosine_similarity(a, b)
+</code></pre>
+<p>距离越小越接近。查询中使用 <code>1 - distance</code>，只是把结果转换成更符合阅读习惯的“分数越大越相似”：</p>
+<pre><code class="language-sql">1 - (dc.embedding &lt;=&gt; ?::vector) AS score
+</code></pre>
+<p>这个分数不能直接解释成“有 91% 的概率正确”。它不是分类模型置信度，也没有跨模型可比性。Embedding 模型、文本语言、Chunk 粒度和语料分布变化后，同一个阈值的含义都会改变。</p>
+<p>生产项目不要先拍一个 <code>score &gt;= 0.8</code> 的固定值，再用几个成功案例证明它合理。更可靠的做法是准备带标准证据的查询集，观察 Recall@K（前 K 个结果覆盖期望证据的比例）、空召回率和噪声比例。阈值应当由业务数据校准，并且和模型版本一起管理。</p>
+<p>TopK 和阈值也不是互相替代的参数。TopK 控制最多取多少候选，阈值控制候选至少要有多接近。只设置 TopK，在完全无关的问题上也可能硬取出若干结果；只设置阈值，则可能在重复文档很多时返回过多内容。两者通常要配合上下文预算、Rerank 和拒答策略一起确定。</p>
+<h3 id="embedding-模型与索引一起版本化">Embedding 模型与索引一起版本化</h3>
+<p>向量不是独立于模型存在的通用数据。同一段文本使用两个 Embedding 模型生成的向量，即使维度相同，也未必处于同一个表示空间。拿模型 A 生成的查询向量去搜索模型 B 生成的文档向量，SQL 可能正常执行，结果却没有语义依据。</p>
+<p>数据库把向量列定义为 <code>VECTOR(1536)</code>，并同时保存 <code>embedding_model</code>：</p>
+<pre><code class="language-sql">CREATE TABLE document_chunk (
+    tenant_id VARCHAR(128) NOT NULL,
+    document_id VARCHAR(160) NOT NULL,
+    version_number INTEGER NOT NULL,
+    chunk_id VARCHAR(80) NOT NULL,
+    content TEXT NOT NULL,
+    embedding VECTOR(1536),
+    embedding_model VARCHAR(160),
+    created_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (tenant_id, chunk_id)
+);
+</code></pre>
+<p><code>1536</code> 是当前向量列的固定维度，不是“向量都应该是 1536 维”的行业规则。接入真实模型时，模型输出维度必须与列定义一致。换成其他维度，应该通过 Flyway 新增列或新表，完成回填、评测和查询切换，不能在运行时截断或补零来迁就旧表。</p>
+<p>模型名称也不能只写在配置文件里。索引数据必须能回答“这条向量由哪个模型、哪套预处理和哪版 Chunk 生成”。公司项目中还可以增加 <code>embedding_policy_version</code>，把文本规范化、标题拼接和模型参数纳入版本。这样才能判断哪些数据需要重建。</p>
+<p>更换 Embedding 模型时，稳妥的路径是建立影子索引。新模型针对同一批 Chunk 生成新向量，查询流量先做离线对照，再对少量请求双路检索。固定数据集通过后切换读取，旧向量保留一个回退窗口。直接覆盖原列会同时失去基线和回滚能力。</p>
+<h2 id="用业务端口隔离模型与数据库细节">用业务端口隔离模型与数据库细节</h2>
+<p>检索用例的业务语义是“在经过身份校验的访问范围和有效时间内，找出与问题最相关的知识片段”。应用层不需要知道 PostgreSQL 使用 <code>&lt;=&gt;</code>，也不应该依赖 Spring AI 的 <code>VectorStore</code> 类型。</p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/application/port/KnowledgeEmbeddingModel.java">KnowledgeEmbeddingModel</a> 和 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/application/port/KnowledgeChunkSearchRepository.java">KnowledgeChunkSearchRepository</a> 分别承担两个端口：</p>
+<pre><code class="language-java">public interface KnowledgeEmbeddingModel {
+    KnowledgeEmbedding embed(String text);
+}
+
+public interface KnowledgeChunkSearchRepository {
+    List&lt;RetrievedKnowledgeChunk&gt; search(
+            float[] embedding,
+            String embeddingModel,
+            KnowledgeAccessScope scope,
+            Instant effectiveAt,
+            int topK
+    );
+}
+</code></pre>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/application/KnowledgeRetrievalService.java">KnowledgeRetrievalService</a> 只编排两个动作：生成问题向量，再携带经过身份校验的访问范围查询候选 Chunk。</p>
+<pre><code class="language-java">public KnowledgeRetrievalResult retrieve(RetrieveKnowledgeQuery query) {
+    KnowledgeEmbedding embedding = embeddingModel.embed(query.question());
+    var chunks = searchRepository.search(
+            embedding.vector(),
+            embedding.model(),
+            query.accessScope(),
+            query.effectiveAt(),
+            query.topK()
+    );
+    return new KnowledgeRetrievalResult(embedding.model(), chunks);
+}
+</code></pre>
+<p>这两个端口隔开了两种独立变化：模型 Provider 会变，向量存储方案也会变。业务用例只依赖明确的输入和返回类型。更换 Embedding Provider 时不改检索 SQL；从 pgvector 迁移到其他向量存储时，也不需要让 Controller 和回答服务理解新的 SDK。</p>
+<p><code>SpringAiKnowledgeEmbeddingModel</code> 通过统一 <code>EmbeddingModel</code> 端口批量提交文本，并校验模型名、输入数量、结果索引和 1536 维约束。无论底层是 Ollama 还是远程 Provider，少量结果、重复索引或错误维度都会让索引任务失败，不会把不同空间的向量混进同一索引。</p>
+<p><code>DeterministicHashEmbeddingModel</code> 仍是可配置的排查适配器。它能检查模型版本隔离、pgvector SQL 和 ACL，却不具备语义表示能力。看到它出现在阶段报告里，只能判断工程链路是否接通。</p>
+<h3 id="一次-pgvector-查询的执行过程">一次 pgvector 查询的执行过程</h3>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/infrastructure/PgVectorSearchQuery.java">PgVectorSearchQuery</a> 生成参数化 SQL，<a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/infrastructure/PgVectorKnowledgeChunkSearchRepository.java">PgVectorKnowledgeChunkSearchRepository</a> 负责绑定参数并映射结果。</p>
+<p><img alt="查询问题进入 pgvector 并返回证据元数据" src="../assets/content/docs/assets/diagrams/source/16-pgvector-query.svg" /></p>
+<p>核心查询可以压缩为下面这段：</p>
+<pre><code class="language-sql">SELECT dc.chunk_id,
+       dc.document_id,
+       dc.version_number,
+       dc.heading_path,
+       dc.clause,
+       dc.content,
+       1 - (dc.embedding &lt;=&gt; ?::vector) AS score
+  FROM document_chunk dc
+  JOIN document_search_version dsv
+    ON dsv.tenant_id = dc.tenant_id
+   AND dsv.document_id = dc.document_id
+   AND dsv.version_number = dc.version_number
+  JOIN knowledge_document kd
+    ON kd.tenant_id = dc.tenant_id
+   AND kd.document_id = dc.document_id
+ WHERE dc.tenant_id = ?
+   AND dc.embedding_model = ?
+   AND kd.status = 'ACTIVE'
+   AND dc.embedding IS NOT NULL
+   AND EXISTS (
+       SELECT 1
+         FROM document_version active_dv
+        WHERE active_dv.tenant_id = dc.tenant_id
+          AND active_dv.document_id = dc.document_id
+          AND active_dv.status = 'PUBLISHED'
+          AND active_dv.effective_from &lt;= ?
+          AND (active_dv.effective_until IS NULL
+               OR active_dv.effective_until &gt; ?)
+   )
+   AND EXISTS (/* 当前身份可读的访问控制条件 */)
+ ORDER BY dc.embedding &lt;=&gt; ?::vector
+ LIMIT ?;
+</code></pre>
+<p><code>document_search_version</code> 指向已经完整写入的检索版本。旁边的 <code>EXISTS</code> 继续检查这份文档当前是否有处于有效期内的业务发布版本。两个条件缺一不可：只看业务状态会在索引未完成时查不到内容，只看检索指针又可能继续返回已经整体失效的文档。</p>
+<p>查询向量出现两次。<code>SELECT</code> 中的一次用于返回可观察的相似度，<code>ORDER BY</code> 中的一次用于排序和使用向量索引。两处必须绑定同一个向量，不能分别生成，否则展示分数和实际排序会失去对应关系。<code>embedding_model</code> 也必须与查询向量的模型标识一致，升级模型时不能让旧向量和新向量进入同一次距离排序。</p>
+<p>向量文本使用参数绑定进入 <code>?::vector</code>，租户、时间、身份和 <code>LIMIT</code> 也全部参数化。部门列表只动态生成占位符数量，不把部门 ID 拼进 SQL。这样既保留可变数量的权限条件，也避免把请求值当成 SQL 结构。</p>
+<p>结果映射同样重要。<code>heading_path</code> 从 JSONB 还原为标题路径，<code>documentId</code> 和版本号跟随内容返回。后续上下文组装可以生成“退款政策 / 售后规则 / 第十条”这样的引用，而不是把一段失去出处的文本交给模型。</p>
+<p>持久化异常被包装成 <code>KnowledgeSearchPersistenceException</code>。这里不应该捕获后返回空列表。数据库连接失败与“确实没有相关知识”是两种完全不同的业务事实。前者需要错误响应、指标和告警，后者才可能进入拒答分支。</p>
+<h2 id="数据增长后再选择近似索引">数据增长后再选择近似索引</h2>
+<p>没有近似索引时，数据库需要计算查询向量与所有候选向量的距离，再排序取前 K。数据量很小时这条精确查询足够简单，也方便建立质量基线。Chunk 数量上升后，全量距离计算会逐渐成为延迟和 CPU 瓶颈。</p>
+<p>项目通过 Flyway 创建 HNSW 索引。HNSW（Hierarchical Navigable Small World）是一种近似最近邻索引；这里的索引算子与查询使用的余弦距离保持一致：</p>
+<pre><code class="language-sql">CREATE INDEX ix_document_chunk_embedding_hnsw
+    ON document_chunk USING hnsw (embedding vector_cosine_ops)
+    WHERE embedding IS NOT NULL;
+</code></pre>
+<p>HNSW 用额外存储和建索引成本换取较低的近似搜索延迟。近似搜索的含义是，返回结果可能不是全量精确计算下绝对最近的 K 条。它适合读多、需要低延迟，并且可以用固定数据集测量召回损失的知识检索场景。</p>
+<p>索引选择不要只看“哪种更快”。至少要把下面几件事一起测量：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>适合先使用的场景</th>
+<th>主要代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>精确扫描</td>
+<td>数据量小、建立质量基线、离线评测</td>
+<td>数据增长后距离计算和排序成本高</td>
+</tr>
+<tr>
+<td>HNSW</td>
+<td>读请求多、需要较低延迟、能接受建索引成本</td>
+<td>占用更多内存和存储，写入与构建更重，参数影响召回</td>
+</tr>
+<tr>
+<td>IVFFlat</td>
+<td>数据量稳定、可以训练分区并持续调参</td>
+<td>数据分布变化后要重新评估，候选探测不足会漏召回</td>
+</tr>
+</tbody>
+</table></div>
+<p>“建了索引”也不等于查询一定走索引。小表上 PostgreSQL 可能认为顺序扫描更便宜；过滤条件选择性、统计信息和 <code>LIMIT</code> 都会影响执行计划。上线前要对真实数量级运行 <code>EXPLAIN (ANALYZE, BUFFERS)</code>，观察计划、实际行数、耗时和缓存命中，而不是只确认索引对象存在。</p>
+<p>多租户和严格的访问控制列表（ACL）会进一步改变执行特征。一个租户只有几百条可见 Chunk，另一个租户可能有几百万条。全局平均延迟掩盖不了大租户和窄权限用户的问题。性能样本要按租户规模、权限范围和问题类型分桶，P95、P99 与空召回率比单次执行时间更有意义。</p>
+<h3 id="把分数k-值和上下文预算放在一起调">把分数、K 值和上下文预算放在一起调</h3>
+<p><code>topK=20</code> 不代表最后把 20 段文本全部放进 Prompt。候选生成可以适当放宽，经过去重、Rerank、同文档合并和引用校验后，再根据上下文预算截取证据。</p>
+<p>如果多个 Chunk 来自同一条款的相邻切片，直接占满 TopK 会挤掉其他证据。可以按 <code>documentId + version + clause</code> 做受控去重，或者在切分阶段保留父子关系。去重规则必须记录在评测配置中，因为它会改变 Recall@K 和最终上下文。</p>
+<p>也不要用增大 K 掩盖检索质量问题。K 变大通常会提高召回上限，同时增加噪声、Token 成本和模型引用错误。正确做法是从 Golden Set 中区分几类失败：正确证据根本没有进入候选、进入候选但排序靠后、正确证据已进入上下文但模型仍答错。三类问题分别对应切分与 Embedding、排序策略、回答约束，不能都靠调 K 解决。</p>
+<p>相似度阈值应当放在可观察的检索策略中，而不是散落在 Controller。每次评测至少记录模型名、Chunk 策略版本、距离度量、候选 K、最终 K 和阈值。缺少这些信息，同一批问题两次跑出不同结果时，很难判断变化来自模型、数据还是代码。</p>
+<h2 id="区分基础设施故障和空召回">区分基础设施故障和空召回</h2>
+<p>向量链路常见的失败不止“没有结果”。</p>
+<p>模型返回维度与 <code>VECTOR(1536)</code> 不一致时，应当在适配器边界立即失败，并记录模型与期望维度。不要等到 JDBC 抛出难以理解的数据库异常。</p>
+<p>文档 Chunk 没有向量时，当前 SQL 通过 <code>embedding IS NOT NULL</code> 排除它。系统还需要从索引任务指标中看到缺失比例。大量 Chunk 被排除，查询仍然可能返回少量结果，单靠接口成功率发现不了索引不完整。</p>
+<p>数据库查询超时或连接失败时，不能伪装成空召回。回答服务应返回明确的暂不可用结果，或者走经过业务批准的降级知识源。让模型在没有证据时自由回答，会把基础设施故障变成业务错误。</p>
+<p>召回分数很低时，系统应进入拒答或澄清，而不是用“最接近的一条”凑出答案。拒答本身也要进入评测，避免为了提高回答率牺牲准确性。</p>
+<h2 id="java-编排与-pgvector-行为分开判断">Java 编排与 pgvector 行为分开判断</h2>
+<p>不依赖外部数据库的测试可以检查应用层传参、SQL 结构、参数顺序和结果映射：</p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/test/java/com/xiaoding/javaai/knowledge/retrieval/application/KnowledgeRetrievalServiceTest.java">KnowledgeRetrievalServiceTest</a> 验证问题经过 Embedding 后，访问范围、生效时间和 TopK 原样进入仓储端口。<a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/test/java/com/xiaoding/javaai/knowledge/retrieval/infrastructure/PgVectorSearchQueryTest.java">PgVectorSearchQueryTest</a> 验证租户、检索版本、业务有效期和 ACL 条件都出现在 <code>LIMIT</code> 之前。</p>
+<p>真实 pgvector 行为仍需要 PostgreSQL 环境。<code>PgVectorExternalIT</code> 会执行 Flyway、创建扩展并重建测试结构，因此只能指向一次性或专用测试库，不能连接共享库和生产库。默认本地验证不运行这项破坏性测试；它适合放在已经准备好隔离数据库的集成环境中。</p>
+<p>外部验证覆盖数据库迁移、运算符、参数绑定、权限前置过滤，以及替换索引前后的版本切换。语义召回质量仍要使用目标 Embedding 模型、业务文档和固定评测集评估。</p>
+<h3 id="接入公司项目时的替换范围">接入公司项目时的替换范围</h3>
+<p>可以直接复用检索用例的职责划分、Embedding 端口、带来源信息的结果类型、Flyway 管理方式，以及“模型版本和索引数据一起版本化”的原则。</p>
+<p>需要按公司条件替换的部分包括 Embedding Provider、向量维度、索引参数、数据库规格、连接池和超时策略。数据量很大或租户隔离要求更强时，还要重新决定分区、分片与独立集群，不能把单表方案机械放大。</p>
+<p>当前查询只完成单路向量候选生成。增加关键词召回、查询改写和 Rerank 后，仍要使用相同的权限过滤和引用字段。无论增加多少检索算法，租户、版本、有效期和 ACL 都不能退回到召回之后处理。</p></article><div class="practice-link"><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/README.md" target="_blank" rel="noopener"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></svg> 本阶段可运行源码 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></div><nav class="chapter-nav" aria-label="前后篇"><a href="15.html"><span>上一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></span><strong>文档切分为什么影响召回：标题、条款、元数据和粒度</strong></a><a href="17.html"><span>下一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><strong>权限为什么必须在 TopK 之前过滤</strong></a></nav><footer class="reader-footer">Java AI 应用开发实战 · <a href="../license.html">非商业使用</a><details class="community-mini"><summary>关注与交流 · 好好用 AI</summary><div class="community-section"><div><p>交流学习中的问题与实践心得。</p><p>代码问题和勘误，欢迎在 <a href="https://github.com/DavidDingXu/learn-java-ai/issues" target="_blank" rel="noopener">GitHub 提交 Issue</a>。</p></div><a class="qr-link" href="../assets/wechat-official-account.jpg" target="_blank" rel="noopener" aria-label="查看好好用 AI 公众号二维码原图"><img src="../assets/wechat-official-account.jpg" alt="好好用 AI 微信公众号二维码" width="130" height="130" loading="lazy"><p class="qr-caption">微信扫码 · 点击查看原图</p></a></div></details></footer></main><aside class="context-sidebar" aria-label="本篇辅助导航"><div class="context-inner"><nav class="reading-route" aria-label="本篇路线"><details open><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#完整-rag-联调需要哪些组件">完整 RAG 联调需要哪些组件</a></li>
+<li><a href="#先说清向量检索能做什么">先说清向量检索能做什么</a></li>
+<li><a href="#用业务端口隔离模型与数据库细节">用业务端口隔离模型与数据库细节</a></li>
+<li><a href="#数据增长后再选择近似索引">数据增长后再选择近似索引</a></li>
+<li><a href="#区分基础设施故障和空召回">区分基础设施故障和空召回</a></li>
+<li><a href="#java-编排与-pgvector-行为分开判断">Java 编排与 pgvector 行为分开判断</a></li>
+</ul>
+</div>
+</details></nav></div></aside></div><dialog class="search-dialog" id="search-dialog" aria-labelledby="search-label"><form method="dialog" class="search-heading"><label for="course-search" id="search-label"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>搜索课程</label><button class="icon-button" aria-label="关闭搜索"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form><input id="course-search" type="search" placeholder="搜索概念、代码或问题…" autocomplete="off" spellcheck="false"><p class="search-status" id="search-status" role="status">搜索全部 52 篇文章。</p><div class="search-results" id="search-results"></div><footer>↑ ↓ 选择结果 <span>Enter 打开 · Esc 关闭</span></footer></dialog>
+<dialog class="image-viewer" id="image-viewer" aria-label="放大配图"><header><span>查看配图</span><div class="image-actions"><button type="button" id="image-size">原尺寸</button><button type="button" id="close-image" autofocus>关闭</button></div></header><div class="image-canvas"><img id="large-image" alt=""></div><footer><p id="image-description"></p><a id="original-image" target="_blank" rel="noopener">打开原图 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></footer></dialog><div class="toast" id="toast" role="status"></div></body></html>

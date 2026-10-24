@@ -1,0 +1,163 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Embedding 与 Rerank 替换实验：怎样设计同集评测 · Learn Java AI</title><meta name="description" content="沿着一条客户服务链路，把模型、企业 RAG、受控 Agent 和 JDK8 老系统接在一起，再补齐评测、安全与上线治理。"><meta name="source-sha256" content="b125d22766f34e778a265da73082c2f20e869463a0ce516471a20b5af5b19580">
+<link rel="canonical" href="https://daviddingxu.github.io/learn-java-ai/course/41.html"><link rel="icon" href="../assets/brand.png">
+<script>try{const t=localStorage.getItem('haohai-course-theme');document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}catch(_){document.documentElement.dataset.theme='light'}</script>
+<link rel="stylesheet" href="../assets/site.css"><script defer src="../assets/search-index.js"></script><script defer src="../assets/site.js"></script></head><body class="article-page" data-root="../" data-page="41"><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header"><div class="header-inner"><button class="icon-button menu-toggle js-only" type="button" aria-label="打开课程目录" aria-controls="course-sidebar" aria-expanded="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<a class="brand" href="../index.html" aria-label="Learn Java AI · 学习站首页"><img src="../assets/brand.png" alt="" width="36" height="36"><span><strong>Learn Java AI</strong><small>Java AI 应用开发实战</small></span></a>
+<nav class="header-nav" aria-label="主导航"><a href="../index.html#curriculum">课程目录</a><a href="../index.html#downloads">离线阅读</a><a href="https://github.com/DavidDingXu/learn-java-ai" target="_blank" rel="noopener">GitHub <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></nav>
+<div class="header-controls"><button class="icon-button theme-toggle js-only" type="button" aria-label="切换到深色主题" title="切换到深色主题"><span class="theme-light-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A9 9 0 0 1 9.5 3.5a9 9 0 1 0 11 11Z"/></svg></span><span class="theme-dark-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span></button><button class="search-trigger js-only" type="button" aria-label="搜索课程"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><span>搜索课程</span><kbd>⌘ K</kbd></button></div></div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header><div class="sidebar-scrim" hidden></div><div class="reader-layout"><aside class="course-sidebar" id="course-sidebar" aria-label="课程目录"><div class="sidebar-heading"><a href="../index.html#curriculum">课程目录</a><button class="icon-button menu-close js-only" type="button" aria-label="关闭课程目录"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><nav aria-label="全部文章"><details class="sidebar-stage"><summary><span class="stage-index">模块 01</span>系统边界与第一条调用</summary><a class="lesson-link" data-lesson="01" href="01.html"><span class="lesson-number">01</span><span>专栏介绍：Java 后端怎样系统学习 AI 应用开发落地</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="02" href="02.html"><span class="lesson-number">02</span><span>从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="03" href="03.html"><span class="lesson-number">03</span><span>Spring AI 为什么做主线，其他框架放在哪里</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="04" href="04.html"><span class="lesson-number">04</span><span>先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="05" href="05.html"><span class="lesson-number">05</span><span>多租户、身份和权限为什么不能相信请求参数</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="06" href="06.html"><span class="lesson-number">06</span><span>JDK8 老系统不升级：先划清现代 AI 服务与老系统边界</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 02</span>模型调用工程化</summary><a class="lesson-link" data-lesson="07" href="07.html"><span class="lesson-number">07</span><span>一次模型调用内部发生了什么：Message、Options、Token 与响应元数据</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="08" href="08.html"><span class="lesson-number">08</span><span>Prompt 的工程边界：模板、版本、授权知识与提示注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="09" href="09.html"><span class="lesson-number">09</span><span>结构化输出为什么会失败：Schema、DTO 和业务校验</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="10" href="10.html"><span class="lesson-number">10</span><span>流式输出原理与实现：SSE、取消、心跳、断连和 TTFT</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="11" href="11.html"><span class="lesson-number">11</span><span>超时、并发保护、重试和降级：为什么不需要万能模型网关</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="12" href="12.html"><span class="lesson-number">12</span><span>真实模型调用之后：怎样建立评测基线与可观测性</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 03</span>企业 RAG</summary><a class="lesson-link" data-lesson="13" href="13.html"><span class="lesson-number">13</span><span>企业知识库先解决什么：文档、版本、状态和冲突</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="14" href="14.html"><span class="lesson-number">14</span><span>文档上传链路：对象存储、内容校验、隔离和解析失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="15" href="15.html"><span class="lesson-number">15</span><span>文档切分为什么影响召回：标题、条款、元数据和粒度</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="16" href="16.html"><span class="lesson-number">16</span><span>向量检索原理与 pgvector 实现</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="17" href="17.html"><span class="lesson-number">17</span><span>权限为什么必须在 TopK 之前过滤</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="18" href="18.html"><span class="lesson-number">18</span><span>混合检索、Query Rewrite、Rerank 什么时候有用</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="19" href="19.html"><span class="lesson-number">19</span><span>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="20" href="20.html"><span class="lesson-number">20</span><span>增量索引为什么需要任务、租约和失败恢复</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="21" href="21.html"><span class="lesson-number">21</span><span>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 04</span>客户咨询与工单升级</summary><a class="lesson-link" data-lesson="22" href="22.html"><span class="lesson-number">22</span><span>C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="23" href="23.html"><span class="lesson-number">23</span><span>多轮会话原理：短期状态、裁剪、总结和过期</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="24" href="24.html"><span class="lesson-number">24</span><span>用户怎样判断回答可信：证据、反馈、拒答和重试</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="25" href="25.html"><span class="lesson-number">25</span><span>机器人解决不了时怎样平滑升级工单</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 05</span>受控 Agent 与老系统接入</summary><a class="lesson-link" data-lesson="26" href="26.html"><span class="lesson-number">26</span><span>Agent 与普通聊天有什么区别：目标、状态和受控执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="27" href="27.html"><span class="lesson-number">27</span><span>Tool Calling 原理与查询 Tool：最小权限、最小参数和最小返回</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="28" href="28.html"><span class="lesson-number">28</span><span>为什么模型只能选择工具：参数污染、结果污染和业务规则边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="29" href="29.html"><span class="lesson-number">29</span><span>写操作为什么必须先做风险分级</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="30" href="30.html"><span class="lesson-number">30</span><span>人工确认为什么不能只传一个字符串 token</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="31" href="31.html"><span class="lesson-number">31</span><span>幂等、并发和审计怎样跨越本地与远程事务边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="32" href="32.html"><span class="lesson-number">32</span><span>JDK8 老系统接入 AI：OpenAPI、Java 8 客户端、认证、超时与错误处理</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="33" href="33.html"><span class="lesson-number">33</span><span>串联工单 Agent 业务链：知识查询、人工确认与 JDK8 执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="34" href="34.html"><span class="lesson-number">34</span><span>Agent 质量怎样评测：工具路径、参数、拒绝和副作用</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 06</span>评测、安全与上线治理</summary><a class="lesson-link" data-lesson="35" href="35.html"><span class="lesson-number">35</span><span>AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="36" href="36.html"><span class="lesson-number">36</span><span>观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="37" href="37.html"><span class="lesson-number">37</span><span>缓存、熔断、限流和降级：只保留业务真正需要的部分</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="38" href="38.html"><span class="lesson-number">38</span><span>项目配置实战：让默认配置跑通，再按需替换基础设施</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="39" href="39.html"><span class="lesson-number">39</span><span>上线前最后核对什么：测试、Eval、密钥配置、发布和回滚</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage" open><summary><span class="stage-index">模块 07</span>框架与协议迁移</summary><a class="lesson-link" data-lesson="40" href="40.html"><span class="lesson-number">40</span><span>DashScope Provider 适配实验：配置隔离、响应差异和回归边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="41" href="41.html" aria-current="page"><span class="lesson-number">41</span><span>Embedding 与 Rerank 替换实验：怎样设计同集评测</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="42" href="42.html"><span class="lesson-number">42</span><span>Graph 人工确认路由实验：何时比现有状态机更合适</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="43" href="43.html"><span class="lesson-number">43</span><span>Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="44" href="44.html"><span class="lesson-number">44</span><span>LangChain4j AI Services 适配实验：迁移一个低风险用例</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="45" href="45.html"><span class="lesson-number">45</span><span>LangChain4j RAG 适配实验：复用现有业务契约</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="46" href="46.html"><span class="lesson-number">46</span><span>LangChain4j Tool 实验：只读调用与结构化输出</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="47" href="47.html"><span class="lesson-number">47</span><span>Spring AI 与 LangChain4j 共存实验：按业务能力选择框架</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="48" href="48.html"><span class="lesson-number">48</span><span>AgentScope Tool 裁决实验：注册、身份传递与权限映射</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="49" href="49.html"><span class="lesson-number">49</span><span>多 Agent 实际协作：并行取证、结果汇总与失败转人工</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="50" href="50.html"><span class="lesson-number">50</span><span>MCP 互操作实验：发现、准入、调用与远程失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="51" href="51.html"><span class="lesson-number">51</span><span>A2A 互操作实验：任务映射、幂等与状态边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="52" href="52.html"><span class="lesson-number">52</span><span>结束语：把 Java + AI 能力迁移到真实公司项目</span><span class="lesson-state" aria-hidden="true"></span></a></details></nav><p class="sidebar-note">模型负责生成，业务系统掌握规则与执行。</p></aside><main class="reader-main" id="main-content"><div class="article-context"><span>框架与协议迁移</span><div class="reading-tools js-only"><div class="font-controls" role="group" aria-label="正文字号"><button type="button" data-font="-1" aria-label="减小正文字号">A−</button><span id="font-size-label" aria-live="polite">18</span><button type="button" data-font="1" aria-label="增大正文字号">A+</button></div><button type="button" class="focus-toggle" aria-pressed="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>专注阅读</span></button></div></div><div class="mobile-context"><nav class="reading-route" aria-label="本篇路线"><details><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#embedding-负责召回rerank-负责排序">Embedding 负责召回，Rerank 负责排序</a></li>
+<li><a href="#embedding-变化会产生新索引版本">Embedding 变化会产生新索引版本</a></li>
+<li><a href="#用同一-golden-set-控制比较条件">用同一 Golden Set 控制比较条件</a></li>
+<li><a href="#用双索引完成迁移与回退">用双索引完成迁移与回退</a></li>
+<li><a href="#真实模型实验记录完整条件">真实模型实验记录完整条件</a></li>
+<li><a href="#直接运行在线-embedding-与-rerank">直接运行在线 Embedding 与 Rerank</a></li>
+<li><a href="#明确实验结论的适用范围">明确实验结论的适用范围</a></li>
+</ul>
+</div>
+</details></nav></div><article id="article-body"><h1 id="embedding-与-rerank-替换实验怎样设计同集评测">Embedding 与 Rerank 替换实验：怎样设计同集评测</h1>
+<p>Chat Provider 切换成功后，团队可能接着替换 Embedding 和 Rerank。三者看起来都属于“换模型”，影响范围却完全不同：Chat 改变生成行为，Embedding 会重建向量空间，Rerank 则改变候选顺序、延迟和成本。</p>
+<p>即使两个 Embedding 模型输出维度相同，旧向量也不能直接与新查询向量混用。维度变化时，表结构、索引和回填任务还要一起调整。因此，文档版本、切分、ACL、问题和 TopK 要先固定，再分别比较召回与排序。</p>
+<p>配套 lab 使用 Spring AI Alibaba 的 Options 描述候选配置，并用小型固定样例校验 Recall@K、MRR 和 p95 计算。具体模型效果仍要连接目标服务，用同一份 Golden Set 实测；公式单测只保证评测工具没有算错。</p>
+<h2 id="embedding-负责召回rerank-负责排序">Embedding 负责召回，Rerank 负责排序</h2>
+<p>Embedding 把文本映射到向量空间。向量检索根据距离找候选，主要决定“可能相关的内容有没有进入候选集”。Rerank 接收查询和一批候选，对相关性重新打分，主要决定“候选的前后顺序是否更适合当前问题”。</p>
+<p><img alt="Embedding 与 Rerank 替换影响不同" src="../assets/content/docs/assets/diagrams/source/41-retrieval-replacement-matrix.svg" /></p>
+<p>如果召回阶段没有找到正确文档，Rerank 无法凭空恢复。相反，召回包含正确文档但排序靠后，Rerank 才可能改善 MRR 或最终 TopN。这个边界决定了评测顺序：先看召回，再看排序，最后看生成答案。</p>
+<p>企业项目还要关注中文分词、短字段、专有名词、编号、表格、混合语言和政策条款。一个模型在通用语义检索上表现不错，不代表它能识别内部队列编码或制度编号。Golden Set 必须来自本公司的真实问题分布，并经过脱敏。</p>
+<h2 id="embedding-变化会产生新索引版本">Embedding 变化会产生新索引版本</h2>
+<p>向量由模型、模型版本、输入文本和预处理共同决定。以下任一变化都应被视为新的索引版本：</p>
+<ul>
+<li>Embedding 模型或版本变化；</li>
+<li>输出维度变化；</li>
+<li>文本前缀、任务类型或 <code>text_type</code> 变化；</li>
+<li>文档切分或规范化规则变化；</li>
+<li>距离函数或向量标准化策略变化。</li>
+</ul>
+<p>配套代码用 <code>DomesticRetrievalProfile</code> 表达模型、维度、Rerank 和 TopN：</p>
+<pre><code class="language-java">public record DomesticRetrievalProfile(
+        String embeddingModel,
+        int dimensions,
+        String rerankModel,
+        int rerankTopN) {
+
+    public boolean requiresFullReindexFrom(DomesticRetrievalProfile previous) {
+        return previous == null
+                || dimensions != previous.dimensions()
+                || !embeddingModel.equals(previous.embeddingModel());
+    }
+}
+</code></pre>
+<p>这里只把模型和维度作为最低重建条件。生产项目还应把切分器版本、文本规范化版本、距离函数和索引参数写进索引元数据，防止两个看似同模型的索引实际不可比较。</p>
+<p>不要在原向量列上原地覆盖。回填途中，新旧向量混在一个索引中，查询结果没有明确语义，也无法安全回滚。</p>
+<h2 id="用同一-golden-set-控制比较条件">用同一 Golden Set 控制比较条件</h2>
+<p>一次有效替换实验需要固定：</p>
+<ul>
+<li>文档集合与发布版本；</li>
+<li>切分结果与 chunk id；</li>
+<li>tenant、department、有效期等 ACL 条件；</li>
+<li>查询文本与预期文档 id；</li>
+<li>候选预算、最终 TopK 和 Rerank TopN；</li>
+<li>运行环境、并发和超时；</li>
+<li>Recall@K、MRR、p95、错误率和成本阈值。</li>
+</ul>
+<p>如果替换 Embedding 的同时修改切分，又把 TopK 从 10 提到 50，就无法判断哪项改动带来了质量变化，延迟和成本也失去比较基础。确实需要组合优化时，应先完成单变量实验，再建立新的组合基线。</p>
+<p>配套代码以 <code>RetrievalGoldenCase</code> 表达一条评测输入，包括预期文档、实际排序和耗时：</p>
+<pre><code class="language-java">public record RetrievalGoldenCase(
+        String caseId,
+        List&lt;String&gt; expectedDocumentIds,
+        List&lt;String&gt; retrievedDocumentIds,
+        Duration latency) {
+}
+</code></pre>
+<p>实验报告按样例平均 Recall 和 reciprocal rank，并从排序后的耗时取 p95，也就是 95% 样例不会超过的耗时。真实项目还应增加 HitRate、重复率、空召回率、ACL 泄露数和分组指标。</p>
+<h3 id="recallk-与-mrr-分别衡量覆盖和位置">Recall@K 与 MRR 分别衡量覆盖和位置</h3>
+<p>Recall@K 关注预期文档是否出现在前 K 个候选中。若一个问题有两个可接受文档，返回一个时 Recall 为 0.5，两个都返回时为 1。</p>
+<p>MRR 关注第一个正确结果的位置。正确文档排第一得 1，排第二得 0.5，排第四得 0.25。它能发现“召回到了，但总被无关内容压在后面”的问题。</p>
+<p>两者必须结合。Recall 很高、MRR 很低，说明候选集合尚可但排序需要改善；MRR 高、Recall 低，可能是少数简单样例表现好，多个必要证据没有被完整召回。</p>
+<p>生产阈值应按业务域分组。员工手册问答可以容忍较高拒答，资金政策和合规制度则更关注错误证据与越权结果。不要用一个全局 80% 通过率掩盖高风险分组失败。</p>
+<h3 id="候选预算限制-rerank-的效果上限">候选预算限制 Rerank 的效果上限</h3>
+<p>Rerank 不是越多越好。候选数增加会提高计算量、网络负载和延迟，也可能把大量噪声带入排序。需要分别定义：</p>
+<pre><code class="language-text">vectorCandidateK = 30
+lexicalCandidateK = 30
+fusionCandidateK = 40
+rerankTopN = 8
+answerTopK = 5
+</code></pre>
+<p>这些数字应由坏案例和容量测试确定。若正确文档常常进不了前 40，先改召回或 Query Rewrite；若正确文档已经在候选中但排序不稳，再评估 Rerank。</p>
+<p>代码将配置映射为真实选项：</p>
+<pre><code class="language-java">DashScopeEmbeddingOptions embeddingOptions = DashScopeEmbeddingOptions.builder()
+        .model(&quot;text-embedding-v4&quot;)
+        .dimensions(1024)
+        .textType(&quot;document&quot;)
+        .build();
+
+DashScopeRerankOptions rerankOptions = DashScopeRerankOptions.builder()
+        .model(&quot;gte-rerank-v2&quot;)
+        .topN(3)
+        .returnDocuments(false)
+        .build();
+</code></pre>
+<p>文档向量和查询向量可能需要不同任务类型或文本前缀，具体以模型文档为准。接入或升级模型前，必须复核输入限制、维度、计费和区域可用性。</p>
+<h3 id="查询向量与文档向量成对管理">查询向量与文档向量成对管理</h3>
+<p>有些 Embedding 模型要求查询和文档使用不同的任务类型、前缀或输入模式。即使底层模型名相同，<code>query</code> 与 <code>document</code> 的编码策略也属于索引配置的一部分。文档回填时记录 <code>documentProfileVersion</code>，查询服务记录 <code>queryProfileVersion</code>，两者必须来自同一套已验证配置。</p>
+<p>若只升级查询侧前缀而不重建文档向量，距离分布可能发生变化。短期评测偶尔提升，不代表长期稳定。建议把查询和文档配置一起写进索引发布记录，并在启动时校验当前读取索引是否支持当前查询 profile。</p>
+<p>长文档还要明确截断策略。供应商超过输入上限时可能拒绝、截断或分段；静默截断会让 chunk 后半部分永远无法被召回。切分器应先保证单片段满足模型输入限制，Embedding 适配器再次校验并记录超限错误，不能依赖供应商默认处理。</p>
+<h2 id="用双索引完成迁移与回退">用双索引完成迁移与回退</h2>
+<p><img alt="Embedding 迁移采用双索引切换" src="../assets/content/docs/assets/diagrams/source/41-dual-index-migration.svg" /></p>
+<p>推荐流程：</p>
+<ol>
+<li>创建新的 embedding_model_id 与 index_version；</li>
+<li>新索引独立回填，不影响旧索引在线查询；</li>
+<li>影子查询同时读取新旧索引，生成同集报告；</li>
+<li>达到质量、延迟和成本阈值后，对内部 tenant 灰度；</li>
+<li>通过读取开关切换主索引；</li>
+<li>保留旧索引覆盖回滚窗口；</li>
+<li>确认无回退需求后再退役旧版本。</li>
+</ol>
+<p>索引任务要有租约、尝试预算、断点恢复和幂等。全量回填不是一个启动后等待结束的脚本；文档可能在回填期间继续发布，需要明确基线快照和增量追平点。</p>
+<h3 id="新旧链路保持相同-acl">新旧链路保持相同 ACL</h3>
+<p>新旧索引比较时，tenant、department、文档状态和有效期过滤必须完全一致。若新链路为了方便先 TopK 再 Java 过滤，它可能看起来质量更好，实际已经扩大候选可见范围。</p>
+<p>评测数据应包含越权对照样例：同一个问题在不同 tenant 或部门下，预期结果不同。指标需要统计正确召回，同时确认未授权文档从未进入候选和 Rerank 请求。</p>
+<p>Rerank 服务接收的文档正文也属于数据出境与隐私边界。使用云服务前要确认数据分类、区域、保留策略和公司合规要求，必要时只发送低敏摘要或采用公司批准的部署方式。</p>
+<p>还要检查缓存键。查询向量缓存至少包含模型、query profile、规范化文本和租户无关的安全边界；检索结果缓存则必须包含 tenant、department、索引版本和权限策略版本。为了提高命中率省略 ACL 字段，会把一次正确的模型替换变成跨租户数据泄露。</p>
+<h2 id="真实模型实验记录完整条件">真实模型实验记录完整条件</h2>
+<p>至少记录：</p>
+<ul>
+<li>Embedding 与 Rerank 精确模型名；</li>
+<li>维度、文本类型、候选预算和 TopN；</li>
+<li>文档、切分、索引和 Golden Set 版本；</li>
+<li>样例总数及分组；</li>
+<li>Recall@K、HitRate、MRR、p50/p95；</li>
+<li>空召回、错误、限流和超时；</li>
+<li>每千次查询成本或内部资源消耗；</li>
+<li>失败样例及人工判断。</li>
+</ul>
+<p>不要只保存一张“通过率 92%”截图。报告需要能回到具体问题、预期文档、实际排序和运行配置，否则下一次升级无法复用。</p>
+<h2 id="直接运行在线-embedding-与-rerank">直接运行在线 Embedding 与 Rerank</h2>
+<p>在项目根 <code>config/application-default.yml</code> 填好 <code>lab.dashscope</code> 后，运行 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-07-framework-boundaries/labs/spring-ai-alibaba-lab/src/main/java/com/xiaoding/javaai/labs/alibaba/DashScopeRetrievalLabApplication.java">DashScopeRetrievalLabApplication</a>。入口会把三段政策文本发给真实 Embedding 服务，按余弦相似度形成初排，再把候选交给真实 Rerank 服务。</p>
+<p>控制台同时打印：</p>
+<pre><code class="language-text">embeddingRanking=[...]
+rerankedRanking=[...]
+recall=...
+mrr=...
+embeddingMs=...
+rerankMs=...
+</code></pre>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-07-framework-boundaries/labs/spring-ai-alibaba-lab/src/main/java/com/xiaoding/javaai/labs/alibaba/OnlineRetrievalReplacementExperiment.java">OnlineRetrievalReplacementExperiment</a> 只依赖 <code>TextEmbeddingGateway</code> 与 <code>TextRerankGateway</code>，框架响应不会扩散到指标计算。<code>RetrievalReplacementExperiment</code> 是不联网的边界样例，用来锁定重建判断和指标公式；在线体验始终从真实入口进入。</p>
+<h2 id="明确实验结论的适用范围">明确实验结论的适用范围</h2>
+<p>Spring AI Alibaba lab 现在覆盖在线 Embedding、在线 Rerank、选项映射、维度变化后的重建判断，以及 Recall、MRR 和分段耗时。三段演示文本让读者确认协议、排序与指标链路确实连通，确定性样例负责锁定公式和错误边界。</p>
+<p>要比较具体模型效果，还要把入口中的三段文本替换为目标文档和授权数据集，并通过主项目 Eval Runner 扩大样本。几条样例可以证明调用链，无法替代知识库选型报告。</p>
+<p>国内组件替换的价值可能来自合规、延迟、成本、中文效果或供应稳定性。最终选择应由实际评测和运行数据决定，而不是“国产模型更适合中文”的笼统判断。Provider 与检索组件都能替换后，才有必要评估编排结构；Graph 实验只选择人工确认这一条流程，不重写整个 Agent。</p></article><div class="practice-link"><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-07-framework-boundaries/README.md" target="_blank" rel="noopener"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></svg> 本阶段可运行源码 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></div><nav class="chapter-nav" aria-label="前后篇"><a href="40.html"><span>上一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></span><strong>DashScope Provider 适配实验：配置隔离、响应差异和回归边界</strong></a><a href="42.html"><span>下一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><strong>Graph 人工确认路由实验：何时比现有状态机更合适</strong></a></nav><footer class="reader-footer">Java AI 应用开发实战 · <a href="../license.html">非商业使用</a><details class="community-mini"><summary>关注与交流 · 好好用 AI</summary><div class="community-section"><div><p>交流学习中的问题与实践心得。</p><p>代码问题和勘误，欢迎在 <a href="https://github.com/DavidDingXu/learn-java-ai/issues" target="_blank" rel="noopener">GitHub 提交 Issue</a>。</p></div><a class="qr-link" href="../assets/wechat-official-account.jpg" target="_blank" rel="noopener" aria-label="查看好好用 AI 公众号二维码原图"><img src="../assets/wechat-official-account.jpg" alt="好好用 AI 微信公众号二维码" width="130" height="130" loading="lazy"><p class="qr-caption">微信扫码 · 点击查看原图</p></a></div></details></footer></main><aside class="context-sidebar" aria-label="本篇辅助导航"><div class="context-inner"><nav class="reading-route" aria-label="本篇路线"><details open><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#embedding-负责召回rerank-负责排序">Embedding 负责召回，Rerank 负责排序</a></li>
+<li><a href="#embedding-变化会产生新索引版本">Embedding 变化会产生新索引版本</a></li>
+<li><a href="#用同一-golden-set-控制比较条件">用同一 Golden Set 控制比较条件</a></li>
+<li><a href="#用双索引完成迁移与回退">用双索引完成迁移与回退</a></li>
+<li><a href="#真实模型实验记录完整条件">真实模型实验记录完整条件</a></li>
+<li><a href="#直接运行在线-embedding-与-rerank">直接运行在线 Embedding 与 Rerank</a></li>
+<li><a href="#明确实验结论的适用范围">明确实验结论的适用范围</a></li>
+</ul>
+</div>
+</details></nav></div></aside></div><dialog class="search-dialog" id="search-dialog" aria-labelledby="search-label"><form method="dialog" class="search-heading"><label for="course-search" id="search-label"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>搜索课程</label><button class="icon-button" aria-label="关闭搜索"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form><input id="course-search" type="search" placeholder="搜索概念、代码或问题…" autocomplete="off" spellcheck="false"><p class="search-status" id="search-status" role="status">搜索全部 52 篇文章。</p><div class="search-results" id="search-results"></div><footer>↑ ↓ 选择结果 <span>Enter 打开 · Esc 关闭</span></footer></dialog>
+<dialog class="image-viewer" id="image-viewer" aria-label="放大配图"><header><span>查看配图</span><div class="image-actions"><button type="button" id="image-size">原尺寸</button><button type="button" id="close-image" autofocus>关闭</button></div></header><div class="image-canvas"><img id="large-image" alt=""></div><footer><p id="image-description"></p><a id="original-image" target="_blank" rel="noopener">打开原图 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></footer></dialog><div class="toast" id="toast" role="status"></div></body></html>

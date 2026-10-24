@@ -1,0 +1,200 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本 · Learn Java AI</title><meta name="description" content="沿着一条客户服务链路，把模型、企业 RAG、受控 Agent 和 JDK8 老系统接在一起，再补齐评测、安全与上线治理。"><meta name="source-sha256" content="f23c91e85ed576dff4b4476330ca3cd3b86f9f04ecb85cc9407cea6a0afb685d">
+<link rel="canonical" href="https://daviddingxu.github.io/learn-java-ai/course/43.html"><link rel="icon" href="../assets/brand.png">
+<script>try{const t=localStorage.getItem('haohai-course-theme');document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}catch(_){document.documentElement.dataset.theme='light'}</script>
+<link rel="stylesheet" href="../assets/site.css"><script defer src="../assets/search-index.js"></script><script defer src="../assets/site.js"></script></head><body class="article-page" data-root="../" data-page="43"><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header"><div class="header-inner"><button class="icon-button menu-toggle js-only" type="button" aria-label="打开课程目录" aria-controls="course-sidebar" aria-expanded="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<a class="brand" href="../index.html" aria-label="Learn Java AI · 学习站首页"><img src="../assets/brand.png" alt="" width="36" height="36"><span><strong>Learn Java AI</strong><small>Java AI 应用开发实战</small></span></a>
+<nav class="header-nav" aria-label="主导航"><a href="../index.html#curriculum">课程目录</a><a href="../index.html#downloads">离线阅读</a><a href="https://github.com/DavidDingXu/learn-java-ai" target="_blank" rel="noopener">GitHub <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></nav>
+<div class="header-controls"><button class="icon-button theme-toggle js-only" type="button" aria-label="切换到深色主题" title="切换到深色主题"><span class="theme-light-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A9 9 0 0 1 9.5 3.5a9 9 0 1 0 11 11Z"/></svg></span><span class="theme-dark-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span></button><button class="search-trigger js-only" type="button" aria-label="搜索课程"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><span>搜索课程</span><kbd>⌘ K</kbd></button></div></div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header><div class="sidebar-scrim" hidden></div><div class="reader-layout"><aside class="course-sidebar" id="course-sidebar" aria-label="课程目录"><div class="sidebar-heading"><a href="../index.html#curriculum">课程目录</a><button class="icon-button menu-close js-only" type="button" aria-label="关闭课程目录"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><nav aria-label="全部文章"><details class="sidebar-stage"><summary><span class="stage-index">模块 01</span>系统边界与第一条调用</summary><a class="lesson-link" data-lesson="01" href="01.html"><span class="lesson-number">01</span><span>专栏介绍：Java 后端怎样系统学习 AI 应用开发落地</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="02" href="02.html"><span class="lesson-number">02</span><span>从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="03" href="03.html"><span class="lesson-number">03</span><span>Spring AI 为什么做主线，其他框架放在哪里</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="04" href="04.html"><span class="lesson-number">04</span><span>先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="05" href="05.html"><span class="lesson-number">05</span><span>多租户、身份和权限为什么不能相信请求参数</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="06" href="06.html"><span class="lesson-number">06</span><span>JDK8 老系统不升级：先划清现代 AI 服务与老系统边界</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 02</span>模型调用工程化</summary><a class="lesson-link" data-lesson="07" href="07.html"><span class="lesson-number">07</span><span>一次模型调用内部发生了什么：Message、Options、Token 与响应元数据</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="08" href="08.html"><span class="lesson-number">08</span><span>Prompt 的工程边界：模板、版本、授权知识与提示注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="09" href="09.html"><span class="lesson-number">09</span><span>结构化输出为什么会失败：Schema、DTO 和业务校验</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="10" href="10.html"><span class="lesson-number">10</span><span>流式输出原理与实现：SSE、取消、心跳、断连和 TTFT</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="11" href="11.html"><span class="lesson-number">11</span><span>超时、并发保护、重试和降级：为什么不需要万能模型网关</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="12" href="12.html"><span class="lesson-number">12</span><span>真实模型调用之后：怎样建立评测基线与可观测性</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 03</span>企业 RAG</summary><a class="lesson-link" data-lesson="13" href="13.html"><span class="lesson-number">13</span><span>企业知识库先解决什么：文档、版本、状态和冲突</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="14" href="14.html"><span class="lesson-number">14</span><span>文档上传链路：对象存储、内容校验、隔离和解析失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="15" href="15.html"><span class="lesson-number">15</span><span>文档切分为什么影响召回：标题、条款、元数据和粒度</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="16" href="16.html"><span class="lesson-number">16</span><span>向量检索原理与 pgvector 实现</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="17" href="17.html"><span class="lesson-number">17</span><span>权限为什么必须在 TopK 之前过滤</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="18" href="18.html"><span class="lesson-number">18</span><span>混合检索、Query Rewrite、Rerank 什么时候有用</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="19" href="19.html"><span class="lesson-number">19</span><span>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="20" href="20.html"><span class="lesson-number">20</span><span>增量索引为什么需要任务、租约和失败恢复</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="21" href="21.html"><span class="lesson-number">21</span><span>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 04</span>客户咨询与工单升级</summary><a class="lesson-link" data-lesson="22" href="22.html"><span class="lesson-number">22</span><span>C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="23" href="23.html"><span class="lesson-number">23</span><span>多轮会话原理：短期状态、裁剪、总结和过期</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="24" href="24.html"><span class="lesson-number">24</span><span>用户怎样判断回答可信：证据、反馈、拒答和重试</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="25" href="25.html"><span class="lesson-number">25</span><span>机器人解决不了时怎样平滑升级工单</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 05</span>受控 Agent 与老系统接入</summary><a class="lesson-link" data-lesson="26" href="26.html"><span class="lesson-number">26</span><span>Agent 与普通聊天有什么区别：目标、状态和受控执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="27" href="27.html"><span class="lesson-number">27</span><span>Tool Calling 原理与查询 Tool：最小权限、最小参数和最小返回</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="28" href="28.html"><span class="lesson-number">28</span><span>为什么模型只能选择工具：参数污染、结果污染和业务规则边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="29" href="29.html"><span class="lesson-number">29</span><span>写操作为什么必须先做风险分级</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="30" href="30.html"><span class="lesson-number">30</span><span>人工确认为什么不能只传一个字符串 token</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="31" href="31.html"><span class="lesson-number">31</span><span>幂等、并发和审计怎样跨越本地与远程事务边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="32" href="32.html"><span class="lesson-number">32</span><span>JDK8 老系统接入 AI：OpenAPI、Java 8 客户端、认证、超时与错误处理</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="33" href="33.html"><span class="lesson-number">33</span><span>串联工单 Agent 业务链：知识查询、人工确认与 JDK8 执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="34" href="34.html"><span class="lesson-number">34</span><span>Agent 质量怎样评测：工具路径、参数、拒绝和副作用</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 06</span>评测、安全与上线治理</summary><a class="lesson-link" data-lesson="35" href="35.html"><span class="lesson-number">35</span><span>AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="36" href="36.html"><span class="lesson-number">36</span><span>观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="37" href="37.html"><span class="lesson-number">37</span><span>缓存、熔断、限流和降级：只保留业务真正需要的部分</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="38" href="38.html"><span class="lesson-number">38</span><span>项目配置实战：让默认配置跑通，再按需替换基础设施</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="39" href="39.html"><span class="lesson-number">39</span><span>上线前最后核对什么：测试、Eval、密钥配置、发布和回滚</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage" open><summary><span class="stage-index">模块 07</span>框架与协议迁移</summary><a class="lesson-link" data-lesson="40" href="40.html"><span class="lesson-number">40</span><span>DashScope Provider 适配实验：配置隔离、响应差异和回归边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="41" href="41.html"><span class="lesson-number">41</span><span>Embedding 与 Rerank 替换实验：怎样设计同集评测</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="42" href="42.html"><span class="lesson-number">42</span><span>Graph 人工确认路由实验：何时比现有状态机更合适</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="43" href="43.html" aria-current="page"><span class="lesson-number">43</span><span>Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="44" href="44.html"><span class="lesson-number">44</span><span>LangChain4j AI Services 适配实验：迁移一个低风险用例</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="45" href="45.html"><span class="lesson-number">45</span><span>LangChain4j RAG 适配实验：复用现有业务契约</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="46" href="46.html"><span class="lesson-number">46</span><span>LangChain4j Tool 实验：只读调用与结构化输出</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="47" href="47.html"><span class="lesson-number">47</span><span>Spring AI 与 LangChain4j 共存实验：按业务能力选择框架</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="48" href="48.html"><span class="lesson-number">48</span><span>AgentScope Tool 裁决实验：注册、身份传递与权限映射</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="49" href="49.html"><span class="lesson-number">49</span><span>多 Agent 实际协作：并行取证、结果汇总与失败转人工</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="50" href="50.html"><span class="lesson-number">50</span><span>MCP 互操作实验：发现、准入、调用与远程失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="51" href="51.html"><span class="lesson-number">51</span><span>A2A 互操作实验：任务映射、幂等与状态边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="52" href="52.html"><span class="lesson-number">52</span><span>结束语：把 Java + AI 能力迁移到真实公司项目</span><span class="lesson-state" aria-hidden="true"></span></a></details></nav><p class="sidebar-note">模型负责生成，业务系统掌握规则与执行。</p></aside><main class="reader-main" id="main-content"><div class="article-context"><span>框架与协议迁移</span><div class="reading-tools js-only"><div class="font-controls" role="group" aria-label="正文字号"><button type="button" data-font="-1" aria-label="减小正文字号">A−</button><span id="font-size-label" aria-live="polite">18</span><button type="button" data-font="1" aria-label="增大正文字号">A+</button></div><button type="button" class="focus-toggle" aria-pressed="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>专注阅读</span></button></div></div><div class="mobile-context"><nav class="reading-route" aria-label="本篇路线"><details><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#先分清四种最新版本">先分清四种“最新版本”</a></li>
+<li><a href="#两代依赖先放在独立-reactor">两代依赖先放在独立 reactor</a></li>
+<li><a href="#adr-同时记录迁移与退出条件">ADR 同时记录迁移与退出条件</a></li>
+<li><a href="#逐项检查四条兼容线">逐项检查四条兼容线</a></li>
+<li><a href="#本项目使用的版本组合">本项目使用的版本组合</a></li>
+<li><a href="#达到这些条件后再进入正式服务">达到这些条件后再进入正式服务</a></li>
+<li><a href="#依赖兼容性实验暴露哪些风险">依赖兼容性实验暴露哪些风险</a></li>
+</ul>
+</div>
+</details></nav></div><article id="article-body"><h1 id="spring-ai-alibaba-兼容性实验依赖隔离迁移-adr-和回归成本">Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本</h1>
+<p>三个实验都能运行后，评审通常会问：“那为什么不直接把 Spring AI Alibaba 的最新版本放进正式服务？”这个问题不能只比较依赖坐标里的版本号。</p>
+<p>Java 框架能否进入生产，要看完整兼容线。除了 JDK、Spring Boot、Spring AI 和扩展模块，还要核对 Jackson、Reactor、Micrometer、OpenTelemetry 与 Netty。候选版本即使更新，也可能仍处于 Milestone，或者要求整个应用平台一起升级。</p>
+<p>因此，正式服务和实验模块分别固定自己的兼容基线，并通过独立 reactor 隔离依赖。这里记录的是当前项目已经验证的组合，不是对未来版本的永久判断；每次升级仍要重新核对官方发布信息并跑完整回归。</p>
+<h2 id="先分清四种最新版本">先分清四种“最新版本”</h2>
+<p>常见版本状态包括：</p>
+<ul>
+<li>Maven 仓库中排序最高的 artifact；</li>
+<li>官方 Release 页面标记的 Latest；</li>
+<li>最新稳定 GA；</li>
+<li>当前项目依赖代际中最新、经过验证的版本。</li>
+</ul>
+<p>四者可能不同。Maven metadata 的 <code>latest</code> 可能指向 Milestone；官方 Release 页面可能暂时没有补最新 Patch 的说明；GA 版本也可能与当前 Boot 主版本不兼容。</p>
+<p>生产项目通常应选择兼容当前技术平台的 GA 版本，并且完成项目自己的回归。试验分支可以验证 Milestone 或 RC，但要与正式依赖隔离，不能让预发布版本通过传递依赖进入生产服务。</p>
+<h2 id="两代依赖先放在独立-reactor">两代依赖先放在独立 reactor</h2>
+<p><img alt="Spring AI Alibaba 为什么放在独立 lab" src="../assets/content/docs/assets/diagrams/source/43-dependency-isolation.svg" /></p>
+<p>正式服务的 Spring AI 2.0 面向 Boot 4 代际。当前 lab 使用的 Spring AI Alibaba 1.1.2.x 属于 Spring AI 1.1 与 Boot 3.5 代际。两边在 API 和传递依赖上都可能不同，例如 Message、Options、Tool、自动配置和观测接口。</p>
+<p>Maven 能解析一组依赖，不代表运行时兼容。强行在一个应用中覆盖版本，可能出现：</p>
+<ul>
+<li><code>NoSuchMethodError</code> 或 <code>ClassNotFoundException</code>；</li>
+<li>自动配置条件失效；</li>
+<li>Jackson 2/3 或相关模块冲突；</li>
+<li>Reactor、Netty、Micrometer 版本不一致；</li>
+<li>Tool Calling 或 Observation 行为变化；</li>
+<li>本地检查通过但实际应用启动失败。</li>
+</ul>
+<p>因此，仓库使用独立 <code>labs/pom.xml</code>。每个子模块只导入自己的框架 BOM，主 reactor 明确禁止 LangChain4j、AgentScope 和 Spring AI Alibaba 依赖泄漏。</p>
+<h3 id="用构建规则阻止依赖泄漏">用构建规则阻止依赖泄漏</h3>
+<p>项目用自动化架构检查限制各实验模块的依赖白名单：</p>
+<pre><code class="language-text">spring-ai-alibaba-lab:
+  spring-ai-alibaba-dashscope
+  spring-ai-alibaba-graph-core
+
+langchain4j-lab:
+  langchain4j
+
+agentscope-lab:
+  agentscope-core
+  agentscope-extensions-a2a-client
+</code></pre>
+<p>Provider starter、数据库、消息队列或其他框架依赖不会因为放在 labs 就自动允许。这样可以防止实验模块慢慢变成第二套应用平台。</p>
+<p>如果公司采用多仓库，也应保持相同原则：实验服务拥有独立 POM、镜像和发布单元，通过 HTTP/OpenAPI 与主系统协作，不共享框架对象或领域 JAR。</p>
+<h2 id="adr-同时记录迁移与退出条件">ADR 同时记录迁移与退出条件</h2>
+<p>ADR 是架构决策记录（Architecture Decision Record），它保留当时的问题、取舍和退出条件。一份能支持生产决策的 ADR 至少回答六个问题：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>决策维度</th>
+<th>必须回答的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>业务收益</td>
+<td>要解决什么现有问题？是国内 Provider 接入、中文效果、Graph 恢复、成本、合规，还是团队维护效率？收益如何量化？</td>
+</tr>
+<tr>
+<td>版本兼容</td>
+<td>目标 JDK、Boot、Spring AI、框架和 Provider 版本是什么？有哪些传递依赖冲突？是否需要独立服务？</td>
+</tr>
+<tr>
+<td>代码改动</td>
+<td>哪些业务端口保持不变，哪些适配器重写？Controller、数据库、OpenAPI、JDK8 客户端是否受影响？</td>
+</tr>
+<tr>
+<td>质量回归</td>
+<td>使用哪个 Golden Set？比较哪些质量、延迟、Token、Tool 路径和安全指标？</td>
+</tr>
+<tr>
+<td>运维成本</td>
+<td>Trace、Metric、日志、告警、限流、连接池、密钥、Runbook 和值班怎样接入现有平台？</td>
+</tr>
+<tr>
+<td>回滚条件</td>
+<td>如何切回旧实现？数据和状态是否兼容？旧模型、旧索引和旧镜像保留多久？</td>
+</tr>
+</tbody>
+</table></div>
+<p>“社区活跃”“API 更优雅”可以作为参考，不能代替业务收益、兼容性和回归结果。</p>
+<h2 id="逐项检查四条兼容线">逐项检查四条兼容线</h2>
+<p><img alt="升级前先核对四条兼容线" src="../assets/content/docs/assets/diagrams/source/43-compatibility-matrix.svg" /></p>
+<p>兼容性检查不能只看框架自己的 artifact，要沿着运行链路逐项确认：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>兼容线</th>
+<th>检查重点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Java 与 Boot</td>
+<td>确认最低 JDK、字节码版本、Servlet/WebFlux 代际和构建插件。JDK21 主服务与 JDK8 老系统仍通过 HTTP API 隔离，不能为了框架升级强迫老系统升级运行时</td>
+</tr>
+<tr>
+<td>Spring AI API</td>
+<td>核对 ChatModel/ChatClient、Message、Options、结构化输出、Tool Callback、Advisor、VectorStore 和 Observation。编译错误容易发现，默认行为变化更需要回归</td>
+</tr>
+<tr>
+<td>Provider 扩展</td>
+<td>核对模型参数、流式、Tool、Embedding、Rerank、内容安全、错误类型和区域。框架支持某个 Provider，不等于支持该 Provider 的所有新能力</td>
+</tr>
+<tr>
+<td>基础设施传递依赖</td>
+<td>在 IDEA 的 Maven 依赖视图中检查 Jackson、Reactor、Netty、Micrometer、OTel、HTTP Client 和日志；还要启动应用并走一条真实请求，因为很多冲突只在自动配置或运行时出现</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="本项目使用的版本组合">本项目使用的版本组合</h2>
+<p>仓库当前使用的兼容基线如下：</p>
+<pre><code class="language-text">Spring Boot          4.1.0
+Spring AI            2.0.0 GA
+Spring AI Alibaba    1.1.2.3
+LangChain4j          1.18.1
+AgentScope Java      2.0.2
+MCP Java SDK         2.0.0
+A2A Java SDK         1.2.0.Final
+Java mainline        21
+Java legacy client   8
+</code></pre>
+<p>这组版本只是本项目的兼容基线，不要求公司项目照抄。仍在 Boot 3 的业务系统，应选择官方支持该代际的 Spring AI 版本，或通过独立 AI 服务接入。不要只为引入 AI 框架升级整个生产平台。</p>
+<p>正式服务使用 Spring AI 2.0 GA。项目没有引入 Spring AI Alibaba <code>2.0.0-M1.1</code>，因为版本号中的 <code>M1</code> 表明它仍是里程碑版，不是 GA。后续即使发布 GA，也要先在独立 lab 更新，检查依赖树并运行框架与协议测试，再决定是否替换。</p>
+<h3 id="patch-升级同样经过回归">Patch 升级同样经过回归</h3>
+<p>Patch 版本通常修复缺陷，但仍可能改变默认值、传递依赖或边界行为。最低回归包括：</p>
+<ul>
+<li>四个 lab 的直接运行入口与回归检查；</li>
+<li>主 reactor 和 JDK8 独立构建；</li>
+<li>Provider 请求、响应和异常映射；</li>
+<li>Embedding 维度与索引元数据；</li>
+<li>Graph 路由与恢复；</li>
+<li>AI Services、Tool 和结构化输出；</li>
+<li>AgentScope Permission、MCP Streamable HTTP 和 A2A Agent Card/JSON-RPC；</li>
+<li>敏感信息和依赖边界扫描。</li>
+</ul>
+<p>涉及真实 Provider 的 Patch，还要补一条真实调用和相应 Golden Set。不能因为本地代码检查通过，就认为供应商协议与在线模型行为没变。</p>
+<h3 id="用隔离实验控制大版本升级成本">用隔离实验控制大版本升级成本</h3>
+<p>大版本升级先在 lab 完成三件事：</p>
+<ol>
+<li>对比 IDEA 依赖视图中的旧、新依赖树；</li>
+<li>确认现有业务行为在不修改预期的情况下仍然成立；</li>
+<li>单独记录为通过升级而修改的代码和行为。</li>
+</ol>
+<p>如果迁移需要同时改业务端口、数据结构、Prompt 和测试期望，说明变更面过大。应拆分：先建立兼容适配器，再切框架，最后按独立需求优化业务。</p>
+<p>公司项目还要评估维护者数量、Release 节奏、漏洞响应、文档完整性和内部熟悉度。框架能做更多，不代表团队能稳定运营更多。</p>
+<h2 id="达到这些条件后再进入正式服务">达到这些条件后再进入正式服务</h2>
+<p>至少满足：</p>
+<ul>
+<li>在同一业务用例和输入输出下取得可测收益；</li>
+<li>目标服务依赖兼容，或有独立部署边界；</li>
+<li>真实 Provider、数据库或协议联调通过；</li>
+<li>Trace、Metric、日志、告警和成本已接入；</li>
+<li>安全、权限和幂等检查仍然生效，<code>UNKNOWN</code> 状态仍可恢复；</li>
+<li>有灰度开关、数据兼容和回滚演练；</li>
+<li>负责团队接受后续升级与事故处理成本。</li>
+</ul>
+<p>通过 lab 单元测试只说明适配代码能运行，不能单独支持生产采用。</p>
+<h2 id="依赖兼容性实验暴露哪些风险">依赖兼容性实验暴露哪些风险</h2>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-07-framework-boundaries/labs/spring-ai-alibaba-lab/src/main/java/com/xiaoding/javaai/labs/alibaba/FrameworkCompatibilityDecision.java">FrameworkCompatibilityDecision</a> 会比较正式服务与候选框架的框架主版本和 Boot 主版本。任意一项不同，就返回 <code>ISOLATED_SERVICE_OR_LAB</code>。ADR 0003 记录了隔离理由、采用条件和代价。</p>
+<p>直接运行 <code>FrameworkCompatibilityLabApplication</code>，控制台会打印 <code>inPlace</code>、推荐边界和具体原因。默认输入会明确指出 Spring AI 2.0/Boot 4 主线与 Spring AI Alibaba 1.1/Boot 3.5 候选线应保持隔离。修改同一配置文件中的候选版本即可重新观察决策，不需要启动 Provider 或准备 API Key。</p>
+<p>所有 lab 的回归范围只覆盖 Java 21 构建、框架迁移和协议互操作，不包括框架的全部扩展模块。候选框架或协议 SDK 是否进入正式服务，仍要结合真实用例、依赖冲突、运行指标和回滚成本判断。</p>
+<p>版本管理不追求“永远最新”。团队应清楚当前使用哪个版本、为什么适合现有平台、怎样验证、何时升级，以及失败后怎样退回。评估其他框架时也使用同样方法：先迁移一个低风险业务用例，再逐步验证 RAG、Tool 和共存方式。</p>
+<p>参考资料：</p>
+<ul>
+<li><a href="https://docs.spring.io/spring-ai/reference/">Spring AI 2.0 Reference</a></li>
+<li><a href="https://github.com/alibaba/spring-ai-alibaba/releases">Spring AI Alibaba Releases</a></li>
+<li><a href="https://github.com/langchain4j/langchain4j/releases">LangChain4j Releases</a></li>
+<li><a href="https://github.com/agentscope-ai/agentscope-java/releases">AgentScope Java Releases</a></li>
+<li><a href="https://github.com/modelcontextprotocol/java-sdk/releases">MCP Java SDK Releases</a></li>
+<li><a href="https://github.com/a2aproject/a2a-java/releases">A2A Java SDK Releases</a></li>
+</ul></article><div class="practice-link"><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-07-framework-boundaries/README.md" target="_blank" rel="noopener"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></svg> 本阶段可运行源码 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></div><nav class="chapter-nav" aria-label="前后篇"><a href="42.html"><span>上一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></span><strong>Graph 人工确认路由实验：何时比现有状态机更合适</strong></a><a href="44.html"><span>下一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><strong>LangChain4j AI Services 适配实验：迁移一个低风险用例</strong></a></nav><footer class="reader-footer">Java AI 应用开发实战 · <a href="../license.html">非商业使用</a><details class="community-mini"><summary>关注与交流 · 好好用 AI</summary><div class="community-section"><div><p>交流学习中的问题与实践心得。</p><p>代码问题和勘误，欢迎在 <a href="https://github.com/DavidDingXu/learn-java-ai/issues" target="_blank" rel="noopener">GitHub 提交 Issue</a>。</p></div><a class="qr-link" href="../assets/wechat-official-account.jpg" target="_blank" rel="noopener" aria-label="查看好好用 AI 公众号二维码原图"><img src="../assets/wechat-official-account.jpg" alt="好好用 AI 微信公众号二维码" width="130" height="130" loading="lazy"><p class="qr-caption">微信扫码 · 点击查看原图</p></a></div></details></footer></main><aside class="context-sidebar" aria-label="本篇辅助导航"><div class="context-inner"><nav class="reading-route" aria-label="本篇路线"><details open><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#先分清四种最新版本">先分清四种“最新版本”</a></li>
+<li><a href="#两代依赖先放在独立-reactor">两代依赖先放在独立 reactor</a></li>
+<li><a href="#adr-同时记录迁移与退出条件">ADR 同时记录迁移与退出条件</a></li>
+<li><a href="#逐项检查四条兼容线">逐项检查四条兼容线</a></li>
+<li><a href="#本项目使用的版本组合">本项目使用的版本组合</a></li>
+<li><a href="#达到这些条件后再进入正式服务">达到这些条件后再进入正式服务</a></li>
+<li><a href="#依赖兼容性实验暴露哪些风险">依赖兼容性实验暴露哪些风险</a></li>
+</ul>
+</div>
+</details></nav></div></aside></div><dialog class="search-dialog" id="search-dialog" aria-labelledby="search-label"><form method="dialog" class="search-heading"><label for="course-search" id="search-label"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>搜索课程</label><button class="icon-button" aria-label="关闭搜索"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form><input id="course-search" type="search" placeholder="搜索概念、代码或问题…" autocomplete="off" spellcheck="false"><p class="search-status" id="search-status" role="status">搜索全部 52 篇文章。</p><div class="search-results" id="search-results"></div><footer>↑ ↓ 选择结果 <span>Enter 打开 · Esc 关闭</span></footer></dialog>
+<dialog class="image-viewer" id="image-viewer" aria-label="放大配图"><header><span>查看配图</span><div class="image-actions"><button type="button" id="image-size">原尺寸</button><button type="button" id="close-image" autofocus>关闭</button></div></header><div class="image-canvas"><img id="large-image" alt=""></div><footer><p id="image-description"></p><a id="original-image" target="_blank" rel="noopener">打开原图 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></footer></dialog><div class="toast" id="toast" role="status"></div></body></html>

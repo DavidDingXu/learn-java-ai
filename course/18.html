@@ -1,0 +1,306 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>混合检索、Query Rewrite、Rerank 什么时候有用 · Learn Java AI</title><meta name="description" content="沿着一条客户服务链路，把模型、企业 RAG、受控 Agent 和 JDK8 老系统接在一起，再补齐评测、安全与上线治理。"><meta name="source-sha256" content="27b90785c80062c12e74bf3c10821f7d0948d897e091d6f3d77b8dc22ad3da62">
+<link rel="canonical" href="https://daviddingxu.github.io/learn-java-ai/course/18.html"><link rel="icon" href="../assets/brand.png">
+<script>try{const t=localStorage.getItem('haohai-course-theme');document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}catch(_){document.documentElement.dataset.theme='light'}</script>
+<link rel="stylesheet" href="../assets/site.css"><script defer src="../assets/search-index.js"></script><script defer src="../assets/site.js"></script></head><body class="article-page" data-root="../" data-page="18"><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header"><div class="header-inner"><button class="icon-button menu-toggle js-only" type="button" aria-label="打开课程目录" aria-controls="course-sidebar" aria-expanded="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<a class="brand" href="../index.html" aria-label="Learn Java AI · 学习站首页"><img src="../assets/brand.png" alt="" width="36" height="36"><span><strong>Learn Java AI</strong><small>Java AI 应用开发实战</small></span></a>
+<nav class="header-nav" aria-label="主导航"><a href="../index.html#curriculum">课程目录</a><a href="../index.html#downloads">离线阅读</a><a href="https://github.com/DavidDingXu/learn-java-ai" target="_blank" rel="noopener">GitHub <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></nav>
+<div class="header-controls"><button class="icon-button theme-toggle js-only" type="button" aria-label="切换到深色主题" title="切换到深色主题"><span class="theme-light-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A9 9 0 0 1 9.5 3.5a9 9 0 1 0 11 11Z"/></svg></span><span class="theme-dark-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span></button><button class="search-trigger js-only" type="button" aria-label="搜索课程"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><span>搜索课程</span><kbd>⌘ K</kbd></button></div></div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header><div class="sidebar-scrim" hidden></div><div class="reader-layout"><aside class="course-sidebar" id="course-sidebar" aria-label="课程目录"><div class="sidebar-heading"><a href="../index.html#curriculum">课程目录</a><button class="icon-button menu-close js-only" type="button" aria-label="关闭课程目录"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><nav aria-label="全部文章"><details class="sidebar-stage"><summary><span class="stage-index">模块 01</span>系统边界与第一条调用</summary><a class="lesson-link" data-lesson="01" href="01.html"><span class="lesson-number">01</span><span>专栏介绍：Java 后端怎样系统学习 AI 应用开发落地</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="02" href="02.html"><span class="lesson-number">02</span><span>从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="03" href="03.html"><span class="lesson-number">03</span><span>Spring AI 为什么做主线，其他框架放在哪里</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="04" href="04.html"><span class="lesson-number">04</span><span>先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="05" href="05.html"><span class="lesson-number">05</span><span>多租户、身份和权限为什么不能相信请求参数</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="06" href="06.html"><span class="lesson-number">06</span><span>JDK8 老系统不升级：先划清现代 AI 服务与老系统边界</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 02</span>模型调用工程化</summary><a class="lesson-link" data-lesson="07" href="07.html"><span class="lesson-number">07</span><span>一次模型调用内部发生了什么：Message、Options、Token 与响应元数据</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="08" href="08.html"><span class="lesson-number">08</span><span>Prompt 的工程边界：模板、版本、授权知识与提示注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="09" href="09.html"><span class="lesson-number">09</span><span>结构化输出为什么会失败：Schema、DTO 和业务校验</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="10" href="10.html"><span class="lesson-number">10</span><span>流式输出原理与实现：SSE、取消、心跳、断连和 TTFT</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="11" href="11.html"><span class="lesson-number">11</span><span>超时、并发保护、重试和降级：为什么不需要万能模型网关</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="12" href="12.html"><span class="lesson-number">12</span><span>真实模型调用之后：怎样建立评测基线与可观测性</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage" open><summary><span class="stage-index">模块 03</span>企业 RAG</summary><a class="lesson-link" data-lesson="13" href="13.html"><span class="lesson-number">13</span><span>企业知识库先解决什么：文档、版本、状态和冲突</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="14" href="14.html"><span class="lesson-number">14</span><span>文档上传链路：对象存储、内容校验、隔离和解析失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="15" href="15.html"><span class="lesson-number">15</span><span>文档切分为什么影响召回：标题、条款、元数据和粒度</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="16" href="16.html"><span class="lesson-number">16</span><span>向量检索原理与 pgvector 实现</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="17" href="17.html"><span class="lesson-number">17</span><span>权限为什么必须在 TopK 之前过滤</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="18" href="18.html" aria-current="page"><span class="lesson-number">18</span><span>混合检索、Query Rewrite、Rerank 什么时候有用</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="19" href="19.html"><span class="lesson-number">19</span><span>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="20" href="20.html"><span class="lesson-number">20</span><span>增量索引为什么需要任务、租约和失败恢复</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="21" href="21.html"><span class="lesson-number">21</span><span>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 04</span>客户咨询与工单升级</summary><a class="lesson-link" data-lesson="22" href="22.html"><span class="lesson-number">22</span><span>C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="23" href="23.html"><span class="lesson-number">23</span><span>多轮会话原理：短期状态、裁剪、总结和过期</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="24" href="24.html"><span class="lesson-number">24</span><span>用户怎样判断回答可信：证据、反馈、拒答和重试</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="25" href="25.html"><span class="lesson-number">25</span><span>机器人解决不了时怎样平滑升级工单</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 05</span>受控 Agent 与老系统接入</summary><a class="lesson-link" data-lesson="26" href="26.html"><span class="lesson-number">26</span><span>Agent 与普通聊天有什么区别：目标、状态和受控执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="27" href="27.html"><span class="lesson-number">27</span><span>Tool Calling 原理与查询 Tool：最小权限、最小参数和最小返回</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="28" href="28.html"><span class="lesson-number">28</span><span>为什么模型只能选择工具：参数污染、结果污染和业务规则边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="29" href="29.html"><span class="lesson-number">29</span><span>写操作为什么必须先做风险分级</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="30" href="30.html"><span class="lesson-number">30</span><span>人工确认为什么不能只传一个字符串 token</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="31" href="31.html"><span class="lesson-number">31</span><span>幂等、并发和审计怎样跨越本地与远程事务边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="32" href="32.html"><span class="lesson-number">32</span><span>JDK8 老系统接入 AI：OpenAPI、Java 8 客户端、认证、超时与错误处理</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="33" href="33.html"><span class="lesson-number">33</span><span>串联工单 Agent 业务链：知识查询、人工确认与 JDK8 执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="34" href="34.html"><span class="lesson-number">34</span><span>Agent 质量怎样评测：工具路径、参数、拒绝和副作用</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 06</span>评测、安全与上线治理</summary><a class="lesson-link" data-lesson="35" href="35.html"><span class="lesson-number">35</span><span>AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="36" href="36.html"><span class="lesson-number">36</span><span>观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="37" href="37.html"><span class="lesson-number">37</span><span>缓存、熔断、限流和降级：只保留业务真正需要的部分</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="38" href="38.html"><span class="lesson-number">38</span><span>项目配置实战：让默认配置跑通，再按需替换基础设施</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="39" href="39.html"><span class="lesson-number">39</span><span>上线前最后核对什么：测试、Eval、密钥配置、发布和回滚</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 07</span>框架与协议迁移</summary><a class="lesson-link" data-lesson="40" href="40.html"><span class="lesson-number">40</span><span>DashScope Provider 适配实验：配置隔离、响应差异和回归边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="41" href="41.html"><span class="lesson-number">41</span><span>Embedding 与 Rerank 替换实验：怎样设计同集评测</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="42" href="42.html"><span class="lesson-number">42</span><span>Graph 人工确认路由实验：何时比现有状态机更合适</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="43" href="43.html"><span class="lesson-number">43</span><span>Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="44" href="44.html"><span class="lesson-number">44</span><span>LangChain4j AI Services 适配实验：迁移一个低风险用例</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="45" href="45.html"><span class="lesson-number">45</span><span>LangChain4j RAG 适配实验：复用现有业务契约</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="46" href="46.html"><span class="lesson-number">46</span><span>LangChain4j Tool 实验：只读调用与结构化输出</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="47" href="47.html"><span class="lesson-number">47</span><span>Spring AI 与 LangChain4j 共存实验：按业务能力选择框架</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="48" href="48.html"><span class="lesson-number">48</span><span>AgentScope Tool 裁决实验：注册、身份传递与权限映射</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="49" href="49.html"><span class="lesson-number">49</span><span>多 Agent 实际协作：并行取证、结果汇总与失败转人工</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="50" href="50.html"><span class="lesson-number">50</span><span>MCP 互操作实验：发现、准入、调用与远程失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="51" href="51.html"><span class="lesson-number">51</span><span>A2A 互操作实验：任务映射、幂等与状态边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="52" href="52.html"><span class="lesson-number">52</span><span>结束语：把 Java + AI 能力迁移到真实公司项目</span><span class="lesson-state" aria-hidden="true"></span></a></details></nav><p class="sidebar-note">模型负责生成，业务系统掌握规则与执行。</p></aside><main class="reader-main" id="main-content"><div class="article-context"><span>企业 RAG</span><div class="reading-tools js-only"><div class="font-controls" role="group" aria-label="正文字号"><button type="button" data-font="-1" aria-label="减小正文字号">A−</button><span id="font-size-label" aria-live="polite">18</span><button type="button" data-font="1" aria-label="增大正文字号">A+</button></div><button type="button" class="focus-toggle" aria-pressed="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>专注阅读</span></button></div></div><div class="mobile-context"><nav class="reading-route" aria-label="本篇路线"><details><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#语义查询和精确词各有所长">语义查询和精确词各有所长</a></li>
+<li><a href="#三个增强步骤各自解决一个问题">三个增强步骤各自解决一个问题</a></li>
+<li><a href="#按查询类型选择三档策略">按查询类型选择三档策略</a></li>
+<li><a href="#从轻量关键词通道到-java-编排">从轻量关键词通道到 Java 编排</a></li>
+<li><a href="#固定融合顺序预算和稳定性">固定融合顺序、预算和稳定性</a></li>
+<li><a href="#迁入既有检索系统时保留什么">迁入既有检索系统时保留什么</a></li>
+</ul>
+</div>
+</details></nav></div><article id="article-body"><h1 id="混合检索query-rewritererank-什么时候有用">混合检索、Query Rewrite、Rerank 什么时候有用</h1>
+<p>“退款多久到账”和“PAY-REFUND-042 怎么处理”都在查售后知识，却适合不同的检索方式。前者依赖语义相近，向量检索更占优势；后者包含精确错误码，关键词检索通常更稳。</p>
+<p>项目做到这里，很容易顺手把向量、关键词、查询改写（Query Rewrite）和重排（Rerank）全部串上。链路确实更完整了，候选分数却无法直接比较，改写可能偏离原问题，重排也会增加延迟和外部调用。一项能力是否值得加入，要看它解决了哪类真实召回问题。</p>
+<p>下面继续使用退款政策，先实现 pgvector、用于模糊关键词匹配的 <code>pg_trgm</code>，以及按名次合并结果的 RRF，再说明 Query Rewrite 与 Rerank 适合放在哪里。重点是检索计划、候选预算和失败后的处理方式，而不是把链路堆得更长。</p>
+<h2 id="语义查询和精确词各有所长">语义查询和精确词各有所长</h2>
+<p>假设知识库里有以下三段内容：</p>
+<pre><code class="language-text">A. 退款审核通过后，款项将在一到五个工作日内原路退回。
+B. 支付平台返回错误码 PAY-REFUND-042 时，转人工核对退款单。
+C. 售后政策第十条适用于银行卡及第三方支付退款。
+</code></pre>
+<p>用户问“退款多久到账”，向量检索容易命中 A，因为“多久到账”和“一到五个工作日”在语义上接近。用户改问“PAY-REFUND-042 怎么处理”，关键词检索通常更可靠：错误码几乎没有同义表达，任何模糊匹配都可能把它带到别的支付故障。用户问“第十条支持哪些支付方式”，条款编号与“银行卡”同时出现，关键词信号也很有价值。</p>
+<p>向量检索把查询和 chunk 映射到同一个向量空间，再按距离或相似度取近邻。它对同义表达、口语、省略主语比较友好，但有几个天然弱点：</p>
+<ul>
+<li>型号、工单号、政策编号等低频词可能没有可靠语义表示；</li>
+<li>两段话主题相近，不代表其中包含回答问题所需的具体条件；</li>
+<li>Embedding 模型更换后，距离分布和召回顺序可能变化；</li>
+<li>长 chunk 中的次要事实容易被整体语义稀释。</li>
+</ul>
+<p>关键词检索根据词项、词频、字段权重等信号排序。BM25 一类算法会考虑词在当前文档中的出现次数，也会降低全库高频词的区分度。它适合精确术语、名称、编号和原文措辞，却很难仅凭字面匹配理解“多久到账”与“到账时限”说的是同一件事。中文还涉及分词词典、同义词表和领域词维护，不能把英文默认分词配置原样搬进生产环境。</p>
+<p>两种通道互补的前提，是它们独立执行相同的业务过滤。租户、部门、文档发布状态和生效时间必须在各自检索语句中生效，而不是两边召回完成后再统一删除越权结果。否则无权限内容会占掉候选名额，RRF 和 Rerank 都无法把已经丢失的合规候选补回来。</p>
+<p>图里的 <code>candidateK</code> 是每个召回通道的候选上限，<code>topK</code> 是最终交给回答链路的证据上限。两者必须分开。直接让向量和关键词各返回 <code>topK</code>，融合后再做重排，候选面往往太窄；无限放大 <code>candidateK</code> 又会增加搜索、网络传输和重排成本。</p>
+<h2 id="三个增强步骤各自解决一个问题">三个增强步骤各自解决一个问题</h2>
+<h3 id="query-rewrite-只生成检索表达">Query Rewrite 只生成检索表达</h3>
+<p>真实咨询经常包含代词、省略和聊天语气：</p>
+<pre><code class="language-text">用户上一轮：我的退款已经审核通过了。
+用户这一轮：那一般还要等多久？
+</code></pre>
+<p>只检索“那一般还要等多久”几乎没有业务信息。Query Rewrite 可以结合受控的会话上下文，把它改写成“退款审核通过后的到账时限”。检索表达更完整后，向量和关键词通道都有机会命中正确条款。</p>
+<p>改写会改变原始表达，存在明确风险。模型可能把“银行卡退款”改成“第三方支付退款”，把“试用期员工”改成“正式员工”，或者补进原问题从未出现的产品名称。查询看起来更顺，检索意图已经漂了。知识库更难发现的坏案例，是系统带着错误限定条件命中一条措辞很像的制度，而非简单返回空结果。</p>
+<p>工程上应把原问题和检索表达保留成两个字段，并让它们承担不同职责：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>信息</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原问题</td>
+<td>展示、受控审计、Rerank、回答生成和最终评测</td>
+</tr>
+<tr>
+<td>改写查询</td>
+<td>向量化、关键词召回和检索日志</td>
+</tr>
+<tr>
+<td>改写使用的上下文</td>
+<td>解释代词和省略，必须经过长度与权限控制</td>
+</tr>
+<tr>
+<td>改写版本</td>
+<td>定位 Prompt 或模型变化引起的召回结果变化</td>
+</tr>
+</tbody>
+</table></div>
+<p>当前 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/application/HybridKnowledgeRetrievalService.java">HybridKnowledgeRetrievalService</a> 正是这样处理的。改写结果进入 Embedding 与关键词通道，Rerank 收到的仍是原始问题 <code>query.question()</code>。即使改写补充了检索术语，最终相关性判断也要回到用户真正问的内容。</p>
+<p>改写适合以下场景：多轮对话存在明确指代，用户表达非常口语化，或者企业内部术语与用户语言差异很大。短而精确的查询未必需要改写，例如错误码、订单号、产品型号和条款编号。对这些内容，模型“润色”反而容易破坏精确词。</p>
+<p>Query Rewrite 还应遵守两条硬边界。第一，它不能扩大访问范围。租户和权限来自经过校验的身份，不允许模型通过改写查询决定访问哪些部门。第二，它不能把改写文本当成事实。改写只帮助召回，回答仍然要以检索到的已发布证据为准。</p>
+<p>当前最小实现要求改写结果非空，空白结果会抛出参数异常，模型或网络异常则继续向上返回。生产适配器可以选择“改写失败时使用原问题”这一降级语义，但要记录 <code>rewrite_fallback=true</code>、失败类型和耗时。悄悄回退而不留痕，会让离线评测与线上表现对不上。</p>
+<h3 id="用排名融合代替直接比较分数">用排名融合代替直接比较分数</h3>
+<p>向量通道可能返回余弦相似度 <code>0.86</code>，关键词通道可能返回 BM25 分数 <code>21.4</code>。如果把结果放进一个列表按原始 <code>score</code> 排序，关键词结果几乎总在前面；换一种搜索引擎或相似度函数，结论又可能反过来。分数的数值范围、分布和方向都由算法实现决定，不是跨通道通用的相关性单位。</p>
+<p>可以先对两边分数做归一化，再加权求和，但这要求分数分布相对稳定。数据量、查询类型、索引版本或模型变化都会影响归一化参数。线上查询只有少量候选时，用当前结果的最大最小值归一化也很脆弱：第一名和第二名的真实差距可能很小，归一化后却被放大成 1 与 0。</p>
+<p>RRF（Reciprocal Rank Fusion）绕开了这个问题。它不比较原始分数，只使用候选在每个通道中的名次。对文档 <code>d</code>，融合分数可以写成：</p>
+<pre><code class="language-text">RRF(d) = Σ 1 / (k + rank_i(d))
+</code></pre>
+<p><code>rank_i(d)</code> 是 <code>d</code> 在第 <code>i</code> 个排名中的位置，从 1 开始；没有进入某个排名，就不贡献该通道分数。<code>k</code> 是平滑常数，用来控制前几名与后续名次的差距。当前实现使用 <code>k = 60</code>。</p>
+<p>假设向量通道排序为 <code>[semantic, shared]</code>，关键词通道排序为 <code>[lexical, shared]</code>：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>chunk</th>
+<th style="text-align: right;">向量名次</th>
+<th style="text-align: right;">关键词名次</th>
+<th style="text-align: right;">RRF 分数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shared</code></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><code>1/62 + 1/62</code></td>
+</tr>
+<tr>
+<td><code>semantic</code></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-</td>
+<td style="text-align: right;"><code>1/61</code></td>
+</tr>
+<tr>
+<td><code>lexical</code></td>
+<td style="text-align: right;">-</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><code>1/61</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><code>shared</code> 同时被两个通道认可，所以排在只被单个通道命中的候选之前。RRF 不知道哪个通道的原始分数更大，也不需要知道。它表达的是一种相当实用的判断：多个独立检索器都把某段证据排在前面时，这段证据更值得进入下一步。</p>
+<p><img alt="RRF 如何合并不同评分空间" src="../assets/content/docs/assets/diagrams/source/18-rrf-ranking.svg" /></p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/application/ReciprocalRankFusion.java">ReciprocalRankFusion</a> 以 <code>chunkId</code> 去重并累加排名贡献。融合分数相同时，再按 <code>chunkId</code> 升序排列：</p>
+<pre><code class="language-java">return scoresById.entrySet().stream()
+        .sorted(Map.Entry.&lt;String, Double&gt;comparingByValue(Comparator.reverseOrder())
+                .thenComparing(Map.Entry::getKey))
+        .limit(topK)
+        .map(entry -&gt; withScore(chunksById.get(entry.getKey()), entry.getValue()))
+        .toList();
+</code></pre>
+<p>第二排序条件用于保证确定性，与相关性无关。同一批输入不能因为 <code>HashMap</code> 遍历顺序或运行环境差异而随机交换位置。稳定排序会直接影响缓存、评测复现和分页结果，也是线上排查“同样问题为什么偶尔引用不同条款”的基础。</p>
+<p>RRF 的局限也很明确。它只看名次，会丢掉通道内部的置信差异。向量第一名远高于第二名，与两者几乎并列，在 RRF 中都会被视为名次 1 和 2。它也不会理解用户问题和证据之间的细粒度关系。RRF 适合做异构召回的稳健融合，不是最终相关性模型。</p>
+<h3 id="把-rerank-留给少量高价值候选">把 Rerank 留给少量高价值候选</h3>
+<p>Embedding 检索通常采用双塔思路：查询和 chunk 分别编码，索引中的 chunk 向量可以预先计算，因此召回速度快。Rerank 常用交叉编码或大模型判断，让查询与每个候选一起参与计算，能够看到更细的词序、条件和否定关系，但无法像向量检索那样对全库预计算。</p>
+<p>这决定了合理顺序只能是“先召回，再重排”。如果全库有一百万个 chunk，不可能让重排模型逐个判断；先用向量与关键词缩小到几十条，再选出最终几条，成本才可控。</p>
+<p>候选预算至少要同时看四个量：</p>
+<ul>
+<li>最终 <code>topK</code>：回答链路真正需要几段证据；</li>
+<li>每通道 <code>candidateK</code>：为了不漏掉正确证据，召回面要放大多少；</li>
+<li>候选去重率：两个通道重叠越高，融合后的实际数量越少；</li>
+<li>Rerank 单候选成本：模型输入长度、批处理能力、并发和计费方式。</li>
+</ul>
+<p>当前 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/application/RetrievalPlan.java">RetrievalPlan</a> 把 <code>rewriteQuery</code>、<code>lexicalSearch</code>、<code>rerank</code> 和 <code>candidateK</code> 显式放在计划中。<code>candidateK</code> 被限制在 1 到 100，应用服务还会检查它不能小于查询的 <code>topK</code>。这个限制挡住了一个很常见的配置错误：想返回 8 条最终证据，却只让召回通道各找 5 条。</p>
+<pre><code class="language-java">if (plan.candidateK() &lt; query.topK()) {
+    throw new IllegalArgumentException(
+            &quot;candidateK must be greater than or equal to topK&quot;
+    );
+}
+</code></pre>
+<p>链路延迟不能只看 Rerank 接口的平均耗时。按当前顺序执行的实现，粗略总延迟是：</p>
+<pre><code class="language-text">T ≈ T_rewrite + T_embedding + T_vector + T_lexical + T_fusion + T_rerank
+</code></pre>
+<p>如果向量与关键词查询在生产适配层并行执行，检索耗时可以接近两者中的较慢值，但前提是两边使用同一个改写查询、权限范围和生效时间，取消和超时也能同时结束两个请求，并保留在同一 Trace 中。当前应用服务是顺序调用，不能按并行链路估算延迟。</p>
+<p>Rerank 的超时应该明显小于整个问答请求剩余预算。举例来说，接口总预算只有 2 秒，前面改写和两路检索已经消耗 1.4 秒，再给重排单独设置 2 秒超时没有意义。超时预算应由入口向下传递，而不是每层各配一个看起来合理的固定值。</p>
+<p>降级也要按步骤定义，不能笼统写成“检索失败就返回默认结果”：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>失败位置</th>
+<th>可接受的读路径</th>
+<th>必须保留的观测信息</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Query Rewrite</td>
+<td>使用原问题继续检索</td>
+<td>异常类型、是否回退；脱敏原问题只进入受控明细</td>
+</tr>
+<tr>
+<td>关键词检索</td>
+<td>使用向量候选</td>
+<td>失败通道、剩余候选数量</td>
+</tr>
+<tr>
+<td>向量检索</td>
+<td>仅在关键词足以支撑业务时继续</td>
+<td>Embedding/向量库错误、策略名</td>
+</tr>
+<tr>
+<td>Rerank</td>
+<td>使用 RRF 排名截取 <code>topK</code></td>
+<td>重排超时或错误、融合版本</td>
+</tr>
+<tr>
+<td>两个召回通道都失败</td>
+<td>返回明确的检索不可用</td>
+<td>Trace、错误码、重试建议</td>
+</tr>
+</tbody>
+</table></div>
+<p>这张表给出生产决策规则，当前代码不会自动执行这些回退。<code>HybridKnowledgeRetrievalService</code> 让端口异常向上抛出，避免在应用层无声吞错。公司项目若允许读请求降级，应把规则放进可测试的适配器或编排策略，同时把降级状态传到 Trace 和回答元数据。证据不足时若让大模型凭自身知识继续回答，产品的事实边界已经发生改变，不能按普通降级处理。</p>
+<h2 id="按查询类型选择三档策略">按查询类型选择三档策略</h2>
+<p>向量、关键词和重排不是固定套餐。先按查询分布和坏案例选最短链路，再用同一套 Golden Set 比较增量收益。</p>
+<h3 id="只用向量检索">只用向量检索</h3>
+<p>适合自然语言问题为主、文档措辞差异大、专有编号较少的知识库。链路短，维护成本最低。第一个版本没有关键词索引与重排模型时，向量检索也更容易把权限过滤、版本过滤、引用和评测先做正确。</p>
+<p>不要因为“混合检索更高级”就立刻加组件。如果向量 Recall@K 已经覆盖主要问题，线上坏案例集中在文档切分或权限，增加 Rerank 不会修复根因。</p>
+<h3 id="向量加关键词再做-rrf">向量加关键词，再做 RRF</h3>
+<p>适合知识库同时包含自然语言规则和大量精确术语，例如错误码、产品型号、条款号、接口名。RRF 不要求校准两种分数，实现和解释成本都比学习排序低。</p>
+<p>这档方案首先改善召回。它能把不同通道发现的候选放进同一列表，但不会理解复杂条件之间的关系。若正确证据已经进入候选集却总排不到前面，再考虑重排。</p>
+<h3 id="混合检索加-rerank">混合检索加 Rerank</h3>
+<p>适合候选内容高度相似、需要区分适用条件、否定条款和版本差异的场景。例如多份退款政策都写着“一到五个工作日”，只有渠道、地区或生效日期不同。重排模型可以结合原问题比较候选，但要承担模型质量、延迟、配额和降级成本。</p>
+<p>Rerank 的价值应该体现在指标上。固定 <code>candidateK</code> 后，要比较首个正确证据排名的倒数均值（MRR）、整段排序质量（nDCG）和 TopK 证据准确率，还要记录坏案例、P95 延迟与单次成本。只展示一个“重排后看起来更准”的例子，不能支持默认开启。</p>
+<h2 id="从轻量关键词通道到-java-编排">从轻量关键词通道到 Java 编排</h2>
+<h3 id="pg_trgm-适合作为轻量起点">pg_trgm 适合作为轻量起点</h3>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/infrastructure/PostgresTrigramKnowledgeChunkSearchRepository.java">PostgresTrigramKnowledgeChunkSearchRepository</a> 作为关键词通道，通过 <code>pg_trgm</code> 的相似度和 <code>ILIKE</code> 补充字面召回。Flyway 的 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/resources/db/migration/V2__knowledge_hybrid_search.sql">V2__knowledge_hybrid_search.sql</a> 创建扩展与 GIN 索引。数据库账号没有 <code>CREATE EXTENSION</code> 权限时，应由 DBA 预装扩展，再让应用账号只负责业务表迁移。</p>
+<p>这套方案适合数据量有限、团队已经使用 PostgreSQL、希望先验证混合检索增量收益的场景。它按字符片段工作，不理解中文词边界、字段权重、同义词和领域词典；大规模知识库、复杂字段检索或专有词维护通常更适合公司已有的 Elasticsearch、OpenSearch 或搜索中台。</p>
+<p>无论关键词通道落在哪个组件，租户、当前有效的业务版本、当前检索版本和 ACL 都必须在 TopK 之前过滤。不能先让搜索引擎返回全局候选，再由 Java 删除越权结果。更换关键词基础设施时，应替换 <code>KnowledgeLexicalSearchRepository</code> 适配器，而不是改写混合检索用例。</p>
+<h3 id="java-应用层的检索编排">Java 应用层的检索编排</h3>
+<p>混合检索最容易写成一个依赖搜索引擎 SDK、Embedding SDK 和重排 SDK 的大 Service。这样短期代码少，后面切模型、做本地测试或增加降级时，每个分支都会碰到基础设施细节。</p>
+<p>应用层用六个端口隔开变化来源：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>端口</th>
+<th>责任</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>KnowledgeQueryRewriter</code></td>
+<td>把原问题改成检索表达</td>
+</tr>
+<tr>
+<td><code>KnowledgeEmbeddingModel</code></td>
+<td>生成查询向量并返回模型标识</td>
+</tr>
+<tr>
+<td><code>KnowledgeChunkSearchRepository</code></td>
+<td>在权限与时间范围内做向量召回</td>
+</tr>
+<tr>
+<td><code>KnowledgeLexicalSearchRepository</code></td>
+<td>使用同一范围做关键词召回</td>
+</tr>
+<tr>
+<td><code>KnowledgeReranker</code></td>
+<td>根据原问题重排候选</td>
+</tr>
+<tr>
+<td><code>RetrievalPlanProvider</code></td>
+<td>根据服务端策略选择候选预算与可选步骤</td>
+</tr>
+</tbody>
+</table></div>
+<p>应用服务只编排顺序和预算：</p>
+<pre><code class="language-java">String retrievalQuery = plan.rewriteQuery()
+        ? requireText(queryRewriter.rewrite(query.question()), &quot;rewritten query&quot;)
+        : query.question();
+
+KnowledgeEmbedding embedding = embeddingModel.embed(retrievalQuery);
+List&lt;RetrievedKnowledgeChunk&gt; vectorCandidates = vectorSearch.search(
+        embedding.vector(), embedding.model(),
+        query.accessScope(), query.effectiveAt(), plan.candidateK()
+);
+
+List&lt;RetrievedKnowledgeChunk&gt; candidates = vectorCandidates;
+if (plan.lexicalSearch()) {
+    List&lt;RetrievedKnowledgeChunk&gt; lexicalCandidates = lexicalSearch.search(
+            retrievalQuery, query.accessScope(), query.effectiveAt(), plan.candidateK()
+    );
+    candidates = rankFusion.fuse(
+            vectorCandidates, lexicalCandidates, plan.candidateK()
+    );
+}
+
+List&lt;RetrievedKnowledgeChunk&gt; result = plan.rerank()
+        ? restoreRerankedCandidates(
+                candidates,
+                reranker.rerank(query.question(), candidates, query.topK()),
+                query.topK()
+        )
+        : candidates.stream().limit(query.topK()).toList();
+</code></pre>
+<p>这里有几个值得保留的细节。</p>
+<p>第一，向量查询携带 Embedding 模型标识，避免升级期间混排不兼容向量。第二，两个召回通道收到相同的 <code>KnowledgeAccessScope</code> 和 <code>effectiveAt</code>。检索策略可以变化，身份与时效边界不能变化。</p>
+<p>第三，RRF 输出受 <code>candidateK</code> 限制，不会无限放大候选集。第四，Rerank 只返回 Chunk ID。应用层拒绝空 ID、重复 ID、未知 ID 和数量异常，再从原始授权候选恢复对象。重排适配器只能改变顺序，不能丢候选或注入未经过 ACL 的内容。</p>
+<p><code>RetrievalPlan</code> 让同一个用例可以按场景选择链路，但它不应该直接暴露给前端，让用户随意打开昂贵能力。计划应由服务端根据业务入口、租户配置、实验分组和容量策略决定。外部请求只表达业务问题、身份与期望证据数量。</p>
+<p>项目默认使用单路向量检索。把 <code>java-ai.knowledge.retrieval.mode</code> 设为 <code>hybrid</code> 后，应用才会组装 <code>pg_trgm</code> 关键词通道和 RRF。该模式下 <code>rewrite-query</code> 与 <code>rerank</code> 仍默认关闭。</p>
+<p>当前仓库没有真实的 Rewrite 和 Rerank 适配器，误开开关会直接报错，不会返回固定结果或静默降级。接入公司的改写或重排服务后，再打开对应开关，并用固定数据集验证收益、超时和回退策略。</p>
+<h2 id="固定融合顺序预算和稳定性">固定融合顺序、预算和稳定性</h2>
+<p>连续实验会在同一次启动中分别请求 <code>VECTOR</code> 与 <code>HYBRID</code>，控制台并列打印两组 TopK，最终报告也分别计算 Recall、HitRate 和 MRR。普通问答仍按 <code>application.yml</code> 中的检索计划运行；这个模式参数只属于受保护的内部评测接口，避免终端用户随意打开昂贵链路。</p>
+<p>确定性代码继续锁住什么文本进入哪个端口、权限范围是否原样传递、候选预算是否一致，以及最终顺序是否可重复。</p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/test/java/com/xiaoding/javaai/knowledge/retrieval/application/HybridKnowledgeRetrievalServiceTest.java">HybridKnowledgeRetrievalServiceTest</a> 固化了两条路径。完整路径把“退款多久到账？”改写为“退款到账时效”，向量和关键词通道都拿到 8 条候选预算，Rerank 收到原问题与融合后的候选；纯向量路径则确认 Rewrite、关键词和 Rerank 端口都不会被调用。</p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/test/java/com/xiaoding/javaai/knowledge/retrieval/application/ReciprocalRankFusionTest.java">ReciprocalRankFusionTest</a> 验证同一 chunk 被两个通道命中时排在单通道候选之前，还验证融合分数相同后按 <code>chunkId</code> 得到稳定顺序。</p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/test/java/com/xiaoding/javaai/knowledge/retrieval/infrastructure/PostgresLexicalSearchQueryTest.java">PostgresLexicalSearchQueryTest</a> 锁住关键词 SQL 的租户、状态、版本、时效与 ACL 前置过滤。<code>KnowledgeRetrievalConfigurationTest</code> 则确认 <code>hybrid</code> 配置真正组装出混合检索器，避免运行时仍走旧实现。</p>
+<p>这些测试检查编排与融合算法。接入公司环境时，还要用同一套业务问题分别运行三档策略，保存原问题、改写查询、各通道排名、融合排名、重排结果和耗时。指标发生变化时，才能据此判断是改写结果发生变化、某一路漏召回，还是重排压低了正确证据。</p>
+<h2 id="迁入既有检索系统时保留什么">迁入既有检索系统时保留什么</h2>
+<p>可以直接复用的是应用层边界：原问题与检索查询分离、<code>candidateK</code> 与 <code>topK</code> 分离、两路召回使用相同权限和时效条件、异构分数通过排名融合、同分排序保持稳定、重排只处理有限候选。</p>
+<p>关键词检索、Query Rewrite 和 Rerank 这三个适配点要按公司基础设施接入。关键词检索可以落在已有搜索引擎或数据库全文检索能力上，但中文分词、字段权重和同义词必须使用业务数据验证；Query Rewrite 与 Rerank 可以调用独立模型服务，也可以在效果收益不足时关闭。代码中有端口，不代表每个环境都必须部署对应组件。</p>
+<p>生产观测至少应回答这些问题：</p>
+<ul>
+<li>当前使用哪种 <code>RetrievalPlan</code>，<code>candidateK</code> 与 <code>topK</code> 分别是多少；</li>
+<li>原问题是否改写，改写失败是否回退；</li>
+<li>两个通道分别返回多少候选，重合率是多少；</li>
+<li>RRF 和 Rerank 前后的正确证据名次怎样变化；</li>
+<li>每一步耗时、超时、错误和降级原因是什么；</li>
+<li>最终证据属于哪个租户、文档版本、标题和条款。</li>
+</ul>
+<p>混合检索值得引入的判断标准很朴素：它能否在固定权限、固定候选预算和可接受延迟下，稳定找回单通道遗漏的证据。Query Rewrite 只负责补全检索表达，RRF 负责合并不同评分空间，Rerank 负责在小候选集里判断细粒度相关性。三者各自解决一个问题，任何一步没有独立收益，都可以从计划中关掉。</p></article><div class="practice-link"><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/README.md" target="_blank" rel="noopener"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></svg> 本阶段可运行源码 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></div><nav class="chapter-nav" aria-label="前后篇"><a href="17.html"><span>上一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></span><strong>权限为什么必须在 TopK 之前过滤</strong></a><a href="19.html"><span>下一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><strong>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</strong></a></nav><footer class="reader-footer">Java AI 应用开发实战 · <a href="../license.html">非商业使用</a><details class="community-mini"><summary>关注与交流 · 好好用 AI</summary><div class="community-section"><div><p>交流学习中的问题与实践心得。</p><p>代码问题和勘误，欢迎在 <a href="https://github.com/DavidDingXu/learn-java-ai/issues" target="_blank" rel="noopener">GitHub 提交 Issue</a>。</p></div><a class="qr-link" href="../assets/wechat-official-account.jpg" target="_blank" rel="noopener" aria-label="查看好好用 AI 公众号二维码原图"><img src="../assets/wechat-official-account.jpg" alt="好好用 AI 微信公众号二维码" width="130" height="130" loading="lazy"><p class="qr-caption">微信扫码 · 点击查看原图</p></a></div></details></footer></main><aside class="context-sidebar" aria-label="本篇辅助导航"><div class="context-inner"><nav class="reading-route" aria-label="本篇路线"><details open><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#语义查询和精确词各有所长">语义查询和精确词各有所长</a></li>
+<li><a href="#三个增强步骤各自解决一个问题">三个增强步骤各自解决一个问题</a></li>
+<li><a href="#按查询类型选择三档策略">按查询类型选择三档策略</a></li>
+<li><a href="#从轻量关键词通道到-java-编排">从轻量关键词通道到 Java 编排</a></li>
+<li><a href="#固定融合顺序预算和稳定性">固定融合顺序、预算和稳定性</a></li>
+<li><a href="#迁入既有检索系统时保留什么">迁入既有检索系统时保留什么</a></li>
+</ul>
+</div>
+</details></nav></div></aside></div><dialog class="search-dialog" id="search-dialog" aria-labelledby="search-label"><form method="dialog" class="search-heading"><label for="course-search" id="search-label"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>搜索课程</label><button class="icon-button" aria-label="关闭搜索"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form><input id="course-search" type="search" placeholder="搜索概念、代码或问题…" autocomplete="off" spellcheck="false"><p class="search-status" id="search-status" role="status">搜索全部 52 篇文章。</p><div class="search-results" id="search-results"></div><footer>↑ ↓ 选择结果 <span>Enter 打开 · Esc 关闭</span></footer></dialog>
+<dialog class="image-viewer" id="image-viewer" aria-label="放大配图"><header><span>查看配图</span><div class="image-actions"><button type="button" id="image-size">原尺寸</button><button type="button" id="close-image" autofocus>关闭</button></div></header><div class="image-canvas"><img id="large-image" alt=""></div><footer><p id="image-description"></p><a id="original-image" target="_blank" rel="noopener">打开原图 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></footer></dialog><div class="toast" id="toast" role="status"></div></body></html>

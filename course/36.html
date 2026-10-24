@@ -1,0 +1,161 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本 · Learn Java AI</title><meta name="description" content="沿着一条客户服务链路，把模型、企业 RAG、受控 Agent 和 JDK8 老系统接在一起，再补齐评测、安全与上线治理。"><meta name="source-sha256" content="76764cb64e4293eebeb21fdcf817654bea5fb4119de27c46c9036c179cbb91ff">
+<link rel="canonical" href="https://daviddingxu.github.io/learn-java-ai/course/36.html"><link rel="icon" href="../assets/brand.png">
+<script>try{const t=localStorage.getItem('haohai-course-theme');document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}catch(_){document.documentElement.dataset.theme='light'}</script>
+<link rel="stylesheet" href="../assets/site.css"><script defer src="../assets/search-index.js"></script><script defer src="../assets/site.js"></script></head><body class="article-page" data-root="../" data-page="36"><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header"><div class="header-inner"><button class="icon-button menu-toggle js-only" type="button" aria-label="打开课程目录" aria-controls="course-sidebar" aria-expanded="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<a class="brand" href="../index.html" aria-label="Learn Java AI · 学习站首页"><img src="../assets/brand.png" alt="" width="36" height="36"><span><strong>Learn Java AI</strong><small>Java AI 应用开发实战</small></span></a>
+<nav class="header-nav" aria-label="主导航"><a href="../index.html#curriculum">课程目录</a><a href="../index.html#downloads">离线阅读</a><a href="https://github.com/DavidDingXu/learn-java-ai" target="_blank" rel="noopener">GitHub <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></nav>
+<div class="header-controls"><button class="icon-button theme-toggle js-only" type="button" aria-label="切换到深色主题" title="切换到深色主题"><span class="theme-light-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A9 9 0 0 1 9.5 3.5a9 9 0 1 0 11 11Z"/></svg></span><span class="theme-dark-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span></button><button class="search-trigger js-only" type="button" aria-label="搜索课程"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><span>搜索课程</span><kbd>⌘ K</kbd></button></div></div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header><div class="sidebar-scrim" hidden></div><div class="reader-layout"><aside class="course-sidebar" id="course-sidebar" aria-label="课程目录"><div class="sidebar-heading"><a href="../index.html#curriculum">课程目录</a><button class="icon-button menu-close js-only" type="button" aria-label="关闭课程目录"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><nav aria-label="全部文章"><details class="sidebar-stage"><summary><span class="stage-index">模块 01</span>系统边界与第一条调用</summary><a class="lesson-link" data-lesson="01" href="01.html"><span class="lesson-number">01</span><span>专栏介绍：Java 后端怎样系统学习 AI 应用开发落地</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="02" href="02.html"><span class="lesson-number">02</span><span>从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="03" href="03.html"><span class="lesson-number">03</span><span>Spring AI 为什么做主线，其他框架放在哪里</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="04" href="04.html"><span class="lesson-number">04</span><span>先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="05" href="05.html"><span class="lesson-number">05</span><span>多租户、身份和权限为什么不能相信请求参数</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="06" href="06.html"><span class="lesson-number">06</span><span>JDK8 老系统不升级：先划清现代 AI 服务与老系统边界</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 02</span>模型调用工程化</summary><a class="lesson-link" data-lesson="07" href="07.html"><span class="lesson-number">07</span><span>一次模型调用内部发生了什么：Message、Options、Token 与响应元数据</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="08" href="08.html"><span class="lesson-number">08</span><span>Prompt 的工程边界：模板、版本、授权知识与提示注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="09" href="09.html"><span class="lesson-number">09</span><span>结构化输出为什么会失败：Schema、DTO 和业务校验</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="10" href="10.html"><span class="lesson-number">10</span><span>流式输出原理与实现：SSE、取消、心跳、断连和 TTFT</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="11" href="11.html"><span class="lesson-number">11</span><span>超时、并发保护、重试和降级：为什么不需要万能模型网关</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="12" href="12.html"><span class="lesson-number">12</span><span>真实模型调用之后：怎样建立评测基线与可观测性</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 03</span>企业 RAG</summary><a class="lesson-link" data-lesson="13" href="13.html"><span class="lesson-number">13</span><span>企业知识库先解决什么：文档、版本、状态和冲突</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="14" href="14.html"><span class="lesson-number">14</span><span>文档上传链路：对象存储、内容校验、隔离和解析失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="15" href="15.html"><span class="lesson-number">15</span><span>文档切分为什么影响召回：标题、条款、元数据和粒度</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="16" href="16.html"><span class="lesson-number">16</span><span>向量检索原理与 pgvector 实现</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="17" href="17.html"><span class="lesson-number">17</span><span>权限为什么必须在 TopK 之前过滤</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="18" href="18.html"><span class="lesson-number">18</span><span>混合检索、Query Rewrite、Rerank 什么时候有用</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="19" href="19.html"><span class="lesson-number">19</span><span>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="20" href="20.html"><span class="lesson-number">20</span><span>增量索引为什么需要任务、租约和失败恢复</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="21" href="21.html"><span class="lesson-number">21</span><span>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 04</span>客户咨询与工单升级</summary><a class="lesson-link" data-lesson="22" href="22.html"><span class="lesson-number">22</span><span>C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="23" href="23.html"><span class="lesson-number">23</span><span>多轮会话原理：短期状态、裁剪、总结和过期</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="24" href="24.html"><span class="lesson-number">24</span><span>用户怎样判断回答可信：证据、反馈、拒答和重试</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="25" href="25.html"><span class="lesson-number">25</span><span>机器人解决不了时怎样平滑升级工单</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 05</span>受控 Agent 与老系统接入</summary><a class="lesson-link" data-lesson="26" href="26.html"><span class="lesson-number">26</span><span>Agent 与普通聊天有什么区别：目标、状态和受控执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="27" href="27.html"><span class="lesson-number">27</span><span>Tool Calling 原理与查询 Tool：最小权限、最小参数和最小返回</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="28" href="28.html"><span class="lesson-number">28</span><span>为什么模型只能选择工具：参数污染、结果污染和业务规则边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="29" href="29.html"><span class="lesson-number">29</span><span>写操作为什么必须先做风险分级</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="30" href="30.html"><span class="lesson-number">30</span><span>人工确认为什么不能只传一个字符串 token</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="31" href="31.html"><span class="lesson-number">31</span><span>幂等、并发和审计怎样跨越本地与远程事务边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="32" href="32.html"><span class="lesson-number">32</span><span>JDK8 老系统接入 AI：OpenAPI、Java 8 客户端、认证、超时与错误处理</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="33" href="33.html"><span class="lesson-number">33</span><span>串联工单 Agent 业务链：知识查询、人工确认与 JDK8 执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="34" href="34.html"><span class="lesson-number">34</span><span>Agent 质量怎样评测：工具路径、参数、拒绝和副作用</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage" open><summary><span class="stage-index">模块 06</span>评测、安全与上线治理</summary><a class="lesson-link" data-lesson="35" href="35.html"><span class="lesson-number">35</span><span>AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="36" href="36.html" aria-current="page"><span class="lesson-number">36</span><span>观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="37" href="37.html"><span class="lesson-number">37</span><span>缓存、熔断、限流和降级：只保留业务真正需要的部分</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="38" href="38.html"><span class="lesson-number">38</span><span>项目配置实战：让默认配置跑通，再按需替换基础设施</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="39" href="39.html"><span class="lesson-number">39</span><span>上线前最后核对什么：测试、Eval、密钥配置、发布和回滚</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 07</span>框架与协议迁移</summary><a class="lesson-link" data-lesson="40" href="40.html"><span class="lesson-number">40</span><span>DashScope Provider 适配实验：配置隔离、响应差异和回归边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="41" href="41.html"><span class="lesson-number">41</span><span>Embedding 与 Rerank 替换实验：怎样设计同集评测</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="42" href="42.html"><span class="lesson-number">42</span><span>Graph 人工确认路由实验：何时比现有状态机更合适</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="43" href="43.html"><span class="lesson-number">43</span><span>Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="44" href="44.html"><span class="lesson-number">44</span><span>LangChain4j AI Services 适配实验：迁移一个低风险用例</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="45" href="45.html"><span class="lesson-number">45</span><span>LangChain4j RAG 适配实验：复用现有业务契约</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="46" href="46.html"><span class="lesson-number">46</span><span>LangChain4j Tool 实验：只读调用与结构化输出</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="47" href="47.html"><span class="lesson-number">47</span><span>Spring AI 与 LangChain4j 共存实验：按业务能力选择框架</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="48" href="48.html"><span class="lesson-number">48</span><span>AgentScope Tool 裁决实验：注册、身份传递与权限映射</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="49" href="49.html"><span class="lesson-number">49</span><span>多 Agent 实际协作：并行取证、结果汇总与失败转人工</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="50" href="50.html"><span class="lesson-number">50</span><span>MCP 互操作实验：发现、准入、调用与远程失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="51" href="51.html"><span class="lesson-number">51</span><span>A2A 互操作实验：任务映射、幂等与状态边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="52" href="52.html"><span class="lesson-number">52</span><span>结束语：把 Java + AI 能力迁移到真实公司项目</span><span class="lesson-state" aria-hidden="true"></span></a></details></nav><p class="sidebar-note">模型负责生成，业务系统掌握规则与执行。</p></aside><main class="reader-main" id="main-content"><div class="article-context"><span>评测、安全与上线治理</span><div class="reading-tools js-only"><div class="font-controls" role="group" aria-label="正文字号"><button type="button" data-font="-1" aria-label="减小正文字号">A−</button><span id="font-size-label" aria-live="polite">18</span><button type="button" data-font="1" aria-label="增大正文字号">A+</button></div><button type="button" class="focus-toggle" aria-pressed="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>专注阅读</span></button></div></div><div class="mobile-context"><nav class="reading-route" aria-label="本篇路线"><details><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#四类信号各自回答一类问题">四类信号各自回答一类问题</a></li>
+<li><a href="#ticket-agent-当前记录的指标">Ticket Agent 当前记录的指标</a></li>
+<li><a href="#跨服务关联需要-trace-context-与业务-id">跨服务关联需要 Trace Context 与业务 ID</a></li>
+<li><a href="#从用户体验和业务风险选择核心指标">从用户体验和业务风险选择核心指标</a></li>
+<li><a href="#日志管理端点与告警">日志、管理端点与告警</a></li>
+<li><a href="#指标与管理端点怎样暴露">指标与管理端点怎样暴露</a></li>
+</ul>
+</div>
+</details></nav></div><article id="article-body"><h1 id="观测做到什么程度才够用tracecorrelationmetric日志和成本">观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本</h1>
+<p>线上有人反馈一次咨询等了 18 秒。团队接着要回答：时间花在检索、模型还是 Tool？同一时段 Token 为什么翻倍？如果远程调用超时，业务动作究竟有没有执行？一张 Prometheus Dashboard 或一份全量 Prompt 日志都无法独立回答这些问题。</p>
+<p>项目把观测信号分成四类：Trace 还原单次调用链，Metric 观察总体趋势，Log 解释程序异常，Audit 记录业务动作与人工决定。Trace 是一次请求经过各服务时形成的调用链；Metric 是用于统计和告警的聚合指标；Audit 是不能由普通运行日志替代的业务审计。</p>
+<p>四类信号的失败语义不同。Metric 只用于观察运行情况，不能因为指标库短暂异常就改写业务状态。高风险动作的必要 Audit 则属于业务记录，保存失败时需要停止执行或进入对账，不能只记一条错误日志后继续。</p>
+<p>标题中的 Correlation 指使用 <code>traceId</code>、<code>taskId</code>、<code>actionId</code> 和 <code>auditId</code> 把不同请求与业务记录关联起来。这些信号的权限和保留周期并不相同。</p>
+<p>当前代码先完成可独立验证的部分。Knowledge Service 用 Micrometer Observation 包裹知识操作；这里的 Observation 是对一次操作进行计时并携带观测上下文的统一 API。服务还会在回答中读取当前 <code>traceId</code>。Ticket Agent 记录规划与 Tool 指标，业务动作进入低敏 Audit。</p>
+<p>这里的低敏是指审计只保留排查动作所需的状态、业务 ID 和有限说明，不复制问题正文或完整 Tool 参数。项目还没有用测试证明 BFF、Knowledge、Ticket Agent 和 JDK8 已形成完整 Trace，也没有把 Trace 与所有审计事件自动关联。</p>
+<h2 id="四类信号各自回答一类问题">四类信号各自回答一类问题</h2>
+<p><strong>Trace。</strong> Trace 回答“一次请求经过了哪里”。一条咨询可能经过 Customer BFF、Knowledge Service、模型 Provider、Ticket Agent 和 Legacy Tool。每一段局部调用记录称为 Span，它应保存服务、操作、耗时、状态和少量关联 ID。</p>
+<p><strong>Metric。</strong> Metric 回答“总体是否异常”。例如 Agent 规划次数、Tool 成功/拒绝/未知比例、Token 分布、并发 429、模型延迟和 RAG 拒答率。它适合固定低基数标签，不适合存每个 taskId。</p>
+<p><strong>Log。</strong> Log 回答“程序具体哪里出错”。异常类、错误码、下游状态和 stack trace 可以进入受控日志；原始 Prompt、访问 Token 和完整客户数据不能为了排障默认打印。</p>
+<p><strong>Audit。</strong> Audit 回答“谁在什么时候批准并执行了哪个业务动作”。它需要追加写、长期保留和权限控制，不能依赖可能采样的 Trace，也不能用普通日志轮转替代。</p>
+<p>把四种信号全部写进一个 ELK 索引，短期看起来方便，长期会造成权限、成本和保留策略混乱。</p>
+<h2 id="ticket-agent-当前记录的指标">Ticket Agent 当前记录的指标</h2>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-05-controlled-agent/services/ticket-agent-service/src/main/java/com/xiaoding/javaai/ticket/agent/infrastructure/MicrometerAgentTelemetry.java">MicrometerAgentTelemetry</a> 记录三类 Meter，也就是 Micrometer 中的计数、分布或计时器：</p>
+<pre><code class="language-text">java.ai.agent.plan
+java.ai.agent.plan.tokens
+java.ai.agent.tool
+</code></pre>
+<p>规划计数只使用 <code>decision</code> 与 <code>finish_reason</code> 标签。结束原因先映射到 <code>stop</code>、<code>length</code>、<code>tool_calls</code> 等有限集合，Provider 私有值统一记为 <code>other</code>，避免新值持续创建时间序列。Token 通过 DistributionSummary 按 decision 聚合。Tool 使用 Timer，标签为 <code>tool</code> 与 <code>outcome</code>。</p>
+<p><code>TicketAgentOrchestrator</code> 在每次规划后记录 decision 与 totalTokens，对只读 Tool 记录 succeeded 或 failed 及耗时。<code>ToolConfirmationService</code> 对写 Tool 记录 succeeded、rejected、uncertain 或 failed。</p>
+<p>这些指标没有 taskId、tenant、subject、问题正文、Prompt 和模型自由文本。当前模型名保留在 Agent 审计中。生产接入 Trace 时，可以记录受控模型别名；若公司模型集合稳定，也可以把有限别名加入 Metric。</p>
+<h3 id="低基数标签控制监控成本">低基数标签控制监控成本</h3>
+<p>时序数据库会为每组标签创建独立时间序列。把 taskId 做标签，100 万任务就可能产生近 100 万序列；把用户问题做标签，基数几乎无限，还会泄露内容。</p>
+<p>适合指标标签的字段：</p>
+<pre><code class="language-text">service=knowledge-service
+operation=answer
+tool=QUERY_KNOWLEDGE
+outcome=uncertain
+decision=use_tool
+error_class=timeout
+</code></pre>
+<p>适合 Trace 或日志的字段：</p>
+<pre><code class="language-text">traceId
+taskId
+actionId
+confirmationId
+model version
+downstream request id
+</code></pre>
+<p>敏感字段通常不应进入任何通用观测系统。确需排障时，使用受控业务引用查询原数据，或者临时开启经过审批的采样与脱敏，不要永久全量记录。</p>
+<h2 id="跨服务关联需要-trace-context-与业务-id">跨服务关联需要 Trace Context 与业务 ID</h2>
+<p><img alt="跨服务 Trace 与业务 ID 关联" src="../assets/content/docs/assets/diagrams/source/36-trace-correlation.svg" /></p>
+<p>生产链路应使用 W3C Trace Context 传播 <code>traceparent</code>。<code>traceparent</code> 是跨服务传递 Trace 身份的标准 HTTP Header。Micrometer Tracing 与 OpenTelemetry Bridge 可以让 Spring HTTP 客户端和服务端创建 Span，业务代码不应另拼一套 <code>trace-id</code> Header。</p>
+<p>但 Trace 可能被采样，也会按较短周期过期。跨人工确认可能间隔数小时，JDK8 CRM 的确认请求通常已经是新 Trace。因此还需要持久业务 ID：</p>
+<ul>
+<li>conversationId 与 attemptId 关联 C 端回答；</li>
+<li>taskId 关联 Agent 生命周期；</li>
+<li>confirmationId 关联人工决策；</li>
+<li>actionId 关联远程写意图；</li>
+<li>legacyAuditId 关联最终业务系统。</li>
+</ul>
+<p>Agent 审计已经保存 taskId、actionId 和下游 auditId，Knowledge 回答也能取得当前 traceId。还缺的部分是让 BFF、Ticket Agent 和 JDK8 的客户端统一传播 <code>traceparent</code>，并在 Span 中加入必要的业务 ID。是否真正打通，要用集成测试或真实 Trace 截图确认上下游属于同一条调用链；POM 中存在 tracing 依赖本身不构成验证结果。</p>
+<h3 id="observation-包裹边界而不侵入业务规则">Observation 包裹边界而不侵入业务规则</h3>
+<p>Knowledge Service 通过 <code>KnowledgeAnswerTelemetry</code> 业务端口包装操作，基础设施实现使用 Micrometer Observation。应用层只知道“观察一次知识操作”，不依赖 Prometheus 或 OTel API。</p>
+<p>Ticket Agent 使用 <code>AgentTelemetry</code> 端口，Orchestrator 和确认服务记录业务事件，<code>MicrometerAgentTelemetry</code> 负责 Meter 名称和标签。测试可使用 NOOP，不需要启动监控系统。</p>
+<p>这种分层避免在每个业务方法里散落 <code>meterRegistry.counter(...)</code>，也便于统一标签。Telemetry 端口仍应保持小而具体，不能演变成通用 <code>record(String, Map&lt;String,String&gt;)</code>，否则任意字段都可能进入指标。</p>
+<h2 id="从用户体验和业务风险选择核心指标">从用户体验和业务风险选择核心指标</h2>
+<p>下面是生产监控建议。当前代码只实现了其中一部分，不应把清单等同于现有 Dashboard。</p>
+<h3 id="模型与回答">模型与回答</h3>
+<ul>
+<li>请求数、错误率、p50/p95/p99；</li>
+<li>TTFT（首个 Token 到达时间）与完整响应时长；</li>
+<li>Prompt、Completion、Total Token；</li>
+<li>finish reason 分布；</li>
+<li>结构化输出失败和业务校验失败；</li>
+<li>拒答率与引用缺失率。</li>
+</ul>
+<h3 id="rag">RAG</h3>
+<ul>
+<li>检索耗时、候选数、TopK；</li>
+<li>Recall/HitRate/MRR 的离线趋势；</li>
+<li>ACL 拒绝与空召回；</li>
+<li>Rerank 调用率和收益分组；</li>
+<li>索引任务积压、租约超时、死信。</li>
+</ul>
+<h3 id="agent">Agent</h3>
+<ul>
+<li>每任务规划步数；</li>
+<li>decision 与 Tool 分布；</li>
+<li>WAITING_CONFIRMATION 数量和等待时长；</li>
+<li>Tool succeeded/rejected/uncertain；</li>
+<li>Agent Run 429；</li>
+<li>STEP_BUDGET_EXCEEDED；</li>
+<li>尚未完成对账的 UNKNOWN 数量和持续时间。</li>
+</ul>
+<h3 id="业务结果">业务结果</h3>
+<ul>
+<li>C 端解决率与转人工率；</li>
+<li>人工批准/拒绝比例；</li>
+<li>重复幂等命中和冲突；</li>
+<li>工单 SLA；</li>
+<li>最终业务动作成功和对账异常。</li>
+</ul>
+<p>技术指标与业务指标要能通过 taskId 等关联，但不要把客户维度直接做 Metric 标签。</p>
+<h3 id="按模型与场景统计-token-成本">按模型与场景统计 Token 成本</h3>
+<p>当前 Agent 指标记录 total token 分布，还没有实现版本化价格表和成本报表。生产需要在 Provider 返回 usage 后保存 prompt、completion 和 total token，再使用受控价目版本计算：</p>
+<pre><code class="language-text">estimatedCost = promptTokens * promptUnitPrice
+              + completionTokens * completionUnitPrice
+</code></pre>
+<p>价格、币种和生效时间会变化，不能把公式中的单价永久写死。公司可以按模型别名维护版本化价格表，报告同时保留原始 Token。</p>
+<p>成本指标应按服务、业务用例、模型别名和环境聚合。按用户 ID 聚合可能涉及隐私和高基数；需要计费归属时，在业务数据仓库离线计算更合适。</p>
+<p>Token 激增告警要结合质量和流量。调用量增长导致总成本上升是正常现象；单请求 Token、步骤数或重试放大突然上升才更接近工程异常。</p>
+<h2 id="日志管理端点与告警">日志、管理端点与告警</h2>
+<h3 id="日志只保留排障所需信息">日志只保留排障所需信息</h3>
+<p>生产结构化日志可以记录错误码、异常类型、操作名、有限状态、下游服务、耗时、traceId 和业务关联 ID。谨慎记录参数指纹或数量，避免完整内容。当前测试没有扫描这些日志字段，因此下面是日志设计规则，不是已经完成的泄露验证。</p>
+<p>这些内容通常禁止：</p>
+<ul>
+<li>Authorization、API Key、Cookie；</li>
+<li>完整 Prompt 和 Tool 输出；</li>
+<li>手机号、身份证、地址、支付信息；</li>
+<li>上传文档正文；</li>
+<li>模型原始响应和未知 HTML 错误页。</li>
+</ul>
+<p>结构化日志的字段 Schema 也要评审。把所有对象 <code>toString()</code> 打出来会绕过字段级脱敏。异常 handler 返回给用户的 message 与内部日志也应分开。</p>
+<h3 id="受控暴露-prometheus-端点">受控暴露 Prometheus 端点</h3>
+<p>服务的 <code>application.yml</code> 注册 <code>health,prometheus</code> 端点，<code>/actuator/env</code> 没有暴露。注册端点不等于允许匿名抓取：Security 只匿名开放 health，本地访问 Prometheus 会得到 <code>401</code>。生产接入再使用独立 management port、内网或 ServiceMonitor，并为监控身份配置明确授权和网络策略。</p>
+<p>不要把 Prometheus 端点开放到公网后只依赖“指标里没有密码”。指标会暴露服务名、工具、错误和容量信息，也属于内部运行数据。</p>
+<h3 id="告警同时考虑比例与流量">告警同时考虑比例与流量</h3>
+<p>告警应对应可执行动作。示例：</p>
+<ul>
+<li>Agent Run 429 持续 5 分钟：检查并发、下游延迟和实例容量；</li>
+<li><code>EXECUTION_UNCERTAIN</code> 新增：立即进入业务对账；</li>
+<li>高风险 Tool 拒绝率突增：检查业务状态、权限或新模型路径；</li>
+<li>p95 上升且 Tool 延迟稳定：检查模型或检索；</li>
+<li>Token/任务突增：检查步数、Prompt 和重复调用；</li>
+<li>跨租户 ACL 拒绝出现异常来源：检查调用方身份。</li>
+</ul>
+<p>仅凭 CPU 高或错误率高报警，值班人仍要花很久定位业务影响。告警描述应包含 Dashboard、Runbook 和责任服务。</p>
+<h2 id="指标与管理端点怎样暴露">指标与管理端点怎样暴露</h2>
+<p>仓库回归检查 Meter 名称、未知 Provider 结束原因的低基数归类和管理端点注册边界。指标组件抛出异常时，已经形成的 Agent 任务结果不能被改写。</p>
+<p>启动 <code>TicketAgentServiceApplication.main()</code>，再打开 <code>production-learning-journey.http</code>。运行 <code>04-prometheus-is-not-public</code>，响应应为 <code>401</code>。这个结果说明管理端点没有匿名暴露；接入监控时再为抓取身份建立专用网络和授权。随后用指标后端确认抓取、Dashboard 和告警，不把“HTTP 能打开”当成观测完成。</p>
+<p>观测的目标是让一次异常能从总体趋势钻取到业务动作，同时不制造新的敏感数据仓库。监控结果还要用于制定故障处理规则：哪些请求可以重试，Agent 并发满时怎样快速失败，写操作为什么必须保留 UNKNOWN。</p></article><div class="practice-link"><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-06-production-readiness/README.md" target="_blank" rel="noopener"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></svg> 本阶段可运行源码 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></div><nav class="chapter-nav" aria-label="前后篇"><a href="35.html"><span>上一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></span><strong>AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权</strong></a><a href="37.html"><span>下一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><strong>缓存、熔断、限流和降级：只保留业务真正需要的部分</strong></a></nav><footer class="reader-footer">Java AI 应用开发实战 · <a href="../license.html">非商业使用</a><details class="community-mini"><summary>关注与交流 · 好好用 AI</summary><div class="community-section"><div><p>交流学习中的问题与实践心得。</p><p>代码问题和勘误，欢迎在 <a href="https://github.com/DavidDingXu/learn-java-ai/issues" target="_blank" rel="noopener">GitHub 提交 Issue</a>。</p></div><a class="qr-link" href="../assets/wechat-official-account.jpg" target="_blank" rel="noopener" aria-label="查看好好用 AI 公众号二维码原图"><img src="../assets/wechat-official-account.jpg" alt="好好用 AI 微信公众号二维码" width="130" height="130" loading="lazy"><p class="qr-caption">微信扫码 · 点击查看原图</p></a></div></details></footer></main><aside class="context-sidebar" aria-label="本篇辅助导航"><div class="context-inner"><nav class="reading-route" aria-label="本篇路线"><details open><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#四类信号各自回答一类问题">四类信号各自回答一类问题</a></li>
+<li><a href="#ticket-agent-当前记录的指标">Ticket Agent 当前记录的指标</a></li>
+<li><a href="#跨服务关联需要-trace-context-与业务-id">跨服务关联需要 Trace Context 与业务 ID</a></li>
+<li><a href="#从用户体验和业务风险选择核心指标">从用户体验和业务风险选择核心指标</a></li>
+<li><a href="#日志管理端点与告警">日志、管理端点与告警</a></li>
+<li><a href="#指标与管理端点怎样暴露">指标与管理端点怎样暴露</a></li>
+</ul>
+</div>
+</details></nav></div></aside></div><dialog class="search-dialog" id="search-dialog" aria-labelledby="search-label"><form method="dialog" class="search-heading"><label for="course-search" id="search-label"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>搜索课程</label><button class="icon-button" aria-label="关闭搜索"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form><input id="course-search" type="search" placeholder="搜索概念、代码或问题…" autocomplete="off" spellcheck="false"><p class="search-status" id="search-status" role="status">搜索全部 52 篇文章。</p><div class="search-results" id="search-results"></div><footer>↑ ↓ 选择结果 <span>Enter 打开 · Esc 关闭</span></footer></dialog>
+<dialog class="image-viewer" id="image-viewer" aria-label="放大配图"><header><span>查看配图</span><div class="image-actions"><button type="button" id="image-size">原尺寸</button><button type="button" id="close-image" autofocus>关闭</button></div></header><div class="image-canvas"><img id="large-image" alt=""></div><footer><p id="image-description"></p><a id="original-image" target="_blank" rel="noopener">打开原图 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></footer></dialog><div class="toast" id="toast" role="status"></div></body></html>

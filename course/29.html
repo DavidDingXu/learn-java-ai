@@ -1,0 +1,193 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>写操作为什么必须先做风险分级 · Learn Java AI</title><meta name="description" content="沿着一条客户服务链路，把模型、企业 RAG、受控 Agent 和 JDK8 老系统接在一起，再补齐评测、安全与上线治理。"><meta name="source-sha256" content="cb2a27c40e21da13793c5e3d77614dfcf3de2d47591fc9a3535061d8e5e6499e">
+<link rel="canonical" href="https://daviddingxu.github.io/learn-java-ai/course/29.html"><link rel="icon" href="../assets/brand.png">
+<script>try{const t=localStorage.getItem('haohai-course-theme');document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}catch(_){document.documentElement.dataset.theme='light'}</script>
+<link rel="stylesheet" href="../assets/site.css"><script defer src="../assets/search-index.js"></script><script defer src="../assets/site.js"></script></head><body class="article-page" data-root="../" data-page="29"><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header"><div class="header-inner"><button class="icon-button menu-toggle js-only" type="button" aria-label="打开课程目录" aria-controls="course-sidebar" aria-expanded="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<a class="brand" href="../index.html" aria-label="Learn Java AI · 学习站首页"><img src="../assets/brand.png" alt="" width="36" height="36"><span><strong>Learn Java AI</strong><small>Java AI 应用开发实战</small></span></a>
+<nav class="header-nav" aria-label="主导航"><a href="../index.html#curriculum">课程目录</a><a href="../index.html#downloads">离线阅读</a><a href="https://github.com/DavidDingXu/learn-java-ai" target="_blank" rel="noopener">GitHub <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></nav>
+<div class="header-controls"><button class="icon-button theme-toggle js-only" type="button" aria-label="切换到深色主题" title="切换到深色主题"><span class="theme-light-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A9 9 0 0 1 9.5 3.5a9 9 0 1 0 11 11Z"/></svg></span><span class="theme-dark-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span></button><button class="search-trigger js-only" type="button" aria-label="搜索课程"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><span>搜索课程</span><kbd>⌘ K</kbd></button></div></div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header><div class="sidebar-scrim" hidden></div><div class="reader-layout"><aside class="course-sidebar" id="course-sidebar" aria-label="课程目录"><div class="sidebar-heading"><a href="../index.html#curriculum">课程目录</a><button class="icon-button menu-close js-only" type="button" aria-label="关闭课程目录"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><nav aria-label="全部文章"><details class="sidebar-stage"><summary><span class="stage-index">模块 01</span>系统边界与第一条调用</summary><a class="lesson-link" data-lesson="01" href="01.html"><span class="lesson-number">01</span><span>专栏介绍：Java 后端怎样系统学习 AI 应用开发落地</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="02" href="02.html"><span class="lesson-number">02</span><span>从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="03" href="03.html"><span class="lesson-number">03</span><span>Spring AI 为什么做主线，其他框架放在哪里</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="04" href="04.html"><span class="lesson-number">04</span><span>先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="05" href="05.html"><span class="lesson-number">05</span><span>多租户、身份和权限为什么不能相信请求参数</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="06" href="06.html"><span class="lesson-number">06</span><span>JDK8 老系统不升级：先划清现代 AI 服务与老系统边界</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 02</span>模型调用工程化</summary><a class="lesson-link" data-lesson="07" href="07.html"><span class="lesson-number">07</span><span>一次模型调用内部发生了什么：Message、Options、Token 与响应元数据</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="08" href="08.html"><span class="lesson-number">08</span><span>Prompt 的工程边界：模板、版本、授权知识与提示注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="09" href="09.html"><span class="lesson-number">09</span><span>结构化输出为什么会失败：Schema、DTO 和业务校验</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="10" href="10.html"><span class="lesson-number">10</span><span>流式输出原理与实现：SSE、取消、心跳、断连和 TTFT</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="11" href="11.html"><span class="lesson-number">11</span><span>超时、并发保护、重试和降级：为什么不需要万能模型网关</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="12" href="12.html"><span class="lesson-number">12</span><span>真实模型调用之后：怎样建立评测基线与可观测性</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 03</span>企业 RAG</summary><a class="lesson-link" data-lesson="13" href="13.html"><span class="lesson-number">13</span><span>企业知识库先解决什么：文档、版本、状态和冲突</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="14" href="14.html"><span class="lesson-number">14</span><span>文档上传链路：对象存储、内容校验、隔离和解析失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="15" href="15.html"><span class="lesson-number">15</span><span>文档切分为什么影响召回：标题、条款、元数据和粒度</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="16" href="16.html"><span class="lesson-number">16</span><span>向量检索原理与 pgvector 实现</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="17" href="17.html"><span class="lesson-number">17</span><span>权限为什么必须在 TopK 之前过滤</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="18" href="18.html"><span class="lesson-number">18</span><span>混合检索、Query Rewrite、Rerank 什么时候有用</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="19" href="19.html"><span class="lesson-number">19</span><span>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="20" href="20.html"><span class="lesson-number">20</span><span>增量索引为什么需要任务、租约和失败恢复</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="21" href="21.html"><span class="lesson-number">21</span><span>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 04</span>客户咨询与工单升级</summary><a class="lesson-link" data-lesson="22" href="22.html"><span class="lesson-number">22</span><span>C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="23" href="23.html"><span class="lesson-number">23</span><span>多轮会话原理：短期状态、裁剪、总结和过期</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="24" href="24.html"><span class="lesson-number">24</span><span>用户怎样判断回答可信：证据、反馈、拒答和重试</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="25" href="25.html"><span class="lesson-number">25</span><span>机器人解决不了时怎样平滑升级工单</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage" open><summary><span class="stage-index">模块 05</span>受控 Agent 与老系统接入</summary><a class="lesson-link" data-lesson="26" href="26.html"><span class="lesson-number">26</span><span>Agent 与普通聊天有什么区别：目标、状态和受控执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="27" href="27.html"><span class="lesson-number">27</span><span>Tool Calling 原理与查询 Tool：最小权限、最小参数和最小返回</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="28" href="28.html"><span class="lesson-number">28</span><span>为什么模型只能选择工具：参数污染、结果污染和业务规则边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="29" href="29.html" aria-current="page"><span class="lesson-number">29</span><span>写操作为什么必须先做风险分级</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="30" href="30.html"><span class="lesson-number">30</span><span>人工确认为什么不能只传一个字符串 token</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="31" href="31.html"><span class="lesson-number">31</span><span>幂等、并发和审计怎样跨越本地与远程事务边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="32" href="32.html"><span class="lesson-number">32</span><span>JDK8 老系统接入 AI：OpenAPI、Java 8 客户端、认证、超时与错误处理</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="33" href="33.html"><span class="lesson-number">33</span><span>串联工单 Agent 业务链：知识查询、人工确认与 JDK8 执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="34" href="34.html"><span class="lesson-number">34</span><span>Agent 质量怎样评测：工具路径、参数、拒绝和副作用</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 06</span>评测、安全与上线治理</summary><a class="lesson-link" data-lesson="35" href="35.html"><span class="lesson-number">35</span><span>AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="36" href="36.html"><span class="lesson-number">36</span><span>观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="37" href="37.html"><span class="lesson-number">37</span><span>缓存、熔断、限流和降级：只保留业务真正需要的部分</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="38" href="38.html"><span class="lesson-number">38</span><span>项目配置实战：让默认配置跑通，再按需替换基础设施</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="39" href="39.html"><span class="lesson-number">39</span><span>上线前最后核对什么：测试、Eval、密钥配置、发布和回滚</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 07</span>框架与协议迁移</summary><a class="lesson-link" data-lesson="40" href="40.html"><span class="lesson-number">40</span><span>DashScope Provider 适配实验：配置隔离、响应差异和回归边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="41" href="41.html"><span class="lesson-number">41</span><span>Embedding 与 Rerank 替换实验：怎样设计同集评测</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="42" href="42.html"><span class="lesson-number">42</span><span>Graph 人工确认路由实验：何时比现有状态机更合适</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="43" href="43.html"><span class="lesson-number">43</span><span>Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="44" href="44.html"><span class="lesson-number">44</span><span>LangChain4j AI Services 适配实验：迁移一个低风险用例</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="45" href="45.html"><span class="lesson-number">45</span><span>LangChain4j RAG 适配实验：复用现有业务契约</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="46" href="46.html"><span class="lesson-number">46</span><span>LangChain4j Tool 实验：只读调用与结构化输出</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="47" href="47.html"><span class="lesson-number">47</span><span>Spring AI 与 LangChain4j 共存实验：按业务能力选择框架</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="48" href="48.html"><span class="lesson-number">48</span><span>AgentScope Tool 裁决实验：注册、身份传递与权限映射</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="49" href="49.html"><span class="lesson-number">49</span><span>多 Agent 实际协作：并行取证、结果汇总与失败转人工</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="50" href="50.html"><span class="lesson-number">50</span><span>MCP 互操作实验：发现、准入、调用与远程失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="51" href="51.html"><span class="lesson-number">51</span><span>A2A 互操作实验：任务映射、幂等与状态边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="52" href="52.html"><span class="lesson-number">52</span><span>结束语：把 Java + AI 能力迁移到真实公司项目</span><span class="lesson-state" aria-hidden="true"></span></a></details></nav><p class="sidebar-note">模型负责生成，业务系统掌握规则与执行。</p></aside><main class="reader-main" id="main-content"><div class="article-context"><span>受控 Agent 与老系统接入</span><div class="reading-tools js-only"><div class="font-controls" role="group" aria-label="正文字号"><button type="button" data-font="-1" aria-label="减小正文字号">A−</button><span id="font-size-label" aria-live="polite">18</span><button type="button" data-font="1" aria-label="增大正文字号">A+</button></div><button type="button" class="focus-toggle" aria-pressed="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>专注阅读</span></button></div></div><div class="mobile-context"><nav class="reading-route" aria-label="本篇路线"><details><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#风险来自动作后果">风险来自动作后果</a></li>
+<li><a href="#四个等级对应不同控制">四个等级对应不同控制</a></li>
+<li><a href="#分开判断风险权限与确认">分开判断风险、权限与确认</a></li>
+<li><a href="#写动作先编译成确定参数">写动作先编译成确定参数</a></li>
+<li><a href="#让风险等级驱动执行策略">让风险等级驱动执行策略</a></li>
+<li><a href="#风险分流必须覆盖状态变化">风险分流必须覆盖状态变化</a></li>
+<li><a href="#建立可维护的风险目录">建立可维护的风险目录</a></li>
+</ul>
+</div>
+</details></nav></div><article id="article-body"><h1 id="写操作为什么必须先做风险分级">写操作为什么必须先做风险分级</h1>
+<p>添加内部备注、调整工单队列和发起退款都属于写操作。如果统一套一个 <code>requiresConfirmation=true</code>，页面不知道该展示哪些风险，服务端也无法判断由谁确认、确认多久有效，以及失败后能不能自动重试。</p>
+<p>这三类动作的影响范围、可逆性和恢复方式并不相同。风险等级需要进一步驱动身份、展示字段、审批角色、有效期、幂等、审计和失败处置，而不是只作为一个标签写进 Prompt。</p>
+<p>示例把工具分为 <code>READ_ONLY</code>、<code>LOW</code>、<code>MEDIUM</code> 和 <code>HIGH</code>：查询知识是只读，内部备注为 LOW，分配队列为 MEDIUM，退款为 HIGH。等级只是示范，接入公司项目时应按照真实业务后果重新评定。</p>
+<h2 id="风险来自动作后果">风险来自动作后果</h2>
+<p>模型置信度回答“模型对自己判断有多确定”，即使这个分数可靠，也不能回答“判断错误会造成多大损失”。模型非常确定地选择退款工具，退款仍然是高风险动作；模型不太确定地建议查询政策，查询仍然是只读动作。</p>
+<p>风险通常来自以下因素：</p>
+<ul>
+<li>是否改变最终业务数据或状态；</li>
+<li>是否涉及资金、账户、个人信息或监管数据；</li>
+<li>动作是否可逆，以及撤销是否有额外代价；</li>
+<li>错误影响单个工单还是一批用户；</li>
+<li>执行后是否会触发通知、支付、合同或外部系统；</li>
+<li>是否需要职责分离或双人审批；</li>
+<li>远程超时后能否查询最终结果。</li>
+</ul>
+<p>一个动作的模型置信度只能作为辅助信息，不能降低上述控制。也不建议把置信度直接显示成“93% 安全”，这会让确认人错误理解为风险概率。</p>
+<p><img alt="Tool 写操作风险矩阵" src="../assets/content/docs/assets/diagrams/source/29-risk-matrix.svg" /></p>
+<h2 id="四个等级对应不同控制">四个等级对应不同控制</h2>
+<p><strong>READ_ONLY。</strong> 只读动作不改变业务状态，可以在目录和身份校验后自动执行。它仍需要最小权限、超时、结果裁剪、访问审计和调用预算。查询客户资料可能包含高敏数据，虽然没有写副作用，也不意味着风险很低；数据敏感度可以在工具目录中形成另一维策略。</p>
+<p><strong>LOW。</strong> 低风险写操作通常影响局部工作流，容易撤销或由人工修正。例如添加普通内部备注、发起人工复核请求。它们仍会进入业务记录，因此要有员工确认、角色校验、稳定动作 ID 和审计。</p>
+<p><strong>MEDIUM。</strong> 中风险动作会改变处理归属、优先级或流程路径，例如把工单分配到退款审核队列。错误分配未必造成资金损失，但可能影响 SLA、数据可见范围和团队责任。除了人工确认，还应校验目标队列白名单、当前工单状态和操作人权限。</p>
+<p><strong>HIGH。</strong> 高风险动作涉及资金、账户、关键数据或不可逆外部影响。<code>ISSUE_REFUND</code> 需要 <code>REFUND_APPROVER</code>，最终业务系统还要重新验证订单、金额、币种和幂等键。Agent 侧确认通过不等于业务系统必须执行。</p>
+<p>当前 <code>confirmationTtl</code> 对所有写工具使用同一配置，默认 15 分钟，只负责确认过期校验。生产系统应由服务端根据风险、金额和业务时效计算差异化 TTL，例如 HIGH 风险确认通常比普通队列调整更短；模型不能传入或延长这个时间。</p>
+<p>公司项目可能还需要 <code>CRITICAL</code>，用于大额资金、批量动作、账号冻结或合规操作，要求双人审批或直接禁止 Agent 发起。不要为了保持枚举简洁，把所有高风险业务压成一种策略。</p>
+<h2 id="分开判断风险权限与确认">分开判断风险、权限与确认</h2>
+<p>风险描述错误后果，权限描述谁可以执行，确认描述当前人是否明确同意这一个动作。三者相关但不能合并。</p>
+<p>一个员工拥有 <code>REFUND_APPROVER</code>，不代表系统可以替他自动批准所有退款；它只说明他具备确认资格。员工点击批准后，服务端仍需验证确认单未过期、任务版本未变化、参数指纹一致，最后由订单系统验证业务可执行性。</p>
+<p>同理，LOW 风险动作也不能因为后果较小就跳过身份。添加内部备注会进入客户服务记录，必须能追到谁确认、写入了哪个 case、下游返回哪个 auditId。</p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-05-controlled-agent/services/ticket-agent-service/src/main/java/com/xiaoding/javaai/ticket/agent/application/BusinessToolCatalog.java">BusinessToolCatalog</a> 把 effect、risk 和 requiredRole 放在同一 ToolPolicy 中：</p>
+<pre><code class="language-java">&quot;ASSIGN_QUEUE&quot;, new ToolPolicy(
+        ToolEffect.WRITE,
+        ToolRisk.MEDIUM,
+        &quot;TICKET_OPERATOR&quot;,
+        Set.of(&quot;queueCode&quot;)),
+&quot;ISSUE_REFUND&quot;, new ToolPolicy(
+        ToolEffect.WRITE,
+        ToolRisk.HIGH,
+        &quot;REFUND_APPROVER&quot;,
+        Set.of(&quot;amountMinor&quot;, &quot;currency&quot;))
+</code></pre>
+<p>这些字段不会出现在模型参数里。模型即使生成 <code>risk=LOW</code> 或 <code>requiredRole=NONE</code>，也会因为未知参数被拒绝。</p>
+<h2 id="写动作先编译成确定参数">写动作先编译成确定参数</h2>
+<p><img alt="写 Tool 从建议到执行的决策链" src="../assets/content/docs/assets/diagrams/source/29-write-decision.svg" /></p>
+<p>模型返回 <code>UseTool</code> 后，服务端目录把它编译成 <code>PreparedToolCall</code>。只有经过参数白名单、业务枚举和长度校验，才会生成确定动作。随后 Orchestrator 根据 effect 分流：</p>
+<pre><code class="language-java">if (call.effect() == ToolEffect.READ) {
+    // 执行只读 Tool，记录 Observation
+}
+
+// WRITE 不执行，只生成 ConfirmationRequest
+</code></pre>
+<p>写动作包含规范化参数和 SHA-256 指纹。任务进入 <code>WAITING_CONFIRMATION</code> 后，模型循环停止，不再有机会修改该动作。员工如果认为金额或队列不对，应拒绝当前确认并启动新的规划或人工处理，而不是在确认页面随手改参数后继续执行。</p>
+<p>允许确认人在页面修改参数会让展示、审批和执行对不上：模型建议的是 A，员工看到后改成 B，审计却可能只记录“批准了模型建议”。若业务需要人工编辑，应把它建模为明确的人工命令，由业务系统重新校验并生成新 actionId。</p>
+<h3 id="服务端拥有动作策略字段">服务端拥有动作策略字段</h3>
+<p>以下字段不应来自模型：</p>
+<p><strong>Effect 与 Risk</strong></p>
+<p>它们决定是否允许自动执行、是否生成确认单和后续监控等级。由代码或受控策略配置维护。</p>
+<p><strong>Required Role</strong></p>
+<p>它决定谁可以批准。角色来自公司身份系统，服务端把当前确认人 JWT 中的 roles 与策略比较。</p>
+<p><strong>Allowed Arguments</strong></p>
+<p>它决定模型能表达哪些业务参数。tenant、subject、actor、Token、URL、幂等键和审批角色都不属于模型参数。</p>
+<p><strong>执行配置</strong></p>
+<p>包括下游服务地址、HTTP 方法、audience、scope、超时、请求 DTO、结果分类和动作幂等键。它属于基础设施适配器。</p>
+<p>这些策略可以配置化，但配置必须有 Schema、版本、审批和回归。把 YAML 放到配置中心不等于自动安全；错误配置同样可能让高风险工具使用低权限策略。</p>
+<h3 id="当前业务状态也会改变风险">当前业务状态也会改变风险</h3>
+<p>静态工具等级只是起点。真实项目通常需要动态条件：</p>
+<pre><code class="language-text">risk = policy(
+  toolName,
+  amountMinor,
+  paymentChannel,
+  customerRiskLevel,
+  caseType,
+  currentBusinessState
+)
+</code></pre>
+<p>例如 10 元优惠补偿和 10 万元退款不应走同一审批；普通队列调整和跨保密团队转派也不应相同。动态风险计算仍必须是确定性服务端规则，输入来自受信身份和当前业务数据。</p>
+<p>动态规则不要依赖 Tool Observation 中的旧订单状态直接执行。确认或执行前，最终业务系统要重新读取事实，避免在 Agent 规划和员工确认之间发生状态变化。</p>
+<h2 id="让风险等级驱动执行策略">让风险等级驱动执行策略</h2>
+<p>公司落地时，可以维护一张明确策略表：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>控制项</th>
+<th>READ_ONLY</th>
+<th>LOW</th>
+<th>MEDIUM</th>
+<th>HIGH</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>自动执行</td>
+<td>可按策略</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+</tr>
+<tr>
+<td>人工确认</td>
+<td>通常不需要</td>
+<td>需要</td>
+<td>需要</td>
+<td>需要或双人审批</td>
+</tr>
+<tr>
+<td>角色</td>
+<td>数据访问 scope</td>
+<td>操作员</td>
+<td>专门岗位</td>
+<td>审批岗位</td>
+</tr>
+<tr>
+<td>确认 TTL</td>
+<td>无</td>
+<td>较长</td>
+<td>较短</td>
+<td>最短</td>
+</tr>
+<tr>
+<td>业务复核</td>
+<td>下游 ACL</td>
+<td>必需</td>
+<td>必需</td>
+<td>强制重新读取事实</td>
+</tr>
+<tr>
+<td>未知结果</td>
+<td>读取可重试</td>
+<td>查询或人工</td>
+<td>专门恢复</td>
+<td>对账与升级告警</td>
+</tr>
+<tr>
+<td>审计</td>
+<td>访问记录</td>
+<td>动作记录</td>
+<td>完整时间线</td>
+<td>强审计与合规保留</td>
+</tr>
+</tbody>
+</table></div>
+<p>表格不能直接复制成所有系统的标准，但每一列都应有明确答案。若 HIGH 风险动作与 LOW 使用完全相同的角色、TTL、审计和恢复，说明风险分级还没有进入执行策略。</p>
+<h3 id="确认前后仍要校验业务状态">确认前后仍要校验业务状态</h3>
+<p>人工确认会受到疲劳、界面误导和信息不足影响。若页面连续弹出大量低价值确认，员工会形成机械点击；若页面只显示“Agent 建议退款”，确认人无法核对金额、订单、政策依据和影响。</p>
+<p>降低确认风险需要：</p>
+<ul>
+<li>只在服务端已经完成参数和业务前置校验后生成确认单；</li>
+<li>展示结构化动作、目标、金额、风险和依据；</li>
+<li>高风险动作突出不可逆影响和最终业务状态；</li>
+<li>不把模型 rationale 当作唯一理由；</li>
+<li>拒绝时允许填写稳定原因，进入后续改进；</li>
+<li>控制确认数量，能用确定性规则自动处理的低价值步骤不要滥用模型。</li>
+</ul>
+<p>确认人不是替系统做所有校验，而是在系统已经收紧边界后承担最终业务判断。</p>
+<p>确认结束后，任务状态还要区分人工拒绝、业务失败和结果未知。员工拒绝动作时，任务进入 <code>REJECTED</code>，表示有人明确决定不执行。下游返回业务 4xx 时，任务进入 <code>FAILED</code>，表示业务系统已经拒绝动作。网络超时或 5xx 则进入 <code>EXECUTION_UNCERTAIN</code>，表示无法确定动作是否发生。</p>
+<p>三种状态影响完全不同。把它们都显示成“执行失败”会让客服重复操作，甚至制造重复退款。风险越高，结果分类越需要严格。</p>
+<h2 id="风险分流必须覆盖状态变化">风险分流必须覆盖状态变化</h2>
+<p>仓库回归覆盖 READ 与 WRITE 分流、退款金额和币种、队列白名单、风险与角色不可由模型覆盖，以及写 Tool 必须停在 <code>WAITING_CONFIRMATION</code>。它不会真的发起退款，副作用执行由隔离的 Legacy Tool 适配器检查。</p>
+<h2 id="建立可维护的风险目录">建立可维护的风险目录</h2>
+<p>先从真实业务动作清单开始，而不是从模型可能做什么开始。对每个动作记录所有者、影响对象、可逆性、最大金额或批量范围、敏感数据、审批岗位、最终事实系统和未知结果恢复方法。</p>
+<p>再把动作归并成少量业务 Tool。不要直接暴露 <code>updateOrderField(field,value)</code> 这类底层 CRUD 方法，它很难做风险判断。<code>REQUEST_REFUND(orderId, amount, reason)</code> 才有明确的业务语义。</p>
+<p>最后由安全、业务和研发共同确认等级。风险目录属于业务控制资产，不应只由 Prompt 工程师或 Agent 开发者维护。每次新增工具、扩大参数范围或降低确认要求，都要运行安全与副作用回归。</p>
+<p>风险分级完成后，还必须准确记录员工确认的是哪一个动作。一个可复用字符串 token 无法表达这层绑定，确认单还要记录任务版本、参数指纹、角色、过期时间和幂等决策。</p></article><div class="practice-link"><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-05-controlled-agent/README.md" target="_blank" rel="noopener"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></svg> 本阶段可运行源码 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></div><nav class="chapter-nav" aria-label="前后篇"><a href="28.html"><span>上一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></span><strong>为什么模型只能选择工具：参数污染、结果污染和业务规则边界</strong></a><a href="30.html"><span>下一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><strong>人工确认为什么不能只传一个字符串 token</strong></a></nav><footer class="reader-footer">Java AI 应用开发实战 · <a href="../license.html">非商业使用</a><details class="community-mini"><summary>关注与交流 · 好好用 AI</summary><div class="community-section"><div><p>交流学习中的问题与实践心得。</p><p>代码问题和勘误，欢迎在 <a href="https://github.com/DavidDingXu/learn-java-ai/issues" target="_blank" rel="noopener">GitHub 提交 Issue</a>。</p></div><a class="qr-link" href="../assets/wechat-official-account.jpg" target="_blank" rel="noopener" aria-label="查看好好用 AI 公众号二维码原图"><img src="../assets/wechat-official-account.jpg" alt="好好用 AI 微信公众号二维码" width="130" height="130" loading="lazy"><p class="qr-caption">微信扫码 · 点击查看原图</p></a></div></details></footer></main><aside class="context-sidebar" aria-label="本篇辅助导航"><div class="context-inner"><nav class="reading-route" aria-label="本篇路线"><details open><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#风险来自动作后果">风险来自动作后果</a></li>
+<li><a href="#四个等级对应不同控制">四个等级对应不同控制</a></li>
+<li><a href="#分开判断风险权限与确认">分开判断风险、权限与确认</a></li>
+<li><a href="#写动作先编译成确定参数">写动作先编译成确定参数</a></li>
+<li><a href="#让风险等级驱动执行策略">让风险等级驱动执行策略</a></li>
+<li><a href="#风险分流必须覆盖状态变化">风险分流必须覆盖状态变化</a></li>
+<li><a href="#建立可维护的风险目录">建立可维护的风险目录</a></li>
+</ul>
+</div>
+</details></nav></div></aside></div><dialog class="search-dialog" id="search-dialog" aria-labelledby="search-label"><form method="dialog" class="search-heading"><label for="course-search" id="search-label"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>搜索课程</label><button class="icon-button" aria-label="关闭搜索"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form><input id="course-search" type="search" placeholder="搜索概念、代码或问题…" autocomplete="off" spellcheck="false"><p class="search-status" id="search-status" role="status">搜索全部 52 篇文章。</p><div class="search-results" id="search-results"></div><footer>↑ ↓ 选择结果 <span>Enter 打开 · Esc 关闭</span></footer></dialog>
+<dialog class="image-viewer" id="image-viewer" aria-label="放大配图"><header><span>查看配图</span><div class="image-actions"><button type="button" id="image-size">原尺寸</button><button type="button" id="close-image" autofocus>关闭</button></div></header><div class="image-canvas"><img id="large-image" alt=""></div><footer><p id="image-description"></p><a id="original-image" target="_blank" rel="noopener">打开原图 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></footer></dialog><div class="toast" id="toast" role="status"></div></body></html>

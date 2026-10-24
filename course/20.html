@@ -1,0 +1,260 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>增量索引为什么需要任务、租约和失败恢复 · Learn Java AI</title><meta name="description" content="沿着一条客户服务链路，把模型、企业 RAG、受控 Agent 和 JDK8 老系统接在一起，再补齐评测、安全与上线治理。"><meta name="source-sha256" content="75d09d03988ef6254af7b983c1df0117c95cca60cb44a03e990b53b0a89f0496">
+<link rel="canonical" href="https://daviddingxu.github.io/learn-java-ai/course/20.html"><link rel="icon" href="../assets/brand.png">
+<script>try{const t=localStorage.getItem('haohai-course-theme');document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light'}catch(_){document.documentElement.dataset.theme='light'}</script>
+<link rel="stylesheet" href="../assets/site.css"><script defer src="../assets/search-index.js"></script><script defer src="../assets/site.js"></script></head><body class="article-page" data-root="../" data-page="20"><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header"><div class="header-inner"><button class="icon-button menu-toggle js-only" type="button" aria-label="打开课程目录" aria-controls="course-sidebar" aria-expanded="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<a class="brand" href="../index.html" aria-label="Learn Java AI · 学习站首页"><img src="../assets/brand.png" alt="" width="36" height="36"><span><strong>Learn Java AI</strong><small>Java AI 应用开发实战</small></span></a>
+<nav class="header-nav" aria-label="主导航"><a href="../index.html#curriculum">课程目录</a><a href="../index.html#downloads">离线阅读</a><a href="https://github.com/DavidDingXu/learn-java-ai" target="_blank" rel="noopener">GitHub <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></nav>
+<div class="header-controls"><button class="icon-button theme-toggle js-only" type="button" aria-label="切换到深色主题" title="切换到深色主题"><span class="theme-light-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A9 9 0 0 1 9.5 3.5a9 9 0 1 0 11 11Z"/></svg></span><span class="theme-dark-icon"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></span></button><button class="search-trigger js-only" type="button" aria-label="搜索课程"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><span>搜索课程</span><kbd>⌘ K</kbd></button></div></div><div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div></header><div class="sidebar-scrim" hidden></div><div class="reader-layout"><aside class="course-sidebar" id="course-sidebar" aria-label="课程目录"><div class="sidebar-heading"><a href="../index.html#curriculum">课程目录</a><button class="icon-button menu-close js-only" type="button" aria-label="关闭课程目录"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><nav aria-label="全部文章"><details class="sidebar-stage"><summary><span class="stage-index">模块 01</span>系统边界与第一条调用</summary><a class="lesson-link" data-lesson="01" href="01.html"><span class="lesson-number">01</span><span>专栏介绍：Java 后端怎样系统学习 AI 应用开发落地</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="02" href="02.html"><span class="lesson-number">02</span><span>从一次客户咨询看系统分工：知识服务、工单 Agent 与 JDK8 老系统</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="03" href="03.html"><span class="lesson-number">03</span><span>Spring AI 为什么做主线，其他框架放在哪里</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="04" href="04.html"><span class="lesson-number">04</span><span>先跑通第一条真实调用：从 ChatClient 到可维护的垂直链路</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="05" href="05.html"><span class="lesson-number">05</span><span>多租户、身份和权限为什么不能相信请求参数</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="06" href="06.html"><span class="lesson-number">06</span><span>JDK8 老系统不升级：先划清现代 AI 服务与老系统边界</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 02</span>模型调用工程化</summary><a class="lesson-link" data-lesson="07" href="07.html"><span class="lesson-number">07</span><span>一次模型调用内部发生了什么：Message、Options、Token 与响应元数据</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="08" href="08.html"><span class="lesson-number">08</span><span>Prompt 的工程边界：模板、版本、授权知识与提示注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="09" href="09.html"><span class="lesson-number">09</span><span>结构化输出为什么会失败：Schema、DTO 和业务校验</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="10" href="10.html"><span class="lesson-number">10</span><span>流式输出原理与实现：SSE、取消、心跳、断连和 TTFT</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="11" href="11.html"><span class="lesson-number">11</span><span>超时、并发保护、重试和降级：为什么不需要万能模型网关</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="12" href="12.html"><span class="lesson-number">12</span><span>真实模型调用之后：怎样建立评测基线与可观测性</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage" open><summary><span class="stage-index">模块 03</span>企业 RAG</summary><a class="lesson-link" data-lesson="13" href="13.html"><span class="lesson-number">13</span><span>企业知识库先解决什么：文档、版本、状态和冲突</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="14" href="14.html"><span class="lesson-number">14</span><span>文档上传链路：对象存储、内容校验、隔离和解析失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="15" href="15.html"><span class="lesson-number">15</span><span>文档切分为什么影响召回：标题、条款、元数据和粒度</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="16" href="16.html"><span class="lesson-number">16</span><span>向量检索原理与 pgvector 实现</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="17" href="17.html"><span class="lesson-number">17</span><span>权限为什么必须在 TopK 之前过滤</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="18" href="18.html"><span class="lesson-number">18</span><span>混合检索、Query Rewrite、Rerank 什么时候有用</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="19" href="19.html"><span class="lesson-number">19</span><span>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="20" href="20.html" aria-current="page"><span class="lesson-number">20</span><span>增量索引为什么需要任务、租约和失败恢复</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="21" href="21.html"><span class="lesson-number">21</span><span>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 04</span>客户咨询与工单升级</summary><a class="lesson-link" data-lesson="22" href="22.html"><span class="lesson-number">22</span><span>C 端为什么需要薄 BFF：鉴权、限流、SSE 和 DTO 聚合</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="23" href="23.html"><span class="lesson-number">23</span><span>多轮会话原理：短期状态、裁剪、总结和过期</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="24" href="24.html"><span class="lesson-number">24</span><span>用户怎样判断回答可信：证据、反馈、拒答和重试</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="25" href="25.html"><span class="lesson-number">25</span><span>机器人解决不了时怎样平滑升级工单</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 05</span>受控 Agent 与老系统接入</summary><a class="lesson-link" data-lesson="26" href="26.html"><span class="lesson-number">26</span><span>Agent 与普通聊天有什么区别：目标、状态和受控执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="27" href="27.html"><span class="lesson-number">27</span><span>Tool Calling 原理与查询 Tool：最小权限、最小参数和最小返回</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="28" href="28.html"><span class="lesson-number">28</span><span>为什么模型只能选择工具：参数污染、结果污染和业务规则边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="29" href="29.html"><span class="lesson-number">29</span><span>写操作为什么必须先做风险分级</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="30" href="30.html"><span class="lesson-number">30</span><span>人工确认为什么不能只传一个字符串 token</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="31" href="31.html"><span class="lesson-number">31</span><span>幂等、并发和审计怎样跨越本地与远程事务边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="32" href="32.html"><span class="lesson-number">32</span><span>JDK8 老系统接入 AI：OpenAPI、Java 8 客户端、认证、超时与错误处理</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="33" href="33.html"><span class="lesson-number">33</span><span>串联工单 Agent 业务链：知识查询、人工确认与 JDK8 执行</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="34" href="34.html"><span class="lesson-number">34</span><span>Agent 质量怎样评测：工具路径、参数、拒绝和副作用</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 06</span>评测、安全与上线治理</summary><a class="lesson-link" data-lesson="35" href="35.html"><span class="lesson-number">35</span><span>AI 安全怎样持续回归：Injection、PII、ACL 与 Tool 越权</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="36" href="36.html"><span class="lesson-number">36</span><span>观测做到什么程度才够用：Trace、Correlation、Metric、日志和成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="37" href="37.html"><span class="lesson-number">37</span><span>缓存、熔断、限流和降级：只保留业务真正需要的部分</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="38" href="38.html"><span class="lesson-number">38</span><span>项目配置实战：让默认配置跑通，再按需替换基础设施</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="39" href="39.html"><span class="lesson-number">39</span><span>上线前最后核对什么：测试、Eval、密钥配置、发布和回滚</span><span class="lesson-state" aria-hidden="true"></span></a></details><details class="sidebar-stage"><summary><span class="stage-index">模块 07</span>框架与协议迁移</summary><a class="lesson-link" data-lesson="40" href="40.html"><span class="lesson-number">40</span><span>DashScope Provider 适配实验：配置隔离、响应差异和回归边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="41" href="41.html"><span class="lesson-number">41</span><span>Embedding 与 Rerank 替换实验：怎样设计同集评测</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="42" href="42.html"><span class="lesson-number">42</span><span>Graph 人工确认路由实验：何时比现有状态机更合适</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="43" href="43.html"><span class="lesson-number">43</span><span>Spring AI Alibaba 兼容性实验：依赖隔离、迁移 ADR 和回归成本</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="44" href="44.html"><span class="lesson-number">44</span><span>LangChain4j AI Services 适配实验：迁移一个低风险用例</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="45" href="45.html"><span class="lesson-number">45</span><span>LangChain4j RAG 适配实验：复用现有业务契约</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="46" href="46.html"><span class="lesson-number">46</span><span>LangChain4j Tool 实验：只读调用与结构化输出</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="47" href="47.html"><span class="lesson-number">47</span><span>Spring AI 与 LangChain4j 共存实验：按业务能力选择框架</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="48" href="48.html"><span class="lesson-number">48</span><span>AgentScope Tool 裁决实验：注册、身份传递与权限映射</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="49" href="49.html"><span class="lesson-number">49</span><span>多 Agent 实际协作：并行取证、结果汇总与失败转人工</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="50" href="50.html"><span class="lesson-number">50</span><span>MCP 互操作实验：发现、准入、调用与远程失败</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="51" href="51.html"><span class="lesson-number">51</span><span>A2A 互操作实验：任务映射、幂等与状态边界</span><span class="lesson-state" aria-hidden="true"></span></a><a class="lesson-link" data-lesson="52" href="52.html"><span class="lesson-number">52</span><span>结束语：把 Java + AI 能力迁移到真实公司项目</span><span class="lesson-state" aria-hidden="true"></span></a></details></nav><p class="sidebar-note">模型负责生成，业务系统掌握规则与执行。</p></aside><main class="reader-main" id="main-content"><div class="article-context"><span>企业 RAG</span><div class="reading-tools js-only"><div class="font-controls" role="group" aria-label="正文字号"><button type="button" data-font="-1" aria-label="减小正文字号">A−</button><span id="font-size-label" aria-live="polite">18</span><button type="button" data-font="1" aria-label="增大正文字号">A+</button></div><button type="button" class="focus-toggle" aria-pressed="false"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>专注阅读</span></button></div></div><div class="mobile-context"><nav class="reading-route" aria-label="本篇路线"><details><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#先把索引建模成可恢复任务">先把索引建模成可恢复任务</a></li>
+<li><a href="#用租约协调多实例-worker">用租约协调多实例 Worker</a></li>
+<li><a href="#让重复执行得到同一索引结果">让重复执行得到同一索引结果</a></li>
+<li><a href="#通过发布接口走一遍索引任务">通过发布接口走一遍索引任务</a></li>
+<li><a href="#从任务年龄和结果观察积压">从任务年龄和结果观察积压</a></li>
+<li><a href="#从故障现象判断恢复边界">从故障现象判断恢复边界</a></li>
+</ul>
+</div>
+</details></nav></div><article id="article-body"><h1 id="增量索引为什么需要任务租约和失败恢复">增量索引为什么需要任务、租约和失败恢复</h1>
+<p>运营同学刚发布一版退款政策，后台显示成功，用户却仍然搜不到。排查后可能发现，原文件已经保存，切分完成了一半，Embedding 调用遇到限流，应用恰好又重启了。</p>
+<p>从上传到可检索，中间还有解析、切分、Embedding、Chunk 与向量写入，以及旧索引切换。把它们都塞进 HTTP 请求，接口延迟会被最慢的外部依赖拖住；只扔进线程池，进程消失后又没有恢复依据。</p>
+<p>因此，增量索引需要一条可以查询和重试的任务记录。任务绑定确定的文档版本，租约标识当前后台执行进程（Worker），幂等写入保证重复执行不会产生重复 Chunk。这样才能解释“处理到哪一步了”，也能在失败后继续完成。</p>
+<p>任务处理由 <code>IndexTask</code> 状态机、<code>IndexTaskWorker</code>、JDBC 队列，以及原子认领与租约代次校验 SQL 组成。<code>DocumentVersionIndexingService</code> 负责确定性切分和批量 Embedding，<code>PgVectorKnowledgeChunkIndexSink</code> 负责事务写入与检索版本切换。</p>
+<h2 id="先把索引建模成可恢复任务">先把索引建模成可恢复任务</h2>
+<p>同步方案最直观：上传文档后立即解析、切分、调用 Embedding，再把向量写进数据库，全部成功才向调用方返回。它在本地样例里很好理解，放进公司业务系统后会产生几个难以接受的耦合。</p>
+<p>首先，上传接口继承了模型服务的延迟与可用性。一个几十页的文档可能产生数百个 Chunk，需要多批 Embedding 请求。Provider 出现限流时，用户看到的是上传超时；实际上原文件可能已经保存，文档版本也已经创建，只有索引没有完成。调用方重试上传，又可能创建重复对象或重复版本。</p>
+<p>其次，HTTP 请求不是可靠的任务容器。网关超时、客户端断开、Pod 重启都可能发生在索引中间。进程内 <code>CompletableFuture</code> 或线程池只能把工作移出请求线程，不能在进程消失后保存进度。没有持久化任务记录，运维只能从日志猜测哪些版本需要补偿。</p>
+<p>第三个问题是发布与可检索并非同一个状态。文档领域关心内容版本、审批和生效时间，索引领域关心某个版本是否已经按指定切分策略与 Embedding 模型生成检索数据。把两者压成一个 <code>published=true</code>，会让业务页面无法解释“文档已发布但索引仍在处理”以及“新索引失败时是否继续使用旧版本”。</p>
+<p>更稳妥的边界是：文档发布事务只负责确认不可变版本，并创建一条持久化索引任务；Worker 在事务外调用解析器和模型，完成后再提交任务结果。文档与任务位于同一个数据库时，版本发布与任务创建可以放在一个本地事务中，不必为了异步而先引入消息中间件。若任务要通过消息总线分发，再使用事务发件箱（Outbox）保证数据库事实和事件一致。</p>
+<p>项目把业务发布版本和检索版本分开保存。<code>PUBLISHED</code> 表示内容已经完成业务发布，<code>document_search_version</code> 表示查询当前读取哪一版完整索引。替换版本仍在处理时，读取继续使用上一版索引；首次发布没有旧版可回退，要等第一条索引任务成功。</p>
+<h3 id="任务绑定不可变文档版本">任务绑定不可变文档版本</h3>
+<p>索引任务不能只记录一个文件地址。文件可能被覆盖，文档可能发布新版本，Embedding 模型也可能升级。Worker 如果每次都“读取最新内容”，同一任务重试两次就可能处理两份不同文本，结果无法复现。</p>
+<p><code>index_task</code> 表使用下面的业务唯一约束：</p>
+<pre><code class="language-sql">UNIQUE (tenant_id, document_id, version_number, task_type)
+</code></pre>
+<p>完整表结构见 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/resources/db/migration/V1__knowledge_platform.sql">V1__knowledge_platform.sql</a>。<code>tenant_id</code> 保证多租户隔离，<code>document_id + version_number</code> 指向不可变版本，<code>task_type</code> 允许同一版本分别执行建索引、重建索引或其他受控任务。重复收到“为退款政策第 2 版建索引”的命令时，数据库唯一键只保留同一个业务任务，不会生成两批相同向量。</p>
+<p>任务 ID 与业务幂等键承担不同职责。<code>task_id</code> 用于定位一次任务记录；业务唯一键用于判断两个请求是否在表达同一项工作。只拿随机 UUID 做去重没有意义，因为每次重试都会得到一个新 UUID。</p>
+<p>任务还要保留 <code>attempts</code>、<code>lease_owner</code>、<code>lease_until</code>、<code>next_attempt_at</code>、<code>error_code</code>、<code>created_at</code> 和 <code>updated_at</code>。每个字段都对应一个运行问题：任务尝试过几次，是否有人正在处理，租约是否已经失效，下次何时允许领取，以及最近一次失败发生在解析、Embedding 还是向量写入。</p>
+<h3 id="状态机记录完整处理结果">状态机记录完整处理结果</h3>
+<p>一个 <code>processing</code> 布尔值只能区分“正在处理”和“没有处理”。Worker 崩溃后，它会永远停在 <code>true</code>；任务等待限流退避时，它又只能写回 <code>false</code>，与从未开始的任务无法区分。任务队列需要显式状态机。</p>
+<p><img alt="增量索引任务状态机" src="../assets/content/docs/assets/diagrams/source/20-task-state.svg" /></p>
+<p>任务状态机使用五个状态：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>代码状态</th>
+<th>语义</th>
+<th>可以发生的转换</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PENDING</code></td>
+<td>新任务已经创建，达到执行时间后可以领取</td>
+<td><code>RUNNING</code></td>
+</tr>
+<tr>
+<td><code>RUNNING</code></td>
+<td>某个 Worker 持有未过期租约</td>
+<td><code>SUCCEEDED</code>、<code>RETRY_WAIT</code>、<code>DEAD</code></td>
+</tr>
+<tr>
+<td><code>RETRY_WAIT</code></td>
+<td>可恢复失败已经记录，等待退避时间</td>
+<td>到期后由认领操作直接进入 <code>RUNNING</code></td>
+</tr>
+<tr>
+<td><code>SUCCEEDED</code></td>
+<td>目标版本已经完成索引</td>
+<td>终态</td>
+</tr>
+<tr>
+<td><code>DEAD</code></td>
+<td>失败或过期租约已经耗尽尝试次数</td>
+<td>终态，人工处理后创建新的受控任务</td>
+</tr>
+</tbody>
+</table></div>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/indexing/domain/IndexTask.java">IndexTask</a> 在 <code>RETRY_WAIT</code> 到期后不会先改回 <code>PENDING</code>，下一次认领会直接把它切换为 <code>RUNNING</code>。数据库队列使用相同语义，不存在图外的中间状态。</p>
+<p><code>claim</code> 每成功一次就增加 <code>attempts</code>，并写入租约所有者和截止时间：</p>
+<pre><code class="language-java">status = IndexTaskStatus.RUNNING;
+attempts += 1;
+leaseOwner = workerId;
+leaseUntil = now.plus(leaseDuration);
+updatedAt = now;
+</code></pre>
+<p>失败时不能只保存异常消息。异常文本会随 SDK、语言与实现变化，不适合统计和自动决策。<code>IndexingException</code> 提供稳定 <code>errorCode</code>，例如 <code>EMBEDDING_TIMEOUT</code>、<code>UNSUPPORTED_DOCUMENT</code>。任务表可以另外保存脱敏后的 <code>error_message</code> 供排查，但重试策略应依赖稳定错误分类，而不是对异常字符串做包含判断。</p>
+<h2 id="用租约协调多实例-worker">用租约协调多实例 Worker</h2>
+<p>多实例部署下，两个 Worker 可能同时看到同一条到期任务。简单执行“先查一条 PENDING，再 UPDATE”为 RUNNING，会留下竞态窗口：两边都查到同一条记录，然后都开始调用 Embedding。用 JVM 锁没有用，因为两个 Worker 不在同一进程。</p>
+<p>租约的含义是：Worker 在一段有限时间内拥有完成或报告失败的权利。它不是永久锁。租约到期后，系统推断原 Worker 已失联，允许另一个实例接管任务。这样即使进程被杀、机器断电或网络分区，任务也不会永远卡住。</p>
+<p><img alt="多实例 Worker 原子领取任务的时序" src="../assets/content/docs/assets/diagrams/source/20-claim-sequence.svg" /></p>
+<p>领取必须在数据库里原子完成。<a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/indexing/infrastructure/PostgresIndexTaskClaimQuery.java">PostgresIndexTaskClaimQuery</a> 使用一个 CTE 完成候选选择和状态更新：</p>
+<pre><code class="language-sql">WITH exhausted AS (
+    UPDATE index_task
+       SET status = 'DEAD',
+           lease_owner = NULL,
+           lease_until = NULL,
+           error_code = COALESCE(error_code, 'LEASE_ATTEMPTS_EXHAUSTED'),
+           updated_at = ?
+     WHERE status = 'RUNNING'
+       AND attempts &gt;= ?
+       AND lease_until &lt;= ?
+    RETURNING task_id
+),
+candidate AS (
+    SELECT task_id
+      FROM index_task
+     WHERE status IN ('PENDING', 'RETRY_WAIT', 'RUNNING')
+       AND attempts &lt; ?
+       AND (
+            (status IN ('PENDING', 'RETRY_WAIT') AND next_attempt_at &lt;= ?)
+            OR (status = 'RUNNING' AND lease_until &lt;= ?)
+       )
+     ORDER BY next_attempt_at, created_at, task_id
+     FOR UPDATE SKIP LOCKED
+     LIMIT 1
+)
+UPDATE index_task task
+   SET status = 'RUNNING',
+       attempts = task.attempts + 1,
+       lease_owner = ?,
+       lease_until = ?,
+       updated_at = ?
+  FROM candidate
+ WHERE task.task_id = candidate.task_id
+RETURNING task.*
+</code></pre>
+<p><code>exhausted</code> 先把租约已经过期且尝试预算耗尽的任务置为 <code>DEAD</code>，避免它被无限接管。<code>FOR UPDATE</code> 锁住候选行，<code>SKIP LOCKED</code> 让其他 Worker 跳过已经被领取的任务，继续寻找下一条，而不是排队等待同一行。<code>UPDATE ... RETURNING</code> 把状态切换和任务返回放在同一个事务里。只有拿到返回记录的 Worker 才能执行索引。</p>
+<p><code>SKIP LOCKED</code> 解决并发吞吐，不自动解决公平性。排序字段决定任务优先级；长时间失败、不断到期的旧任务可能挤占新任务，某些高优先级租户又可能需要独立队列。公司项目应根据业务设置优先级、分片或配额，并观察最老待处理任务的年龄，而不是只看队列总数。</p>
+<p>还有一条容易写错：数据库行锁不能覆盖整个 Embedding 调用。若 Worker 在持有事务和行锁时请求外部模型，几十秒的网络等待会占用连接与锁，吞吐很快崩掉。正确做法是短事务领取并提交，随后在事务外执行索引，再用另一个短事务完成或失败任务。租约负责跨越这段无数据库锁的执行时间。</p>
+<h3 id="提交结果前再次校验租约所有权">提交结果前再次校验租约所有权</h3>
+<p>设想 Worker A 获得 45 秒租约，处理时发生长时间暂停；45 秒后 Worker B 接管并完成任务。A 随后恢复，如果它仍能无条件写 <code>SUCCEEDED</code>，就会覆盖 B 的结果，甚至在 B 已经依据新配置重建向量后写回旧数据。</p>
+<p>因此 <code>complete</code> 与 <code>fail</code> 都必须证明调用者仍拥有有效租约。<a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/indexing/domain/IndexTask.java">IndexTask</a> 会检查状态、<code>workerId</code> 和 <code>leaseUntil</code>：</p>
+<pre><code class="language-java">if (status != IndexTaskStatus.RUNNING || !workerId.equals(leaseOwner)) {
+    throw new IndexTaskLeaseOwnershipException(workerId, leaseOwner);
+}
+if (leaseUntil == null || !leaseUntil.isAfter(now)) {
+    throw new IndexTaskLeaseOwnershipException(workerId, leaseOwner);
+}
+</code></pre>
+<p>JDBC 队列还把本次领取后的 <code>attempts</code> 返回为 <code>leaseAttempt</code>，作为这次租约的代次。完成和失败 SQL 同时校验 <code>workerId</code>、<code>leaseAttempt</code> 与 <code>leaseUntil</code>，更新行数不是 1 就抛出 <code>IndexTaskLeaseLostException</code>。</p>
+<p>即使同一个 <code>workerId</code> 被重启后的进程复用，旧代次也不能覆盖新代次写入的任务状态。这种防止旧执行者覆盖新结果的做法，通常称为租约代次校验（fencing）。</p>
+<p>任务状态受保护，不等于索引数据自动受保护。<code>ClaimedIndexTask</code> 会把 <code>leaseAttempt</code> 传给 <code>KnowledgeChunkIndexSink</code>。pgvector 适配器在短事务开始时按 <code>taskId + leaseAttempt</code> 锁住当前任务行，并再次检查状态与租约。校验通过后才写分块和切换检索版本；失去租约的旧 Worker 在写入前就会失败。</p>
+<p>当前 Worker 会在一个租期的三分之一处开始周期续租。续租 SQL 与完成、失败 SQL 使用同一组 fencing 条件：任务仍为 <code>RUNNING</code>、Worker 匹配、<code>leaseAttempt</code> 匹配、旧租约尚未过期。任一条件失效，续租就不能修改当前任务。</p>
+<p>心跳解决的是正常长任务续租，不是让已失联的 Worker 无限占有任务。如果数据库异常导致续租不确定，最终的完成或失败 SQL 仍会重新校验所有权。返回 <code>LOST_LEASE</code> 时，旧 Worker 停止终态写入，任务由当前持有者继续处理或在租期后被接管。</p>
+<h3 id="worker-只编排任务步骤">Worker 只编排任务步骤</h3>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/indexing/application/IndexTaskWorker.java">IndexTaskWorker</a> 的 <code>runOnce</code> 保持了很窄的职责：领取一条任务，调用 <code>DocumentVersionIndexer</code>，成功后完成任务，可分类的索引异常则记录失败策略。</p>
+<pre><code class="language-java">private IndexTaskRunResult runClaimed(Optional&lt;ClaimedIndexTask&gt; claimed) {
+    if (claimed.isEmpty()) return IndexTaskRunResult.IDLE;
+
+    ClaimedIndexTask task = claimed.orElseThrow();
+    LeaseHeartbeat heartbeat = new LeaseHeartbeat(task);
+    heartbeat.start();
+    try {
+        indexer.index(task);
+        heartbeat.close();
+        if (heartbeat.leaseLost()) return IndexTaskRunResult.LOST_LEASE;
+        taskQueue.complete(
+                task.taskId(), workerId, task.leaseAttempt(), clock.get());
+        return IndexTaskRunResult.SUCCEEDED;
+    } catch (IndexingException error) {
+        heartbeat.close();
+        if (heartbeat.leaseLost()) return IndexTaskRunResult.LOST_LEASE;
+        try {
+            taskQueue.fail(task.taskId(), workerId, task.leaseAttempt(),
+                    clock.get(), error.errorCode(), retryDelay, maximumAttempts);
+            return IndexTaskRunResult.FAILED;
+        } catch (IndexTaskLeaseLostException leaseLost) {
+            return IndexTaskRunResult.LOST_LEASE;
+        }
+    } finally {
+        heartbeat.close();
+    }
+}
+</code></pre>
+<p>上面的片段省略了失败写入细节。可预期的解析失败、Provider 限流和外部超时，需要在 <code>DocumentVersionIndexer</code> 边界转换成稳定错误码。失败写入如果被 fencing 拒绝，返回 <code>LOST_LEASE</code>；<code>NullPointerException</code>、数据库映射错误等编程缺陷不会被统一包装成“稍后重试”，避免任务反复消耗资源却隐藏真正缺陷。</p>
+<p>实际 Worker 进程仍需要最外层的运行保护：记录未处理异常、让租约自然过期、触发告警，并保证调度线程不会永久死亡。这个保护属于运行容器，不应改变领域错误分类。当前最小实现对 <code>IndexingException</code> 使用统一的固定退避和最大尝试次数；公司项目若要让不可恢复错误直接进入终态，应显式扩展错误策略，不能只靠错误消息猜测。</p>
+<p><code>runOnce</code> 返回 <code>IDLE</code>、<code>SUCCEEDED</code>、<code>FAILED</code> 或 <code>LOST_LEASE</code>。空队列时可以退避，连续成功时可以立即领取下一条，失败时由任务的 <code>nextAttemptAt</code> 控制重试。<code>LOST_LEASE</code> 不能再用旧租约记录一次 <code>FAILED</code>，否则会让丢失所有权的 Worker 再次修改任务。</p>
+<h2 id="让重复执行得到同一索引结果">让重复执行得到同一索引结果</h2>
+<p>租约意味着系统采用至少一次执行语义。Worker A 可能已经把全部向量写入数据库，但在提交 <code>SUCCEEDED</code> 前宕机；租约到期后 Worker B 会再次执行同一任务。任何声称分布式索引“恰好一次”的设计，最终都要面对这个窗口。</p>
+<p>工程目标应当是让重复执行得到同一业务结果，因为分布式链路无法消除所有重复窗口。向量写入的幂等键至少应包含：</p>
+<pre><code class="language-text">tenantId + documentId + documentVersion + chunkId
+</code></pre>
+<p>如果同一个文档版本允许使用不同 Embedding 模型并行迁移，还要加入 <code>embeddingModel</code> 或 <code>indexVersion</code>。切分阶段已经让 <code>chunkId</code> 由版本、切分策略、顺序、标题路径和内容摘要稳定生成。同一版本按同一策略重跑时，可以执行 UPSERT，也可以先写新索引版本再原子切换。不要每次重跑都追加一行。</p>
+<p>删除旧数据也要有版本边界。不要在新版本第一批向量写入前就删除旧版本，否则中途失败会让线上没有可用索引。项目让不同文档版本使用不同的 Chunk 行，全部 Embedding 完成后，sink 在一个短事务中写入目标版本并更新 <code>document_search_version</code>。中途失败时事务回滚，查询指针仍指向上一版。当前代码没有实现旧版本清理任务；公司接入时应在回退窗口结束后再清理旧分块，并保留正在被引用或审计的版本。</p>
+<p>这套实现优先保证已有知识可用，因此新索引长期失败时会继续返回旧版。公司必须给“业务版本与检索版本不一致”设置最长允许时间和告警。法规、价格或权限敏感内容不能接受继续返回旧版时，应改成先构建索引、再原子发布；或者在新版本就绪前明确拒答。</p>
+<p>恢复策略应先分类失败：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>失败类型</th>
+<th>示例</th>
+<th>处理方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>瞬时依赖失败</td>
+<td>Provider 超时、限流、短暂网络错误</td>
+<td>指数退避并增加随机抖动，有限重试</td>
+</tr>
+<tr>
+<td>输入不可处理</td>
+<td>不支持的格式、解码失败、文档损坏</td>
+<td>直接终态，提示内容维护人员修复源文件</td>
+</tr>
+<tr>
+<td>配置或兼容错误</td>
+<td>向量维度不匹配、模型名无效、数据库迁移缺失</td>
+<td>阻断同类任务并告警，不让每条任务重复撞错</td>
+</tr>
+<tr>
+<td>Worker 失联</td>
+<td>进程退出、节点故障、长时间停顿</td>
+<td>租约到期后由其他 Worker 接管</td>
+</tr>
+</tbody>
+</table></div>
+<p>当前领域模型使用固定 <code>retryDelay</code> 和最大尝试次数，便于把状态转换写清楚。公司项目可以把退避计算放入策略对象，例如 <code>baseDelay * 2^(attempts-1)</code>，再增加上限与随机抖动，避免大量任务同时恢复造成惊群。重试参数应按错误类型区分；损坏文件重试十次不会变好，限流错误立即重试又会进一步放大流量。</p>
+<h3 id="embedding-批次兼顾吞吐与一致性">Embedding 批次兼顾吞吐与一致性</h3>
+<p>逐 Chunk 调用 Embedding Provider 会把一次文档索引放大成大量网络往返；把几百个 Chunk 一次性提交，又可能超过 Provider 的批量上限、请求体限制或单次超时预算。批次大小应作为 Worker 配置，而不是写死在循环里，并结合文档规模、向量维度、Provider 限流和连接池容量压测。</p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/indexing/application/DocumentVersionIndexingService.java">DocumentVersionIndexingService</a> 按 <code>embeddingBatchSize</code> 切分请求。每批文本通过 <code>KnowledgeEmbeddingModel.embedAll</code> 一次提交。</p>
+<p><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/retrieval/infrastructure/SpringAiKnowledgeEmbeddingModel.java">SpringAiKnowledgeEmbeddingModel</a> 还会校验返回数量、结果索引、模型元数据和向量维度。批次少一个向量、索引重复或中途换模型，都不能继续写库。</p>
+<p>同一任务的所有批次必须使用同一个 Embedding 模型和维度。同一文档版本若前半批使用 <code>embedding-v1</code>、后半批使用 <code>embedding-v2</code>，即使维度相同，距离空间也可能不兼容。当前实现发现模型名变化会终止任务，由失败恢复流程处理；模型迁移应建立独立索引版本，完成整批验证后再切换可见版本。</p>
+<p>批量 Embedding 完成前不持有数据库行锁，所有批次完成后才调用 <code>replaceVersion</code>。当前 pgvector 适配器把任务租约校验、目标版本分块写入和检索指针切换放在同一个短事务里，不能让前两个批次成功、第三个批次失败后留下半份可见索引。</p>
+<h2 id="通过发布接口走一遍索引任务">通过发布接口走一遍索引任务</h2>
+<p>第 14 篇上传接口返回 <code>documentId</code>、<code>versionNumber</code> 和最新 <code>revision</code>。发布时使用这个 revision，并同时提交文档级 READ ACL：</p>
+<p><code>rag-learning-journey.http</code> 会发布两份文档，并调用 Worker 两次。<code>06-index-first-document</code> 与 <code>07-index-second-document</code> 都应返回 <code>SUCCEEDED</code>。随后执行 <code>11-idempotent-worker-observation</code>，结果应为 <code>IDLE</code>。</p>
+<p>若出现 <code>FAILED</code> 或 <code>LOST_LEASE</code>，就根据响应中的任务结果回到上面的状态机定位：是 Provider 失败、租约已经丢失，还是任务进入了下一次退避。发布接口返回 <code>202 Accepted</code>、新的 revision 和 <code>indexTaskId</code>；在 JDBC 实现中，业务版本、ACL 和 <code>PENDING</code> 任务在同一个数据库事务中提交。</p>
+<p>阶段 03 已把发布、手动触发 Worker 和重复触发写进同一个 <code>.http</code> 文件，macOS 与 Windows 都可以直接在 IDEA 中运行，不需要在三套命令之间切换。完整配置和结果核对 SQL 见 <a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/docs/runbooks/knowledge-ingestion.md">知识写入运行手册</a>。</p>
+<h2 id="从任务年龄和结果观察积压">从任务年龄和结果观察积压</h2>
+<p>队列长度不是唯一指标。100 条刚创建的任务可能完全正常，1 条等待两小时的高优先级政策任务却可能已经影响用户。任务观测至少需要以下维度：</p>
+<ul>
+<li>到期可领取任务数，以及最老任务等待时间；</li>
+<li><code>RUNNING</code> 数量、租约即将到期和已经过期的数量；</li>
+<li>各低基数 <code>errorCode</code> 的失败次数、重试次数和终态数量；</li>
+<li>从文档发布到索引成功的端到端延迟分位数；</li>
+<li>每个任务的 Chunk 数、Embedding 批次数和向量写入耗时；</li>
+<li>当前检索版本与当前有效业务版本是否一致。</li>
+</ul>
+<p><code>taskId</code>、<code>documentId</code> 和租户不适合放进指标标签，它们会制造高基数。单任务排查通过调用链、结构化日志或受控查询完成，聚合指标只保留任务类型、结果、错误类别和 Worker 池等稳定维度。</p>
+<p>告警也要与业务影响绑定。短暂积压可以观察；最老任务超过服务目标、终态失败持续增加、过期租约异常增多，才需要通知。文档发布页面最好直接展示 <code>INDEXING</code>、<code>SEARCHABLE</code> 和失败原因摘要，让内容维护人员不用翻运维日志判断政策是否已经对用户生效。</p>
+<h2 id="从故障现象判断恢复边界">从故障现象判断恢复边界</h2>
+<p>读代码时抓住三条规则即可。<code>IndexTask</code> 决定合法状态转换。<a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/indexing/application/IndexTaskWorker.java">IndexTaskWorker</a> 只编排领取、续租、索引与终态。<a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/services/knowledge-service/src/main/java/com/xiaoding/javaai/knowledge/indexing/infrastructure/PgVectorKnowledgeChunkIndexSink.java">PgVectorKnowledgeChunkIndexSink</a> 在短事务里校验租约代次、写入完整目标版本并切换检索指针。</p>
+<p>重复触发后返回 <code>IDLE</code>，说明同一业务任务没有被再次创建；旧 Worker 返回 <code>LOST_LEASE</code>，说明它不能覆盖新持有者；索引批次失败后旧检索版本仍可用，说明半份新索引没有暴露给查询。进入目标 PostgreSQL 环境后，再用两个 Worker 同时领取到期任务，观察同一任务是否只被一个连接拿到，以及过期租约能否由另一个连接接管。</p>
+<h3 id="接入现有任务系统时保留的规则">接入现有任务系统时保留的规则</h3>
+<p>可以复用的规则很具体：任务绑定不可变文档版本，发布与任务创建保持一致，领取通过数据库原子更新完成。执行期间只持有有限租约，完成与失败必须校验所有权。重试建立在幂等索引写入上，终态失败可以查询并转人工处理。调度框架只负责触发执行。</p>
+<p>需要按公司环境替换的部分包括调度入口、Embedding 批大小与限流策略、向量库写入、心跳策略和告警平台。已有 XXL-JOB、Kubernetes CronJob 或内部任务平台时，可以让它们周期性调用 <code>runOnce</code>，但不要把任务状态只存在调度平台里。索引任务状态仍应由知识服务自己的数据库保存，避免换调度器时丢失恢复语义。</p>
+<p>迁移时可以复用 JDBC Queue 的原子领取、续租与租约代次校验，sink 的事务切换，以及 <code>DocumentVersionIndexer</code> 对相同输入生成相同索引结果的要求。调度周期、租期、续租频率、公司对象存储和长文档检查点，则要根据目标调度平台、Provider 超时、向量策略和文档规模调整。</p>
+<p>增量索引稳定后，几次成功查询仍然不能代表 RAG 质量。切分策略、Embedding、TopK、混合检索和重排（Rerank）每改一项，都可能让一部分问题变好、另一部分问题变差。下一步需要把“搜得准”变成可重复计算的指标，并把每个失败样例定位到具体链路。</p></article><div class="practice-link"><a href="https://github.com/DavidDingXu/learn-java-ai/blob/main/learning-stages/stage-03-enterprise-rag/README.md" target="_blank" rel="noopener"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/></svg> 本阶段可运行源码 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></div><nav class="chapter-nav" aria-label="前后篇"><a href="19.html"><span>上一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></span><strong>RAG 回答为什么必须带证据：拒答、冲突、时效与知识注入</strong></a><a href="21.html"><span>下一篇 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><strong>RAG 质量怎样量化：Golden Set、Recall@K 和坏案例</strong></a></nav><footer class="reader-footer">Java AI 应用开发实战 · <a href="../license.html">非商业使用</a><details class="community-mini"><summary>关注与交流 · 好好用 AI</summary><div class="community-section"><div><p>交流学习中的问题与实践心得。</p><p>代码问题和勘误，欢迎在 <a href="https://github.com/DavidDingXu/learn-java-ai/issues" target="_blank" rel="noopener">GitHub 提交 Issue</a>。</p></div><a class="qr-link" href="../assets/wechat-official-account.jpg" target="_blank" rel="noopener" aria-label="查看好好用 AI 公众号二维码原图"><img src="../assets/wechat-official-account.jpg" alt="好好用 AI 微信公众号二维码" width="130" height="130" loading="lazy"><p class="qr-caption">微信扫码 · 点击查看原图</p></a></div></details></footer></main><aside class="context-sidebar" aria-label="本篇辅助导航"><div class="context-inner"><nav class="reading-route" aria-label="本篇路线"><details open><summary>本篇路线</summary><div class="toc">
+<ul>
+<li><a href="#先把索引建模成可恢复任务">先把索引建模成可恢复任务</a></li>
+<li><a href="#用租约协调多实例-worker">用租约协调多实例 Worker</a></li>
+<li><a href="#让重复执行得到同一索引结果">让重复执行得到同一索引结果</a></li>
+<li><a href="#通过发布接口走一遍索引任务">通过发布接口走一遍索引任务</a></li>
+<li><a href="#从任务年龄和结果观察积压">从任务年龄和结果观察积压</a></li>
+<li><a href="#从故障现象判断恢复边界">从故障现象判断恢复边界</a></li>
+</ul>
+</div>
+</details></nav></div></aside></div><dialog class="search-dialog" id="search-dialog" aria-labelledby="search-label"><form method="dialog" class="search-heading"><label for="course-search" id="search-label"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>搜索课程</label><button class="icon-button" aria-label="关闭搜索"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></form><input id="course-search" type="search" placeholder="搜索概念、代码或问题…" autocomplete="off" spellcheck="false"><p class="search-status" id="search-status" role="status">搜索全部 52 篇文章。</p><div class="search-results" id="search-results"></div><footer>↑ ↓ 选择结果 <span>Enter 打开 · Esc 关闭</span></footer></dialog>
+<dialog class="image-viewer" id="image-viewer" aria-label="放大配图"><header><span>查看配图</span><div class="image-actions"><button type="button" id="image-size">原尺寸</button><button type="button" id="close-image" autofocus>关闭</button></div></header><div class="image-canvas"><img id="large-image" alt=""></div><footer><p id="image-description"></p><a id="original-image" target="_blank" rel="noopener">打开原图 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6m0-6-9 9M10 4H4v16h16v-6"/></svg></a></footer></dialog><div class="toast" id="toast" role="status"></div></body></html>
