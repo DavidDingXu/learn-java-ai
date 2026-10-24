@@ -208,7 +208,7 @@
   "tables": 44,
   "code_blocks": 222,
   "diagrams": 0,
-  "publishing_sha256": "08b003ea3677132794ed589a56bc27cd0cbba8abdb17f247025f29b71c4c8e04",
+  "publishing_sha256": "11b5d3da21562ad0599752da367f01f7cc8ea8cd6e16aa65a2627064ab45e561",
   "content_sha256": "31f5f2878748d9d0c8db08d87628a815dbaeacd8aa9c5d1018cbea3383663990",
   "pdf_pages": 422,
   "tools": {
@@ -217,6 +217,6 @@
   },
   "files": {
     "learn-java-ai.pdf": "5c79e4a69902c12a64687c29010095ed75aa646b3ba241c25974397c108c68c0",
-    "learn-java-ai.epub": "66139987645f61d852ba3e1e9e6a7d4f897cd8f4c7d34dc5c98a9be0b39d5314"
+    "learn-java-ai.epub": "dcfd51195923126f517d0431200183b9901c543eb688483df049b487b0a0fd09"
   }
 }

@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/gh-pages' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -67,3 +67,14 @@ jobs:
           test -f "docs/releases/$RELEASE_TAG.md"
           gh release create "$RELEASE_TAG" published-site/downloads/* --verify-tag --draft --title "Java AI 应用开发实战 · $RELEASE_TAG" --notes-file "docs/releases/$RELEASE_TAG.md"
           gh release edit "$RELEASE_TAG" --draft=false --latest
+  request-deployment:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/gh-pages'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Deploy through the default branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run reading-site.yml --ref main
